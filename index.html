@@ -493,6 +493,33 @@
             border-radius: 50px;
             font-size: 12px;
         }
+
+
+
+        /* Estilos mejorados para tarjetas de brigadistas */
+.brigadista-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.brigadista-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+/* Scrollbar personalizado para el modal */
+.swal2-popup::-webkit-scrollbar {
+    width: 8px;
+}
+
+.swal2-popup::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.swal2-popup::-webkit-scrollbar-thumb {
+    background: #667eea;
+    border-radius: 10px;
+}
     </style>
 </head>
 <body>
@@ -1254,60 +1281,173 @@
         }
 
         async function loadBrigadistas() {
-            const search = document.getElementById('searchBrigadista')?.value.toLowerCase() || '';
-            try {
-                const snapshot = await database.ref('usuarios').once('value');
-                const brigadistas = [];
-                snapshot.forEach(child => {
-                    const data = child.val();
-                    brigadistas.push({ uid: child.key, ...data });
-                });
-                const filtered = brigadistas.filter(b => b.nombre.toLowerCase().includes(search));
-                document.getElementById('brigadistasList').innerHTML = filtered.map(b => `
-                    <div class="brigadista-card" onclick="verBrigadistaDetalle('${b.uid}', '${escapeHtml(b.nombre)}')">
-                        <h3><i class="fas fa-user"></i> ${escapeHtml(b.nombre)}</h3>
-                        <p><i class="fas fa-id-card"></i> ID: ${b.uid.substring(0,8)}...</p>
-                    </div>
-                `).join('');
-            } catch (error) {
-                console.error('Error cargando brigadistas:', error);
-            }
+    const search = document.getElementById('searchBrigadista')?.value.toLowerCase() || '';
+    try {
+        const snapshot = await database.ref('usuarios').once('value');
+        const brigadistas = [];
+        snapshot.forEach(child => {
+            const data = child.val();
+            brigadistas.push({ uid: child.key, ...data });
+        });
+        
+        // Cargar estadísticas para cada brigadista
+        const brigadistasConStats = [];
+        for (const b of brigadistas) {
+            const visitsSnap = await database.ref(`visitas/${b.uid}`).once('value');
+            let total = 0;
+            let conTelefono = 0;
+            const coloniasMap = new Map(); // Para contar visitas por colonia
+            
+            visitsSnap.forEach(child => {
+                const visita = child.val();
+                total++;
+                if (visita.telefono && visita.telefono.trim()) conTelefono++;
+                if (visita.colonia) {
+                    coloniasMap.set(visita.colonia, (coloniasMap.get(visita.colonia) || 0) + 1);
+                }
+            });
+            
+            brigadistasConStats.push({
+                ...b,
+                totalVisitas: total,
+                conTelefono: conTelefono,
+                coloniasMap: coloniasMap,
+                totalColonias: coloniasMap.size
+            });
         }
+        
+        // Ordenar por total de visitas (mayor a menor)
+        brigadistasConStats.sort((a, b) => b.totalVisitas - a.totalVisitas);
+        
+        const filtered = brigadistasConStats.filter(b => b.nombre.toLowerCase().includes(search));
+        
+        document.getElementById('brigadistasList').innerHTML = filtered.map(b => {
+            // Crear HTML de colonias con conteo
+            const coloniasHtml = Array.from(b.coloniasMap.entries())
+                .map(([colonia, count]) => `<span style="display:inline-block; background:#f3f4f6; padding:2px 8px; margin:2px; border-radius:15px; font-size:11px;">${escapeHtml(colonia)} (${count})</span>`)
+                .join('');
+            
+            return `
+                <div class="brigadista-card" onclick="verBrigadistaDetalle('${b.uid}', '${escapeHtml(b.nombre)}')" style="cursor:pointer; margin-bottom:15px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+                        <h3 style="margin:0 0 10px 0;"><i class="fas fa-user-circle" style="color:#667eea;"></i> ${escapeHtml(b.nombre)}</h3>
+                    </div>
+                    
+                    <!-- Estadísticas principales -->
+                    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin:15px 0;">
+                        <div style="background:linear-gradient(135deg, #667eea, #764ba2); color:white; padding:12px; border-radius:12px; text-align:center;">
+                            <div style="font-size:24px; font-weight:bold;">${b.totalVisitas}</div>
+                            <div style="font-size:11px;">Total Visitas</div>
+                        </div>
+                        <div style="background:#10b981; color:white; padding:12px; border-radius:12px; text-align:center;">
+                            <div style="font-size:24px; font-weight:bold;">${b.conTelefono}</div>
+                            <div style="font-size:11px;">Con Teléfono</div>
+                        </div>
+                        <div style="background:#f59e0b; color:white; padding:12px; border-radius:12px; text-align:center;">
+                            <div style="font-size:24px; font-weight:bold;">${b.totalColonias}</div>
+                            <div style="font-size:11px;">Colonias</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Colonias visitadas con conteo -->
+                    <div style="margin-top:10px;">
+                        <div style="font-size:12px; color:#666; margin-bottom:8px;"><i class="fas fa-map-marker-alt"></i> Colonias visitadas:</div>
+                        <div style="display:flex; flex-wrap:wrap; gap:5px;">
+                            ${coloniasHtml || '<span style="color:#999;">Sin colonias registradas</span>'}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+    } catch (error) {
+        console.error('Error cargando brigadistas:', error);
+        document.getElementById('brigadistasList').innerHTML = '<p style="text-align:center;padding:20px;">Error cargando datos</p>';
+    }
+}
 
         async function verBrigadistaDetalle(uid, nombre) {
-            try {
-                const snapshot = await database.ref(`visitas/${uid}`).once('value');
-                const visitas = [];
-                snapshot.forEach(child => visitas.push({ id: child.key, ...child.val() }));
-                const total = visitas.length;
-                const conTelefono = visitas.filter(v => v.telefono && v.telefono.trim()).length;
-                
-                Swal.fire({
-                    title: nombre,
-                    html: `
-                        <div style="text-align:left">
-                            <p><strong>📊 Estadísticas:</strong></p>
-                            <p>📋 Total visitas: ${total}</p>
-                            <p>📞 Con teléfono: ${conTelefono}</p>
-                            <p>🔇 Sin teléfono: ${total - conTelefono}</p>
-                            <hr>
-                            <p><strong>📝 Últimas visitas:</strong></p>
-                            ${visitas.slice(0,5).map(v => `<p>• ${escapeHtml(v.nombre)} - ${new Date(v.fecha).toLocaleDateString()}</p>`).join('')}
-                        </div>
-                    `,
-                    icon: 'info',
-                    showCancelButton: true,
-                    confirmButtonText: 'Exportar Excel',
-                    cancelButtonText: 'Cerrar'
-                }).then(result => {
-                    if (result.isConfirmed) {
-                        exportBrigadistaExcel(visitas, nombre);
-                    }
-                });
-            } catch (error) {
-                console.error('Error cargando detalle:', error);
+    try {
+        const snapshot = await database.ref(`visitas/${uid}`).once('value');
+        const visitas = [];
+        snapshot.forEach(child => visitas.push({ id: child.key, ...child.val() }));
+        
+        const total = visitas.length;
+        const conTelefono = visitas.filter(v => v.telefono && v.telefono.trim()).length;
+        const sinTelefono = total - conTelefono;
+        
+        // Calcular visitas por colonia
+        const coloniasMap = new Map();
+        visitas.forEach(v => {
+            if (v.colonia) {
+                coloniasMap.set(v.colonia, (coloniasMap.get(v.colonia) || 0) + 1);
             }
-        }
+        });
+        
+        // Generar HTML de colonias con conteo
+        const coloniasHtml = Array.from(coloniasMap.entries())
+            .map(([colonia, count]) => `<div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;">
+                <span><i class="fas fa-map-marker-alt"></i> ${escapeHtml(colonia)}</span>
+                <span style="background:#667eea; color:white; padding:2px 10px; border-radius:20px;">${count} visitas</span>
+            </div>`).join('');
+        
+        // Últimas 10 visitas
+        const ultimasVisitas = visitas.slice(0, 10).map(v => 
+            `<div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;">
+                <span><i class="fas fa-user"></i> ${escapeHtml(v.nombre)}</span>
+                <span style="color:#666; font-size:12px;">${new Date(v.fecha).toLocaleDateString()}</span>
+            </div>`
+        ).join('');
+        
+        Swal.fire({
+            title: `<i class="fas fa-user-circle"></i> ${escapeHtml(nombre)}`,
+            html: `
+                <div style="text-align:left; max-height:500px; overflow-y:auto;">
+                    <!-- Tarjetas de estadísticas -->
+                    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin-bottom:20px;">
+                        <div style="background:linear-gradient(135deg, #667eea, #764ba2); color:white; padding:15px; border-radius:12px; text-align:center;">
+                            <div style="font-size:28px; font-weight:bold;">${total}</div>
+                            <div style="font-size:11px;">Total Visitas</div>
+                        </div>
+                        <div style="background:#10b981; color:white; padding:15px; border-radius:12px; text-align:center;">
+                            <div style="font-size:28px; font-weight:bold;">${conTelefono}</div>
+                            <div style="font-size:11px;">Con Teléfono</div>
+                        </div>
+                        <div style="background:#ef4444; color:white; padding:15px; border-radius:12px; text-align:center;">
+                            <div style="font-size:28px; font-weight:bold;">${sinTelefono}</div>
+                            <div style="font-size:11px;">Sin Teléfono</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Colonias visitadas -->
+                    <div style="background:#f8fafc; border-radius:12px; padding:12px; margin-bottom:15px;">
+                        <div style="font-weight:bold; margin-bottom:10px;"><i class="fas fa-city"></i> 📍 Visitas por colonia (${coloniasMap.size} colonias)</div>
+                        ${coloniasHtml || '<div style="color:#999;">No hay colonias registradas</div>'}
+                    </div>
+                    
+                    <!-- Últimas visitas -->
+                    <div style="background:#f8fafc; border-radius:12px; padding:12px;">
+                        <div style="font-weight:bold; margin-bottom:10px;"><i class="fas fa-clock"></i> 📝 Últimas 10 visitas</div>
+                        ${ultimasVisitas || '<div style="color:#999;">No hay visitas registradas</div>'}
+                    </div>
+                </div>
+            `,
+            icon: 'info',
+            width: '500px',
+            showCancelButton: true,
+            confirmButtonText: '<i class="fas fa-file-excel"></i> Exportar Excel',
+            cancelButtonText: 'Cerrar',
+            confirmButtonColor: '#10b981'
+        }).then(result => {
+            if (result.isConfirmed) {
+                exportBrigadistaExcel(visitas, nombre);
+            }
+        });
+    } catch (error) {
+        console.error('Error cargando detalle:', error);
+        Swal.fire('Error', 'No se pudieron cargar los detalles', 'error');
+    }
+}
 
         function exportBrigadistaExcel(visitas, nombre) {
             const data = visitas.map(v => ({
