@@ -1419,7 +1419,7 @@ colonia: document.getElementById('personaColonia').value.toUpperCase(),
     }
 }
 
-        
+
 
         async function verBrigadistaDetalle(uid, nombre) {
     try {
@@ -1430,122 +1430,159 @@ colonia: document.getElementById('personaColonia').value.toUpperCase(),
             didOpen: () => Swal.showLoading()
         });
 
+        // 🔥 CORREGIDO: Cargar TODAS las visitas del brigadista
         const snapshot = await database.ref(`visitas/${uid}`).once('value');
         const visitas = [];
-        snapshot.forEach(child => visitas.push({ id: child.key, ...child.val() }));
         
-        // Cerrar el loading
+        // Verificar si hay visitas
+        if (snapshot.exists()) {
+            snapshot.forEach(child => {
+                const visitaData = child.val();
+                visitas.push({ 
+                    id: child.key, 
+                    ...visitaData,
+                    fecha: visitaData.fecha || new Date().toISOString()
+                });
+            });
+        }
+        
+        // Cerrar loading
         Swal.close();
         
+        // 🔥 ESTADÍSTICAS CORREGIDAS
         const total = visitas.length;
-        const conTelefono = visitas.filter(v => v.telefono && v.telefono.trim()).length;
+        const conTelefono = visitas.filter(v => v.telefono && v.telefono.trim() !== '' && v.telefono.trim().length > 5).length;
         const sinTelefono = total - conTelefono;
+        
+        // Mostrar en consola para depuración
+        console.log(`📊 Estadísticas de ${nombre}:`, {
+            uid: uid,
+            totalVisitas: total,
+            conTelefono: conTelefono,
+            sinTelefono: sinTelefono,
+            visitas: visitas.map(v => ({ nombre: v.nombre, telefono: v.telefono }))
+        });
+        
+        // Si no hay visitas, mostrar mensaje
+        if (total === 0) {
+            Swal.fire({
+                title: nombre,
+                text: 'Este brigadista aún no tiene visitas registradas',
+                icon: 'info',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
         
         // Calcular visitas por colonia
         const coloniasMap = new Map();
         visitas.forEach(v => {
-            if (v.colonia) {
-                coloniasMap.set(v.colonia, (coloniasMap.get(v.colonia) || 0) + 1);
+            if (v.colonia && v.colonia.trim()) {
+                const colonia = v.colonia.toUpperCase();
+                coloniasMap.set(colonia, (coloniasMap.get(colonia) || 0) + 1);
             }
         });
         
-        // Ordenar colonias por cantidad de visitas (de mayor a menor)
+        // Ordenar colonias por cantidad (mayor a menor)
         const coloniasOrdenadas = Array.from(coloniasMap.entries())
             .sort((a, b) => b[1] - a[1]);
         
-        // Generar HTML de colonias con conteo
+        // Generar HTML de colonias
         const coloniasHtml = coloniasOrdenadas.length > 0 
             ? coloniasOrdenadas.map(([colonia, count]) => `
-                <div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;">
-                    <span><i class="fas fa-map-marker-alt"></i> ${escapeHtml(colonia)}</span>
-                    <span style="background:#667eea; color:white; padding:2px 10px; border-radius:20px;">${count} visita${count !== 1 ? 's' : ''}</span>
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #e5e7eb;">
+                    <span style="font-weight:500;"><i class="fas fa-map-marker-alt" style="color:#667eea;"></i> ${escapeHtml(colonia)}</span>
+                    <span style="background:linear-gradient(135deg, #667eea, #764ba2); color:white; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:bold;">${count} visita${count !== 1 ? 's' : ''}</span>
                 </div>
             `).join('')
-            : '<div style="color:#999; text-align:center; padding:15px;">No hay colonias registradas</div>';
+            : '<div style="text-align:center; color:#999; padding:15px;">🚫 No hay colonias registradas</div>';
         
-        // ✅ CORREGIDO: Mostrar TODAS las visitas, no solo 10
-        // Ordenar visitas por fecha (más recientes primero)
+        // 🔥 CORREGIDO: Mostrar TODAS las visitas (NO solo 10)
         const visitasOrdenadas = [...visitas].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
         
-        // Si hay muchas visitas, mostrar todas con scroll
-        const todasVisitasHtml = visitasOrdenadas.map(v => `
-            <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #eee; gap:10px;">
-                <div style="flex:1;">
-                    <div style="font-weight:600; color:#333;">${escapeHtml(v.nombre)}</div>
-                    ${v.telefono ? `<div style="font-size:11px; color:#666;"><i class="fas fa-phone"></i> ${escapeHtml(v.telefono)}</div>` : ''}
-                    ${v.colonia ? `<div style="font-size:11px; color:#666;"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(v.colonia)}</div>` : ''}
+        const todasVisitasHtml = visitasOrdenadas.map((v, index) => `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; border-bottom:1px solid #e5e7eb; ${index % 2 === 0 ? 'background:#f9fafb;' : ''}">
+                <div style="flex:2;">
+                    <div style="font-weight:600; color:#1f2937;">${escapeHtml(v.nombre)}</div>
+                    <div style="font-size:11px; color:#6b7280; margin-top:3px;">
+                        ${v.telefono ? `<i class="fas fa-phone"></i> ${escapeHtml(v.telefono)}` : '<i class="fas fa-phone-slash"></i> Sin teléfono'}
+                        ${v.colonia ? ` | <i class="fas fa-map-marker-alt"></i> ${escapeHtml(v.colonia)}` : ''}
+                    </div>
                 </div>
-                <div style="font-size:11px; color:#999; white-space:nowrap;">
-                    ${new Date(v.fecha).toLocaleDateString()}
+                <div style="font-size:11px; color:#6b7280; white-space:nowrap; margin-left:10px;">
+                    <i class="far fa-calendar-alt"></i> ${new Date(v.fecha).toLocaleDateString()}
                 </div>
             </div>
         `).join('');
         
-        // ✅ NUEVA SECCIÓN: Estadísticas adicionales
-        const promedioVisitas = total > 0 ? (conTelefono / total * 100).toFixed(1) : 0;
+        // Calcular porcentaje de captura
+        const porcentajeCaptura = total > 0 ? ((conTelefono / total) * 100).toFixed(1) : 0;
         
-        // Mostrar el modal con TODAS las visitas
+        // Mostrar modal con estadísticas CORRECTAS
         Swal.fire({
-            title: `<i class="fas fa-user-circle" style="color:#667eea;"></i> ${escapeHtml(nombre)}`,
+            title: `<div style="display:flex; align-items:center; justify-content:center; gap:10px;">
+                        <i class="fas fa-user-circle" style="font-size:32px; color:#667eea;"></i>
+                        <span style="font-size:24px;">${escapeHtml(nombre)}</span>
+                    </div>`,
             html: `
-                <div style="text-align:left; max-height:70vh; overflow-y:auto; padding-right:5px;">
-                    <!-- Tarjetas de estadísticas principales -->
-                    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin-bottom:20px;">
+                <div style="text-align:left; max-height:65vh; overflow-y:auto; padding:5px;">
+                    <!-- 🔥 ESTADÍSTICAS PRINCIPALES CORREGIDAS -->
+                    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; margin-bottom:20px;">
                         <div style="background:linear-gradient(135deg, #667eea, #764ba2); color:white; padding:15px; border-radius:12px; text-align:center;">
-                            <div style="font-size:28px; font-weight:bold;">${total}</div>
-                            <div style="font-size:11px;">Total Visitas</div>
+                            <div style="font-size:32px; font-weight:bold;">${total}</div>
+                            <div style="font-size:12px; margin-top:5px;"><i class="fas fa-users"></i> Total Visitas</div>
                         </div>
                         <div style="background:#10b981; color:white; padding:15px; border-radius:12px; text-align:center;">
-                            <div style="font-size:28px; font-weight:bold;">${conTelefono}</div>
-                            <div style="font-size:11px;">Con Teléfono</div>
+                            <div style="font-size:32px; font-weight:bold;">${conTelefono}</div>
+                            <div style="font-size:12px; margin-top:5px;"><i class="fas fa-phone"></i> Con Teléfono</div>
                         </div>
                         <div style="background:#ef4444; color:white; padding:15px; border-radius:12px; text-align:center;">
-                            <div style="font-size:28px; font-weight:bold;">${sinTelefono}</div>
-                            <div style="font-size:11px;">Sin Teléfono</div>
+                            <div style="font-size:32px; font-weight:bold;">${sinTelefono}</div>
+                            <div style="font-size:12px; margin-top:5px;"><i class="fas fa-phone-slash"></i> Sin Teléfono</div>
                         </div>
                     </div>
                     
-                    <!-- Tarjeta de porcentaje de captura -->
-                    <div style="background:#f8fafc; border-radius:12px; padding:12px; margin-bottom:15px;">
-                        <div style="font-weight:bold; margin-bottom:8px;"><i class="fas fa-chart-line"></i> Métricas de captura</div>
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span>Tasa de captura de teléfono:</span>
-                            <span style="font-weight:bold; color:#10b981;">${promedioVisitas}%</span>
+                    <!-- Porcentaje de captura -->
+                    <div style="background:#f0fdf4; border-radius:12px; padding:12px; margin-bottom:20px; border:1px solid #bbf7d0;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <span style="font-weight:600; color:#166534;"><i class="fas fa-chart-line"></i> Tasa de captura de teléfono</span>
+                            <span style="font-weight:bold; color:#10b981; font-size:18px;">${porcentajeCaptura}%</span>
                         </div>
-                        <div style="background:#e5e7eb; border-radius:10px; height:8px; margin-top:8px;">
-                            <div style="background:#10b981; width:${promedioVisitas}%; height:8px; border-radius:10px;"></div>
+                        <div style="background:#dcfce7; border-radius:10px; height:10px; overflow:hidden;">
+                            <div style="background:#10b981; width:${porcentajeCaptura}%; height:10px; border-radius:10px; transition:width 0.5s;"></div>
                         </div>
                     </div>
                     
                     <!-- Colonias visitadas -->
-                    <div style="background:#f8fafc; border-radius:12px; padding:12px; margin-bottom:15px;">
-                        <div style="font-weight:bold; margin-bottom:10px;">
-                            <i class="fas fa-city"></i> 📍 Visitas por colonia 
-                            <span style="background:#667eea; color:white; padding:2px 8px; border-radius:20px; font-size:11px; margin-left:8px;">${coloniasMap.size} colonias</span>
+                    <div style="background:#ffffff; border-radius:12px; padding:12px; margin-bottom:20px; border:1px solid #e5e7eb;">
+                        <div style="font-weight:bold; margin-bottom:12px; font-size:15px; color:#374151;">
+                            <i class="fas fa-city" style="color:#667eea;"></i> 📍 Visitas por colonia 
+                            <span style="background:#667eea20; color:#667eea; padding:2px 10px; border-radius:20px; font-size:12px; margin-left:8px;">${coloniasMap.size} colonias</span>
                         </div>
                         <div style="max-height:200px; overflow-y:auto;">
                             ${coloniasHtml}
                         </div>
                     </div>
                     
-                    <!-- ✅ CORREGIDO: Mostrar TODAS las visitas (no solo 10) -->
-                    <div style="background:#f8fafc; border-radius:12px; padding:12px;">
-                        <div style="font-weight:bold; margin-bottom:10px;">
-                            <i class="fas fa-list"></i> 📝 Todas las visitas 
-                            <span style="background:#667eea; color:white; padding:2px 8px; border-radius:20px; font-size:11px; margin-left:8px;">${total} registros</span>
+                    <!-- 🔥 TODAS LAS VISITAS (CORREGIDO) -->
+                    <div style="background:#ffffff; border-radius:12px; padding:12px; border:1px solid #e5e7eb;">
+                        <div style="font-weight:bold; margin-bottom:12px; font-size:15px; color:#374151;">
+                            <i class="fas fa-list" style="color:#667eea;"></i> 📝 Lista completa de visitas 
+                            <span style="background:#667eea20; color:#667eea; padding:2px 10px; border-radius:20px; font-size:12px; margin-left:8px;">${total} registros</span>
                         </div>
                         <div style="max-height:300px; overflow-y:auto;">
-                            ${todasVisitasHtml || '<div style="color:#999; text-align:center; padding:15px;">No hay visitas registradas</div>'}
+                            ${todasVisitasHtml}
                         </div>
                     </div>
                 </div>
             `,
             icon: 'info',
-            width: '550px',
+            width: '600px',
             showCancelButton: true,
             confirmButtonText: '<i class="fas fa-file-excel"></i> Exportar Excel',
             cancelButtonText: 'Cerrar',
             confirmButtonColor: '#10b981',
+            cancelButtonColor: '#6b7280',
             customClass: {
                 popup: 'modal-detalle-brigadista'
             }
@@ -1557,10 +1594,12 @@ colonia: document.getElementById('personaColonia').value.toUpperCase(),
         
     } catch (error) {
         console.error('Error cargando detalle:', error);
-        Swal.fire('Error', 'No se pudieron cargar los detalles del brigadista', 'error');
+        Swal.fire('Error', 'No se pudieron cargar los detalles del brigadista: ' + error.message, 'error');
     }
 }
-                
+
+        
+
         function exportBrigadistaExcel(visitas, nombre) {
     const data = visitas.map(v => ({
         Nombre: v.nombre,
@@ -1694,23 +1733,167 @@ colonia: document.getElementById('personaColonia').value.toUpperCase(),
     Swal.fire('Exportado', 'Excel generado con formato profesional', 'success');
 }
 
-        function exportAllToPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            doc.setFontSize(16);
-            doc.text('Reporte General de Visitas', 20, 20);
-            doc.setFontSize(10);
-            let y = 35;
-            allVisitas.forEach((v, i) => {
-                if (y > 280) { doc.addPage(); y = 20; }
-                doc.text(`${i+1}. ${v.nombre}`, 20, y);
-                doc.text(`   ${v.colonia || 'Sin colonia'} - ${new Date(v.fecha).toLocaleDateString()}`, 20, y + 5);
-                y += 12;
-            });
-            doc.save('reporte_visitas.pdf');
-            Swal.fire('PDF Generado', 'Reporte descargado', 'success');
-        }
 
+
+        function exportAllToPDF() {
+    const { jsPDF } = window.jspdf;
+    
+    Swal.fire({
+        title: 'Generando PDF...',
+        text: 'Recopilando datos de todos los brigadistas',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
+    
+    // Recopilar TODOS los datos
+    const allData = [];
+    const promises = [];
+    
+    database.ref('usuarios').once('value').then(usuariosSnapshot => {
+        const usuarios = [];
+        usuariosSnapshot.forEach(child => {
+            usuarios.push({ uid: child.key, nombre: child.val().nombre });
+        });
+        
+        usuarios.forEach(usuario => {
+            promises.push(
+                database.ref(`visitas/${usuario.uid}`).once('value').then(visitasSnapshot => {
+                    visitasSnapshot.forEach(visita => {
+                        allData.push({
+                            Nombre: visita.val().nombre,
+                            Telefono: visita.val().telefono || '',
+                            Colonia: visita.val().colonia || '',
+                            Fecha: new Date(visita.val().fecha).toLocaleString(),
+                            Brigadista: usuario.nombre
+                        });
+                    });
+                })
+            );
+        });
+        
+        Promise.all(promises).then(() => {
+            // Ordenar por fecha
+            allData.sort((a, b) => new Date(b.Fecha) - new Date(a.Fecha));
+            
+            // Crear PDF horizontal
+            const doc = new jsPDF({
+                orientation: 'landscape',
+                unit: 'mm',
+                format: 'a4'
+            });
+            
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const margin = 10;
+            let startY = 30;
+            const rowHeight = 8;
+            
+            // Definir columnas
+            const columns = [
+                { header: 'NOMBRE', width: 50 },
+                { header: 'TELÉFONO', width: 35 },
+                { header: 'COLONIA', width: 45 },
+                { header: 'FECHA', width: 45 },
+                { header: 'BRIGADISTA', width: 45 }
+            ];
+            
+            const totalWidth = columns.reduce((sum, col) => sum + col.width, 0);
+            const startX = (pageWidth - totalWidth) / 2;
+            let currentY = startY;
+            
+            // Título
+            doc.setFontSize(16);
+            doc.setFont('helvetica', 'bold');
+            doc.text('REPORTE GENERAL DE VISITAS', pageWidth / 2, 15, { align: 'center' });
+            
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Generado: ${new Date().toLocaleString()}`, pageWidth / 2, 22, { align: 'center' });
+            doc.text(`Total de registros: ${allData.length}`, pageWidth / 2, 28, { align: 'center' });
+            
+            // Cabecera
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'bold');
+            doc.setFillColor(68, 114, 196);
+            doc.setTextColor(255, 255, 255);
+            
+            let currentX = startX;
+            columns.forEach(col => {
+                doc.rect(currentX, currentY, col.width, rowHeight, 'F');
+                doc.text(col.header, currentX + 2, currentY + 5);
+                currentX += col.width;
+            });
+            currentY += rowHeight;
+            
+            // Datos
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(0, 0, 0);
+            
+            for (let i = 0; i < allData.length; i++) {
+                const item = allData[i];
+                
+                if (currentY + rowHeight > pageHeight - margin) {
+                    doc.addPage();
+                    currentY = margin;
+                    
+                    // Redibujar cabecera
+                    doc.setFontSize(9);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFillColor(68, 114, 196);
+                    doc.setTextColor(255, 255, 255);
+                    currentX = startX;
+                    columns.forEach(col => {
+                        doc.rect(currentX, currentY, col.width, rowHeight, 'F');
+                        doc.text(col.header, currentX + 2, currentY + 5);
+                        currentX += col.width;
+                    });
+                    currentY += rowHeight;
+                    doc.setFontSize(8);
+                    doc.setFont('helvetica', 'normal');
+                    doc.setTextColor(0, 0, 0);
+                }
+                
+                currentX = startX;
+                
+                // Filas alternadas
+                if (i % 2 === 0) {
+                    doc.setFillColor(245, 245, 245);
+                    doc.rect(currentX, currentY, totalWidth, rowHeight, 'F');
+                }
+                
+                doc.text(item.Nombre.length > 25 ? item.Nombre.substring(0, 22) + '...' : item.Nombre, currentX + 2, currentY + 5);
+                currentX += columns[0].width;
+                
+                doc.text(item.Telefono || '-', currentX + 2, currentY + 5);
+                currentX += columns[1].width;
+                
+                doc.text(item.Colonia.length > 22 ? item.Colonia.substring(0, 19) + '...' : item.Colonia || '-', currentX + 2, currentY + 5);
+                currentX += columns[2].width;
+                
+                doc.text(item.Fecha, currentX + 2, currentY + 5);
+                currentX += columns[3].width;
+                
+                doc.text(item.Brigadista.length > 22 ? item.Brigadista.substring(0, 19) + '...' : item.Brigadista, currentX + 2, currentY + 5);
+                
+                currentY += rowHeight;
+            }
+            
+            // Pie de página
+            const totalPages = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= totalPages; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8);
+                doc.setTextColor(128, 128, 128);
+                doc.text(`Página ${i} de ${totalPages}`, pageWidth / 2, pageHeight - 5, { align: 'center' });
+            }
+            
+            doc.save(`reporte_visitas_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.pdf`);
+            Swal.fire('PDF Generado', 'Reporte descargado con formato profesional', 'success');
+        });
+    });
+}
+        
         function exportAllToExcel() {
     const allVisitasData = [];
     const promises = [];
@@ -1733,11 +1916,12 @@ colonia: document.getElementById('personaColonia').value.toUpperCase(),
                 database.ref(`visitas/${usuario.uid}`).once('value').then(visitasSnapshot => {
                     visitasSnapshot.forEach(visita => {
                         allVisitasData.push({
-                            Brigadista: usuario.nombre,
                             Nombre: visita.val().nombre,
                             Teléfono: visita.val().telefono || '',
                             Colonia: visita.val().colonia || '',
-                            Fecha: new Date(visita.val().fecha).toLocaleString()
+                            Fecha: new Date(visita.val().fecha).toLocaleString(),
+                            Brigadista: usuario.nombre
+
                         });
                     });
                 })
