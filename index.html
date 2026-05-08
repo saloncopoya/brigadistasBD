@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
-    <title>Sistema Brigadista Pro | CRUD + Offline + Admin</title>
+    <meta name="theme-color" content="#0f3b5e">
+    <meta name="description" content="Sistema profesional para brigadistas sociales con sincronización offline">
+    <link rel="manifest" href="manifest.json">
+    <title>Sistema Brigadista Pro | Offline + Cloud</title>
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -27,7 +30,6 @@
             padding-bottom: 80px;
             min-height: 100vh;
         }
-        /* Modal bienvenida */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -81,7 +83,6 @@
             padding: 24px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.06);
             margin-bottom: 24px;
-            transition: 0.2s;
         }
         .form-grid { display: flex; flex-direction: column; gap: 18px; }
         input, select, .file-label {
@@ -148,12 +149,7 @@
         }
         .menu-item i { font-size: 22px; }
         .menu-item.active, .menu-item:hover { background: #eef2ff; color: #0f3b5e; font-weight: 600; }
-        .stats-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-bottom: 24px;
-        }
+        .stats-grid { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
         .stat-card {
             background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
             padding: 16px;
@@ -171,22 +167,11 @@
             margin-bottom: 12px;
             border-left: 4px solid #0f3b5e;
             transition: 0.2s;
-            position: relative;
         }
         .person-item:hover { background: #f1f5f9; transform: translateX(4px); }
-        .action-buttons {
-            margin-top: 12px;
-            display: flex;
-            gap: 8px;
-            justify-content: flex-end;
-        }
+        .action-buttons { margin-top: 12px; display: flex; gap: 8px; justify-content: flex-end; }
         .action-buttons button { padding: 6px 16px; font-size: 12px; }
-        .filters-bar {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
+        .filters-bar { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
         .filters-bar select, .filters-bar input { flex: 1; min-width: 120px; }
         .admin-list { display: flex; flex-direction: column; gap: 12px; }
         .brigadista-card {
@@ -238,7 +223,6 @@
             <span id="pendingCounter"><i class="fas fa-database"></i> 0 pendientes</span>
         </div>
         
-        <!-- Sección de Registro -->
         <div id="registroSection" class="card">
             <h3><i class="fas fa-user-plus"></i> 📝 Nuevo registro de visita</h3>
             <div class="form-grid">
@@ -253,13 +237,12 @@
                 <div class="btn-group" style="display: flex; gap: 12px; flex-wrap: wrap;">
                     <button id="saveRegisterBtn"><i class="fas fa-save"></i> Guardar registro</button>
                     <button id="updateRegisterBtn" style="background:#f59e0b; display:none;"><i class="fas fa-edit"></i> Actualizar</button>
-                    <button id="cancelEditBtn" class="btn-secondary" style="display:none;"><i class="fas fa-times"></i> Cancelar edición</button>
+                    <button id="cancelEditBtn" class="btn-secondary" style="display:none;"><i class="fas fa-times"></i> Cancelar</button>
                     <button id="clearBtn" class="btn-secondary"><i class="fas fa-broom"></i> Limpiar</button>
                 </div>
             </div>
         </div>
 
-        <!-- Mis visitas -->
         <div id="misVisitasSection" style="display:none;" class="card">
             <h3><i class="fas fa-address-book"></i> 📋 Mis visitas registradas</h3>
             <div id="userStats" class="stats-grid"></div>
@@ -275,7 +258,6 @@
             <div id="visitsList"></div>
         </div>
 
-        <!-- Panel Admin -->
         <div id="adminSection" style="display:none;" class="card">
             <h3><i class="fas fa-chalkboard-user"></i> 👑 Panel de Administrador</h3>
             <div class="btn-group" style="margin-bottom:20px; gap: 12px; flex-wrap: wrap;">
@@ -288,14 +270,13 @@
             <div id="brigadistasListAdmin" class="admin-list"></div>
         </div>
 
-        <!-- Vista detalle brigadista -->
         <div id="brigadistaDetailView" style="display:none;" class="card">
-            <button id="backToAdminBtn" class="btn-secondary"><i class="fas fa-arrow-left"></i> Volver a brigadistas</button>
+            <button id="backToAdminBtn" class="btn-secondary"><i class="fas fa-arrow-left"></i> Volver</button>
             <h3 id="detailBrigName" style="margin:15px 0"></h3>
             <div id="detailStats"></div>
             <div class="btn-group" style="margin: 15px 0;">
-                <button id="downloadBrigadaPDF"><i class="fas fa-file-pdf"></i> PDF este brigadista</button>
-                <button id="downloadBrigadaExcel"><i class="fas fa-file-excel"></i> Excel este brigadista</button>
+                <button id="downloadBrigadaPDF"><i class="fas fa-file-pdf"></i> PDF</button>
+                <button id="downloadBrigadaExcel"><i class="fas fa-file-excel"></i> Excel</button>
             </div>
             <div id="detailVisitsList"></div>
         </div>
@@ -309,7 +290,7 @@
 </div>
 
 <script>
-    // ---------- CONFIGURACIÓN ----------
+    // Configuración Firebase y Cloudinary
     const firebaseConfig = {
         apiKey: "AIzaSyAiojpfnGUPhaoQkpAh1Yey3fp6uWU-iFQ",
         authDomain: "aplicacion-2c1c8.firebaseapp.com",
@@ -317,8 +298,7 @@
         projectId: "aplicacion-2c1c8",
         storageBucket: "aplicacion-2c1c8.firebasestorage.app",
         messagingSenderId: "837629411067",
-        appId: "1:837629411067:web:6c96cfcd7490b049787a5e",
-        measurementId: "G-SFP1SEY20W"
+        appId: "1:837629411067:web:6c96cfcd7490b049787a5e"
     };
     const CLOUD_NAME = "davovja1g";
     const UPLOAD_PRESET = "sinfirmaupload";
@@ -330,20 +310,25 @@
     let isAdmin = false;
     let pendingQueue = [];
     let online = navigator.onLine;
-    let currentVisits = []; // almacenar visitas para filtros
+    let currentVisits = [];
     let editingId = null;
 
-    // ========== GESTIÓN DE COLA OFFLINE ==========
-    function saveQueueToLocal() { localStorage.setItem("offline_queue_v3", JSON.stringify(pendingQueue)); updatePendingUI(); }
-    function loadQueue() { const stored = localStorage.getItem("offline_queue_v3"); if(stored) pendingQueue = JSON.parse(stored); updatePendingUI(); }
+    // Service Worker Registration
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').then(reg => console.log('SW registrado:', reg)).catch(err => console.log('SW error:', err));
+    }
+
+    function saveQueueToLocal() { localStorage.setItem("offline_queue_v4", JSON.stringify(pendingQueue)); updatePendingUI(); }
+    function loadQueue() { const stored = localStorage.getItem("offline_queue_v4"); if(stored) pendingQueue = JSON.parse(stored); updatePendingUI(); }
+    
     function addToPending(record) { pendingQueue.push(record); saveQueueToLocal(); processQueueWhenOnline(); }
     
     async function processQueueWhenOnline() {
         if(!online || pendingQueue.length === 0) return;
         for(let i = 0; i < pendingQueue.length; i++) {
             const item = pendingQueue[i];
-            if(item.type === 'visit') {
-                try {
+            try {
+                if(item.type === 'visit') {
                     let finalImageUrl = null;
                     if(item.imageDataUrl) {
                         const formData = new FormData();
@@ -353,23 +338,21 @@
                         const cloudData = await resp.json();
                         finalImageUrl = cloudData.secure_url;
                     }
-                    const visitObj = {
-                        nombre: item.nombre, telefono: item.telefono, colonia: item.colonia,
-                        imagenUrl: finalImageUrl, fecha: item.fecha,
-                        brigadistaId: currentUser.uid, brigadistaNombre: currentUser.nombre
-                    };
+                    const visitObj = { nombre: item.nombre, telefono: item.telefono, colonia: item.colonia, imagenUrl: finalImageUrl, fecha: item.fecha, brigadistaId: currentUser.uid, brigadistaNombre: currentUser.nombre };
                     if(item.editId) await db.ref(`visitas/${currentUser.uid}/${item.editId}`).set(visitObj);
                     else await db.ref(`visitas/${currentUser.uid}`).push(visitObj);
                     await db.ref(`colonias_globales/${item.colonia}`).set(true);
-                    pendingQueue.splice(i,1); i--;
-                    saveQueueToLocal();
-                } catch(e) { console.warn("fallo subida pendiente", e); }
-            } else if(item.type === 'delete') {
-                try { await db.ref(`visitas/${currentUser.uid}/${item.visitId}`).remove(); pendingQueue.splice(i,1); i--; saveQueueToLocal(); } catch(e) {}
-            }
+                } else if(item.type === 'delete') {
+                    await db.ref(`visitas/${currentUser.uid}/${item.visitId}`).remove();
+                }
+                pendingQueue.splice(i,1); i--;
+                saveQueueToLocal();
+            } catch(e) { console.warn("Error en sincronización:", e); }
         }
         if(pendingQueue.length === 0) updatePendingUI();
         else setTimeout(processQueueWhenOnline, 5000);
+        await loadMyVisitsAndStats();
+        if(isAdmin) await loadAdminDashboard();
     }
     
     function updatePendingUI() {
@@ -382,7 +365,6 @@
     window.addEventListener("online", async () => { online=true; updatePendingUI(); await processQueueWhenOnline(); Swal.fire("🟢 Conectado", "Sincronizando datos pendientes...", "success"); });
     window.addEventListener("offline", () => { online=false; updatePendingUI(); Swal.fire("🔴 Sin conexión", "Los datos se guardarán localmente", "warning"); });
 
-    // ========== CRUD COMPLETO ==========
     async function saveOrUpdateVisit(isUpdate = false) {
         if(!currentUser) return;
         const nombre = document.getElementById("visitName").value.trim();
@@ -462,7 +444,6 @@
     document.getElementById("cancelEditBtn").onclick = resetForm;
     document.getElementById("clearBtn").onclick = resetForm;
     
-    // ========== CARGAR VISITAS CON FILTROS Y BÚSQUEDA ==========
     async function loadMyVisitsAndStats() {
         if(!currentUser) return;
         const snapshot = await db.ref(`visitas/${currentUser.uid}`).once("value");
@@ -478,10 +459,10 @@
         const conTelefono = visits.filter(v=> v.telefono && v.telefono.trim().length>0).length;
         const coloniasUnicas = new Set(visits.map(v=>v.colonia)).size;
         document.getElementById("userStats").innerHTML = `
-            <div class="stat-card"><i class="fas fa-users"></i><strong>${total}</strong><br>Personas visitadas</div>
+            <div class="stat-card"><i class="fas fa-users"></i><strong>${total}</strong><br>Personas</div>
             <div class="stat-card"><i class="fas fa-phone-alt"></i><strong>${conTelefono}</strong><br>Con teléfono</div>
             <div class="stat-card"><i class="fas fa-phone-slash"></i><strong>${total-conTelefono}</strong><br>Sin teléfono</div>
-            <div class="stat-card"><i class="fas fa-city"></i><strong>${coloniasUnicas}</strong><br>Colonias distintas</div>
+            <div class="stat-card"><i class="fas fa-city"></i><strong>${coloniasUnicas}</strong><br>Colonias</div>
         `;
     }
     
@@ -501,16 +482,16 @@
         });
         
         const container = document.getElementById("visitsList");
-        if(filtered.length===0) { container.innerHTML = "<p style='padding:20px;text-align:center'>📭 No hay registros con esos filtros</p>"; return; }
+        if(filtered.length===0) { container.innerHTML = "<p style='padding:20px;text-align:center'>📭 No hay registros</p>"; return; }
         container.innerHTML = filtered.map(v => `
             <div class="person-item">
                 <strong><i class="fas fa-user"></i> ${escapeHtml(v.nombre)}</strong>
                 ${v.imagenUrl ? '<span class="badge"><i class="fas fa-image"></i> Foto</span>' : ''}
                 <br>📞 ${v.telefono || 'No registrado'} &nbsp;| 🏘️ ${escapeHtml(v.colonia)}<br>
-                📅 ${new Date(v.fecha).toLocaleDateString()} ${new Date(v.fecha).toLocaleTimeString()}
+                📅 ${new Date(v.fecha).toLocaleDateString()}
                 <div class="action-buttons">
-                    <button onclick="window.editVisitFromGlobal(${JSON.stringify(v).replace(/"/g, '&quot;')})" class="btn-warning" style="background:#f59e0b"><i class="fas fa-edit"></i> Editar</button>
-                    <button onclick="window.deleteVisitFromGlobal('${v.id}', '${escapeHtml(v.nombre)}')" class="btn-danger" style="background:#dc2626"><i class="fas fa-trash"></i> Eliminar</button>
+                    <button onclick="window.editVisitFromGlobal(${JSON.stringify(v).replace(/"/g, '&quot;')})" style="background:#f59e0b"><i class="fas fa-edit"></i> Editar</button>
+                    <button onclick="window.deleteVisitFromGlobal('${v.id}', '${escapeHtml(v.nombre)}')" style="background:#dc2626"><i class="fas fa-trash"></i> Eliminar</button>
                 </div>
             </div>
         `).join('');
@@ -531,7 +512,6 @@
         applyFiltersAndSearch();
     };
     
-    // ========== ADMINISTRACIÓN ==========
     async function loadGlobalColonies() {
         const snapshot = await db.ref("colonias_globales").once("value");
         const colonies = snapshot.val() || {};
@@ -553,11 +533,9 @@
             const visitsSnap = await db.ref(`visitas/${uid}`).once("value");
             let total=0, conTel=0, coloniasSet = new Set();
             visitsSnap.forEach(v => { const val = v.val(); total++; if(val.telefono && val.telefono.trim()) conTel++; if(val.colonia) coloniasSet.add(val.colonia); });
-            const coloniasArr = Array.from(coloniasSet);
             html += `<div class="brigadista-card" data-uid="${uid}" data-name="${escapeHtml(brig.nombre)}">
                         <i class="fas fa-user-circle"></i> <strong>${escapeHtml(brig.nombre)}</strong><br>
-                        👥 Visitados: ${total} | 📞 Con teléfono: ${conTel} | 🏘️ Colonias: ${coloniasSet.size}<br>
-                        <small>📍 ${coloniasArr.slice(0,4).join(', ')}${coloniasArr.length>4?'...':''}</small>
+                        👥 ${total} visitas | 📞 ${conTel} con teléfono | 🏘️ ${coloniasSet.size} colonias
                      </div>`;
         }
         container.innerHTML = html;
@@ -589,7 +567,6 @@
         document.getElementById("backToAdminBtn").onclick = () => { document.getElementById("brigadistaDetailView").style.display = "none"; document.getElementById("adminSection").style.display = "block"; };
     }
     
-    // Exportaciones
     function exportToPDF(data, filename) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
@@ -598,17 +575,19 @@
         data.forEach((r,i) => { if(y > 270) { doc.addPage(); y = 20; } doc.setFontSize(10); doc.text(`${i+1}. ${r.nombre} - Tel:${r.telefono||'N/A'} - Col:${r.colonia} - Fecha:${new Date(r.fecha).toLocaleDateString()}`, 10, y); y += 8; });
         doc.save(`${filename}.pdf`);
     }
+    
     function exportToExcel(data, filename) {
         const wsData = data.map(v => ({ Nombre: v.nombre, Teléfono: v.telefono||'', Colonia: v.colonia, Fecha: new Date(v.fecha).toLocaleString() }));
         const ws = XLSX.utils.json_to_sheet(wsData); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Visitas"); XLSX.writeFile(wb, `${filename}.xlsx`);
     }
+    
     async function getAllDataGlobal() { let all = []; const usersSnap = await db.ref("usuarios").once("value"); for(let uid in (usersSnap.val()||{})) { const snap = await db.ref(`visitas/${uid}`).once("value"); snap.forEach(v => all.push(v.val())); } return all; }
+    
     document.getElementById("downloadAllPDFBtn").onclick = async () => { const data=await getAllDataGlobal(); exportToPDF(data, "TODOS_BRIGADISTAS"); };
     document.getElementById("downloadAllExcelBtn").onclick = async () => { const data=await getAllDataGlobal(); exportToExcel(data, "TODOS_BRIGADISTAS"); };
     
     function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m){ if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
     
-    // Navegación
     document.querySelectorAll(".menu-item").forEach(tab => {
         tab.addEventListener("click", () => {
             const sec = tab.dataset.tab;
@@ -625,7 +604,6 @@
         if(e.target.files[0]) { const url = URL.createObjectURL(e.target.files[0]); document.getElementById("photoPreview").innerHTML = `<img src="${url}" class="photo-preview" />`; }
     });
     
-    // Inicialización
     document.getElementById("confirmNameBtn").onclick = async () => {
         const nombreCompleto = document.getElementById("brigadierNameInput").value.trim();
         if(!nombreCompleto) return Swal.fire("Error", "Escribe tu nombre completo", "error");
