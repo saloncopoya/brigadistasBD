@@ -1458,32 +1458,137 @@
 }
 
         function exportBrigadistaExcel(visitas, nombre) {
-            const data = visitas.map(v => ({
-                Nombre: v.nombre,
-                Teléfono: v.telefono || '',
-                Colonia: v.colonia || '',
-                Fecha: new Date(v.fecha).toLocaleString()
-            }));
-            const ws = XLSX.utils.json_to_sheet(data);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Visitas');
-            XLSX.writeFile(wb, `visitas_${nombre}.xlsx`);
-            Swal.fire('Exportado', `Excel de ${nombre} generado`, 'success');
+    const data = visitas.map(v => ({
+        Nombre: v.nombre,
+        Teléfono: v.telefono || '',
+        Colonia: v.colonia || '',
+        Fecha: new Date(v.fecha).toLocaleString()
+    }));
+    
+    const ws = XLSX.utils.json_to_sheet(data);
+    
+    // 🔥 AGREGAR BORDES A TODAS LAS CELDAS
+    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1:D1');
+    for (let R = range.s.r; R <= range.e.r; ++R) {
+        for (let C = range.s.c; C <= range.e.c; ++C) {
+            const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+            if (!ws[cellAddress]) continue;
+            ws[cellAddress].s = {
+                border: {
+                    top: { style: 'thin', color: { rgb: '000000' } },
+                    bottom: { style: 'thin', color: { rgb: '000000' } },
+                    left: { style: 'thin', color: { rgb: '000000' } },
+                    right: { style: 'thin', color: { rgb: '000000' } }
+                },
+                alignment: { vertical: 'center', horizontal: 'left' },
+                font: { sz: 11, name: 'Arial' }
+            };
         }
+    }
+    
+    // 🔥 ESTILO CABECERA
+    for (let C = range.s.c; C <= range.e.c; ++C) {
+        const cellAddress = XLSX.utils.encode_cell({ r: range.s.r, c: C });
+        if (ws[cellAddress]) {
+            ws[cellAddress].s = {
+                font: { bold: true, sz: 12, name: 'Arial', color: { rgb: 'FFFFFF' } },
+                fill: { fgColor: { rgb: '4472C4' } },
+                border: {
+                    top: { style: 'thin', color: { rgb: '000000' } },
+                    bottom: { style: 'thin', color: { rgb: '000000' } },
+                    left: { style: 'thin', color: { rgb: '000000' } },
+                    right: { style: 'thin', color: { rgb: '000000' } }
+                },
+                alignment: { vertical: 'center', horizontal: 'center' }
+            };
+        }
+    }
+    
+    // 🔥 AUTO AJUSTAR ANCHO DE COLUMNAS
+    const colWidths = [];
+    for (let C = range.s.c; C <= range.e.c; ++C) {
+        let maxWidth = 0;
+        for (let R = range.s.r; R <= range.e.r; ++R) {
+            const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+            const cellValue = ws[cellAddress] ? ws[cellAddress].v : '';
+            const cellLength = String(cellValue).length;
+            if (cellLength > maxWidth) maxWidth = Math.min(cellLength, 50);
+        }
+        colWidths.push({ wch: maxWidth + 3 });
+    }
+    ws['!cols'] = colWidths;
+    
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Visitas');
+    XLSX.writeFile(wb, `visitas_${nombre}_${new Date().toISOString().slice(0,10)}.xlsx`);
+    Swal.fire('Exportado', `Excel de ${nombre} generado con formato profesional`, 'success');
+}
 
         function exportMyVisitsToExcel() {
-            const data = allVisitas.map(v => ({
-                Nombre: v.nombre,
-                Teléfono: v.telefono || '',
-                Colonia: v.colonia || '',
-                Fecha: new Date(v.fecha).toLocaleString()
-            }));
-            const ws = XLSX.utils.json_to_sheet(data);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Mis Visitas');
-            XLSX.writeFile(wb, `mis_visitas_${currentUser.nombre}.xlsx`);
-            Swal.fire('Exportado', 'Tu Excel ha sido generado', 'success');
+    const data = allVisitas.map(v => ({
+        Nombre: v.nombre,
+        Teléfono: v.telefono || '',
+        Colonia: v.colonia || '',
+        Fecha: new Date(v.fecha).toLocaleString()
+    }));
+    
+    const ws = XLSX.utils.json_to_sheet(data);
+    
+    // 🔥 AGREGAR BORDES A TODAS LAS CELDAS
+    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1:D1');
+    for (let R = range.s.r; R <= range.e.r; ++R) {
+        for (let C = range.s.c; C <= range.e.c; ++C) {
+            const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+            if (!ws[cellAddress]) continue;
+            ws[cellAddress].s = {
+                border: {
+                    top: { style: 'thin', color: { rgb: '000000' } },
+                    bottom: { style: 'thin', color: { rgb: '000000' } },
+                    left: { style: 'thin', color: { rgb: '000000' } },
+                    right: { style: 'thin', color: { rgb: '000000' } }
+                },
+                alignment: { vertical: 'center', horizontal: 'left' }
+            };
         }
+    }
+    
+    // 🔥 ESTILO CABECERA
+    for (let C = range.s.c; C <= range.e.c; ++C) {
+        const cellAddress = XLSX.utils.encode_cell({ r: range.s.r, c: C });
+        if (ws[cellAddress]) {
+            ws[cellAddress].s = {
+                font: { bold: true, sz: 12, name: 'Arial', color: { rgb: 'FFFFFF' } },
+                fill: { fgColor: { rgb: '4472C4' } },
+                border: {
+                    top: { style: 'thin', color: { rgb: '000000' } },
+                    bottom: { style: 'thin', color: { rgb: '000000' } },
+                    left: { style: 'thin', color: { rgb: '000000' } },
+                    right: { style: 'thin', color: { rgb: '000000' } }
+                },
+                alignment: { vertical: 'center', horizontal: 'center' }
+            };
+        }
+    }
+    
+    // 🔥 AUTO AJUSTAR ANCHO
+    const colWidths = [];
+    for (let C = range.s.c; C <= range.e.c; ++C) {
+        let maxWidth = 0;
+        for (let R = range.s.r; R <= range.e.r; ++R) {
+            const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+            const cellValue = ws[cellAddress] ? ws[cellAddress].v : '';
+            const cellLength = String(cellValue).length;
+            if (cellLength > maxWidth) maxWidth = Math.min(cellLength, 50);
+        }
+        colWidths.push({ wch: maxWidth + 3 });
+    }
+    ws['!cols'] = colWidths;
+    
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Mis Visitas');
+    XLSX.writeFile(wb, `mis_visitas_${currentUser.nombre}_${new Date().toISOString().slice(0,10)}.xlsx`);
+    Swal.fire('Exportado', 'Excel generado con formato profesional', 'success');
+}
 
         function exportAllToPDF() {
             const { jsPDF } = window.jspdf;
@@ -1503,47 +1608,101 @@
         }
 
         function exportAllToExcel() {
-            const allVisitasData = [];
-            const promises = [];
+    const allVisitasData = [];
+    const promises = [];
+    
+    Swal.fire({
+        title: 'Generando Excel...',
+        text: 'Recopilando datos de todos los brigadistas',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
+    
+    database.ref('usuarios').once('value').then(usuariosSnapshot => {
+        const usuarios = [];
+        usuariosSnapshot.forEach(child => {
+            usuarios.push({ uid: child.key, nombre: child.val().nombre });
+        });
+        
+        usuarios.forEach(usuario => {
+            promises.push(
+                database.ref(`visitas/${usuario.uid}`).once('value').then(visitasSnapshot => {
+                    visitasSnapshot.forEach(visita => {
+                        allVisitasData.push({
+                            Brigadista: usuario.nombre,
+                            Nombre: visita.val().nombre,
+                            Teléfono: visita.val().telefono || '',
+                            Colonia: visita.val().colonia || '',
+                            Fecha: new Date(visita.val().fecha).toLocaleString()
+                        });
+                    });
+                })
+            );
+        });
+        
+        Promise.all(promises).then(() => {
+            // Crear hoja de cálculo con los datos
+            const ws = XLSX.utils.json_to_sheet(allVisitasData);
             
-            Swal.fire({
-                title: 'Generando Excel...',
-                text: 'Recopilando datos de todos los brigadistas',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
-            });
+            // 🔥 AGREGAR BORDES A TODAS LAS CELDAS
+            const range = XLSX.utils.decode_range(ws['!ref'] || 'A1:E1');
+            for (let R = range.s.r; R <= range.e.r; ++R) {
+                for (let C = range.s.c; C <= range.e.c; ++C) {
+                    const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+                    if (!ws[cellAddress]) continue;
+                    ws[cellAddress].s = {
+                        border: {
+                            top: { style: 'thin', color: { rgb: '000000' } },
+                            bottom: { style: 'thin', color: { rgb: '000000' } },
+                            left: { style: 'thin', color: { rgb: '000000' } },
+                            right: { style: 'thin', color: { rgb: '000000' } }
+                        },
+                        alignment: { vertical: 'center', horizontal: 'left' },
+                        font: { sz: 11, name: 'Arial' }
+                    };
+                }
+            }
             
-            database.ref('usuarios').once('value').then(usuariosSnapshot => {
-                const usuarios = [];
-                usuariosSnapshot.forEach(child => {
-                    usuarios.push({ uid: child.key, nombre: child.val().nombre });
-                });
-                
-                usuarios.forEach(usuario => {
-                    promises.push(
-                        database.ref(`visitas/${usuario.uid}`).once('value').then(visitasSnapshot => {
-                            visitasSnapshot.forEach(visita => {
-                                allVisitasData.push({
-                                    Brigadista: usuario.nombre,
-                                    Nombre: visita.val().nombre,
-                                    Teléfono: visita.val().telefono || '',
-                                    Colonia: visita.val().colonia || '',
-                                    Fecha: new Date(visita.val().fecha).toLocaleString()
-                                });
-                            });
-                        })
-                    );
-                });
-                
-                Promise.all(promises).then(() => {
-                    const ws = XLSX.utils.json_to_sheet(allVisitasData);
-                    const wb = XLSX.utils.book_new();
-                    XLSX.utils.book_append_sheet(wb, ws, 'Todas las Visitas');
-                    XLSX.writeFile(wb, 'todas_visitas.xlsx');
-                    Swal.fire('Completado', 'Excel generado con todos los registros', 'success');
-                });
-            });
-        }
+            // 🔥 ESTILO PARA LA CABECERA (negrita + fondo gris)
+            for (let C = range.s.c; C <= range.e.c; ++C) {
+                const cellAddress = XLSX.utils.encode_cell({ r: range.s.r, c: C });
+                if (ws[cellAddress]) {
+                    ws[cellAddress].s = {
+                        font: { bold: true, sz: 12, name: 'Arial', color: { rgb: 'FFFFFF' } },
+                        fill: { fgColor: { rgb: '4472C4' } },
+                        border: {
+                            top: { style: 'thin', color: { rgb: '000000' } },
+                            bottom: { style: 'thin', color: { rgb: '000000' } },
+                            left: { style: 'thin', color: { rgb: '000000' } },
+                            right: { style: 'thin', color: { rgb: '000000' } }
+                        },
+                        alignment: { vertical: 'center', horizontal: 'center' }
+                    };
+                }
+            }
+            
+            // 🔥 AUTO AJUSTAR ANCHO DE COLUMNAS
+            const colWidths = [];
+            for (let C = range.s.c; C <= range.e.c; ++C) {
+                let maxWidth = 0;
+                for (let R = range.s.r; R <= range.e.r; ++R) {
+                    const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+                    const cellValue = ws[cellAddress] ? ws[cellAddress].v : '';
+                    const cellLength = String(cellValue).length;
+                    if (cellLength > maxWidth) maxWidth = Math.min(cellLength, 50);
+                }
+                colWidths.push({ wch: maxWidth + 3 });
+            }
+            ws['!cols'] = colWidths;
+            
+            // Crear libro y guardar
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Todas las Visitas');
+            XLSX.writeFile(wb, `todas_visitas_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.xlsx`);
+            Swal.fire('Completado', 'Excel generado con bordes y formato profesional', 'success');
+        });
+    });
+}
 
         function escapeHtml(str) {
             if (!str) return '';
