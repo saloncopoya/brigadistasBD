@@ -1,18 +1,14 @@
 const CACHE_NAME = 'cotejo-offline-v1.0.0.21'; 
 const urlsToCache = [
     '/',
-    '/index.html',
-    '/offline.html',
-    '/subasta.html',
-     '/subasta2.html',
-    '/online.html',
-    '/importar.html',
-    '/cotejooffline.html',
-    '/admin.html',
-    '/manifest.json',
-      '/manifest2.json',
-    'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
+  '/index.html',
+  '/manifest.json',
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
+  'https://cdn.jsdelivr.net/npm/sweetalert2@11',
+  'https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js',
+  'https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+  'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js'
 ];
 
 // Instalar Service Worker (VERSIÓN MEJORADA - Con instalación FORZADA de páginas)
