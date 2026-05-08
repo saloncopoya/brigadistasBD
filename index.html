@@ -543,8 +543,8 @@
 <input type="text" id="personaNombre" required placeholder="NOMBRE DE LA PERSONA" style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase();">
                 </div>
                 <div class="form-group">
-                    <label>Teléfono</label>
-                    <input type="tel" id="personaTelefono" placeholder="Opcional">
+                    <label>Numero de Teléfono *</label>
+                    <input type="tel" id="personaTelefono" placeholder="Numero a 10 digitos">
                 </div>
                 <div class="form-group">
                     <label>Colonia</label>
@@ -553,14 +553,14 @@
                 </div>
 
                 <div class="form-group" id="fotoGroup">
-    <label>Fotografía</label>
+    <label>Opcional</label>
     <input type="file" id="personaFoto" accept="image/*">
     <img id="imagePreview" class="image-preview" style="display: none;">
 </div>
                 
             <div class="btn-group">
-    <button type="submit" class="btn btn-primary btn-large" id="submitBtn"><i class="fas fa-save"></i> GUARDAR VISITA</button>
-    <button type="button" class="btn btn-success btn-large hidden" id="updateBtn"><i class="fas fa-edit"></i> ACTUALIZAR</button>
+    <button type="submit" class="btn btn-primary btn-large" id="submitBtn"><i class="fas fa-save"></i> GUARDAR VISITA </button>
+    <button type="button" class="btn btn-success btn-large hidden" id="updateBtn"><i class="fas fa-edit"></i> ACTUALIZAR VISITA</button>
     <button type="button" class="btn btn-danger btn-large hidden" id="cancelEditBtn"><i class="fas fa-times"></i> CANCELAR</button>
 </div>
             
