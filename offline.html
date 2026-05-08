@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sin Conexión - Legado Avícola</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .offline-card {
+            background: white;
+            border-radius: 32px;
+            padding: 40px 30px;
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        .offline-card span {
+            font-size: 80px;
+            display: block;
+            margin-bottom: 20px;
+        }
+        .offline-card h1 {
+            color: #8B4513;
+            margin-bottom: 15px;
+            font-size: 28px;
+        }
+        .offline-card p {
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+        .btn-retry {
+            background: #8B4513;
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-retry:hover {
+            background: #A0522D;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-card">
+        <span>📴</span>
+        <h1>Sin Conexión</h1>
+        <p>No tienes acceso a internet en este momento.<br>Vuelve a intentar cuando tengas conexión.</p>
+        <button class="btn-retry" onclick="location.reload()">🔄 RECARGAR</button>
+    </div>
+</body>
+</html>
