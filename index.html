@@ -524,8 +524,11 @@
                     <input type="file" id="personaFoto" accept="image/*">
                     <img id="imagePreview" class="image-preview" style="display: none;">
                 </div>
+
                 <button type="submit" class="btn btn-primary" id="submitBtn">Guardar Visita</button>
-                <button type="button" class="btn btn-danger hidden" id="cancelEditBtn">Cancelar Edición</button>
+<button type="button" class="btn btn-success hidden" id="updateBtn">Actualizar Cambios</button>
+<button type="button" class="btn btn-danger hidden" id="cancelEditBtn">Cancelar Edición</button>
+                
             </form>
         </div>
 
@@ -807,6 +810,7 @@
         function setupEventListeners() {
             document.getElementById('visitaForm').addEventListener('submit', guardarVisita);
             document.getElementById('cancelEditBtn').addEventListener('click', cancelarEdicion);
+                document.getElementById('updateBtn').addEventListener('click', guardarVisita);  
             document.getElementById('resetFilters').addEventListener('click', resetFilters);
             document.getElementById('exportAllPdfBtn')?.addEventListener('click', () => exportAllToPDF());
             document.getElementById('exportAllExcelBtn')?.addEventListener('click', () => exportAllToExcel());
@@ -945,22 +949,23 @@
             }
             
             if (editandoId) {
-                data.editado = true;
-                if (online) {
-                    await actualizarEnFirebase(editandoId, data);
-                    Swal.fire('Actualizado', 'Registro actualizado', 'success');
-                } else {
-                    addToPendingQueue({ type: 'update', id: editandoId, data });
-                }
-                cancelarEdicion();
-            } else {
-                if (online) {
-                    await guardarEnFirebase(data);
-                    Swal.fire('Guardado', 'Registro guardado', 'success');
-                } else {
-                    addToPendingQueue({ type: 'create', data });
-                }
-            }
+    data.editado = true;
+    if (online) {
+        await actualizarEnFirebase(editandoId, data);
+        Swal.fire('Actualizado', 'Registro actualizado', 'success');
+    } else {
+        addToPendingQueue({ type: 'update', id: editandoId, data });
+        Swal.fire('Actualización pendiente', 'Se actualizará cuando haya conexión', 'info');
+    }
+    cancelarEdicion();  // Esta línea es importante
+} else {
+    if (online) {
+        await guardarEnFirebase(data);
+        Swal.fire('Guardado', 'Registro guardado', 'success');
+    } else {
+        addToPendingQueue({ type: 'create', data });
+    }
+}
             
             resetFormulario();
             if (!document.getElementById('visitasSection').classList.contains('hidden')) {
@@ -1006,32 +1011,42 @@
         }
 
         function editarVisita(visita) {
-            document.getElementById('personaNombre').value = visita.nombre;
-            document.getElementById('personaTelefono').value = visita.telefono || '';
-            document.getElementById('personaColonia').value = visita.colonia || '';
-            document.getElementById('submitBtn').classList.add('hidden');
-            document.getElementById('cancelEditBtn').classList.remove('hidden');
-            editandoId = visita.id;
-            if (visita.imagenUrl) {
-                document.getElementById('imagePreview').src = visita.imagenUrl;
-                document.getElementById('imagePreview').style.display = 'block';
-            } else {
-                document.getElementById('imagePreview').style.display = 'none';
-            }
-            switchSection('registro');
-        }
+    document.getElementById('personaNombre').value = visita.nombre;
+    document.getElementById('personaTelefono').value = visita.telefono || '';
+    document.getElementById('personaColonia').value = visita.colonia || '';
+    
+    // Ocultar botón Guardar, mostrar botones Actualizar y Cancelar
+    document.getElementById('submitBtn').classList.add('hidden');
+    document.getElementById('updateBtn').classList.remove('hidden');
+    document.getElementById('cancelEditBtn').classList.remove('hidden');
+    
+    editandoId = visita.id;
+    
+    if (visita.imagenUrl) {
+        document.getElementById('imagePreview').src = visita.imagenUrl;
+        document.getElementById('imagePreview').style.display = 'block';
+    } else {
+        document.getElementById('imagePreview').style.display = 'none';
+    }
+    
+    switchSection('registro');
+}
 
         function cancelarEdicion() {
-            resetFormulario();
-            editandoId = null;
-            document.getElementById('submitBtn').classList.remove('hidden');
-            document.getElementById('cancelEditBtn').classList.add('hidden');
-        }
+    resetFormulario();
+    editandoId = null;
+    
+    // Mostrar botón Guardar, ocultar Actualizar y Cancelar
+    document.getElementById('submitBtn').classList.remove('hidden');
+    document.getElementById('updateBtn').classList.add('hidden');
+    document.getElementById('cancelEditBtn').classList.add('hidden');
+}
 
         function resetFormulario() {
             document.getElementById('visitaForm').reset();
             document.getElementById('imagePreview').style.display = 'none';
             document.getElementById('imagePreview').src = '';
+             editandoId = null;
         }
 
         async function loadMisVisitas() {
