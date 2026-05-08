@@ -936,20 +936,29 @@
         }
 
         async function checkSavedSession() {
-            const savedUser = localStorage.getItem('currentUser');
-            if (savedUser) {
-                currentUser = JSON.parse(savedUser);
-                await verificarAdminStatus();
-                document.getElementById('userNameDisplay').innerHTML = `<i class="fas fa-user"></i> ${currentUser.nombre}`;
-                document.getElementById('logoutBtn').classList.remove('hidden');
-                document.getElementById('welcomeModal').style.display = 'none';
-                switchSection('registro');
-                await loadGlobalColonias();
-            } else {
-                document.getElementById('welcomeModal').style.display = 'flex';
-            }
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        await verificarAdminStatus();
+        document.getElementById('userNameDisplay').innerHTML = `<i class="fas fa-user"></i> ${currentUser.nombre}`;
+        document.getElementById('logoutBtn').classList.remove('hidden');
+        document.getElementById('welcomeModal').style.display = 'none';
+        
+        // 🔥 NUEVO: Si es administrador, mostrar panel admin, si no, mostrar registro
+        if (isAdmin) {
+            switchSection('admin');
+        } else {
+            switchSection('registro');
         }
-
+        
+        await loadGlobalColonias();
+        if (isAdmin) {
+            await loadBrigadistas();
+        }
+    } else {
+        document.getElementById('welcomeModal').style.display = 'flex';
+    }
+}
         async function registrarBrigadista() {
             const nombre = document.getElementById('brigadistaNombre').value.trim();
             if (!nombre) {
@@ -985,11 +994,21 @@
                     document.querySelector('.admin-only').classList.remove('hidden');
                 }
                 
-                document.getElementById('userNameDisplay').innerHTML = `<i class="fas fa-user"></i> ${nombre}`;
-                document.getElementById('logoutBtn').classList.remove('hidden');
-                document.getElementById('welcomeModal').style.display = 'none';
-                switchSection('registro');
-                await loadGlobalColonias();
+document.getElementById('userNameDisplay').innerHTML = `<i class="fas fa-user"></i> ${nombre}`;
+document.getElementById('logoutBtn').classList.remove('hidden');
+document.getElementById('welcomeModal').style.display = 'none';
+
+// 🔥 NUEVO: Si es administrador, mostrar panel admin, si no, mostrar registro
+if (isAdmin) {
+    switchSection('admin');
+    await loadBrigadistas();
+} else {
+    switchSection('registro');
+}
+await loadGlobalColonias();
+
+
+                
             } catch (error) {
                 console.error(error);
                 Swal.fire('Error', 'No se pudo completar el registro', 'error');
@@ -997,18 +1016,21 @@
         }
 
         async function verificarAdminStatus() {
-            if (!currentUser) return;
-            try {
-                const snapshot = await database.ref(`usuarios/${currentUser.uid}/administrador`).once('value');
-                isAdmin = snapshot.val() === true;
-                if (isAdmin) {
-                    document.getElementById('adminBadge').classList.remove('hidden');
-                    document.querySelector('.admin-only').classList.remove('hidden');
-                }
-            } catch (error) {
-                console.error('Error verificando admin:', error);
-            }
+    if (!currentUser) return;
+    try {
+        const snapshot = await database.ref(`usuarios/${currentUser.uid}/administrador`).once('value');
+        isAdmin = snapshot.val() === true;
+        if (isAdmin) {
+            document.getElementById('adminBadge').classList.remove('hidden');
+            document.querySelector('.admin-only').classList.remove('hidden');
+        } else {
+            document.getElementById('adminBadge').classList.add('hidden');
+            document.querySelector('.admin-only').classList.add('hidden');
         }
+    } catch (error) {
+        console.error('Error verificando admin:', error);
+    }
+}
 
         async function guardarVisita(e) {
             e.preventDefault();
