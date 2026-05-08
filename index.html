@@ -497,17 +497,7 @@
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <div class="user-info">
-                <i class="fas fa-hand-holding-heart" style="font-size: 30px; color: #667eea;"></i>
-                <span id="userNameDisplay" class="user-badge">Cargando...</span>
-                <span id="adminBadge" class="user-badge admin-badge hidden">👑 Admin</span>
-            </div>
-            <div>
-                <button id="logoutBtn" class="btn-logout hidden"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
-                <button id="installBtn" class="btn-install hidden"><i class="fas fa-download"></i> Instalar App</button>
-            </div>
-        </div>
+  
 
         <!-- Banner de instalación PWA -->
         <div id="installBanner" class="install-banner hidden">
@@ -542,12 +532,13 @@
                     <input type="text" id="personaColonia" list="coloniasList" placeholder="Colonia">
                     <datalist id="coloniasList"></datalist>
                 </div>
-                <div class="form-group">
-                    <label>Fotografía</label>
-                    <input type="file" id="personaFoto" accept="image/*">
-                    <img id="imagePreview" class="image-preview" style="display: none;">
-                </div>
 
+                <div class="form-group" id="fotoGroup">
+    <label>Fotografía</label>
+    <input type="file" id="personaFoto" accept="image/*">
+    <img id="imagePreview" class="image-preview" style="display: none;">
+</div>
+                
             <div class="btn-group">
     <button type="submit" class="btn btn-primary btn-large" id="submitBtn"><i class="fas fa-save"></i> GUARDAR VISITA</button>
     <button type="button" class="btn btn-success btn-large hidden" id="updateBtn"><i class="fas fa-edit"></i> ACTUALIZAR</button>
@@ -555,6 +546,24 @@
 </div>
             
             </form>
+
+
+
+
+                 <div class="header">
+    <div class="user-info" id="userInfoContainer">
+        <i class="fas fa-hand-holding-heart" style="font-size: 30px; color: #667eea;"></i>
+        <span id="userNameDisplay" class="user-badge">Cargando...</span>
+        <span id="adminBadge" class="user-badge admin-badge hidden">👑 Admin</span>
+    </div>
+    <div id="logoutContainer">
+        <button id="logoutBtn" class="btn-logout hidden"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
+        <button id="installBtn" class="btn-install hidden"><i class="fas fa-download"></i> Instalar App</button>
+    </div>
+</div>
+
+
+            
         </div>
 
         <!-- Sección Mis Visitas -->
@@ -782,25 +791,47 @@
             }
         }
 
-        async function handleOnline() {
-            updateOnlineStatus(true);
-            await processPendingQueue();
-            await loadMisVisitas();
-            if (currentUser) await loadGlobalColonias();
-        }
+      async function handleOnline() {
+    updateOnlineStatus(true);
+    await processPendingQueue();
+    await loadMisVisitas();
+    if (currentUser) await loadGlobalColonias();
+    // Restaurar elementos del header
+    const userInfo = document.getElementById('userInfoContainer');
+    const logoutContainer = document.getElementById('logoutContainer');
+    if (userInfo) userInfo.style.display = 'flex';
+    if (logoutContainer) logoutContainer.style.display = 'block';
+    // Mostrar nuevamente la opción de foto si hay internet
+    location.reload(); // Recargar para restaurar completamente
+}
 
-        function updateOnlineStatus(isOnline = navigator.onLine) {
-            online = isOnline;
-            const banner = document.getElementById('offlineBanner');
-            if (online) {
-                banner.className = 'offline-banner online';
-                banner.innerHTML = '<i class="fas fa-wifi"></i><span>Online</span><span id="pendingCount" class="pending-badge hidden"></span>';
-            } else {
-                banner.className = 'offline-banner';
-                banner.innerHTML = '<i class="fas fa-plug"></i><span>Offline - Modo sin conexión</span><span id="pendingCount" class="pending-badge"></span>';
-            }
-            updatePendingBadge();
-        }
+       function updateOnlineStatus(isOnline = navigator.onLine) {
+    online = isOnline;
+    const banner = document.getElementById('offlineBanner');
+    const fotoGroup = document.getElementById('fotoGroup');
+    const userInfo = document.getElementById('userInfoContainer');
+    const logoutContainer = document.getElementById('logoutContainer');
+    
+    if (online) {
+        banner.className = 'offline-banner online';
+        banner.innerHTML = '<i class="fas fa-wifi"></i><span>Online</span><span id="pendingCount" class="pending-badge hidden"></span>';
+        
+        // Mostrar elementos cuando hay internet
+        if (fotoGroup) fotoGroup.style.display = 'block';
+        if (userInfo) userInfo.style.display = 'flex';
+        if (logoutContainer) logoutContainer.style.display = 'block';
+        
+    } else {
+        banner.className = 'offline-banner';
+        banner.innerHTML = '<i class="fas fa-plug"></i><span>Offline - Modo sin conexión</span><span id="pendingCount" class="pending-badge"></span>';
+        
+        // OCULTAR elementos cuando NO hay internet
+        if (fotoGroup) fotoGroup.style.display = 'none';
+        if (userInfo) userInfo.style.display = 'none';
+        if (logoutContainer) logoutContainer.style.display = 'none';
+    }
+    updatePendingBadge();
+}
 
         function updatePendingBadge() {
             const pendingSpan = document.getElementById('pendingCount');
