@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+    <title>Sistema Brigadistas Pro | Offline + Cloud</title>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+    <!-- Librerías para PDF/Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <!-- Estilos CSS modernos -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+        body {
+            background: #f4f7fc;
+            padding-bottom: 75px;
+        }
+        /* Modal bienvenida */
+        .modal-overlay {
+            position: fixed;
+            top:0;left:0;width:100%;height:100%;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        .modal-card {
+            background: white;
+            max-width: 400px;
+            width: 90%;
+            border-radius: 32px;
+            padding: 28px 24px;
+            text-align: center;
+            box-shadow: 0 25px 45px rgba(0,0,0,0.2);
+        }
+        .modal-card h2 { margin-bottom: 16px; color: #1e2a3e; }
+        .modal-card input {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 60px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+            margin: 16px 0;
+        }
+        .btn-primary {
+            background: #0f3b5e;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-primary:hover { background: #1f5a83; }
+        /* Layout */
+        .container { padding: 20px 16px 90px; max-width: 1200px; margin: auto; }
+        .card {
+            background: white;
+            border-radius: 28px;
+            padding: 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+            margin-bottom: 24px;
+        }
+        .form-grid { display: flex; flex-direction: column; gap: 18px; }
+        input, select, .file-label {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 28px;
+            border: 1px solid #cfdfed;
+            font-size: 15px;
+            background: #fff;
+        }
+        .file-label {
+            background: #f0f4f8;
+            text-align: center;
+            cursor: pointer;
+            display: block;
+        }
+        button {
+            background: #0f3b5e;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-secondary { background: #6c757d; }
+        .floating-menu {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(12px);
+            padding: 12px 20px;
+            border-radius: 50px;
+            width: fit-content;
+            margin: auto;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            z-index: 1000;
+        }
+        .menu-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: none;
+            color: #2c3e66;
+            font-size: 12px;
+            gap: 4px;
+            cursor: pointer;
+            padding: 6px 14px;
+            border-radius: 40px;
+            transition: 0.2s;
+        }
+        .menu-item.active { background: #eef2ff; color: #0f3b5e; font-weight: 600; }
+        .menu-item i { font-size: 22px; }
+        .stats-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .stat-badge {
+            background: #eef2ff;
+            padding: 12px;
+            border-radius: 24px;
+            flex:1;
+            text-align: center;
+            font-weight: 600;
+        }
+        .person-item {
+            background: #f9fafc;
+            border-radius: 20px;
+            padding: 14px;
+            margin-bottom: 12px;
+            border-left: 4px solid #0f3b5e;
+        }
+        .admin-list { display: flex; flex-direction: column; gap: 12px; }
+        .brigadista-card {
+            background: white;
+            border-radius: 24px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .brigadista-card:hover { background: #f0f6ff; transform: scale(0.99); }
+        .filters { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+        .badge-offline {
+            background: #ffc107;
+            color: #2c2c2c;
+            font-size: 12px;
+            border-radius: 50px;
+            padding: 4px 12px;
+            display: inline-block;
+            margin-bottom: 12px;
+        }
+        @media (max-width: 640px) {
+            .stats-grid { flex-direction: column; }
+            .container { padding: 12px; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="welcomeModal" class="modal-overlay">
+    <div class="modal-card">
+        <i class="fas fa-hands-helping" style="font-size: 48px; color:#0f3b5e;"></i>
+        <h2>Bienvenido Brigadista</h2>
+        <p>Ingresa tu nombre completo para comenzar</p>
+        <input type="text" id="brigadierNameInput" placeholder="Ej: Luis Escobar Escobar" autocomplete="off">
+        <button id="confirmNameBtn" class="btn-primary">Ingresar</button>
+    </div>
+</div>
+
+<div id="mainApp" style="display:none;">
+    <div class="container">
+        <div id="offlineBanner" style="background:#fff3cd; border-radius: 60px; padding: 8px 16px; margin-bottom: 12px; display: flex; justify-content: space-between;">
+            <span id="offlineStatusText"><i class="fas fa-wifi"></i> Online</span>
+            <span id="pendingCounter">0 pendientes</span>
+        </div>
+        <!-- Secciones dinámicas -->
+        <div id="registroSection" class="card">
+            <h3><i class="fas fa-user-plus"></i> Nuevo Registro</h3>
+            <div class="form-grid">
+                <input type="text" id="visitName" placeholder="Nombre de la persona visitada *">
+                <input type="tel" id="phoneNumber" placeholder="Número de teléfono (opcional)">
+                <input list="coloniasList" id="coloniaInput" placeholder="Seleccionar o escribir colonia" autocomplete="off">
+                <datalist id="coloniasList"></datalist>
+                <input type="file" id="photoFile" accept="image/*" style="display:none;">
+                <label for="photoFile" class="file-label"><i class="fas fa-camera"></i> Tomar / Seleccionar foto</label>
+                <div style="display: flex; gap:12px;">
+                    <button id="saveRegisterBtn" class="btn-primary"><i class="fas fa-save"></i> Guardar</button>
+                    <button id="clearBtn" class="btn-secondary"><i class="fas fa-eraser"></i> Limpiar</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="misVisitasSection" style="display:none;" class="card">
+            <h3><i class="fas fa-list"></i> Mis visitas</h3>
+            <div class="stats-grid" id="userStats"></div>
+            <div class="filters">
+                <select id="filterColonia"><option value="">Todas las colonias</option></select>
+                <select id="filterPhoneStatus"><option value="">Todos</option><option value="si">Con teléfono</option><option value="no">Sin teléfono</option></select>
+                <input type="date" id="filterDate" placeholder="Filtrar por fecha">
+                <button id="resetFilters" class="btn-secondary">Reset</button>
+            </div>
+            <div id="visitsList"></div>
+        </div>
+
+        <div id="adminSection" style="display:none;" class="card">
+            <h3><i class="fas fa-users-cog"></i> Panel Administrador</h3>
+            <div style="display: flex; gap:12px; flex-wrap:wrap; margin-bottom:20px;">
+                <button id="downloadAllPDFBtn"><i class="fas fa-file-pdf"></i> Todo PDF</button>
+                <button id="downloadAllExcelBtn"><i class="fas fa-file-excel"></i> Todo Excel</button>
+            </div>
+            <div id="brigadistasListAdmin"></div>
+        </div>
+
+        <div id="brigadistaDetailView" style="display:none;" class="card">
+            <button id="backToAdminBtn" class="btn-secondary"><i class="fas fa-arrow-left"></i> Volver</button>
+            <h3 id="detailBrigName"></h3>
+            <div id="detailStats"></div>
+            <div style="display:flex; gap:10px; margin: 15px 0;">
+                <button id="downloadBrigadaPDF"><i class="fas fa-file-pdf"></i> PDF Brigadista</button>
+                <button id="downloadBrigadaExcel"><i class="fas fa-file-excel"></i> Excel Brigadista</button>
+            </div>
+            <div id="detailVisitsList"></div>
+        </div>
+    </div>
+    <div class="floating-menu">
+        <div class="menu-item" data-tab="registro"><i class="fas fa-clipboard-list"></i><span>Registro</span></div>
+        <div class="menu-item" data-tab="misvisitas"><i class="fas fa-address-book"></i><span>Mis visitas</span></div>
+        <div class="menu-item" id="adminMenuItem" style="display:none;" data-tab="admin"><i class="fas fa-chart-line"></i><span>Admin</span></div>
+    </div>
+</div>
+
+<script>
+    // Configuración Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyAiojpfnGUPhaoQkpAh1Yey3fp6uWU-iFQ",
+        authDomain: "aplicacion-2c1c8.firebaseapp.com",
+        databaseURL: "https://aplicacion-2c1c8.firebaseio.com",
+        projectId: "aplicacion-2c1c8",
+        storageBucket: "aplicacion-2c1c8.firebasestorage.app",
+        messagingSenderId: "837629411067",
+        appId: "1:837629411067:web:6c96cfcd7490b049787a5e",
+        measurementId: "G-SFP1SEY20W"
+    };
+    // Cloudinary config
+    const CLOUD_NAME = "davovja1g";
+    const UPLOAD_PRESET = "sinfirmaupload";
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const storage = firebase.storage();
+
+    let currentUser = null; // { uid, nombre }
+    let isAdmin = false;
+    let pendingQueue = []; // registros offline pendientes { type, data, imageFile? }
+    let online = navigator.onLine;
+
+    // IndexedDB / localStorage offline queue
+    function loadOfflineQueue() {
+        const stored = localStorage.getItem("offline_queue");
+        if(stored) pendingQueue = JSON.parse(stored);
+        updatePendingUI();
+    }
+    function saveOfflineQueue() {
+        localStorage.setItem("offline_queue", JSON.stringify(pendingQueue));
+        updatePendingUI();
+    }
+    function addToQueue(record) {
+        pendingQueue.push(record);
+        saveOfflineQueue();
+        processQueueWhenOnline();
+    }
+    async function processQueueWhenOnline() {
+        if(!online || pendingQueue.length === 0) return;
+        for(let i=0; i<pendingQueue.length; i++) {
+            const item = pendingQueue[i];
+            if(item.type === 'visit') {
+                try {
+                    let imageUrl = null;
+                    if(item.imageDataUrl) {
+                        // subir a cloudinary
+                        const formData = new FormData();
+                        formData.append("file", item.imageDataUrl);
+                        formData.append("upload_preset", UPLOAD_PRESET);
+                        const resp = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: "POST", body: formData });
+                        const data = await resp.json();
+                        imageUrl = data.secure_url;
+                    }
+                    const visitData = {
+                        nombre: item.nombre,
+                        telefono: item.telefono,
+                        colonia: item.colonia,
+                        imagenUrl: imageUrl,
+                        fecha: item.fecha,
+                        uid: currentUser.uid,
+                        brigadistaNombre: currentUser.nombre
+                    };
+                    const newRef = db.ref(`visitas/${currentUser.uid}`).push();
+                    await newRef.set(visitData);
+                    // ademas guardar colonia global
+                    await db.ref(`colonias_globales/${item.colonia}`).set(true);
+                } catch(e) { console.warn("Error subiendo pendiente", e); continue; }
+            }
+            pendingQueue.splice(i,1); i--;
+            saveOfflineQueue();
+        }
+        if(pendingQueue.length===0) updatePendingUI();
+        else setTimeout(processQueueWhenOnline, 3000);
+    }
+
+    function updatePendingUI() {
+        const count = pendingQueue.length;
+        document.getElementById("pendingCounter").innerHTML = `<i class="fas fa-hourglass-half"></i> ${count} pendientes`;
+        if(!online && count>0) document.getElementById("offlineStatusText").innerHTML = `<i class="fas fa-plug"></i> Offline - ${count} por subir`;
+        else if(online) document.getElementById("offlineStatusText").innerHTML = `<i class="fas fa-wifi"></i> Online`;
+    }
+
+    window.addEventListener("online", async () => { online=true; updatePendingUI(); await processQueueWhenOnline(); });
+    window.addEventListener("offline", () => { online=false; updatePendingUI(); });
+
+    // Guardar registro (con soporte offline)
+    async function saveVisitLocallyOrCloud(visitData, imageDataUrl) {
+        const finalData = {
+            nombre: visitData.nombre,
+            telefono: visitData.telefono,
+            colonia: visitData.colonia,
+            fecha: new Date().toISOString(),
+            imagenUrl: null
+        };
+        if(!online) {
+            addToQueue({ type:'visit', nombre:finalData.nombre, telefono:finalData.telefono, colonia:finalData.colonia, imageDataUrl, fecha:finalData.fecha });
+            showToast("Registro guardado localmente (offline)");
+            return;
+        }
+        try {
+            let imageUrl = null;
+            if(imageDataUrl) {
+                const formData = new FormData();
+                formData.append("file", imageDataUrl);
+                formData.append("upload_preset", UPLOAD_PRESET);
+                const resp = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method:"POST", body:formData });
+                const cloud = await resp.json();
+                imageUrl = cloud.secure_url;
+            }
+            finalData.imagenUrl = imageUrl;
+            await db.ref(`visitas/${currentUser.uid}`).push(finalData);
+            await db.ref(`colonias_globales/${finalData.colonia}`).set(true);
+            showToast("Registro guardado en la nube");
+        } catch(err) {
+            addToQueue({ type:'visit', nombre:finalData.nombre, telefono:finalData.telefono, colonia:finalData.colonia, imageDataUrl, fecha:finalData.fecha });
+            showToast("Error de conexión, se guardó offline");
+        }
+    }
+
+    // Cargar colonias globales
+    async function loadGlobalColonies() {
+        const snapshot = await db.ref("colonias_globales").once("value");
+        const colonies = snapshot.val() || {};
+        const datalist = document.getElementById("coloniasList");
+        datalist.innerHTML = "";
+        for(let col in colonies) {
+            let opt = document.createElement("option");
+            opt.value = col;
+            datalist.appendChild(opt);
+        }
+    }
+
+    // Cargar mis visitas, estadisticas, ordenar
+    async function loadMyVisits() {
+        if(!currentUser) return;
+        const snapshot = await db.ref(`visitas/${currentUser.uid}`).once("value");
+        let visits = [];
+        snapshot.forEach(child => { visits.push({ id:child.key, ...child.val() }); });
+        visits.sort((a,b)=> new Date(b.fecha) - new Date(a.fecha));
+        renderStatsAndList(visits);
+    }
+
+    function renderStatsAndList(visits) {
+        const total = visits.length;
+        const conTelefono = visits.filter(v=> v.telefono && v.telefono.trim().length>0).length;
+        const sinTelefono = total - conTelefono;
+        const coloniasUnicas = new Set(visits.map(v=>v.colonia)).size;
+        document.getElementById("userStats").innerHTML = `
+            <div class="stat-badge"><i class="fas fa-users"></i> Total: ${total}</div>
+            <div class="stat-badge"><i class="fas fa-phone-alt"></i> Con teléfono: ${conTelefono}</div>
+            <div class="stat-badge"><i class="fas fa-phone-slash"></i> Sin teléfono: ${sinTelefono}</div>
+            <div class="stat-badge"><i class="fas fa-city"></i> Colonias: ${coloniasUnicas}</div>
+        `;
+        const coloniaFilter = document.getElementById("filterColonia").value;
+        const phoneFilter = document.getElementById("filterPhoneStatus").value;
+        const dateFilter = document.getElementById("filterDate").value;
+        let filtered = visits.filter(v => {
+            if(coloniaFilter && v.colonia !== coloniaFilter) return false;
+            if(phoneFilter === "si" && (!v.telefono || v.telefono.trim()==="")) return false;
+            if(phoneFilter === "no" && v.telefono && v.telefono.trim()!=="") return false;
+            if(dateFilter && new Date(v.fecha).toISOString().slice(0,10) !== dateFilter) return false;
+            return true;
+        });
+        const container = document.getElementById("visitsList");
+        container.innerHTML = filtered.map(v => `<div class="person-item"><strong>${escapeHtml(v.nombre)}</strong><br>📞 ${v.telefono || 'No registrado'} | 🏘️ ${v.colonia} | 📅 ${new Date(v.fecha).toLocaleDateString()} ${v.imagenUrl ? '<i class="fas fa-image"></i>' : ''}</div>`).join('');
+    }
+
+    // Admin: obtener todos brigadistas y estadisticas
+    async function loadAdminDashboard() {
+        const brigUsersSnap = await db.ref("usuarios").once("value");
+        const brigUsers = brigUsersSnap.val() || {};
+        const container = document.getElementById("brigadistasListAdmin");
+        let html = `<div class="admin-list">`;
+        for(let uid in brigUsers) {
+            const brig = brigUsers[uid];
+            const visitsSnap = await db.ref(`visitas/${uid}`).once("value");
+            let total=0, conTel=0, coloniasSet=new Set();
+            visitsSnap.forEach(v=> { total++; if(v.val().telefono && v.val().telefono.trim()) conTel++; coloniasSet.add(v.val().colonia); });
+            const coloniasArr = Array.from(coloniasSet);
+            html += `<div class="brigadista-card" data-uid="${uid}" data-name="${brig.nombre}">
+                        <strong>${escapeHtml(brig.nombre)}</strong><br>
+                        👥 Personas: ${total} | 📞 Con teléfono: ${conTel} | 🏘️ Colonias: ${coloniasSet.size}<br>
+                        <small>Colonias: ${coloniasArr.slice(0,5).join(', ')}${coloniasArr.length>5 ? '...' : ''}</small>
+                     </div>`;
+        }
+        html+=`</div>`;
+        container.innerHTML = html;
+        document.querySelectorAll(".brigadista-card").forEach(card => {
+            card.addEventListener("click", () => showBrigadistaDetails(card.dataset.uid, card.dataset.name));
+        });
+    }
+
+    async function showBrigadistaDetails(uid, name) {
+        document.getElementById("brigadistaDetailView").style.display = "block";
+        document.getElementById("adminSection").style.display = "none";
+        document.getElementById("detailBrigName").innerText = `Registros de: ${name}`;
+        const visitsSnap = await db.ref(`visitas/${uid}`).once("value");
+        let visits = [];
+        visitsSnap.forEach(v=> { visits.push({ id:v.key, ...v.val() }); });
+        visits.sort((a,b)=> new Date(b.fecha)-new Date(a.fecha));
+        const total=visits.length, conTel=visits.filter(v=>v.telefono && v.telefono.trim()).length;
+        document.getElementById("detailStats").innerHTML = `<div class="stats-grid"><div class="stat-badge">Total: ${total}</div><div class="stat-badge">Con teléfono: ${conTel}</div><div class="stat-badge">Sin teléfono: ${total-conTel}</div></div>`;
+        document.getElementById("detailVisitsList").innerHTML = visits.map(v=> `<div class="person-item"><strong>${escapeHtml(v.nombre)}</strong><br>📞 ${v.telefono||'---'} | 🏘️ ${v.colonia} | 📅 ${new Date(v.fecha).toLocaleDateString()}</div>`).join('');
+        // descargas especificas
+        document.getElementById("downloadBrigadaPDF").onclick = () => exportToPDF(visits, `brigada_${name}`);
+        document.getElementById("downloadBrigadaExcel").onclick = () => exportToExcel(visits, `brigada_${name}`);
+        document.getElementById("backToAdminBtn").onclick = () => { document.getElementById("brigadistaDetailView").style.display="none"; document.getElementById("adminSection").style.display="block"; };
+    }
+
+    // Exportaciones globales y específicas
+    async function exportToPDF(data, filename="registros") {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.text(`Reporte ${filename}`, 10,10);
+        let y=20;
+        data.forEach((r,i) => {
+            if(y>270) { doc.addPage(); y=20; }
+            doc.text(`${i+1}. ${r.nombre} - Tel:${r.telefono||'N/A'} - Col:${r.colonia} - Fecha:${new Date(r.fecha).toLocaleDateString()}`, 10, y);
+            y+=8;
+        });
+        doc.save(`${filename}.pdf`);
+    }
+    function exportToExcel(data, filename) {
+        const wsData = data.map(v=> ({ Nombre:v.nombre, Telefono:v.telefono||'', Colonia:v.colonia, Fecha:new Date(v.fecha).toLocaleString() }));
+        const ws = XLSX.utils.json_to_sheet(wsData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Visitas");
+        XLSX.writeFile(wb, `${filename}.xlsx`);
+    }
+    async function downloadAllData() {
+        const allVisits = [];
+        const usersSnap = await db.ref("usuarios").once("value");
+        for(let uid in usersSnap.val()||{}) {
+            const snap = await db.ref(`visitas/${uid}`).once("value");
+            snap.forEach(v=> allVisits.push(v.val()));
+        }
+        return allVisits;
+    }
+    document.getElementById("downloadAllPDFBtn").onclick = async()=>{ const all=await downloadAllData(); exportToPDF(all, "TODOS_BRIGADISTAS"); };
+    document.getElementById("downloadAllExcelBtn").onclick = async()=>{ const all=await downloadAllData(); exportToExcel(all, "TODOS_BRIGADISTAS"); };
+
+    // Helper
+    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+    function showToast(msg) { alert(msg); } // simple
+
+    // Inicializar usuario (modal)
+    document.getElementById("confirmNameBtn").onclick = async () => {
+        const nombre = document.getElementById("brigadierNameInput").value.trim();
+        if(!nombre) return alert("Ingrese nombre completo");
+        // buscamos o creamos en firebase
+        const usersRef = db.ref("usuarios");
+        let uid = null;
+        const snap = await usersRef.orderByChild("nombre").equalTo(nombre).once("value");
+        if(snap.exists()) {
+            uid = Object.keys(snap.val())[0];
+        } else {
+            const newUser = usersRef.push();
+            await newUser.set({ nombre, creado: Date.now() });
+            uid = newUser.key;
+        }
+        currentUser = { uid, nombre };
+        localStorage.setItem("brigUser", JSON.stringify(currentUser));
+        // verificar admin
+        const adminCheck = await db.ref(`usuarios/${uid}/administrador`).once("value");
+        isAdmin = adminCheck.val() === true;
+        if(isAdmin) document.getElementById("adminMenuItem").style.display = "flex";
+        else document.getElementById("adminMenuItem").style.display = "none";
+        // cerrar modal
+        document.getElementById("welcomeModal").style.display = "none";
+        document.getElementById("mainApp").style.display = "block";
+        // cargar colonias y datos iniciales
+        await loadGlobalColonies();
+        await loadMyVisits();
+        // cargar filtros colonias
+        db.ref("colonias_globales").on("value", async(snap)=>{
+            const cols = snap.val()||{};
+            const filterSelect = document.getElementById("filterColonia");
+            filterSelect.innerHTML = '<option value="">Todas las colonias</option>';
+            for(let c in cols) filterSelect.innerHTML += `<option>${escapeHtml(c)}</option>`;
+            await loadMyVisits();
+        });
+        if(isAdmin) { await loadAdminDashboard(); }
+        startOfflineSync();
+    };
+
+    function startOfflineSync() {
+        setInterval(() => { if(online) processQueueWhenOnline(); }, 5000);
+    }
+
+    document.getElementById("saveRegisterBtn").onclick = async () => {
+        if(!currentUser) return;
+        const nombrePersona = document.getElementById("visitName").value.trim();
+        const telefono = document.getElementById("phoneNumber").value.trim();
+        const colonia = document.getElementById("coloniaInput").value.trim();
+        const fileInput = document.getElementById("photoFile");
+        if(!nombrePersona || !colonia) return alert("Nombre y colonia requeridos");
+        let imageDataUrl = null;
+        if(fileInput.files && fileInput.files[0]) {
+            imageDataUrl = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.readAsDataURL(fileInput.files[0]);
+            });
+        }
+        await saveVisitLocallyOrCloud({ nombre: nombrePersona, telefono, colonia }, imageDataUrl);
+        document.getElementById("visitName").value="";
+        document.getElementById("phoneNumber").value="";
+        document.getElementById("coloniaInput").value="";
+        document.getElementById("photoFile").value="";
+        await loadMyVisits();
+        if(isAdmin) await loadAdminDashboard();
+    };
+    document.getElementById("clearBtn").onclick = ()=>{
+        document.getElementById("visitName").value="";
+        document.getElementById("phoneNumber").value="";
+        document.getElementById("coloniaInput").value="";
+        document.getElementById("photoFile").value="";
+    };
+    // filtros
+    document.getElementById("filterColonia").addEventListener("change", loadMyVisits);
+    document.getElementById("filterPhoneStatus").addEventListener("change", loadMyVisits);
+    document.getElementById("filterDate").addEventListener("change", loadMyVisits);
+    document.getElementById("resetFilters").onclick = ()=>{
+        document.getElementById("filterColonia").value="";
+        document.getElementById("filterPhoneStatus").value="";
+        document.getElementById("filterDate").value="";
+        loadMyVisits();
+    };
+    // navegacion tabs
+    const tabs = document.querySelectorAll(".menu-item");
+    tabs.forEach(tab => {
+        tab.addEventListener("click", ()=>{
+            const sec = tab.dataset.tab;
+            document.getElementById("registroSection").style.display = sec==="registro" ? "block" : "none";
+            document.getElementById("misVisitasSection").style.display = sec==="misvisitas" ? "block" : "none";
+            document.getElementById("adminSection").style.display = (sec==="admin" && isAdmin) ? "block" : "none";
+            document.getElementById("brigadistaDetailView").style.display = "none";
+            if(sec==="misvisitas") loadMyVisits();
+            if(sec==="admin" && isAdmin) loadAdminDashboard();
+        });
+    });
+    // Cargar usuario previo
+    const storedUser = localStorage.getItem("brigUser");
+    if(storedUser && JSON.parse(storedUser)) {
+        currentUser = JSON.parse(storedUser);
+        // verificar admin y proceder
+        (async()=>{
+            const adminCheck = await db.ref(`usuarios/${currentUser.uid}/administrador`).once("value");
+            isAdmin = adminCheck.val() === true;
+            if(isAdmin) document.getElementById("adminMenuItem").style.display = "flex";
+            document.getElementById("welcomeModal").style.display = "none";
+            document.getElementById("mainApp").style.display = "block";
+            await loadGlobalColonies();
+            await loadMyVisits();
+            if(isAdmin) await loadAdminDashboard();
+            startOfflineSync();
+        })();
+    }
+    loadOfflineQueue();
+</script>
+</body>
+</html>
