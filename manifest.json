@@ -1,0 +1,77 @@
+{
+    "name": "Legado Avícola",
+    "short_name": "LegadoAV",
+    "description": "Cotejo Computarizado - Tabla de Posiciones en Vivo",
+    "start_url": "/",
+    "display": "standalone",
+    "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+    "theme_color": "#8B4513",
+    "background_color": "#f8f9fa",
+    "orientation": "portrait-primary",
+    "scope": "/",
+    "lang": "es-MX",
+    "dir": "ltr",
+    "categories": ["sports", "entertainment", "productivity"],
+    "id": "legado-avicola-main",
+    "version": "2.0.0",
+    
+    "icons": [
+        {"src": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi0T3uNTRD3YcwGAC4QM6ZJg_ylxluOI6yCOVTW4yf1hhgK4qP6rl8aF1INqcVBJ-2ph5U9w-FV67mUY8sGGheW7AQ3x00fZz3SyG7Kt0b3sxGE0G3G578DgZAWW8-Z-GWXCSK_6Iyoe0QP41AMCBfdKtwqxs0aXjVoAvqYV7_oxBBvuUW18I5Az01uDBup/s1024/abrir.jpg", "sizes": "48x48", "type": "image/png", "purpose": "any"},
+               {"src": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi0T3uNTRD3YcwGAC4QM6ZJg_ylxluOI6yCOVTW4yf1hhgK4qP6rl8aF1INqcVBJ-2ph5U9w-FV67mUY8sGGheW7AQ3x00fZz3SyG7Kt0b3sxGE0G3G578DgZAWW8-Z-GWXCSK_6Iyoe0QP41AMCBfdKtwqxs0aXjVoAvqYV7_oxBBvuUW18I5Az01uDBup/s1024/abrir.jpg", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+    ],
+
+    "shortcuts": [
+        {
+            "name": "⚡ COTEJO", 
+            "short_name": "Cotejo", 
+            "description": "Ver tabla de cotejo", 
+            "url": "/?tab=cotejo", 
+            "icons": [{"src": "https://placehold.co/96x96/8B4513/white?text=⚡", "sizes": "96x96", "type": "image/png"}]
+        },
+        {
+            "name": "🏆 POSICIONES", 
+            "short_name": "Posiciones", 
+            "description": "Ver tabla de posiciones", 
+            "url": "/?tab=posicion", 
+            "icons": [{"src": "https://placehold.co/96x96/8B4513/white?text=🏆", "sizes": "96x96", "type": "image/png"}]
+        },
+        {
+            "name": "📥 IMPORTAR", 
+            "short_name": "Importar", 
+            "description": "Importar torneo desde JSON", 
+            "url": "/?tab=cotejo", 
+            "icons": [{"src": "https://placehold.co/96x96/8B4513/white?text=📥", "sizes": "96x96", "type": "image/png"}]
+        }
+    ],
+
+    "screenshots": [
+        {"src": "https://placehold.co/1280x720/8B4513/white?text=Cotejo+Computarizado", "sizes": "1280x720", "type": "image/png", "form_factor": "wide", "label": "Tabla de Cotejo"},
+        {"src": "https://placehold.co/1280x720/8B4513/white?text=Tabla+de+Posiciones", "sizes": "1280x720", "type": "image/png", "form_factor": "wide", "label": "Tabla de Posiciones"},
+        {"src": "https://placehold.co/720x1280/8B4513/white?text=Calificar+Peleas", "sizes": "720x1280", "type": "image/png", "form_factor": "narrow", "label": "Calificación de peleas"}
+    ],
+
+"launch_handler": {
+    "client_mode": "new-client",
+    "route_to": "new-client"
+},
+    
+    "handle_links": "preferred",
+    
+    "share_target": {
+        "action": "/",
+        "method": "GET",
+        "enctype": "application/x-www-form-urlencoded",
+        "params": {"title": "title", "text": "text", "url": "url"}
+    },
+    
+    "serviceworker": {"src": "/sw.js", "scope": "/", "type": "classic", "update_via_cache": "all"},
+    "offline_enabled": true,
+    "cache": {"strategy": "cache-first", "max_age": 2592000, "max_entries": 100},
+    "prefetch": {"urls": ["/", "/offline.html"], "strategy": "eager"},
+    
+    "splash_screen": {"background_color": "#8B4513", "image": "https://placehold.co/512x512/8B4513/white?text=🐓", "image_purpose": "any"},
+    
+    "analytics": {"enabled": false},
+    "features": {"cross_window": true, "fullscreen": true, "picture_in_picture": false, "wake_lock": false},
+    "capture_links": "existing-client-event"
+}
