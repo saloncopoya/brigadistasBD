@@ -1,36 +1,33 @@
-const CACHE_NAME = 'cotejo-offline-v1.0.0.21'; 
+const CACHE_NAME = 'cotejo-offline-v1.0.0.23'; 
 const urlsToCache = [
     '/',
-  '/index.html',
-  '/manifest.json',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
-  'https://cdn.jsdelivr.net/npm/sweetalert2@11',
-  'https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js',
-  'https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
-  'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js'
+    '/index.html',
+    '/manifest.json',
+    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
+    'https://cdn.jsdelivr.net/npm/sweetalert2@11',
+    'https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js',
+    'https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+    'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js'
 ];
 
-// Instalar Service Worker (VERSIÓN MEJORADA - Con instalación FORZADA de páginas)
+// Instalar Service Worker
 self.addEventListener('install', event => {
     console.log('⚡ Service Worker instalando...');
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then(async cache => {
-                // 1. Cachear los archivos normales de urlsToCache
-                console.log('📦 Cacheando archivos base:', urlsToCache);
-               
-                // Cachear TODOS los archivos, si uno falla, que no detenga todo
-for (const url of urlsToCache) {
-    try {
-        await cache.add(url);
-        console.log('✅ Cacheado:', url);
-    } catch (err) {
-        console.warn('⚠️ No se pudo cachear:', url, err);
-    }
-}
+                console.log('📦 Cacheando archivos base...');
                 
-                            })
+                for (const url of urlsToCache) {
+                    try {
+                        await cache.add(url);
+                        console.log('✅ Cacheado:', url);
+                    } catch (err) {
+                        console.warn('⚠️ No se pudo cachear:', url, err);
+                    }
+                }
+            })
     );
     self.skipWaiting();
 });
@@ -53,7 +50,7 @@ self.addEventListener('activate', event => {
     self.clients.claim();
 });
 
-// Interceptar peticiones (VERSIÓN MEJORADA - Cachea todas las páginas HTML)
+// Interceptar peticiones
 self.addEventListener('fetch', event => {
     const url = new URL(event.request.url);
     
@@ -88,10 +85,10 @@ self.addEventListener('fetch', event => {
                     
                     return response;
                 }).catch(() => {
-                    // Si falla la red y no está en caché, mostrar página offline
+                    // Si falla la red y no está en caché, mostrar index.html
                     if (event.request.mode === 'navigate') {
-                        console.log('📴 Offline - Mostrando offline.html');
-                        return caches.match('/offline.html');
+                        console.log('📴 Offline - Mostrando index.html');
+                        return caches.match('/index.html');
                     }
                     return new Response('Contenido no disponible offline', {
                         status: 503,
