@@ -540,7 +540,7 @@
             <form id="visitaForm">
                 <div class="form-group">
                     <label>Nombre completo *</label>
-<input type="text" id="personaNombre" required placeholder="NOMBRE DE LA PERSONA" style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase();">
+<input type="text" id="personaNombre" required placeholder="Nombre de la persona visitada" style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase();">
                 </div>
                 <div class="form-group">
                     <label>Numero de Teléfono *</label>
@@ -548,7 +548,7 @@
                 </div>
                 <div class="form-group">
                     <label>Colonia</label>
-                    <input type="text" id="personaColonia" list="coloniasList" placeholder="Colonia">
+<input type="text" id="personaColonia" list="coloniasList" placeholder="COLONIA" style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase();">
                     <datalist id="coloniasList"></datalist>
                 </div>
 
@@ -597,7 +597,7 @@
         <div id="adminSection" class="hidden">
             <div class="export-buttons">
                 <button id="exportAllPdfBtn" class="btn btn-primary"><i class="fas fa-file-pdf"></i>PDF</button>
-                <button id="exportAllExcelBtn" class="btn btn-success"><i class="fas fa-file-excel"></i> Descargar Excel</button>
+                <button id="exportAllExcelBtn" class="btn btn-success"><i class="fas fa-file-excel"></i> Excel</button>
             </div>
             <div class="form-group">
                 <input type="text" id="searchBrigadista" placeholder="Buscar brigadista...">
@@ -1040,7 +1040,7 @@ await loadGlobalColonias();
             const data = {
                 nombre: nombre,
                 telefono: document.getElementById('personaTelefono').value,
-                colonia: document.getElementById('personaColonia').value,
+colonia: document.getElementById('personaColonia').value.toUpperCase(),
                 fecha: new Date().toISOString(),
                 brigadistaId: currentUser.uid,
                 brigadistaNombre: currentUser.nombre
@@ -1258,16 +1258,19 @@ await loadGlobalColonias();
         }
 
         async function agregarColoniaGlobal(colonia) {
-            if (!colonia || allColonias.includes(colonia)) return;
-            try {
-                await database.ref(`colonias_globales/${colonia}`).set(true);
-                allColonias.push(colonia);
-                const datalist = document.getElementById('coloniasList');
-                datalist.innerHTML = allColonias.map(c => `<option value="${escapeHtml(c)}">`).join('');
-            } catch (error) {
-                console.error('Error agregando colonia:', error);
-            }
-        }
+    if (!colonia) return;
+    // Convertir a mayúsculas antes de guardar
+    const coloniaMayus = colonia.toUpperCase();
+    if (allColonias.includes(coloniaMayus)) return;
+    try {
+        await database.ref(`colonias_globales/${coloniaMayus}`).set(true);
+        allColonias.push(coloniaMayus);
+        const datalist = document.getElementById('coloniasList');
+        datalist.innerHTML = allColonias.map(c => `<option value="${escapeHtml(c)}">`).join('');
+    } catch (error) {
+        console.error('Error agregando colonia:', error);
+    }
+}
 
         async function subirImagenCloudinary(file) {
             const formData = new FormData();
