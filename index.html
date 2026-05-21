@@ -586,18 +586,35 @@
         <!-- Sección Registro -->
         <div id="registroSection" class="form-card">
             <h2><i class="fas fa-user-plus"></i> Registrar Visita</h2>
-            <form id="visitaForm">
-                <div class="form-group">
+<form id="visitaForm" autocomplete="off">
+    <div class="form-group">
                     <label>Nombre completo *</label>
-<input type="text" id="personaNombre" required placeholder="Nombre de la persona visitada" style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase();">
+<input type="text" id="personaNombre" required placeholder="Nombre de la persona visitada" 
+       style="text-transform: uppercase;" 
+       oninput="this.value = this.value.toUpperCase();"
+       autocomplete="off"
+       autocomplete="new-password"
+       autofill="off">
                 </div>
                 <div class="form-group">
                     <label>Numero de Teléfono *</label>
-<input type="tel" id="personaTelefono" placeholder="Número a 10 dígitos" maxlength="10" pattern="[0-9]{10}" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0,10)" required>
+<input type="tel" id="personaTelefono" placeholder="Número a 10 dígitos" 
+       maxlength="10" pattern="[0-9]{10}" 
+       oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0,10)" 
+       required
+    inputmode="numeric"
+       autocomplete="off"
+       autofill="off">
                 </div>
                 <div class="form-group">
                     <label>Colonia</label>
-<input type="text" id="personaColonia" list="coloniasList" placeholder="COLONIA" style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase();">
+<input type="text" id="personaColonia" list="coloniasList" 
+       placeholder="COLONIA" 
+       style="text-transform: uppercase;" 
+       oninput="this.value = this.value.toUpperCase();"
+       autocomplete="off"
+       autofill="off"
+       autocomplete="new-password">
                     <datalist id="coloniasList"></datalist>
                 </div>
 
