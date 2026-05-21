@@ -16,8 +16,8 @@
     "version": "2.0.0",
     
     "icons": [
-        {"src": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi0T3uNTRD3YcwGAC4QM6ZJg_ylxluOI6yCOVTW4yf1hhgK4qP6rl8aF1INqcVBJ-2ph5U9w-FV67mUY8sGGheW7AQ3x00fZz3SyG7Kt0b3sxGE0G3G578DgZAWW8-Z-GWXCSK_6Iyoe0QP41AMCBfdKtwqxs0aXjVoAvqYV7_oxBBvuUW18I5Az01uDBup/s1024/abrir.jpg", "sizes": "48x48", "type": "image/png", "purpose": "any"},
-               {"src": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi0T3uNTRD3YcwGAC4QM6ZJg_ylxluOI6yCOVTW4yf1hhgK4qP6rl8aF1INqcVBJ-2ph5U9w-FV67mUY8sGGheW7AQ3x00fZz3SyG7Kt0b3sxGE0G3G578DgZAWW8-Z-GWXCSK_6Iyoe0QP41AMCBfdKtwqxs0aXjVoAvqYV7_oxBBvuUW18I5Az01uDBup/s1024/abrir.jpg", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+        {"src": "/img.png", "sizes": "48x48", "type": "image/png", "purpose": "any"},
+               {"src": "/img.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
     ],
 
     "shortcuts": [
