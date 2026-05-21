@@ -534,6 +534,23 @@
     background: #667eea;
     border-radius: 10px;
 }
+
+
+        /* Dashboard compacto responsivo */
+@media (max-width: 480px) {
+    #dashboardStats {
+        gap: 4px !important;
+    }
+    #dashboardStats > div {
+        padding: 4px 2px !important;
+    }
+    #dashboardStats > div div:first-child {
+        font-size: 9px !important;
+    }
+    #dashboardStats > div div:nth-child(2) {
+        font-size: 14px !important;
+    }
+}
     </style>
 </head>
 <body>
@@ -588,13 +605,13 @@
             </div>
 
 
-                        <!-- DASHBOARD DE BRIGADISTAS -->
-            <div id="brigadistasDashboard" style="background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.1);">
-                <h3 style="margin-bottom: 15px; color: #333;"><i class="fas fa-chart-bar"></i> Top Brigadistas</h3>
-                <div id="dashboardStats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
-                    <div style="text-align: center; padding: 20px;">Cargando datos...</div>
-                </div>
-            </div>
+          <!-- DASHBOARD DE BRIGADISTAS COMPACTO -->
+<div id="brigadistasDashboard" style="background: white; border-radius: 12px; padding: 8px 12px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+    <h3 style="margin: 0 0 8px 0; font-size: 14px; color: #333;"><i class="fas fa-chart-bar" style="font-size: 12px;"></i> Top Brigadistas</h3>
+    <div id="dashboardStats" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
+        <div style="text-align: center; padding: 8px; font-size: 11px; color: #999;">Cargando...</div>
+    </div>
+</div>
 
             
             <div class="stats-grid" id="statsContainer"></div>
@@ -1056,54 +1073,53 @@ await loadGlobalColonias();
 
                 // Función para cargar dashboard de brigadistas
         async function loadBrigadistasDashboard() {
-            if (!currentUser) return;
-            
-            try {
-                const snapshot = await database.ref('usuarios').once('value');
-                const brigadistas = [];
-                snapshot.forEach(child => {
-                    brigadistas.push({ uid: child.key, nombre: child.val().nombre });
-                });
-                
-                const brigadistasConTotal = [];
-                for (const b of brigadistas) {
-                    const visitsSnap = await database.ref(`visitas/${b.uid}`).once('value');
-                    let total = 0;
-                    visitsSnap.forEach(() => total++);
-                    brigadistasConTotal.push({
-                        nombre: b.nombre,
-                        total: total
-                    });
-                }
-                
-                // Ordenar por total (mayor a menor) y tomar top 6
-                brigadistasConTotal.sort((a, b) => b.total - a.total);
-                const topBrigadistas = brigadistasConTotal.slice(0, 6);
-                
-                const dashboardContainer = document.getElementById('dashboardStats');
-                if (dashboardContainer) {
-                    if (topBrigadistas.length === 0) {
-                        dashboardContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #999;">No hay brigadistas registrados</div>';
-                        return;
-                    }
-                    
-                    dashboardContainer.innerHTML = topBrigadistas.map(b => `
-                        <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 15px; border-radius: 15px; text-align: center; transition: transform 0.3s;">
-                            <i class="fas fa-user-circle" style="font-size: 28px; margin-bottom: 8px;"></i>
-                            <div style="font-weight: bold; font-size: 14px; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(b.nombre)}</div>
-                            <div style="font-size: 28px; font-weight: bold;">${b.total}</div>
-                            <div style="font-size: 11px; opacity: 0.9;">personas registradas</div>
-                        </div>
-                    `).join('');
-                }
-            } catch (error) {
-                console.error('Error cargando dashboard:', error);
-                const dashboardContainer = document.getElementById('dashboardStats');
-                if (dashboardContainer) {
-                    dashboardContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #999;">Error cargando datos</div>';
-                }
-            }
+    if (!currentUser) return;
+    
+    try {
+        const snapshot = await database.ref('usuarios').once('value');
+        const brigadistas = [];
+        snapshot.forEach(child => {
+            brigadistas.push({ uid: child.key, nombre: child.val().nombre });
+        });
+        
+        const brigadistasConTotal = [];
+        for (const b of brigadistas) {
+            const visitsSnap = await database.ref(`visitas/${b.uid}`).once('value');
+            let total = 0;
+            visitsSnap.forEach(() => total++);
+            brigadistasConTotal.push({
+                nombre: b.nombre,
+                total: total
+            });
         }
+        
+        // Ordenar por total (mayor a menor)
+        brigadistasConTotal.sort((a, b) => b.total - a.total);
+        
+        const dashboardContainer = document.getElementById('dashboardStats');
+        if (dashboardContainer) {
+            if (brigadistasConTotal.length === 0) {
+                dashboardContainer.innerHTML = '<div style="text-align: center; padding: 8px; color: #999; font-size: 11px;">Sin brigadistas</div>';
+                return;
+            }
+            
+            // Mostrar TODOS los brigadistas en 3 columnas compactas
+            dashboardContainer.innerHTML = brigadistasConTotal.map(b => `
+                <div style="background: #f8f9fa; padding: 6px 4px; border-radius: 8px; text-align: center; border: 1px solid #e9ecef;">
+                    <div style="font-size: 11px; font-weight: 600; color: #495057; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(b.nombre)}">${escapeHtml(b.nombre)}</div>
+                    <div style="font-size: 18px; font-weight: bold; color: #667eea; line-height: 1.2;">${b.total}</div>
+                    <div style="font-size: 9px; color: #6c757d;">visitas</div>
+                </div>
+            `).join('');
+        }
+    } catch (error) {
+        console.error('Error cargando dashboard:', error);
+        const dashboardContainer = document.getElementById('dashboardStats');
+        if (dashboardContainer) {
+            dashboardContainer.innerHTML = '<div style="text-align: center; padding: 8px; color: #999; font-size: 11px;">Error</div>';
+        }
+    }
+}
         
 
         async function guardarVisita(e) {
