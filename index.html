@@ -727,32 +727,37 @@
         
     </div>
 
-    
-    <!-- Menú Flotante con SVG Icons -->
-    <div class="floating-menu">
-        <div class="menu-item" data-section="registro">
-            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 4v16M4 12h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" fill="none"/>
-            </svg>
-            <span>Registrar</span>
-        </div>
-        <div class="menu-item" data-section="visitas">
-            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M3 6h18M9 12h6M7 18h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                <rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" stroke-width="2" fill="none"/>
-            </svg>
-            <span>Mis Visitas</span>
-        </div>
-        <div class="menu-item admin-only hidden" data-section="admin">
-            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" stroke="currentColor" stroke-width="2" fill="none"/>
-                <circle cx="18" cy="8" r="2" stroke="currentColor" stroke-width="2" fill="none"/>
-                <path d="M22 14c0-1.33-2.67-2-4-2" stroke="currentColor" stroke-width="2"/>
-            </svg>
-            <span>Administrador</span>
-        </div>
+    <!-- Menú Flotante con SVG Icons Modernos -->
+<div class="floating-menu">
+    <div class="menu-item" data-section="registro">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 4V20M20 12H4" stroke="#3B82F6" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="12" cy="12" r="9" stroke="#3B82F6" stroke-width="2" fill="white"/>
+            <path d="M12 8V16M8 12H16" stroke="#3B82F6" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span>Registrar</span>
     </div>
+    <div class="menu-item" data-section="visitas">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 12V18H4V12" stroke="#10B981" stroke-width="2" stroke-linecap="round"/>
+            <rect x="2" y="6" width="20" height="14" rx="2" stroke="#10B981" stroke-width="2" fill="white"/>
+            <path d="M8 6V4H16V6" stroke="#10B981" stroke-width="2" stroke-linecap="round"/>
+            <path d="M12 10V16M9 13H15" stroke="#10B981" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="12" cy="12" r="1.5" fill="#10B981"/>
+        </svg>
+        <span>Visitas</span>
+    </div>
+    <div class="menu-item admin-only hidden" data-section="admin">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 12C14.2091 12 16 10.2091 16 8C16 5.79086 14.2091 4 12 4C9.79086 4 8 5.79086 8 8C8 10.2091 9.79086 12 12 12Z" stroke="#8B5CF6" stroke-width="2" fill="white"/>
+            <path d="M5 20V19C5 15.6863 7.68629 13 11 13H13C16.3137 13 19 15.6863 19 19V20" stroke="#8B5CF6" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="18" cy="8" r="2" stroke="#8B5CF6" stroke-width="2" fill="white"/>
+            <path d="M22 14C22 12.8954 21.1046 12 20 12C18.8954 12 18 12.8954 18 14" stroke="#8B5CF6" stroke-width="2" stroke-linecap="round"/>
+            <path d="M12 16L14 18L18 14" stroke="#8B5CF6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Admin</span>
+    </div>
+</div>
 
     <!-- Modal Bienvenida -->
     <div id="welcomeModal" class="modal">
