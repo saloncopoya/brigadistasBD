@@ -45,9 +45,9 @@
     ],
 
     "screenshots": [
-        {"src": "https://placehold.co/1280x720/8B4513/white?text=Cotejo+Computarizado", "sizes": "1280x720", "type": "image/png", "form_factor": "wide", "label": "Tabla de Cotejo"},
-        {"src": "https://placehold.co/1280x720/8B4513/white?text=Tabla+de+Posiciones", "sizes": "1280x720", "type": "image/png", "form_factor": "wide", "label": "Tabla de Posiciones"},
-        {"src": "https://placehold.co/720x1280/8B4513/white?text=Calificar+Peleas", "sizes": "720x1280", "type": "image/png", "form_factor": "narrow", "label": "Calificación de peleas"}
+        {"src": "/img.png", "sizes": "1280x720", "type": "image/png", "form_factor": "wide", "label": "T3"},
+        {"src": "/img.png", "sizes": "1280x720", "type": "image/png", "form_factor": "wide", "label": "t2"},
+        {"src": "/img.png", "sizes": "720x1280", "type": "image/png", "form_factor": "narrow", "label": "C1"}
     ],
 
 "launch_handler": {
