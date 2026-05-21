@@ -546,9 +546,27 @@
     }
     #dashboardStats > div div:first-child {
         font-size: 9px !important;
+                min-height: 28px;
+
     }
     #dashboardStats > div div:nth-child(2) {
         font-size: 14px !important;
+    }
+}
+
+        @media (max-width: 360px) {
+    #dashboardStats {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 6px !important;
+    }
+    #dashboardStats > div {
+        padding: 6px 2px !important;
+    }
+    #dashboardStats > div div:first-child {
+        font-size: 9px !important;
+    }
+    #dashboardStats > div div:nth-child(2) {
+        font-size: 16px !important;
     }
 }
     </style>
@@ -637,6 +655,26 @@
                 <button id="exportAllPdfBtn" class="btn btn-primary"><i class="fas fa-file-pdf"></i>PDF</button>
                 <button id="exportAllExcelBtn" class="btn btn-success"><i class="fas fa-file-excel"></i> Excel</button>
             </div>
+
+                        <!-- ESTADÍSTICAS GLOBALES ADMIN -->
+            <div id="adminGlobalStats" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px;">
+                <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 12px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 11px; opacity: 0.9;">TOTAL VISITAS</div>
+                    <div style="font-size: 28px; font-weight: bold;" id="adminTotalVisitas">0</div>
+                </div>
+                <div style="background: #10b981; color: white; padding: 12px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 11px; opacity: 0.9;">CON TELÉFONO</div>
+                    <div style="font-size: 28px; font-weight: bold;" id="adminTotalTelefono">0</div>
+                </div>
+                <div style="background: #f59e0b; color: white; padding: 12px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 11px; opacity: 0.9;">COLONIAS VISITADAS</div>
+                    <div style="font-size: 28px; font-weight: bold;" id="adminTotalColonias">0</div>
+                    <div style="font-size: 10px; margin-top: 5px;" id="adminColoniasDetalle"></div>
+                </div>
+            </div>
+
+            
+            
             <div class="form-group">
                 <input type="text" id="searchBrigadista" placeholder="Buscar brigadista...">
             </div>
@@ -969,7 +1007,10 @@
                 loadMisVisitas();
                 loadBrigadistasDashboard();
             }
-            if (section === 'admin' && isAdmin) loadBrigadistas();
+            if (section === 'admin' && isAdmin) {
+                loadBrigadistas();
+                loadAdminGlobalStats();
+            }
         }
 
         async function checkSavedSession() {
@@ -1140,33 +1181,39 @@ await loadGlobalColonias();
             const topBrigadistas = brigadistasConTotal.slice(0, maxToShow);
             
             dashboardContainer.innerHTML = topBrigadistas.map((b, index) => `
-                <div style="background: ${b.uid === currentUser?.uid ? 'linear-gradient(135deg, #667eea20, #764ba220)' : '#f8f9fa'}; 
-                            padding: 10px 4px; 
-                            border-radius: 10px; 
-                            text-align: center; 
-                            border: ${b.uid === currentUser?.uid ? '2px solid #667eea' : '1px solid #e9ecef'};
-                            transition: all 0.2s;
-                            position: relative;">
-                    ${index === 0 && b.total > 0 ? '<div style="position: absolute; top: -8px; right: -5px; font-size: 18px;">🏆</div>' : ''}
-                    <div style="font-size: 10px; 
-                                font-weight: 600; 
-                                color: ${b.uid === currentUser?.uid ? '#667eea' : '#495057'}; 
-                                white-space: nowrap; 
-                                overflow: hidden; 
-                                text-overflow: ellipsis;" 
-                         title="${escapeHtml(b.nombre)}">
-                        ${b.uid === currentUser?.uid ? '⭐ ' : ''}${index + 1}. ${escapeHtml(b.nombre)}
-                    </div>
-                    <div style="font-size: 22px; 
-                                font-weight: bold; 
-                                color: ${b.uid === currentUser?.uid ? '#667eea' : '#333'}; 
-                                line-height: 1.2;
-                                margin: 5px 0;">
-                        ${b.total}
-                    </div>
-                    <div style="font-size: 8px; color: #6c757d;">VISITAS TOTALES</div>
-                </div>
-            `).join('');
+    <div style="background: ${b.uid === currentUser?.uid ? 'linear-gradient(135deg, #667eea20, #764ba220)' : '#f8f9fa'}; 
+                padding: 10px 4px; 
+                border-radius: 10px; 
+                text-align: center; 
+                border: ${b.uid === currentUser?.uid ? '2px solid #667eea' : '1px solid #e9ecef'};
+                transition: all 0.2s;
+                position: relative;
+                min-height: 85px;">
+        ${index === 0 && b.total > 0 ? '<div style="position: absolute; top: -8px; right: -5px; font-size: 18px;">🏆</div>' : ''}
+        <div style="font-size: 10px; 
+                    font-weight: 600; 
+                    color: ${b.uid === currentUser?.uid ? '#667eea' : '#495057'}; 
+                    line-height: 1.3;
+                    min-height: 32px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    text-align: center;
+                    word-break: break-word;
+                    white-space: normal;"
+             title="${escapeHtml(b.nombre)}">
+            ${b.uid === currentUser?.uid ? '⭐ ' : ''}${index + 1}. ${escapeHtml(b.nombre)}
+        </div>
+        <div style="font-size: 22px; 
+                    font-weight: bold; 
+                    color: ${b.uid === currentUser?.uid ? '#667eea' : '#333'}; 
+                    line-height: 1.2;
+                    margin: 5px 0;">
+            ${b.total}
+        </div>
+        <div style="font-size: 8px; color: #6c757d;">VISITAS TOTALES</div>
+    </div>
+`).join('');
         }
         
     } catch (error) {
@@ -1423,6 +1470,57 @@ colonia: document.getElementById('personaColonia').value.toUpperCase(),
             renderVisitasList();
         }
 
+
+                // Función para cargar estadísticas globales de ADMIN
+        async function loadAdminGlobalStats() {
+            if (!isAdmin) return;
+            
+            try {
+                const usuariosSnapshot = await database.ref('usuarios').once('value');
+                const usuarios = [];
+                usuariosSnapshot.forEach(child => {
+                    usuarios.push({ uid: child.key });
+                });
+                
+                let totalVisitasGlobal = 0;
+                let totalTelefonoGlobal = 0;
+                const coloniasGlobalMap = new Map();
+                
+                for (const usuario of usuarios) {
+                    const visitsSnap = await database.ref(`visitas/${usuario.uid}`).once('value');
+                    if (visitsSnap.exists()) {
+                        visitsSnap.forEach(child => {
+                            const visita = child.val();
+                            totalVisitasGlobal++;
+                            if (visita.telefono && visita.telefono.trim() && visita.telefono.trim().length >= 8) {
+                                totalTelefonoGlobal++;
+                            }
+                            if (visita.colonia && visita.colonia.trim()) {
+                                const colonia = visita.colonia.toUpperCase();
+                                coloniasGlobalMap.set(colonia, (coloniasGlobalMap.get(colonia) || 0) + 1);
+                            }
+                        });
+                    }
+                }
+                
+                document.getElementById('adminTotalVisitas').textContent = totalVisitasGlobal;
+                document.getElementById('adminTotalTelefono').textContent = totalTelefonoGlobal;
+                document.getElementById('adminTotalColonias').textContent = coloniasGlobalMap.size;
+                
+                // Mostrar top 3 colonias con más visitas
+                const topColonias = Array.from(coloniasGlobalMap.entries())
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 3)
+                    .map(([colonia, count]) => `${colonia}: ${count}`)
+                    .join(', ');
+                
+                document.getElementById('adminColoniasDetalle').innerHTML = topColonias ? `Top: ${topColonias}` : 'Sin colonias';
+                
+            } catch (error) {
+                console.error('Error cargando estadísticas admin:', error);
+            }
+        }
+        
         async function loadBrigadistas() {
     const search = document.getElementById('searchBrigadista')?.value.toLowerCase() || '';
     try {
