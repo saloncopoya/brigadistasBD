@@ -635,6 +635,24 @@
     <button type="button" class="btn btn-danger btn-large hidden" id="cancelEditBtn"><i class="fas fa-times"></i> CANCELAR</button>
 </div>
 
+     <div class="form-group">
+                <label>🏠 Número / Manzana</label>
+                <input type="text" id="numCalle" 
+                       placeholder="Ej: 123, Manzana 5, Lote 10" 
+                       style="text-transform: uppercase;" 
+                       oninput="this.value = this.value.toUpperCase();"
+                       autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label>📍 Calle / Dirección</label>
+                <input type="text" id="direccion" 
+                       placeholder="Ej: Av. Principal #123, Colonia Centro" 
+                       style="text-transform: uppercase;" 
+                       oninput="this.value = this.value.toUpperCase();"
+                       autocomplete="off">
+            </div>
+    
                 <!-- NUEVOS CAMPOS OPCIONALES -->
             <div class="form-group">
                 <label>📊 Nivel de Interés</label>
@@ -1309,6 +1327,8 @@ colonia: document.getElementById('personaColonia').value.toUpperCase(),
                 fecha: new Date().toISOString(),
                 brigadistaId: currentUser.uid,
                 brigadistaNombre: currentUser.nombre,
+                numCalle: document.getElementById('numCalle').value,
+                direccion: document.getElementById('direccion').value,
                 nivelInteres: document.getElementById('nivelInteres').value,
                 numPersonas: document.getElementById('numPersonas').value,
                 verificacion: document.getElementById('verificacion').value
@@ -1389,6 +1409,8 @@ colonia: document.getElementById('personaColonia').value.toUpperCase(),
             document.getElementById('personaTelefono').value = visita.telefono || '';
             document.getElementById('personaColonia').value = visita.colonia || '';
             // Cargar los nuevos campos
+            document.getElementById('numCalle').value = visita.numCalle || '';
+            document.getElementById('direccion').value = visita.direccion || '';
             document.getElementById('nivelInteres').value = visita.nivelInteres || '';
             document.getElementById('numPersonas').value = visita.numPersonas || '';
             document.getElementById('verificacion').value = visita.verificacion || '';
@@ -1413,9 +1435,11 @@ colonia: document.getElementById('personaColonia').value.toUpperCase(),
     document.getElementById('cancelEditBtn').classList.add('hidden');
 }
 
-        function resetFormulario() {
+             function resetFormulario() {
             document.getElementById('visitaForm').reset();
             // Resetear los nuevos campos también
+            document.getElementById('numCalle').value = '';
+            document.getElementById('direccion').value = '';
             document.getElementById('nivelInteres').value = '';
             document.getElementById('numPersonas').value = '';
             document.getElementById('verificacion').value = '';
@@ -1928,11 +1952,13 @@ colonia: document.getElementById('personaColonia').value.toUpperCase(),
     Swal.fire('Exportado', `Excel de ${nombre} generado con formato profesional`, 'success');
 }
 
-        function exportMyVisitsToExcel() {
+               function exportMyVisitsToExcel() {
    const data = allVisitas.map(v => ({
                 Nombre: v.nombre,
                 Teléfono: v.telefono || '',
                 Colonia: v.colonia || '',
+                'Número/Calle': v.numCalle || '',
+                Dirección: v.direccion || '',
                 Fecha: new Date(v.fecha).toLocaleString(),
                 'Nivel Interés': v.nivelInteres || '',
                 '# Personas': v.numPersonas || '',
@@ -2023,10 +2049,12 @@ colonia: document.getElementById('personaColonia').value.toUpperCase(),
             promises.push(
                 database.ref(`visitas/${usuario.uid}`).once('value').then(visitasSnapshot => {
                     visitasSnapshot.forEach(visita => {
-                                               allData.push({
+                                                                       allData.push({
                             Nombre: visita.val().nombre,
                             Telefono: visita.val().telefono || '',
                             Colonia: visita.val().colonia || '',
+                            NumCalle: visita.val().numCalle || '',
+                            Direccion: visita.val().direccion || '',
                             Fecha: new Date(visita.val().fecha).toLocaleString(),
                             Brigadista: usuario.nombre,
                             NivelInteres: visita.val().nivelInteres || '',
@@ -2056,15 +2084,17 @@ colonia: document.getElementById('personaColonia').value.toUpperCase(),
             const rowHeight = 8;
             
             // Definir columnas
-                       const columns = [
-                { header: 'NOMBRE', width: 40 },
-                { header: 'TELÉFONO', width: 30 },
-                { header: 'COLONIA', width: 35 },
-                { header: 'FECHA', width: 40 },
-                { header: 'BRIGADISTA', width: 35 },
-                { header: 'NIVEL INTERÉS', width: 30 },
-                { header: '# PERSONAS', width: 25 },
-                { header: 'VERIFICACIÓN', width: 30 }
+                                   const columns = [
+                { header: 'NOMBRE', width: 30 },
+                { header: 'TELÉFONO', width: 25 },
+                { header: 'COLONIA', width: 30 },
+                { header: 'NÚMERO/CALLE', width: 25 },
+                { header: 'DIRECCIÓN', width: 35 },
+                { header: 'FECHA', width: 35 },
+                { header: 'BRIGADISTA', width: 30 },
+                { header: 'NIVEL INTERÉS', width: 25 },
+                { header: '# PERSONAS', width: 20 },
+                { header: 'VERIFICACIÓN', width: 25 }
             ];
             
             const totalWidth = columns.reduce((sum, col) => sum + col.width, 0);
@@ -2131,9 +2161,8 @@ colonia: document.getElementById('personaColonia').value.toUpperCase(),
                     doc.setFillColor(245, 245, 245);
                     doc.rect(currentX, currentY, totalWidth, rowHeight, 'F');
                 }
-                
-                // Columna 1: NOMBRE
-                doc.text(item.Nombre.length > 25 ? item.Nombre.substring(0, 22) + '...' : item.Nombre, currentX + 2, currentY + 5);
+                                // Columna 1: NOMBRE
+                doc.text(item.Nombre.length > 20 ? item.Nombre.substring(0, 17) + '...' : item.Nombre, currentX + 2, currentY + 5);
                 currentX += columns[0].width;
                 
                 // Columna 2: TELÉFONO
@@ -2141,26 +2170,34 @@ colonia: document.getElementById('personaColonia').value.toUpperCase(),
                 currentX += columns[1].width;
                 
                 // Columna 3: COLONIA
-                doc.text(item.Colonia.length > 22 ? item.Colonia.substring(0, 19) + '...' : item.Colonia || '-', currentX + 2, currentY + 5);
+                doc.text(item.Colonia.length > 20 ? item.Colonia.substring(0, 17) + '...' : item.Colonia || '-', currentX + 2, currentY + 5);
                 currentX += columns[2].width;
                 
-                // Columna 4: FECHA
-                doc.text(item.Fecha, currentX + 2, currentY + 5);
+                // 🆕 Columna 4: NÚMERO/CALLE
+                doc.text(item.NumCalle || '-', currentX + 2, currentY + 5);
                 currentX += columns[3].width;
                 
-                // Columna 5: BRIGADISTA
-                doc.text(item.Brigadista.length > 22 ? item.Brigadista.substring(0, 19) + '...' : item.Brigadista, currentX + 2, currentY + 5);
+                // 🆕 Columna 5: DIRECCIÓN
+                doc.text(item.Direccion ? (item.Direccion.length > 22 ? item.Direccion.substring(0, 19) + '...' : item.Direccion) : '-', currentX + 2, currentY + 5);
                 currentX += columns[4].width;
                 
-                // 🆕 Columna 6: NIVEL INTERÉS
-                doc.text(item.NivelInteres || '-', currentX + 2, currentY + 5);
+                // Columna 6: FECHA
+                doc.text(item.Fecha, currentX + 2, currentY + 5);
                 currentX += columns[5].width;
                 
-                // 🆕 Columna 7: # PERSONAS
-                doc.text(item.NumPersonas || '-', currentX + 2, currentY + 5);
+                // Columna 7: BRIGADISTA
+                doc.text(item.Brigadista.length > 20 ? item.Brigadista.substring(0, 17) + '...' : item.Brigadista, currentX + 2, currentY + 5);
                 currentX += columns[6].width;
                 
-                // 🆕 Columna 8: VERIFICACIÓN
+                // Columna 8: NIVEL INTERÉS
+                doc.text(item.NivelInteres || '-', currentX + 2, currentY + 5);
+                currentX += columns[7].width;
+                
+                // Columna 9: # PERSONAS
+                doc.text(item.NumPersonas || '-', currentX + 2, currentY + 5);
+                currentX += columns[8].width;
+                
+                // Columna 10: VERIFICACIÓN
                 doc.text(item.Verificacion || '-', currentX + 2, currentY + 5);
                 
                 currentY += rowHeight;
@@ -2202,16 +2239,19 @@ colonia: document.getElementById('personaColonia').value.toUpperCase(),
             promises.push(
                 database.ref(`visitas/${usuario.uid}`).once('value').then(visitasSnapshot => {
                     visitasSnapshot.forEach(visita => {
-                                                allVisitasData.push({
+                  allVisitasData.push({
                             Nombre: visita.val().nombre,
                             Teléfono: visita.val().telefono || '',
                             Colonia: visita.val().colonia || '',
+                            'Número/Calle': visita.val().numCalle || '',
+                            Dirección: visita.val().direccion || '',
                             Fecha: new Date(visita.val().fecha).toLocaleString(),
                             Brigadista: usuario.nombre,
                             'Nivel Interés': visita.val().nivelInteres || '',
                             '# Personas': visita.val().numPersonas || '',
                             Verificación: visita.val().verificacion || ''
                         });
+                        
                     });
                 })
             );
