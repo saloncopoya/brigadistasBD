@@ -1,7 +1,7 @@
 {
-    "name": "Legado Avícola",
-    "short_name": "LegadoAV",
-    "description": "Cotejo Computarizado - Tabla de Posiciones en Vivo",
+    "name": "BRIGADISTA BD",
+    "short_name": "BRIGADISTA BD",
+    "description": "BASE DE DATOS",
     "start_url": "/",
     "display": "standalone",
     "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
