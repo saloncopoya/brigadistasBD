@@ -1,8 +1,9 @@
-const CACHE_NAME = 'cotejo-offline-v1.0.0.44'; 
+const CACHE_NAME = 'cotejo-offline-v1.0.0.45'; 
 const urlsToCache = [
     '/',
     '/index.html',
     '/manifest.json',
+     '/img.png',
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
     'https://cdn.jsdelivr.net/npm/sweetalert2@11',
     'https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js',
