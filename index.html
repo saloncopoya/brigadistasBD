@@ -1076,47 +1076,104 @@ await loadGlobalColonias();
     if (!currentUser) return;
     
     try {
+        const dashboardContainer = document.getElementById('dashboardStats');
+        if (dashboardContainer) {
+            dashboardContainer.innerHTML = '<div style="text-align: center; padding: 8px; color: #999; font-size: 11px;">Cargando top brigadistas...</div>';
+        }
+        
+        // Obtener todos los brigadistas
         const snapshot = await database.ref('usuarios').once('value');
         const brigadistas = [];
         snapshot.forEach(child => {
             brigadistas.push({ uid: child.key, nombre: child.val().nombre });
         });
         
-        const brigadistasConTotal = [];
-        for (const b of brigadistas) {
-            const visitsSnap = await database.ref(`visitas/${b.uid}`).once('value');
-            let total = 0;
-            visitsSnap.forEach(() => total++);
-            brigadistasConTotal.push({
-                nombre: b.nombre,
-                total: total
-            });
+        if (brigadistas.length === 0) {
+            if (dashboardContainer) {
+                dashboardContainer.innerHTML = '<div style="text-align: center; padding: 8px; color: #999; font-size: 11px;">Sin brigadistas</div>';
+            }
+            return;
         }
         
-        // Ordenar por total (mayor a menor)
+        // Para cada brigadista, contar TODAS LAS VISITAS (total de registros)
+        const brigadistasConTotal = [];
+        
+        for (const b of brigadistas) {
+            try {
+                const visitsSnap = await database.ref(`visitas/${b.uid}`).once('value');
+                
+                // CONTAR TODOS LOS REGISTROS - SIMPLE Y DIRECTO
+                let totalVisitas = 0;
+                if (visitsSnap.exists()) {
+                    visitsSnap.forEach(() => {
+                        totalVisitas++; // CADA REGISTRO CUENTA
+                    });
+                }
+                
+                brigadistasConTotal.push({
+                    nombre: b.nombre,
+                    total: totalVisitas,
+                    uid: b.uid
+                });
+                
+            } catch (error) {
+                console.error(`Error en ${b.nombre}:`, error);
+                brigadistasConTotal.push({
+                    nombre: b.nombre,
+                    total: 0,
+                    uid: b.uid
+                });
+            }
+        }
+        
+        // Ordenar por TOTAL DE VISITAS (mayor a menor)
         brigadistasConTotal.sort((a, b) => b.total - a.total);
         
-        const dashboardContainer = document.getElementById('dashboardStats');
+        // Mostrar en el dashboard
         if (dashboardContainer) {
             if (brigadistasConTotal.length === 0) {
-                dashboardContainer.innerHTML = '<div style="text-align: center; padding: 8px; color: #999; font-size: 11px;">Sin brigadistas</div>';
+                dashboardContainer.innerHTML = '<div style="text-align: center; padding: 8px; color: #999; font-size: 11px;">Sin datos</div>';
                 return;
             }
             
-            // Mostrar TODOS los brigadistas en 3 columnas compactas
-            dashboardContainer.innerHTML = brigadistasConTotal.map(b => `
-                <div style="background: #f8f9fa; padding: 6px 4px; border-radius: 8px; text-align: center; border: 1px solid #e9ecef;">
-                    <div style="font-size: 11px; font-weight: 600; color: #495057; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(b.nombre)}">${escapeHtml(b.nombre)}</div>
-                    <div style="font-size: 18px; font-weight: bold; color: #667eea; line-height: 1.2;">${b.total}</div>
-                    <div style="font-size: 9px; color: #6c757d;">visitas</div>
+            const maxToShow = 12;
+            const topBrigadistas = brigadistasConTotal.slice(0, maxToShow);
+            
+            dashboardContainer.innerHTML = topBrigadistas.map((b, index) => `
+                <div style="background: ${b.uid === currentUser?.uid ? 'linear-gradient(135deg, #667eea20, #764ba220)' : '#f8f9fa'}; 
+                            padding: 10px 4px; 
+                            border-radius: 10px; 
+                            text-align: center; 
+                            border: ${b.uid === currentUser?.uid ? '2px solid #667eea' : '1px solid #e9ecef'};
+                            transition: all 0.2s;
+                            position: relative;">
+                    ${index === 0 && b.total > 0 ? '<div style="position: absolute; top: -8px; right: -5px; font-size: 18px;">🏆</div>' : ''}
+                    <div style="font-size: 10px; 
+                                font-weight: 600; 
+                                color: ${b.uid === currentUser?.uid ? '#667eea' : '#495057'}; 
+                                white-space: nowrap; 
+                                overflow: hidden; 
+                                text-overflow: ellipsis;" 
+                         title="${escapeHtml(b.nombre)}">
+                        ${b.uid === currentUser?.uid ? '⭐ ' : ''}${index + 1}. ${escapeHtml(b.nombre)}
+                    </div>
+                    <div style="font-size: 22px; 
+                                font-weight: bold; 
+                                color: ${b.uid === currentUser?.uid ? '#667eea' : '#333'}; 
+                                line-height: 1.2;
+                                margin: 5px 0;">
+                        ${b.total}
+                    </div>
+                    <div style="font-size: 8px; color: #6c757d;">VISITAS TOTALES</div>
                 </div>
             `).join('');
         }
+        
     } catch (error) {
         console.error('Error cargando dashboard:', error);
         const dashboardContainer = document.getElementById('dashboardStats');
         if (dashboardContainer) {
-            dashboardContainer.innerHTML = '<div style="text-align: center; padding: 8px; color: #999; font-size: 11px;">Error</div>';
+            dashboardContainer.innerHTML = '<div style="text-align: center; padding: 8px; color: #ef4444; font-size: 11px;">⚠️ Error al cargar</div>';
         }
     }
 }
