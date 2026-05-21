@@ -625,6 +625,48 @@
     <button type="button" class="btn btn-success btn-large hidden" id="updateBtn"><i class="fas fa-edit"></i> ACTUALIZAR VISITA</button>
     <button type="button" class="btn btn-danger btn-large hidden" id="cancelEditBtn"><i class="fas fa-times"></i> CANCELAR</button>
 </div>
+
+                <!-- NUEVOS CAMPOS OPCIONALES -->
+            <div class="form-group">
+                <label>📊 Nivel de Interés</label>
+                <select id="nivelInteres" class="form-control">
+                    <option value="">-- SELECCIONAR --</option>
+                    <option value="CONVENCIDO">✅ CONVENCIDO</option>
+                    <option value="INDECISO">🤔 INDECISO</option>
+                    <option value="RENUENTE">❌ RENUENTE</option>
+                    <option value="LE INTERESA">📌 LE INTERESA</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>👨‍👩‍👧‍👦 Número de personas en el hogar</label>
+                <select id="numPersonas" class="form-control">
+                    <option value="">-- SELECCIONAR --</option>
+                    <option value="1">1 persona</option>
+                    <option value="2">2 personas</option>
+                    <option value="3">3 personas</option>
+                    <option value="4">4 personas</option>
+                    <option value="5">5 personas</option>
+                    <option value="6">6 personas</option>
+                    <option value="7">7 personas</option>
+                    <option value="8">8 personas</option>
+                    <option value="9">9 personas</option>
+                    <option value="10">10 personas</option>
+                    <option value="MAS DE 11">+11 personas</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>🔍 Verificación del número</label>
+                <select id="verificacion" class="form-control">
+                    <option value="">-- SELECCIONAR --</option>
+                    <option value="VERIFICADO">✅ VERIFICADO</option>
+                    <option value="NO VERIFICADO">❌ NO VERIFICADO</option>
+                    <option value="NO DISPONIBLE">📵 NO DISPONIBLE</option>
+                    <option value="NUMERO FALSO">🚫 NÚMERO FALSO</option>
+                </select>
+            </div>
+    
             
             </form>
 
@@ -1264,7 +1306,10 @@ await loadGlobalColonias();
 colonia: document.getElementById('personaColonia').value.toUpperCase(),
                 fecha: new Date().toISOString(),
                 brigadistaId: currentUser.uid,
-                brigadistaNombre: currentUser.nombre
+                brigadistaNombre: currentUser.nombre,
+                nivelInteres: document.getElementById('nivelInteres').value,
+                numPersonas: document.getElementById('numPersonas').value,
+                verificacion: document.getElementById('verificacion').value
             };
             
 
@@ -1338,21 +1383,23 @@ colonia: document.getElementById('personaColonia').value.toUpperCase(),
         }
 
         function editarVisita(visita) {
-    document.getElementById('personaNombre').value = visita.nombre;
-    document.getElementById('personaTelefono').value = visita.telefono || '';
-    document.getElementById('personaColonia').value = visita.colonia || '';
-    
-    // Ocultar botón Guardar, mostrar botones Actualizar y Cancelar
-    document.getElementById('submitBtn').classList.add('hidden');
-    document.getElementById('updateBtn').classList.remove('hidden');
-    document.getElementById('cancelEditBtn').classList.remove('hidden');
-    
-    editandoId = visita.id;
-    
-
-    
-    switchSection('registro');
-}
+            document.getElementById('personaNombre').value = visita.nombre;
+            document.getElementById('personaTelefono').value = visita.telefono || '';
+            document.getElementById('personaColonia').value = visita.colonia || '';
+            // Cargar los nuevos campos
+            document.getElementById('nivelInteres').value = visita.nivelInteres || '';
+            document.getElementById('numPersonas').value = visita.numPersonas || '';
+            document.getElementById('verificacion').value = visita.verificacion || '';
+            
+            // Ocultar botón Guardar, mostrar botones Actualizar y Cancelar
+            document.getElementById('submitBtn').classList.add('hidden');
+            document.getElementById('updateBtn').classList.remove('hidden');
+            document.getElementById('cancelEditBtn').classList.remove('hidden');
+            
+            editandoId = visita.id;
+            
+            switchSection('registro');
+        }
 
         function cancelarEdicion() {
     resetFormulario();
@@ -1366,8 +1413,11 @@ colonia: document.getElementById('personaColonia').value.toUpperCase(),
 
         function resetFormulario() {
             document.getElementById('visitaForm').reset();
-
-             editandoId = null;
+            // Resetear los nuevos campos también
+            document.getElementById('nivelInteres').value = '';
+            document.getElementById('numPersonas').value = '';
+            document.getElementById('verificacion').value = '';
+            editandoId = null;
         }
 
         async function loadMisVisitas() {
@@ -1877,12 +1927,15 @@ colonia: document.getElementById('personaColonia').value.toUpperCase(),
 }
 
         function exportMyVisitsToExcel() {
-    const data = allVisitas.map(v => ({
-        Nombre: v.nombre,
-        Teléfono: v.telefono || '',
-        Colonia: v.colonia || '',
-        Fecha: new Date(v.fecha).toLocaleString()
-    }));
+   const data = allVisitas.map(v => ({
+                Nombre: v.nombre,
+                Teléfono: v.telefono || '',
+                Colonia: v.colonia || '',
+                Fecha: new Date(v.fecha).toLocaleString(),
+                'Nivel Interés': v.nivelInteres || '',
+                '# Personas': v.numPersonas || '',
+                Verificación: v.verificacion || ''
+            }));
     
     const ws = XLSX.utils.json_to_sheet(data);
     
@@ -1968,12 +2021,15 @@ colonia: document.getElementById('personaColonia').value.toUpperCase(),
             promises.push(
                 database.ref(`visitas/${usuario.uid}`).once('value').then(visitasSnapshot => {
                     visitasSnapshot.forEach(visita => {
-                        allData.push({
+                                               allData.push({
                             Nombre: visita.val().nombre,
                             Telefono: visita.val().telefono || '',
                             Colonia: visita.val().colonia || '',
                             Fecha: new Date(visita.val().fecha).toLocaleString(),
-                            Brigadista: usuario.nombre
+                            Brigadista: usuario.nombre,
+                            NivelInteres: visita.val().nivelInteres || '',
+                            NumPersonas: visita.val().numPersonas || '',
+                            Verificacion: visita.val().verificacion || ''
                         });
                     });
                 })
@@ -1998,12 +2054,15 @@ colonia: document.getElementById('personaColonia').value.toUpperCase(),
             const rowHeight = 8;
             
             // Definir columnas
-            const columns = [
-                { header: 'NOMBRE', width: 50 },
-                { header: 'TELÉFONO', width: 35 },
-                { header: 'COLONIA', width: 45 },
-                { header: 'FECHA', width: 45 },
-                { header: 'BRIGADISTA', width: 45 }
+                       const columns = [
+                { header: 'NOMBRE', width: 40 },
+                { header: 'TELÉFONO', width: 30 },
+                { header: 'COLONIA', width: 35 },
+                { header: 'FECHA', width: 40 },
+                { header: 'BRIGADISTA', width: 35 },
+                { header: 'NIVEL INTERÉS', width: 30 },
+                { header: '# PERSONAS', width: 25 },
+                { header: 'VERIFICACIÓN', width: 30 }
             ];
             
             const totalWidth = columns.reduce((sum, col) => sum + col.width, 0);
@@ -2063,7 +2122,7 @@ colonia: document.getElementById('personaColonia').value.toUpperCase(),
                     doc.setTextColor(0, 0, 0);
                 }
                 
-                currentX = startX;
+                               currentX = startX;
                 
                 // Filas alternadas
                 if (i % 2 === 0) {
@@ -2071,19 +2130,36 @@ colonia: document.getElementById('personaColonia').value.toUpperCase(),
                     doc.rect(currentX, currentY, totalWidth, rowHeight, 'F');
                 }
                 
+                // Columna 1: NOMBRE
                 doc.text(item.Nombre.length > 25 ? item.Nombre.substring(0, 22) + '...' : item.Nombre, currentX + 2, currentY + 5);
                 currentX += columns[0].width;
                 
+                // Columna 2: TELÉFONO
                 doc.text(item.Telefono || '-', currentX + 2, currentY + 5);
                 currentX += columns[1].width;
                 
+                // Columna 3: COLONIA
                 doc.text(item.Colonia.length > 22 ? item.Colonia.substring(0, 19) + '...' : item.Colonia || '-', currentX + 2, currentY + 5);
                 currentX += columns[2].width;
                 
+                // Columna 4: FECHA
                 doc.text(item.Fecha, currentX + 2, currentY + 5);
                 currentX += columns[3].width;
                 
+                // Columna 5: BRIGADISTA
                 doc.text(item.Brigadista.length > 22 ? item.Brigadista.substring(0, 19) + '...' : item.Brigadista, currentX + 2, currentY + 5);
+                currentX += columns[4].width;
+                
+                // 🆕 Columna 6: NIVEL INTERÉS
+                doc.text(item.NivelInteres || '-', currentX + 2, currentY + 5);
+                currentX += columns[5].width;
+                
+                // 🆕 Columna 7: # PERSONAS
+                doc.text(item.NumPersonas || '-', currentX + 2, currentY + 5);
+                currentX += columns[6].width;
+                
+                // 🆕 Columna 8: VERIFICACIÓN
+                doc.text(item.Verificacion || '-', currentX + 2, currentY + 5);
                 
                 currentY += rowHeight;
             }
@@ -2124,13 +2200,15 @@ colonia: document.getElementById('personaColonia').value.toUpperCase(),
             promises.push(
                 database.ref(`visitas/${usuario.uid}`).once('value').then(visitasSnapshot => {
                     visitasSnapshot.forEach(visita => {
-                        allVisitasData.push({
+                                                allVisitasData.push({
                             Nombre: visita.val().nombre,
                             Teléfono: visita.val().telefono || '',
                             Colonia: visita.val().colonia || '',
                             Fecha: new Date(visita.val().fecha).toLocaleString(),
-                            Brigadista: usuario.nombre
-
+                            Brigadista: usuario.nombre,
+                            'Nivel Interés': visita.val().nivelInteres || '',
+                            '# Personas': visita.val().numPersonas || '',
+                            Verificación: visita.val().verificacion || ''
                         });
                     });
                 })
