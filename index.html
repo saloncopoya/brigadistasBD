@@ -865,7 +865,9 @@
         let allVisitas = [];
         let allColonias = [];
         let deferredPrompt = null;
-
+let intentosClaveAdmin = 0;        // 👈 AGREGAR ESTA LÍNEA
+const MAX_INTENTOS = 3;
+        
         // Inicialización
         async function init() {
             loadPendingQueue();
@@ -1129,60 +1131,89 @@
     }
 }
         async function registrarBrigadista() {
-            const nombre = document.getElementById('brigadistaNombre').value.trim();
-            if (!nombre) {
-                Swal.fire('Error', 'Ingresa tu nombre completo', 'error');
-                return;
+    const nombre = document.getElementById('brigadistaNombre').value.trim();
+    if (!nombre) {
+        Swal.fire('Error', 'Ingresa tu nombre completo', 'error');
+        return;
+    }
+    
+    try {
+        const usuariosRef = database.ref('usuarios');
+        const snapshot = await usuariosRef.orderByChild('nombre').equalTo(nombre).once('value');
+        let uid, esAdmin = false;
+        
+        if (snapshot.exists()) {
+            const [key, userData] = Object.entries(snapshot.val())[0];
+            uid = key;
+            esAdmin = userData.administrador || false;
+            
+            // 🔐 SI ES ADMIN, PEDIR CLAVE ANTES DE CONTINUAR
+            if (esAdmin) {
+                const claveCorrecta = await pedirClaveAdmin();
+                if (!claveCorrecta) {
+                    Swal.fire('Acceso Denegado', 'Clave de administrador incorrecta', 'error');
+                    return; // No permite el acceso
+                }
+                Swal.fire('Bienvenido', `Hola de nuevo ${nombre} (Admin)`, 'success');
+            } else {
+                Swal.fire('Bienvenido', `Hola de nuevo ${nombre}`, 'success');
+            }
+        } else {
+            // Usuario NUEVO - verificar si es admin por nombre
+            // Puedes definir una lista de nombres que serán administradores
+            const nombresAdmin = ["ADMIN", "ADMINISTRADOR", "JEFE", "SUPERVISOR"];
+            const esAdminPorNombre = nombresAdmin.includes(nombre.toUpperCase());
+            
+            if (esAdminPorNombre) {
+                const claveCorrecta = await pedirClaveAdmin();
+                if (!claveCorrecta) {
+                    Swal.fire('Acceso Denegado', 'Clave de administrador incorrecta', 'error');
+                    return;
+                }
+                esAdmin = true;
+                Swal.fire('Registro Admin', `Bienvenido ${nombre} (Administrador)`, 'success');
+            } else {
+                esAdmin = false;
+                Swal.fire('Registro exitoso', `Bienvenido ${nombre}`, 'success');
             }
             
-            try {
-                const usuariosRef = database.ref('usuarios');
-                const snapshot = await usuariosRef.orderByChild('nombre').equalTo(nombre).once('value');
-                let uid, esAdmin = false;
-                
-                if (snapshot.exists()) {
-                    const [key, userData] = Object.entries(snapshot.val())[0];
-                    uid = key;
-                    esAdmin = userData.administrador || false;
-                    Swal.fire('Bienvenido', `Hola de nuevo ${nombre}`, 'success');
-                } else {
-                    uid = Date.now().toString();
-                    await usuariosRef.child(uid).set({
-                        nombre: nombre,
-                        creado: Date.now()
-                    });
-                    Swal.fire('Registro exitoso', `Bienvenido ${nombre}`, 'success');
-                }
-                
-                currentUser = { uid, nombre, administrador: esAdmin };
-                localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                isAdmin = esAdmin;
-                
-                if (isAdmin) {
-                    document.getElementById('adminBadge').classList.remove('hidden');
-                    document.querySelector('.admin-only').classList.remove('hidden');
-                }
-                
-document.getElementById('userNameDisplay').innerHTML = `<i class="fas fa-user"></i> ${nombre}`;
-document.getElementById('logoutBtn').classList.remove('hidden');
-document.getElementById('welcomeModal').style.display = 'none';
-
-// 🔥 NUEVO: Si es administrador, mostrar panel admin, si no, mostrar registro
-if (isAdmin) {
-    switchSection('admin');
-    await loadBrigadistas();
-} else {
-    switchSection('registro');
-}
-await loadGlobalColonias();
-
-
-                
-            } catch (error) {
-                console.error(error);
-                Swal.fire('Error', 'No se pudo completar el registro', 'error');
-            }
+            uid = Date.now().toString();
+            await usuariosRef.child(uid).set({
+                nombre: nombre,
+                creado: Date.now(),
+                administrador: esAdmin
+            });
         }
+        
+        // Guardar sesión
+        currentUser = { uid, nombre, administrador: esAdmin };
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        isAdmin = esAdmin;
+        
+        // Actualizar UI
+        document.getElementById('userNameDisplay').innerHTML = `<i class="fas fa-user"></i> ${nombre}`;
+        document.getElementById('logoutBtn').classList.remove('hidden');
+        document.getElementById('welcomeModal').style.display = 'none';
+        
+        if (isAdmin) {
+            document.getElementById('adminBadge').classList.remove('hidden');
+            document.querySelector('.admin-only').classList.remove('hidden');
+            switchSection('admin');
+            await loadBrigadistas();
+            await loadAdminGlobalStats();
+        } else {
+            document.getElementById('adminBadge').classList.add('hidden');
+            document.querySelector('.admin-only').classList.add('hidden');
+            switchSection('registro');
+        }
+        
+        await loadGlobalColonias();
+        
+    } catch (error) {
+        console.error(error);
+        Swal.fire('Error', 'No se pudo completar el registro: ' + error.message, 'error');
+    }
+}
 
         async function verificarAdminStatus() {
     if (!currentUser) return;
@@ -1336,12 +1367,7 @@ await loadGlobalColonias();
                 return;
             }
 
-            // Validación de número/manzana (obligatorio)
-            const numCalle = document.getElementById('numCalle').value.trim();
-            if (!numCalle) {
-                Swal.fire('Error', 'El seccion/ manzana es obligatorio. Por favor, ingresa esta información.', 'error');
-                return;
-            }
+           
             
             const data = {
                 nombre: nombre,
@@ -2344,6 +2370,93 @@ colonia: document.getElementById('personaColonia').value.toUpperCase(),
     });
 }
 
+        async function pedirClaveAdmin() {
+    return new Promise((resolve) => {
+        if (intentosClaveAdmin >= MAX_INTENTOS) {
+            Swal.fire({
+                icon: 'error',
+                title: '🔒 Acceso Bloqueado',
+                text: `Has superado el límite de ${MAX_INTENTOS} intentos. Espera 5 minutos para volver a intentar.`,
+                confirmButtonColor: '#ef4444'
+            });
+            resolve(false);
+            return;
+        }
+        
+        Swal.fire({
+            title: '🔐 Verificación de Administrador',
+            html: `
+                <div style="text-align: left; padding: 10px 0;">
+                    <p style="color: #666; margin-bottom: 15px;">
+                        <i class="fas fa-shield-alt" style="color: #ef4444;"></i> 
+                        Esta cuenta requiere verificación de seguridad
+                    </p>
+                    <div style="background: #fef3c7; padding: 10px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #f59e0b;">
+                        <span style="font-size: 13px; color: #92400e;">
+                            <i class="fas fa-info-circle"></i> 
+                            Ingresa la clave de administrador para continuar
+                            <br><span style="font-size: 11px;">Intentos restantes: ${MAX_INTENTOS - intentosClaveAdmin}</span>
+                        </span>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <label style="font-weight: 600; color: #333; display: block; margin-bottom: 5px;">
+                            <i class="fas fa-key" style="color: #667eea;"></i> Clave de seguridad:
+                        </label>
+                        <input type="password" id="swal-clave-admin" 
+                               placeholder="••••••••" 
+                               style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 16px; letter-spacing: 4px;"
+                               autocomplete="off"
+                               onkeydown="if(event.key === 'Enter') document.querySelector('.swal2-confirm').click()">
+                    </div>
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: '<i class="fas fa-unlock"></i> Verificar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#6b7280',
+            allowOutsideClick: false,
+            preConfirm: async () => {
+                const claveIngresada = document.getElementById('swal-clave-admin').value.trim();
+                if (!claveIngresada) {
+                    Swal.showValidationMessage('⚠️ Ingresa la clave de seguridad');
+                    return false;
+                }
+                return claveIngresada;
+            }
+        }).then(async (result) => {
+            if (result.isConfirmed && result.value) {
+                try {
+                    const snapshot = await database.ref('configuracion/clave_admin').once('value');
+                    const claveCorrecta = snapshot.val() || 'ADMIN2026';
+                    
+                    if (result.value === claveCorrecta) {
+                        intentosClaveAdmin = 0; // Resetear al acertar
+                        resolve(true);
+                    } else {
+                        intentosClaveAdmin++;
+                        const restantes = MAX_INTENTOS - intentosClaveAdmin;
+                        if (restantes > 0) {
+                            Swal.fire('❌ Clave Incorrecta', `Te quedan ${restantes} intentos`, 'error');
+                            // Volver a pedir la clave (recursivo)
+                            resolve(await pedirClaveAdmin());
+                        } else {
+                            Swal.fire('🔒 Bloqueado', 'Has superado el límite de intentos', 'error');
+                            resolve(false);
+                        }
+                    }
+                } catch (error) {
+                    Swal.fire('Error', 'No se pudo verificar la clave', 'error');
+                    resolve(false);
+                }
+            } else {
+                resolve(false);
+            }
+        });
+    });
+}
+        
+        
         function escapeHtml(str) {
             if (!str) return '';
             return str.replace(/[&<>]/g, function(m) {
