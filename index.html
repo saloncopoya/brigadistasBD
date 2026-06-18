@@ -829,17 +829,18 @@
 </div>
 
     <!-- Modal Bienvenida -->
-    <div id="welcomeModal" class="modal">
-        <div class="modal-content">
-            <i class="fas fa-hand-holding-heart" style="font-size: 50px; color: #667eea;"></i>
-            <h2>¡Bienvenido Brigadista!</h2>
-            <p>Ingresa tu nombre completo para acceder y  continuar</p>
-            <div class="form-group">
-<input type="text" id="brigadistaNombre" placeholder="Escribe aqui tu nombre completo" required style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase();">
-            </div>
-            <button class="btn btn-primary" id="confirmarAcceso">Acceder</button>
+    <!-- Modal Bienvenida -->
+<div id="welcomeModal" class="modal" style="z-index: 999;">
+    <div class="modal-content">
+        <i class="fas fa-hand-holding-heart" style="font-size: 50px; color: #667eea;"></i>
+        <h2>¡Bienvenido Brigadista!</h2>
+        <p>Ingresa tu nombre completo para acceder y  continuar</p>
+        <div class="form-group">
+            <input type="text" id="brigadistaNombre" placeholder="Escribe aqui tu nombre completo" required style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase();">
         </div>
+        <button class="btn btn-primary" id="confirmarAcceso">Acceder</button>
     </div>
+</div>
 
     <script>
         // Configuración Firebase
