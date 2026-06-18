@@ -1018,6 +1018,8 @@ const MAX_INTENTOS = 3;
     if (online) {
         banner.className = 'offline-banner online';
         banner.innerHTML = '<i class="fas fa-wifi"></i><span>Online</span><span id="pendingCount" class="pending-badge hidden"></span>';
+        banner.style.cursor = 'default';
+        banner.onclick = null; // Quitar evento click cuando está online
         
         // Mostrar elementos cuando hay internet
         if (userInfo) userInfo.style.display = 'flex';
@@ -1025,7 +1027,12 @@ const MAX_INTENTOS = 3;
         
     } else {
         banner.className = 'offline-banner';
-        banner.innerHTML = '<i class="fas fa-plug"></i><span>Offline - Modo sin conexión</span><span id="pendingCount" class="pending-badge"></span>';
+banner.innerHTML = '<i class="fas fa-plug"></i><span>Offline - Modo sin conexión (pendientes: <span id="pendingCountText">0</span>)</span><span id="pendingCount" class="pending-badge hidden"></span>';        banner.style.cursor = 'pointer';
+        
+        // 🔥 AGREGAR EVENTO CLICK AL BANNER OFFLINE
+        banner.onclick = function() {
+            mostrarModalPendientes();
+        };
         
         // OCULTAR elementos cuando NO hay internet
         if (userInfo) userInfo.style.display = 'none';
@@ -1034,15 +1041,111 @@ const MAX_INTENTOS = 3;
     updatePendingBadge();
 }
 
-        function updatePendingBadge() {
-            const pendingSpan = document.getElementById('pendingCount');
-            if (pendingQueue.length > 0) {
-                pendingSpan.textContent = `${pendingQueue.length} pendientes`;
-                pendingSpan.classList.remove('hidden');
+        // Función para mostrar modal con datos de pendientes
+function mostrarModalPendientes() {
+    if (pendingQueue.length === 0) {
+        Swal.fire({
+            icon: 'info',
+            title: 'Sin pendientes',
+            text: 'No hay visitas pendientes de subir',
+            confirmButtonText: 'OK'
+        });
+        return;
+    }
+    
+    // Obtener solo las operaciones de tipo 'create' (nuevos registros)
+    const registrosPendientes = pendingQueue.filter(op => op.type === 'create');
+    
+    if (registrosPendientes.length === 0) {
+        Swal.fire({
+            icon: 'info',
+            title: 'Sin registros pendientes',
+            text: 'Solo hay operaciones de edición o eliminación pendientes',
+            confirmButtonText: 'OK'
+        });
+        return;
+    }
+    
+    // Generar HTML de la lista de pendientes
+    let listaHtml = `
+        <div style="max-height: 400px; overflow-y: auto; text-align: left; padding: 5px;">
+            <div style="font-size: 14px; font-weight: bold; margin-bottom: 15px; color: #f59e0b; text-align: center;">
+                <i class="fas fa-clock"></i> ${registrosPendientes.length} registro(s) pendiente(s) de subir
+            </div>
+            <div style="display: grid; gap: 10px;">
+    `;
+    
+    registrosPendientes.forEach((op, index) => {
+        const data = op.data;
+        listaHtml += `
+            <div style="background: #f8f9fa; padding: 12px; border-radius: 10px; border-left: 4px solid #f59e0b;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                    <span style="font-weight: bold; color: #333; font-size: 14px;">#${index + 1}</span>
+                    <span style="font-size: 11px; color: #999;">Pendiente</span>
+                </div>
+                <div style="font-size: 14px; font-weight: 600; color: #1f2937;">${escapeHtml(data.nombre) || 'Sin nombre'}</div>
+                <div style="font-size: 13px; color: #4b5563; margin-top: 3px;">
+                    <i class="fas fa-phone" style="color: #10b981; width: 16px;"></i> ${data.telefono || 'Sin teléfono'}
+                </div>
+                <div style="font-size: 13px; color: #4b5563; margin-top: 2px;">
+                    <i class="fas fa-map-marker-alt" style="color: #667eea; width: 16px;"></i> ${escapeHtml(data.colonia) || 'Sin colonia'}
+                </div>
+            </div>
+        `;
+    });
+    
+    listaHtml += `
+            </div>
+        </div>
+    `;
+    
+    // Mostrar modal con SweetAlert2
+    Swal.fire({
+        title: '📋 Registros Pendientes',
+        html: listaHtml,
+        width: '500px',
+        confirmButtonText: 'Cerrar',
+        confirmButtonColor: '#f59e0b',
+        showCancelButton: true,
+        cancelButtonText: 'Intentar sincronizar ahora',
+        cancelButtonColor: '#10b981',
+        customClass: {
+            popup: 'modal-pendientes'
+        }
+    }).then((result) => {
+        if (result.dismiss === Swal.DismissReason.cancel) {
+            // Si el usuario hace clic en "Intentar sincronizar ahora"
+            if (navigator.onLine) {
+                processPendingQueue();
             } else {
-                pendingSpan.classList.add('hidden');
+                Swal.fire('Sin conexión', 'Conéctate a internet para sincronizar', 'info');
             }
         }
+    });
+}
+
+        function updatePendingBadge() {
+    const pendingSpan = document.getElementById('pendingCount');
+    const pendingText = document.getElementById('pendingCountText');
+    const count = pendingQueue.length;
+    
+    if (count > 0) {
+        if (pendingSpan) {
+            pendingSpan.textContent = `${count} pendientes`;
+            pendingSpan.classList.remove('hidden');
+        }
+        if (pendingText) {
+            pendingText.textContent = count;
+        }
+    } else {
+        if (pendingSpan) {
+            pendingSpan.classList.add('hidden');
+        }
+        if (pendingText) {
+            pendingText.textContent = '0';
+        }
+    }
+}
 
         function cerrarSesion() {
             Swal.fire({
