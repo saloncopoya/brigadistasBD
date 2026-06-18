@@ -637,13 +637,16 @@
     <button type="button" class="btn btn-danger btn-large hidden" id="cancelEditBtn"><i class="fas fa-times"></i> CANCELAR</button>
 </div>
 
+    <!-- COMENTADO: CAMPOS OCULTOS - Se ocultaron los siguientes campos opcionales por solicitud del usuario -->
+<div class="hidden">
+    <!-- NUEVOS CAMPOS OPCIONALES -->
      <div class="form-group">
                 <label>🏠 Seccion / Manzana</label>
                 <input type="text" id="numCalle" 
                        placeholder="Ejemplo: 2196" 
                        style="text-transform: uppercase;" 
                        oninput="this.value = this.value.toUpperCase();"
-                       autocomplete="off" required>
+                       autocomplete="off">
             </div>
 
             <div class="form-group">
@@ -695,6 +698,9 @@
                     <option value="NUMERO FALSO">🚫 NÚMERO FALSO</option>
                 </select>
             </div>
+    </div>
+<!-- FIN DE CAMPOS OCULTOS -->
+
     
             
             </form>
