@@ -17,7 +17,7 @@
     measurementId: "G-8L3Z484S3D"
   };
 
-  const DEFAULT_CENTER = [19.4326, -99.1332];
+const DEFAULT_CENTER = [16.7530, -93.1150];
   const DEFAULT_ZOOM = 13;
 
   // ==================== UTILIDADES ====================
