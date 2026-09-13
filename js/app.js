@@ -394,7 +394,7 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
   }
 
   async function sharePost(post) {
-    const url = location.origin + '/share/post/' + post.id;
+const url = location.origin + '/share/post/' + post.id + '.html';
      const res = await Publisher.share({
       title: post.title,
       text: post.content ? post.content.slice(0, 100) : 'Mira esta publicación',
@@ -789,7 +789,7 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
   }
 
   async function shareRoute(route) {
-    const url = location.origin + '/share/ruta/' + route.id;
+const url = location.origin + '/share/ruta/' + route.id + '.html';
      const res = await Publisher.share({
       title: 'Ruta ' + route.nombre,
       text: `Mira la ruta ${route.nombre} (${route.categoria || 'urbana'})`,
@@ -1133,7 +1133,7 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
             const msg = encodeURIComponent('Hola, me interesa: ' + ad.title);
             window.open(`https://wa.me/${ad.phone.replace(/\D/g, '')}?text=${msg}`, '_blank');
           } else if (b.dataset.mact === 'share') {
-            const url = location.origin + '/share/m/' + id;
+const url = location.origin + '/share/m/' + id + '.html';
              Publisher.share({ title: ad.title, text: ad.description?.slice(0, 100), url });
           }
         };
