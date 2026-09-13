@@ -55,10 +55,10 @@ export async function onRequest(context) {
     if (tipo === 'ruta') folder = 'share/ruta';
     else if (tipo === 'market') folder = 'share/m';
 
-    const safeSlug = slug.replace(/[^a-z0-9+\-_]/gi, '-').toLowerCase();
-    const htmlPath = `${folder}/${safeSlug}.html`;
-    const pageUrl = `${baseUrl}/${htmlPath}`;
-
+    const safeSlug = slug.replace(/[^a-z0-9\-_]/gi, '-').toLowerCase().replace(/-+/g, '-').replace(/^-|-$/g, '');
+     const htmlPath = `${folder}/${safeSlug}.html`;
+    const cleanPath = `${folder}/${safeSlug}`;
+    const pageUrl = `${baseUrl}/${cleanPath}`;
     // ---------- Generar HTML con SEO completo ----------
     const html = generateHTML({
       tipo, title, content, image, slug: safeSlug, pageUrl, baseUrl, extra
