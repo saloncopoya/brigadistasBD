@@ -600,7 +600,7 @@ button{cursor:pointer;border:none;background:none}
       likes: state.editingPost?.likes || 0,
       likedBy: state.editingPost?.likedBy || [],
       comments: state.editingPost?.comments || [],
-      url: `/share/post/${id}.html`
+      url: `/share/post/${id}`
     };
     await DB.put('posts', post);
     try{
@@ -689,14 +689,15 @@ button{cursor:pointer;border:none;background:none}
     const pts = state.routeDraft.puntos;
     if(pts.length>1){
       const geom = await getRouteGeometry(pts);
+      state.routeDraft.geometriaIda = geom;
       state.layers.ida = L.polyline(geom,{color:state.routeDraft.colorIda||'#00e5ff',weight:5,opacity:.9}).addTo(state.map);
     }
     const pv = state.routeDraft.puntosVuelta;
     if(pv.length>1){
       const geomV = await getRouteGeometry(pv);
+      state.routeDraft.geometriaVuelta = geomV;
       state.layers.vuelta = L.polyline(geomV,{color:state.routeDraft.colorVuelta||'#a855f7',weight:5,opacity:.9,dashArray:'8,6'}).addTo(state.map);
     }
-    // Sin fitBounds para respetar la vista del usuario
   }
 
   // Obtiene la geometría real de la calle entre los puntos usando OSRM
@@ -730,7 +731,29 @@ button{cursor:pointer;border:none;background:none}
     $('#routePrev').style.visibility = n===1?'hidden':'visible';
     $('#routeNext').classList.toggle('hidden', n===3);
     $('#routeSave').classList.toggle('hidden', n!==3);
-    if(n===3) setTimeout(()=>{ initEditorMap(); state.map && state.map.invalidateSize(); },150);
+    if(n===3){
+      setTimeout(()=>{
+        initEditorMap();
+        if(state.map){
+          state.map.invalidateSize();
+          if(state.routeDraft.puntos && state.routeDraft.puntos.length){
+            state.layers.markers.forEach(m=>state.map.removeLayer(m));
+            state.layers.markers = [];
+            state.routeDraft.puntos.forEach(p=>{
+              addMarker(p[0], p[1]);
+            });
+            redrawLines();
+          }
+          if(state.routeDraft.pois && state.routeDraft.pois.length){
+            state.routeDraft.pois.forEach(p=>{
+              const poiMarker = L.circleMarker([p[0], p[1]],{radius:7,color:'#a855f7',fillColor:'#a855f7',fillOpacity:1,weight:2}).addTo(state.map);
+              state.layers.markers.push(poiMarker);
+            });
+          }
+          updateEditorStatus();
+        }
+      },200);
+    }
   }
   $('#routePrev').onclick = ()=>goStep(Math.max(1,state.routeStep-1));
   $('#routeNext').onclick = ()=>goStep(Math.min(3,state.routeStep+1));
@@ -835,14 +858,15 @@ button{cursor:pointer;border:none;background:none}
       notas: $('#routeNotas').value.trim(),
       paradas: splitList($('#routeParadas').value),
       retornos: splitList($('#routeRetornos').value),
-      pois: splitList($('#routePoisIda').value),
-      poisVuelta: splitList($('#routePoisVuelta').value),
+      pois: (state.routeDraft.pois && state.routeDraft.pois.length) ? state.routeDraft.pois : splitList($('#routePoisIda').value),      poisVuelta: splitList($('#routePoisVuelta').value),
       calles: splitList($('#routeCalles').value),
       puntos: state.routeDraft.puntos,
       puntosVuelta: state.routeDraft.puntosVuelta,
+      geometriaIda: state.routeDraft.geometriaIda || [],
+      geometriaVuelta: state.routeDraft.geometriaVuelta || [],
       timestamp: state.editingRoute?.timestamp || Date.now(),
       updatedAt: Date.now(),
-      url:`/share/ruta/${id}.html`
+      url:`/share/ruta/${id}`
     };
     await DB.put('routes', route);
     try{
@@ -898,6 +922,8 @@ button{cursor:pointer;border:none;background:none}
         state.routeDraft = {
           puntos: r.puntos||[], puntosVuelta: r.puntosVuelta||[],
           calles: r.calles||[], pois: r.pois||[],
+          geometriaIda: r.geometriaIda||[],
+          geometriaVuelta: r.geometriaVuelta||[],
           colorIda: r.colorIda||colores[0], colorVuelta: r.colorVuelta||colores[1]
         };
         $('#routeFormTitle').textContent='Editar ruta';
@@ -995,7 +1021,7 @@ button{cursor:pointer;border:none;background:none}
       price:$('#mkPrice').value.trim(), phone:$('#mkPhone').value.trim(),
       description:$('#mkDesc').value.trim(), image:$('#mkImgUrl').value.trim(),
       tipo:'market', timestamp: state.editingMarket?.timestamp||Date.now(),
-      updatedAt:Date.now(), url:`/share/m/${id}.html`
+      updatedAt:Date.now(), url:`/share/m/${id}`
     };
     await DB.put('market',ad);
     try{
