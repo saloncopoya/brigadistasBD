@@ -6,40 +6,65 @@
   <title>Panel de Publicación</title>
   <link rel="stylesheet" href="css/style.css">
   <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f172a">
 </head>
 <body>
-  <div class="admin-container">
-    <h2>Publicar Nuevo Post .</h2>
-    <form id="publishForm">
-      <label>Contraseña Administrador:
-        <input type="password" id="secretPass" required>
-      </label>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="/" class="logo">📝 Mi Blog</a>
+      <nav class="nav"><a href="/">Inicio</a></nav>
+    </div>
+  </header>
 
-      <label>Título del Post:
-        <input type="text" id="title" placeholder="Ej: Mi primer artículo" required>
-      </label>
+  <main class="container">
+    <section class="admin-container">
+      <h1>Publicar Nuevo Post</h1>
+      <p class="muted">Rellena los campos y pulsa publicar. El sitio se actualizará automáticamente.</p>
 
-      <label>Slug (URL personalizada):
-        <input type="text" id="slug" placeholder="ej-mi-primer-articulo" required>
-      </label>
+      <form id="publishForm" class="form">
+        <div class="field">
+          <label for="secretPass">Contraseña de administrador</label>
+          <input type="password" id="secretPass" autocomplete="current-password" required>
+        </div>
 
-      <label>Descripción corta (SEO):
-        <textarea id="description" rows="2" placeholder="Resumen para Google..." required></textarea>
-      </label>
+        <div class="field">
+          <label for="title">Título</label>
+          <input type="text" id="title" placeholder="Mi primer artículo" required>
+        </div>
 
-      <label>URL Imagen Destacada:
-        <input type="url" id="image" placeholder="https://ejemplo.com/imagen.jpg">
-      </label>
+        <div class="field">
+          <label for="slug">Slug (URL)</label>
+          <input type="text" id="slug" placeholder="mi-primer-articulo" required>
+        </div>
 
-      <label>Contenido del Post (Soporta HTML):
-        <textarea id="content" rows="10" placeholder="<p>Escribe tu contenido aquí...</p>" required></textarea>
-      </label>
+        <div class="field">
+          <label for="description">Descripción corta (SEO)</label>
+          <textarea id="description" rows="2" placeholder="Resumen para buscadores…" required></textarea>
+        </div>
 
-      <button type="submit" id="submitBtn">Publicar Artículo</button>
-    </form>
-    <div id="statusMessage"></div>
-  </div>
+        <div class="field">
+          <label for="image">URL de imagen destacada</label>
+          <input type="url" id="image" placeholder="https://…/imagen.jpg">
+        </div>
 
+        <div class="field">
+          <label for="content">Contenido (HTML permitido)</label>
+          <textarea id="content" rows="12" placeholder="<p>Escribe tu contenido aquí…</p>" required></textarea>
+        </div>
+
+        <button type="submit" id="submitBtn" class="btn-primary">Publicar Artículo</button>
+      </form>
+
+      <div id="statusMessage" class="status" hidden></div>
+    </section>
+  </main>
+
+  <script src="js/db.js"></script>
   <script src="js/publisher.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("sw.js").catch(() => {});
+    }
+  </script>
 </body>
 </html>
