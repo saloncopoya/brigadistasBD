@@ -1,23 +1,17 @@
-/* SW.JS — v4 · Corregido para /admin y navegación HTML */
-const VERSION = 'bgd-v4';
+/* ==========================================================================
+   SW.JS — Corregido: NO intercepta tiles con credentials:include
+   Los tiles deben ir DIRECTO a la red sin que el SW los toque.
+   ========================================================================== */
+
+const VERSION = 'bgd-v6';
 const STATIC_CACHE = `${VERSION}-static`;
 const HTML_CACHE = `${VERSION}-html`;
-const TILES_CACHE = `${VERSION}-tiles`;
 
 const PRECACHE = [
-  '/',
-  '/index.html',
-  '/admin.html',
-  '/offline.html',
-  '/manifest.json',
-  '/robots.txt',
-  '/sitemap.xml',
-  '/assets/icon.svg',
-  '/js/db.js',
-  '/js/publisher.js',
-  '/js/app.js',
-  '/js/main.js',
-  '/js/blog.js'
+  '/', '/index.html', '/admin.html', '/offline.html',
+  '/manifest.json', '/robots.txt', '/sitemap.xml',
+  '/assets/icon.svg', '/js/db.js', '/js/publisher.js', '/js/app.js',
+  '/js/main.js', '/js/blog.js'
 ];
 
 self.addEventListener('install', event => {
@@ -46,46 +40,47 @@ self.addEventListener('fetch', event => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
 
-  // Tiles OSM
-  if (url.hostname.endsWith('tile.openstreetmap.org')) {
-    event.respondWith(tileStrategy(req));
+  // ⚠️ CRÍTICO: NO interceptar tiles. Dejarlos pasar DIRECTO.
+  if (url.hostname.includes('tile.openstreetmap.org') ||
+      url.hostname.includes('basemaps.cartocdn.com') ||
+      url.hostname.includes('tile.openstreetmap.fr') ||
+      url.hostname.includes('maps.wikimedia.org')) {
+    return; // El navegador maneja el fetch normalmente
+  }
+
+  // NO interceptar APIs externas
+  if (url.hostname.includes('nominatim.openstreetmap.org') ||
+      url.hostname.includes('firebaseio.com') ||
+      url.hostname.includes('googleapis.com') ||
+      url.hostname.includes('cloudinary.com') ||
+      url.hostname.includes('gstatic.com')) {
     return;
   }
 
-  // Externos (CDNs, Firebase, Nominatim, Cloudinary) → red directa
-  if (url.origin !== self.location.origin) return;
-
-  // HTML (navegación) → network-first SIN fallback a index.html
-  if (req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html')) {
-    event.respondWith(htmlStrategy(req));
-    return;
+  // Mismo origen
+  if (url.origin === self.location.origin) {
+    if (req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html')) {
+      event.respondWith(htmlStrategy(req));
+      return;
+    }
+    event.respondWith(cacheFirst(req, STATIC_CACHE));
   }
-
-  // Estáticos propios → cache-first
-  event.respondWith(cacheFirst(req, STATIC_CACHE));
 });
 
 async function htmlStrategy(req) {
   const cache = await caches.open(HTML_CACHE);
   try {
     const fresh = await fetch(req);
-    if (fresh && fresh.ok && fresh.status === 200) {
+    if (fresh && fresh.ok) {
       cache.put(req, fresh.clone());
-      console.log('🌐 Desde INTERNET:', new URL(req.url).pathname);
       return fresh;
     }
-    // Si la red responde error (404, 308, 503...) intentamos cache
-    throw new Error('bad status ' + fresh.status);
+    throw new Error('bad status');
   } catch (err) {
     const cached = await cache.match(req);
-    if (cached) {
-      console.log('✅ Desde CACHÉ:', new URL(req.url).pathname);
-      return cached;
-    }
-    // Sin cache → offline.html
+    if (cached) return cached;
     const offline = await caches.match('/offline.html');
-    if (offline) return offline;
-    return new Response('<h1>Sin conexión</h1>', {
+    return offline || new Response('<h1>Sin conexión</h1>', {
       status: 503, headers: { 'Content-Type': 'text/html' }
     });
   }
@@ -94,28 +89,12 @@ async function htmlStrategy(req) {
 async function cacheFirst(req, cacheName) {
   const cache = await caches.open(cacheName);
   const cached = await cache.match(req);
-  if (cached) { console.log('✅ Desde CACHÉ:', new URL(req.url).pathname); return cached; }
+  if (cached) return cached;
   try {
     const fresh = await fetch(req);
     if (fresh && fresh.ok) cache.put(req, fresh.clone());
-    console.log('🌐 Desde INTERNET:', new URL(req.url).pathname);
     return fresh;
   } catch (e) { return cached || Response.error(); }
-}
-
-async function tileStrategy(req) {
-  const cache = await caches.open(TILES_CACHE);
-  const cached = await cache.match(req);
-  if (cached) return cached;
-  try {
-    const fresh = await fetch(req, { mode: 'cors' });
-    if (fresh && fresh.ok) {
-      cache.put(req, fresh.clone());
-      const keys = await cache.keys();
-      if (keys.length > 500) await cache.delete(keys[0]);
-    }
-    return fresh;
-  } catch (e) { return new Response('', { status: 504 }); }
 }
 
 self.addEventListener('message', event => {
