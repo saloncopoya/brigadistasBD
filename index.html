@@ -3,30 +3,52 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mi Blog Estático</title>
-  <meta name="description" content="Bienvenido a mi blog alojado en Cloudflare Pages">
+  <title>Mi Blog — Últimas Publicaciones</title>
+  <meta name="description" content="Blog estático moderno y offline-first alojado en Cloudflare Pages.">
   <link rel="stylesheet" href="css/style.css">
   <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f172a">
 </head>
 <body>
-  <header>
-    <h1>Mi Blog</h1>
-    <nav><a href="admin.html">Panel Admin</a></nav>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="/" class="logo">📝 Mi Blog</a>
+      <nav class="nav">
+        <a href="/">Inicio</a>
+        <a href="admin.html">Admin</a>
+      </nav>
+    </div>
   </header>
 
-  <main>
-    <h2>Últimas Publicaciones</h2>
-    <div id="postsList" class="posts-grid">Cargando publicaciones...</div>
+  <main class="container">
+    <section class="hero">
+      <h1>Últimas Publicaciones</h1>
+      <p class="muted">Disponibles online y offline, siempre a mano.</p>
+    </section>
+
+    <div id="offlineBanner" class="banner" hidden>
+      ⚡ Estás offline. Mostrando contenido guardado en tu dispositivo.
+    </div>
+
+    <div id="postsList" class="posts-grid">
+      <p class="muted">Cargando publicaciones…</p>
+    </div>
   </main>
 
-  <footer>
-    <p>&copy; 2026 Mi Blog Estático</p>
+  <footer class="site-footer">
+    <div class="container">
+      <p>&copy; <span id="year"></span> Mi Blog Estático · Hecho con Cloudflare Pages</p>
+    </div>
   </footer>
 
+  <script src="js/db.js"></script>
   <script src="js/main.js"></script>
   <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js');
+    document.getElementById("year").textContent = new Date().getFullYear();
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("sw.js").catch(() => {});
+      });
     }
   </script>
 </body>
