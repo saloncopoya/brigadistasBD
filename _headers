@@ -1,11 +1,69 @@
+# ========================================================================
+# Cloudflare Pages - Cabeceras HTTP de seguridad
+# ========================================================================
+
 /*
   X-Frame-Options: SAMEORIGIN
   X-Content-Type-Options: nosniff
+  X-XSS-Protection: 1; mode=block
   Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: geolocation=(self), camera=(), microphone=()
+  Permissions-Policy: geolocation=(self), camera=(self), microphone=(), payment=(), usb=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://maps.googleapis.com; style-src 'self' 'unsafe-inline' https://unpkg.com https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https: wss: https://*.firebaseio.com https://*.googleapis.com https://nominatim.openstreetmap.org https://api.cloudinary.com https://res.cloudinary.com; frame-src 'self' https://www.google.com https://maps.google.com; worker-src 'self' blob:; manifest-src 'self'; media-src 'self' https: blob:; object-src 'none'; base-uri 'self'; form-action 'self'
+  Access-Control-Allow-Origin: https://brigadistasbd.pages.dev
 
+# Recursos estáticos — caché agresiva
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/js/*
+  Cache-Control: public, max-age=86400, must-revalidate
+
+/css/*
+  Cache-Control: public, max-age=86400, must-revalidate
+
+# Páginas HTML — revalidar siempre
+/*.html
+  Cache-Control: public, max-age=300, must-revalidate
+
+# Service Worker — sin caché
+/sw.js
+  Cache-Control: no-cache, no-store, must-revalidate
+  Service-Worker-Allowed: /
+
+# Manifest
+/manifest.json
+  Cache-Control: public, max-age=86400
+  Content-Type: application/manifest+json
+
+# Páginas compartidas — indexables con caché media
+/share/*
+  Cache-Control: public, max-age=3600, s-maxage=86400
+  X-Robots-Tag: index, follow
+
+# Bloquear indexación del panel admin
 /admin.html
-  X-Robots-Tag: noindex, nofollow
+  X-Robots-Tag: noindex, nofollow, noarchive
+  Cache-Control: no-store
 
+/admin
+  X-Robots-Tag: noindex, nofollow, noarchive
+  Cache-Control: no-store
+
+# Bloquear indexación de funciones API
 /functions/*
-  X-Robots-Tag: noindex
+  X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-store
+
+/api/*
+  X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-store
+
+# Sitemap y robots
+/sitemap.xml
+  Content-Type: application/xml; charset=utf-8
+  Cache-Control: public, max-age=3600
+
+/robots.txt
+  Content-Type: text/plain; charset=utf-8
+  Cache-Control: public, max-age=3600
