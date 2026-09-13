@@ -756,6 +756,27 @@ const url = location.origin + '/share/post/' + post.id + '.html';
     setTimeout(() => initRouteMap(route), 200);
   }
 
+     // Offset perpendicular a una polyline (separa ida y regreso en la misma calle)
+  function offsetPolyline(coords, offsetMeters){
+    if(!coords || coords.length < 2) return coords;
+    const out = [];
+    const R = 6371000;
+    for(let i=0;i<coords.length;i++){
+      const p = coords[i];
+      const prev = coords[Math.max(0,i-1)];
+      const next = coords[Math.min(coords.length-1,i+1)];
+      const dLat = next[0]-prev[0];
+      const dLng = next[1]-prev[1];
+      const len = Math.hypot(dLat,dLng) || 1;
+      const perpLat = -dLng/len;
+      const perpLng =  dLat/len;
+      const dLatDeg = (offsetMeters / R) * (180/Math.PI);
+      const dLngDeg = (offsetMeters / (R*Math.cos(p[0]*Math.PI/180))) * (180/Math.PI);
+      out.push([p[0] + perpLat*dLatDeg, p[1] + perpLng*dLngDeg]);
+    }
+    return out;
+  }
+   
   function initRouteMap(route) {
     const container = document.getElementById('map');
     if (!container) return;
@@ -768,23 +789,91 @@ const url = location.origin + '/share/post/' + post.id + '.html';
     }).addTo(state.map);
 
     const layers = [];
-    const pts = (route.geometriaIda && route.geometriaIda.length) ? route.geometriaIda : (route.puntos || []);
-    if (pts.length > 1) {
-      const line = L.polyline(pts, { color: route.colorIda || '#00e5ff', weight: 5, opacity: 0.9 }).addTo(state.map);
-      layers.push(line);
+    const colorIda = route.colorIda || '#00e5ff';
+    const colorVuelta = route.colorVuelta || '#a855f7';
+
+    // --- IDA ---
+    const ptsIda = (route.geometriaIda && route.geometriaIda.length) ? route.geometriaIda : (route.puntos || []);
+    if (ptsIda.length > 1) {
+      // Si hay vuelta, aplicamos offset; si no, dibujamos centrado
+      const hasVuelta = (route.geometriaVuelta && route.geometriaVuelta.length > 1) ||
+                        (route.puntosVuelta && route.puntosVuelta.length > 1);
+      const finalPts = hasVuelta ? offsetPolyline(ptsIda, 4) : ptsIda;
+      const lineIda = L.polyline(finalPts, {
+        color: colorIda,
+        weight: 5,
+        opacity: 0.95,
+        lineJoin: 'round',
+        lineCap: 'round'
+      }).addTo(state.map);
+      layers.push(lineIda);
+
+      // Marcadores de inicio/fin de ida
+      const startIda = finalPts[0];
+      const endIda = finalPts[finalPts.length - 1];
+      L.circleMarker(startIda, { radius: 7, color: colorIda, fillColor: '#fff', fillOpacity: 1, weight: 3 })
+        .addTo(state.map).bindPopup('🟢 Inicio ida');
+      L.circleMarker(endIda, { radius: 7, color: colorIda, fillColor: colorIda, fillOpacity: 1, weight: 2 })
+        .addTo(state.map).bindPopup('🔴 Fin ida');
     }
-    const pv = (route.geometriaVuelta && route.geometriaVuelta.length) ? route.geometriaVuelta : (route.puntosVuelta || []);
-    if (pv.length > 1) {
-      const line = L.polyline(pv, { color: route.colorVuelta || '#a855f7', weight: 5, opacity: 0.9, dashArray: '8,6' }).addTo(state.map);
-      layers.push(line);
+
+    // --- REGRESO ---
+    const ptsVuelta = (route.geometriaVuelta && route.geometriaVuelta.length) ? route.geometriaVuelta : (route.puntosVuelta || []);
+    if (ptsVuelta.length > 1) {
+      const hasIda = (route.geometriaIda && route.geometriaIda.length > 1) ||
+                     (route.puntos && route.puntos.length > 1);
+      const finalPtsV = hasIda ? offsetPolyline(ptsVuelta, -4) : ptsVuelta;
+      const lineVuelta = L.polyline(finalPtsV, {
+        color: colorVuelta,
+        weight: 5,
+        opacity: 0.95,
+        lineJoin: 'round',
+        lineCap: 'round'
+      }).addTo(state.map);
+      layers.push(lineVuelta);
+
+      // Marcadores de inicio/fin de regreso
+      const startV = finalPtsV[0];
+      const endV = finalPtsV[finalPtsV.length - 1];
+      L.circleMarker(startV, { radius: 7, color: colorVuelta, fillColor: '#fff', fillOpacity: 1, weight: 3 })
+        .addTo(state.map).bindPopup('🟣 Inicio regreso');
+      L.circleMarker(endV, { radius: 7, color: colorVuelta, fillColor: colorVuelta, fillOpacity: 1, weight: 2 })
+        .addTo(state.map).bindPopup('🔵 Fin regreso');
     }
+
+    // --- POIs ---
+    (route.pois || []).forEach((poi, i) => {
+      if (Array.isArray(poi) && poi.length === 2) {
+        L.circleMarker(poi, {
+          radius: 6, color: '#f59e0b', fillColor: '#f59e0b', fillOpacity: 0.9, weight: 2
+        }).addTo(state.map).bindPopup('📍 POI ' + (i + 1));
+      }
+    });
+
+    // --- Centrar mapa ---
     const allPts = (route.puntos || []).concat(route.puntosVuelta || []);
     if (allPts.length) {
       state.map.fitBounds(L.latLngBounds(allPts).pad(0.15));
+    } else if (route.calles && route.calles.length) {
+      // Si no hay puntos pero hay calles, mostrar centro por defecto
+      state.map.setView(DEFAULT_CENTER, 13);
     } else {
-      // Si no hay puntos, intentar geocodificar calles
       state.map.setView(DEFAULT_CENTER, 12);
     }
+
+    // --- Leyenda flotante (opcional pero recomendado) ---
+    const legend = L.control({ position: 'bottomright' });
+    legend.onAdd = function () {
+      const div = L.DomUtil.create('div', 'map-legend');
+      div.innerHTML = `
+        <div style="background:rgba(20,28,48,.92);padding:8px 12px;border-radius:10px;font-size:12px;color:#e8edf7;border:1px solid #26314f;line-height:1.6">
+          <div><span style="display:inline-block;width:14px;height:3px;background:${colorIda};vertical-align:middle;margin-right:6px"></span> Ida</div>
+          <div><span style="display:inline-block;width:14px;height:3px;background:${colorVuelta};vertical-align:middle;margin-right:6px"></span> Regreso</div>
+        </div>`;
+      return div;
+    };
+    legend.addTo(state.map);
+
     state.mapLayers = { route: layers };
   }
 
