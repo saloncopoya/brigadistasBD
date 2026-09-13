@@ -1377,29 +1377,19 @@ const url = location.origin + '/share/m/' + id;
   function renderTripPointsList() {
     const el = $('#tripPointsList');
     if (!el) return;
-    if (!state.tripPoints.length) { el.innerHTML = '<div class="tiny" style="text-align:center;padding:8px">Toca el mapa para agregar puntos</div>'; return; }
+    if (!state.tripPoints.length) {
+      el.innerHTML = '<div class="empty-trip">Toca el mapa para agregar puntos (máx. 5)</div>';
+      return;
+    }
     el.innerHTML = state.tripPoints.map((p, i) => `
-      <div class="list-item" style="padding:8px 12px">
-        <div style="display:flex;align-items:center;gap:8px;flex:1">
-          <div style="width:24px;height:24px;border-radius:50%;background:${p.color};display:grid;place-items:center;color:#fff;font-weight:800;font-size:12px">${p.letter}</div>
-          <span style="font-size:12.5px">${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:6px">
-          <input type="range" min="10" max="2000" value="${p.radius}" data-trip-radius="${i}" style="width:80px">
-          <span class="tiny" data-trip-radius-val="${i}">${p.radius}m</span>
-          <button class="btn btn-danger btn-sm" data-trip-del="${i}">✕</button>
+      <div class="trip-point-card">
+        <div class="tpc-letter" style="background:${p.color}">${p.letter}</div>
+        <span class="tpc-coords">${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}</span>
+        <div class="tpc-actions">
+          <button data-trip-del="${i}" title="Eliminar">✕</button>
         </div>
       </div>`).join('');
 
-    el.querySelectorAll('[data-trip-radius]').forEach(inp => {
-      inp.oninput = e => {
-        const i = +e.target.dataset.tripRadius;
-        state.tripPoints[i].radius = +e.target.value;
-        el.querySelector(`[data-trip-radius-val="${i}"]`).textContent = e.target.value + 'm';
-        if (state.tripCircles[i]) state.tripCircles[i].setRadius(+e.target.value);
-        performTripSearch();
-      };
-    });
     el.querySelectorAll('[data-trip-del]').forEach(b => {
       b.onclick = () => {
         const i = +b.dataset.tripDel;
@@ -1412,6 +1402,17 @@ const url = location.origin + '/share/m/' + id;
         state.tripPoints.forEach((p, idx) => {
           p.letter = String.fromCharCode(65 + idx);
           p.color = ['#10b981', '#ef4444', '#f59e0b', '#3b82f6', '#a855f7'][idx] || '#00e5ff';
+        });
+        // Redibujar markers en el mapa con nueva letra/color
+        state.tripMarkers.forEach((m, idx) => {
+          const pt = state.tripPoints[idx];
+          if (!pt) return;
+          const icon = L.divIcon({
+            className: '',
+            html: `<div class="marker-${pt.letter.toLowerCase()}" style="background:${pt.color}">${pt.letter}</div>`,
+            iconSize: [26, 26], iconAnchor: [13, 13]
+          });
+          m.setIcon(icon);
         });
         renderTripPointsList();
         performTripSearch();
@@ -1452,103 +1453,418 @@ const url = location.origin + '/share/m/' + id;
     return min;
   }
 
+  // ============================================================
+  //  MOTOR AVANZADO DE BÚSQUEDA DE VIAJES
+  //  - Rutas directas
+  //  - Transbordos de 1, 2, 3, 4 saltos
+  //  - Ordenados por distancia total y cantidad de transbordos
+  //  - Dibuja trazos en el mapa con colores únicos por resultado
+  // ============================================================
+
+  const TRIP_COLORS = ['#00e5ff','#a855f7','#10b981','#f59e0b','#ef4444','#ec4899','#3b82f6','#84cc16','#f97316','#14b8a6','#8b5cf6','#eab308'];
+  let tripRouteLayers = [];        // capas de trazos de resultados en el mapa
+  let tripCurrentHighlight = null; // índice del resultado resaltado
+
+  function clearTripRouteLayers() {
+    tripRouteLayers.forEach(l => { try { state.tripMap.removeLayer(l); } catch(e){} });
+    tripRouteLayers = [];
+  }
+
+  // Devuelve las coordenadas [lat,lng] de una ruta (geometría o puntos)
+  function getRouteCoords(route) {
+    if (route.geometriaIda && route.geometriaIda.length > 1) {
+      return route.geometriaIda.map(c => [c[0], c[1]]);
+    }
+    return (route.puntos || []).map(c => [c[0], c[1]]);
+  }
+
+  // Distancia total de una ruta (en metros)
+  function routeTotalDistance(route) {
+    const coords = getRouteCoords(route);
+    if (coords.length < 2) return 0;
+    let total = 0;
+    for (let i = 0; i < coords.length - 1; i++) {
+      total += haversine(coords[i][0], coords[i][1], coords[i+1][0], coords[i+1][1]);
+    }
+    return total;
+  }
+
+  // Dibuja en el mapa un conjunto de rutas con colores únicos
+  function drawTripRoutesOnMap(routeList, highlightIdx = null) {
+    clearTripRouteLayers();
+    if (!state.tripMap) return;
+
+    routeList.forEach((item, idx) => {
+      const route = item.route || item;
+      const coords = getRouteCoords(route);
+      if (coords.length < 2) return;
+      const color = TRIP_COLORS[idx % TRIP_COLORS.length];
+      const isHl = highlightIdx === null || highlightIdx === idx;
+      const line = L.polyline(coords, {
+        color,
+        weight: isHl ? 6 : 3,
+        opacity: isHl ? 0.95 : 0.35,
+        lineJoin: 'round',
+        lineCap: 'round',
+        dashArray: item.type === 'transfer' ? '8,6' : null
+      }).addTo(state.tripMap);
+      line.bindTooltip((item.label || route.nombre || 'Ruta') + ` <span style="color:${color}">●</span>`, { sticky: true });
+      tripRouteLayers.push(line);
+
+      // Si es transbordo, marcar el punto de encuentro
+      if (item.transferPoint) {
+        const tp = L.circleMarker(item.transferPoint, {
+          radius: 9, color: '#fff', fillColor: color, fillOpacity: 1, weight: 3
+        }).addTo(state.tripMap).bindPopup('🔄 Transbordo: ' + (item.label || ''));
+        tripRouteLayers.push(tp);
+      }
+    });
+  }
+
+  // Calcula la distancia mínima entre dos rutas (para transbordos)
+  function routesMinDistance(r1, r2) {
+    const c1 = getRouteCoords(r1);
+    const c2 = getRouteCoords(r2);
+    let best = Infinity, bestPt = null, bestPt2 = null;
+    c1.forEach(p1 => {
+      c2.forEach(p2 => {
+        const d = haversine(p1[0], p1[1], p2[0], p2[1]);
+        if (d < best) { best = d; bestPt = p1; bestPt2 = p2; }
+      });
+    });
+    return { dist: best, p1: bestPt, p2: bestPt2, mid: bestPt ? [(bestPt[0]+bestPt2[0])/2, (bestPt[1]+bestPt2[1])/2] : null };
+  }
+
+  // Verifica si una ruta pasa cerca de un punto
+  function routeNearPoint(route, point, radius) {
+    return routeDistanceToPoint(route, point.lat, point.lng) <= radius;
+  }
+
+  // Encuentra todos los transbordos posibles (1, 2, 3, 4 saltos)
+  function findTransferChains(startPoint, endPoint, maxTransfers) {
+    const chains = [];
+    const startRoutes = state.routes.filter(r => routeNearPoint(r, startPoint, startPoint.radius));
+    const endRoutes   = state.routes.filter(r => routeNearPoint(r, endPoint, endPoint.radius));
+
+    if (!startRoutes.length || !endRoutes.length) return chains;
+
+    // 1 transbordo (2 rutas)
+    if (maxTransfers >= 1) {
+      startRoutes.forEach(r1 => {
+        endRoutes.forEach(r2 => {
+          if (r1.id === r2.id) return;
+          const inter = routesMinDistance(r1, r2);
+          if (inter.dist <= 300) {
+            chains.push({
+              type: 'transfer',
+              legs: [r1, r2],
+              transferPoints: [inter.mid],
+              totalDist: routeTotalDistance(r1) + routeTotalDistance(r2),
+              transfers: 1
+            });
+          }
+        });
+      });
+    }
+
+    // 2 transbordos (3 rutas)
+    if (maxTransfers >= 2) {
+      startRoutes.forEach(r1 => {
+        state.routes.forEach(r2 => {
+          if (r2.id === r1.id) return;
+          const i12 = routesMinDistance(r1, r2);
+          if (i12.dist > 300) return;
+          endRoutes.forEach(r3 => {
+            if (r3.id === r2.id || r3.id === r1.id) return;
+            const i23 = routesMinDistance(r2, r3);
+            if (i23.dist > 300) return;
+            chains.push({
+              type: 'transfer',
+              legs: [r1, r2, r3],
+              transferPoints: [i12.mid, i23.mid],
+              totalDist: routeTotalDistance(r1) + routeTotalDistance(r2) + routeTotalDistance(r3),
+              transfers: 2
+            });
+          });
+        });
+      });
+    }
+
+    // 3 transbordos (4 rutas)
+    if (maxTransfers >= 3) {
+      startRoutes.forEach(r1 => {
+        state.routes.forEach(r2 => {
+          if (r2.id === r1.id) return;
+          const i12 = routesMinDistance(r1, r2);
+          if (i12.dist > 300) return;
+          state.routes.forEach(r3 => {
+            if (r3.id === r2.id || r3.id === r1.id) return;
+            const i23 = routesMinDistance(r2, r3);
+            if (i23.dist > 300) return;
+            endRoutes.forEach(r4 => {
+              if (r4.id === r3.id || r4.id === r2.id || r4.id === r1.id) return;
+              const i34 = routesMinDistance(r3, r4);
+              if (i34.dist > 300) return;
+              chains.push({
+                type: 'transfer',
+                legs: [r1, r2, r3, r4],
+                transferPoints: [i12.mid, i23.mid, i34.mid],
+                totalDist: routeTotalDistance(r1) + routeTotalDistance(r2) + routeTotalDistance(r3) + routeTotalDistance(r4),
+                transfers: 3
+              });
+            });
+          });
+        });
+      });
+    }
+
+    // 4 transbordos (5 rutas)
+    if (maxTransfers >= 4) {
+      startRoutes.forEach(r1 => {
+        state.routes.forEach(r2 => {
+          if (r2.id === r1.id) return;
+          const i12 = routesMinDistance(r1, r2);
+          if (i12.dist > 300) return;
+          state.routes.forEach(r3 => {
+            if (r3.id === r2.id || r3.id === r1.id) return;
+            const i23 = routesMinDistance(r2, r3);
+            if (i23.dist > 300) return;
+            state.routes.forEach(r4 => {
+              if (r4.id === r3.id || r4.id === r2.id || r4.id === r1.id) return;
+              const i34 = routesMinDistance(r3, r4);
+              if (i34.dist > 300) return;
+              endRoutes.forEach(r5 => {
+                if (r5.id === r4.id || r5.id === r3.id || r5.id === r2.id || r5.id === r1.id) return;
+                const i45 = routesMinDistance(r4, r5);
+                if (i45.dist > 300) return;
+                chains.push({
+                  type: 'transfer',
+                  legs: [r1, r2, r3, r4, r5],
+                  transferPoints: [i12.mid, i23.mid, i34.mid, i45.mid],
+                  totalDist: routeTotalDistance(r1) + routeTotalDistance(r2) + routeTotalDistance(r3) + routeTotalDistance(r4) + routeTotalDistance(r5),
+                  transfers: 4
+                });
+              });
+            });
+          });
+        });
+      });
+    }
+
+    // Eliminar cadenas duplicadas (misma secuencia de rutas)
+    const seen = new Set();
+    return chains.filter(c => {
+      const key = c.legs.map(l => l.id).join('>');
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
   function performTripSearch() {
     const el = $('#tripResults');
     if (!el) return;
+    clearTripRouteLayers();
     if (state.tripPoints.length < 1) { el.innerHTML = ''; return; }
 
-    const results = { direct: [], transfer: [] };
+    const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
+    const results = { direct: [], transfers: [] };
 
     if (state.tripPoints.length === 1) {
-      // Todas las rutas que tocan el punto A
+      // Rutas que tocan el punto A
       const p = state.tripPoints[0];
       state.routes.forEach(r => {
         const d = routeDistanceToPoint(r, p.lat, p.lng);
-        if (d <= p.radius) results.direct.push({ route: r, dist: d });
+        if (d <= p.radius) results.direct.push({ route: r, dist: d, type: 'direct' });
       });
     } else {
-      // Rutas que tocan todos los puntos
+      // ¿Existe una ruta directa que pase por TODOS los puntos?
+      const start = state.tripPoints[0];
+      const end   = state.tripPoints[state.tripPoints.length - 1];
+      const middle = state.tripPoints.slice(1, -1);
+
       state.routes.forEach(r => {
-        const all = state.tripPoints.every(p => routeDistanceToPoint(r, p.lat, p.lng) <= p.radius);
-        if (all) results.direct.push({ route: r });
+        const touchesAll = state.tripPoints.every(p => routeNearPoint(r, p, p.radius));
+        if (touchesAll) {
+          results.direct.push({ route: r, type: 'direct', label: r.nombre });
+        }
       });
-      // Transbordos
-      if (!results.direct.length) {
-        const r1s = state.routes.filter(r => routeDistanceToPoint(r, state.tripPoints[0].lat, state.tripPoints[0].lng) <= state.tripPoints[0].radius);
-        const r2s = state.routes.filter(r => {
-          const last = state.tripPoints[state.tripPoints.length - 1];
-          return routeDistanceToPoint(r, last.lat, last.lng) <= last.radius;
-        });
-        r1s.forEach(r1 => {
-          r2s.forEach(r2 => {
-            if (r1.id === r2.id) return;
-            // Punto de encuentro aproximado
-            const pts1 = (r1.puntos || []).concat(r1.puntosVuelta || []);
-            const pts2 = (r2.puntos || []).concat(r2.puntosVuelta || []);
-            let best = null, bestD = Infinity;
-            pts1.forEach(p1 => {
-              pts2.forEach(p2 => {
-                const d = haversine(p1[0], p1[1], p2[0], p2[1]);
-                if (d < bestD) { bestD = d; best = [p1, p2]; }
-              });
+
+      // Si no hay directa, o si el usuario quiere ver también transbordos,
+      // calculamos cadenas de transbordos
+      if (!results.direct.length || maxTransfers >= 1) {
+        // Para 2 puntos
+        if (state.tripPoints.length === 2) {
+          const chains = findTransferChains(start, end, maxTransfers);
+          // Ordenar por: menos transbordos primero, luego distancia total
+          chains.sort((a, b) => a.transfers - b.transfers || a.totalDist - b.totalDist);
+          results.transfers = chains.slice(0, 20);
+        } else {
+          // Para 3+ puntos: buscar cadena que pase por todos los puntos
+          // Estrategia simplificada: buscar ruta que una start→mid1, mid1→mid2, etc.
+          // Aquí se puede extender; por ahora hacemos pares consecutivos
+          const pairs = [];
+          for (let i = 0; i < state.tripPoints.length - 1; i++) {
+            const a = state.tripPoints[i];
+            const b = state.tripPoints[i+1];
+            const chains = findTransferChains(a, b, maxTransfers);
+            if (chains.length) pairs.push(chains[0]); // la mejor de cada par
+          }
+          // Combinar en una sola "ruta multi-punto" (simplificado)
+          if (pairs.length) {
+            const allLegs = [];
+            const allTransferPts = [];
+            pairs.forEach(pair => {
+              pair.legs.forEach(l => { if (!allLegs.find(x => x.id === l.id)) allLegs.push(l); });
+              allTransferPts.push(...(pair.transferPoints || []));
             });
-            if (bestD < 200) {
-              results.transfer.push({ r1, r2, transfer: best[0], dist: bestD });
-            }
-          });
-        });
+            results.transfers.push({
+              type: 'transfer',
+              legs: allLegs,
+              transferPoints: allTransferPts,
+              totalDist: pairs.reduce((s, p) => s + p.totalDist, 0),
+              transfers: allLegs.length - 1
+            });
+          }
+        }
       }
     }
 
-    if (!results.direct.length && !results.transfer.length) {
-      el.innerHTML = `<div class="card" style="text-align:center;padding:20px">
-        <div class="empty" style="padding:0"><p>Sin resultados. Prueba aumentar el radio de los puntos.</p></div>
-      </div>`;
-      return;
+    // Si hay directas, dibujarlas en el mapa automáticamente
+    if (results.direct.length) {
+      drawTripRoutesOnMap(results.direct.map(d => ({ ...d, label: d.route.nombre })));
     }
 
+    // Render de resultados
     let html = '';
+
     if (results.direct.length) {
-      html += `<div class="section-title">Rutas que pasan por los puntos</div>`;
-      html += results.direct.slice(0, 15).map(r => `
-        <div class="result-card directa" data-route-id="${esc(r.route.id)}">
+      html += `<div class="section-title">✅ Rutas directas (${results.direct.length})</div>`;
+      html += results.direct.map((r, idx) => `
+        <div class="result-card directa" data-result-idx="${idx}" data-result-type="direct">
           <div class="rc-head">
-            <div class="rc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="M3 11h18"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg></div>
+            <div class="rc-icon" style="background:${TRIP_COLORS[idx % TRIP_COLORS.length]}20;color:${TRIP_COLORS[idx % TRIP_COLORS.length]}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="M3 11h18"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
+            </div>
             <div style="flex:1">
-              <div class="rc-route">${esc(r.route.nombre)}</div>
-              <div class="rc-sub">${esc(r.route.categoria || 'urbana')}${r.dist ? ' · ' + Math.round(r.dist) + 'm' : ''}</div>
+              <div class="rc-route">
+                <span class="trip-badge-route" style="background:${TRIP_COLORS[idx % TRIP_COLORS.length]}">${idx+1}</span>
+                ${esc(r.route.nombre)}
+              </div>
+              <div class="rc-sub">${esc(r.route.categoria || 'urbana')}${r.dist ? ' · ' + Math.round(r.dist) + 'm del punto' : ''}</div>
             </div>
             <span class="badge badge-green">Directa</span>
           </div>
         </div>`).join('');
     }
-    if (results.transfer.length) {
-      html += `<div class="section-title">Transbordos</div>`;
-      html += results.transfer.slice(0, 10).map(t => `
-        <div class="result-card transbordo" data-route-id="${esc(t.r1.id)}">
-          <div class="rc-head">
-            <div class="rc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/></svg></div>
-            <div style="flex:1">
-              <div class="rc-route">${esc(t.r1.nombre)} → ${esc(t.r2.nombre)}</div>
-              <div class="rc-sub">Transbordo a ${Math.round(t.dist)}m</div>
+
+    if (results.transfers.length) {
+      html += `<div class="section-title">🔄 Transbordos (${results.transfers.length})</div>`;
+      html += results.transfers.map((t, idx) => {
+        const colorOffset = results.direct.length;
+        const color = TRIP_COLORS[(colorOffset + idx) % TRIP_COLORS.length];
+        const legsHtml = t.legs.map((leg, li) => `
+          <div class="rc-step" style="border-left:3px solid ${TRIP_COLORS[(colorOffset + li) % TRIP_COLORS.length]};padding-left:8px">
+            <div class="step-num" style="background:${TRIP_COLORS[(colorOffset + li) % TRIP_COLORS.length]}">${li+1}</div>
+            <div>
+              <b>${esc(leg.nombre)}</b>
+              ${li < t.legs.length - 1 ? `<div class="tiny" style="margin-top:2px">🔽 Baja y transborda aquí</div>` : ''}
             </div>
-            <span class="badge badge-amber">Transbordo</span>
+          </div>`).join('');
+        return `
+        <div class="result-card transbordo" data-result-idx="${idx}" data-result-type="transfer">
+          <div class="rc-head">
+            <div class="rc-icon" style="background:${color}20;color:${color}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/></svg>
+            </div>
+            <div style="flex:1">
+              <div class="rc-route">${t.legs.map(l => esc(l.nombre)).join(' → ')}</div>
+              <div class="rc-sub">${t.transfers} transbordo(s) · ~${Math.round(t.totalDist)}m totales</div>
+            </div>
+            <span class="badge badge-amber">${t.transfers}T</span>
           </div>
-        </div>`).join('');
+          <div class="rc-steps">${legsHtml}</div>
+          <div class="trip-result-actions">
+            <button class="btn btn-primary btn-sm" data-trip-show="${idx}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="14" height="14"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/></svg>
+              Ver trazos en mapa
+            </button>
+            <button class="btn btn-ghost btn-sm" data-trip-focus="${t.legs[0].id}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="14" height="14"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+              Abrir 1ª ruta
+            </button>
+          </div>
+        </div>`;
+      }).join('');
     }
+
+    if (!results.direct.length && !results.transfers.length) {
+      html = `<div class="card" style="text-align:center;padding:20px">
+        <div class="empty" style="padding:0">
+          <h3>Sin resultados</h3>
+          <p>No se encontraron rutas. Prueba aumentar el radio o el máximo de transbordos.</p>
+        </div>
+      </div>`;
+    }
+
     el.innerHTML = html;
-    el.querySelectorAll('.result-card').forEach(c => {
-      c.onclick = () => {
-        const r = state.routes.find(x => x.id === c.dataset.routeId);
+
+    // Eventos de resultados
+    el.querySelectorAll('[data-trip-show]').forEach(b => {
+      b.onclick = (e) => {
+        e.stopPropagation();
+        const idx = +b.dataset.tripShow;
+        const t = results.transfers[idx];
+        if (!t) return;
+        // Dibujar SOLO los trazos de este transbordo
+        drawTripRoutesOnMap(t.legs.map((l, li) => ({
+          route: l,
+          label: l.nombre,
+          transferPoint: li === 0 ? t.transferPoints[0] : null
+        })));
+        // Hacer zoom a los trazos
+        const allCoords = [];
+        t.legs.forEach(l => allCoords.push(...getRouteCoords(l)));
+        if (allCoords.length) {
+          try { state.tripMap.fitBounds(L.latLngBounds(allCoords).pad(0.15)); } catch(e){}
+        }
+        toast('Mostrando ' + t.legs.length + ' trazos del transbordo');
+      };
+    });
+
+    el.querySelectorAll('[data-trip-focus]').forEach(b => {
+      b.onclick = (e) => {
+        e.stopPropagation();
+        const r = state.routes.find(x => x.id === b.dataset.tripFocus);
         if (r) openRouteDetail(r);
       };
     });
+
+    // Click en tarjeta de resultado directo → abrir ruta
+    el.querySelectorAll('.result-card.directa').forEach(c => {
+      c.onclick = () => {
+        const idx = +c.dataset.resultIdx;
+        const r = results.direct[idx];
+        if (r) openRouteDetail(r.route);
+      };
+    });
+
+    // Si hay directas, auto-zoom al primer resultado
+    if (results.direct.length) {
+      const coords = getRouteCoords(results.direct[0].route);
+      if (coords.length) {
+        try { state.tripMap.fitBounds(L.latLngBounds(coords).pad(0.15)); } catch(e){}
+      }
+    }
   }
 
   $('#tripRadius').oninput = e => {
     state.tripRadius = +e.target.value;
     $('#tripRadiusVal').textContent = e.target.value;
   };
+  $('#tripMaxTransfers')?.addEventListener('change', () => {
+    if (state.tripPoints.length) performTripSearch();
+  });
   $('#btnTripSearch').onclick = performTripSearch;
 
   // Toolbar trip
