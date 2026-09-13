@@ -1,5 +1,14 @@
 [
   {
+    "title": "Tercer",
+    "slug": "tercer",
+    "description": "Corta descripción ",
+    "image": "https://images.milenio.com/HMd2llieV_9k1OAOtnleHdiYNCk=/345x195/uploads/media/2026/09/11/alumnos-unam-leon-protestan-transporte.jpg",
+    "date": "2026-09-13",
+    "url": "paginas/tercer.html",
+    "content": "Contenido texto lego "
+  },
+  {
     "title": "Segundo",
     "slug": "segundo",
     "description": "Descripción corta",
