@@ -486,11 +486,12 @@ button{cursor:pointer;border:none;background:none}
       + '<span>'+esc(msg)+'</span>';
     w.appendChild(t); setTimeout(()=>{t.style.opacity='0';t.style.transform='translateY(-10px)';setTimeout(()=>t.remove(),300)},2800);
   };
-  const slugify = (s,dia,mes)=>{
-    const base = String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-      .replace(/[^a-z0-9\s-]/g,'').trim().replace(/\s+/g,'-').replace(/-+/g,'-').slice(0,60);
-    return `${base}+${dia}+${mes}`;
-  };
+ const slugify = (s,dia,mes)=>{
+  const base = String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]/g,'').trim().replace(/\s+/g,'').slice(0,60);
+  const num = `${dia}${mes}`.replace(/[^0-9]/g,'');
+  return `${base}${num}`;
+};
   const splitList = v => String(v||'').split(/[\n,;]+/).map(s=>s.trim()).filter(Boolean);
   const nowDM = ()=>{ const d=new Date(); return {dia:d.getDate(),mes:d.getMonth()+1}; };
   const colores = ['#00e5ff','#a855f7','#10b981','#f59e0b','#ef4444','#ec4899','#3b82f6','#84cc16'];
