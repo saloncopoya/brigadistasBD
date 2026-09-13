@@ -858,7 +858,8 @@ button{cursor:pointer;border:none;background:none}
       notas: $('#routeNotas').value.trim(),
       paradas: splitList($('#routeParadas').value),
       retornos: splitList($('#routeRetornos').value),
-      pois: (state.routeDraft.pois && state.routeDraft.pois.length) ? state.routeDraft.pois : splitList($('#routePoisIda').value),      poisVuelta: splitList($('#routePoisVuelta').value),
+      pois: (state.routeDraft.pois && state.routeDraft.pois.length) ? state.routeDraft.pois : splitList($('#routePoisIda').value),
+      poisVuelta: splitList($('#routePoisVuelta').value),
       calles: splitList($('#routeCalles').value),
       puntos: state.routeDraft.puntos,
       puntosVuelta: state.routeDraft.puntosVuelta,
@@ -885,10 +886,15 @@ button{cursor:pointer;border:none;background:none}
   function resetRouteForm(){
     state.editingRoute=null;
     state.routeDraft = {puntos:[],calles:[],pois:[],puntosVuelta:[],callesVuelta:[],poisVuelta:[],
+      geometriaIda:[], geometriaVuelta:[],
       colorIda:colores[0], colorVuelta:colores[1]};
+    state.drawMode = null;
+    state.drawing = false;
     ['routeName','routeTarifa','routeFrec','routeHoraIni','routeHoraFin','routeNotas',
      'routeParadas','routeRetornos','routePoisIda','routePoisVuelta','routeCalles'].forEach(i=>$('#'+i).value='');
     if(state.map && state.layers.markers.length){ state.layers.markers.forEach(m=>state.map.removeLayer(m)); state.layers.markers=[]; }
+    if(state.layers.ida && state.map) state.map.removeLayer(state.layers.ida);
+    if(state.layers.vuelta && state.map) state.map.removeLayer(state.layers.vuelta);
     if(state.map) redrawLines();
     updateEditorStatus();
     $('#routeFormTitle').textContent='Registrar nueva ruta';
