@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Publicación</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+  <div class="admin-container">
+    <h2>Publicar Nuevo Post</h2>
+    <form id="publishForm">
+      <label>Contraseña Administrador:
+        <input type="password" id="secretPass" required>
+      </label>
+
+      <label>Título del Post:
+        <input type="text" id="title" placeholder="Ej: Mi primer artículo" required>
+      </label>
+
+      <label>Slug (URL personalizada):
+        <input type="text" id="slug" placeholder="ej-mi-primer-articulo" required>
+      </label>
+
+      <label>Descripción corta (SEO):
+        <textarea id="description" rows="2" placeholder="Resumen para Google..." required></textarea>
+      </label>
+
+      <label>URL Imagen Destacada:
+        <input type="url" id="image" placeholder="https://ejemplo.com/imagen.jpg">
+      </label>
+
+      <label>Contenido del Post (Soporta HTML):
+        <textarea id="content" rows="10" placeholder="<p>Escribe tu contenido aquí...</p>" required></textarea>
+      </label>
+
+      <button type="submit" id="submitBtn">Publicar Artículo</button>
+    </form>
+    <div id="statusMessage"></div>
+  </div>
+
+  <script src="js/publisher.js"></script>
+</body>
+</html>
