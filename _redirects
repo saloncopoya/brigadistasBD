@@ -1,2 +1,35 @@
-/ruta/:slug    /paginas/:slug.html    200
-/api/*         /functions/api/:splat  200
+# ========================================================================
+# Cloudflare Pages - Redirecciones y rewrites
+# ========================================================================
+
+# ===== Rewrites internos (200) =====
+# URLs amigables para secciones compartidas
+/share/post/*  /share/post/:splat  200
+/share/ruta/*  /share/ruta/:splat  200
+/share/m/*     /share/m/:splat     200
+
+# Ruta corta alternativa /ruta/:slug → /share/ruta/:slug.html
+/ruta/:slug    /share/ruta/:slug.html  200
+
+# Ruta corta alternativa /p/:slug → /share/post/:slug.html
+/p/:slug       /share/post/:slug.html  200
+
+# Ruta corta alternativa /m/:slug → /share/m/:slug.html
+/m/:slug       /share/m/:slug.html     200
+
+# API interna
+/api/*         /functions/api/:splat   200
+
+# ===== Redirecciones (301) =====
+# Blog legacy
+/blog/:slug    /share/post/:slug.html  301
+
+# Forzar HTTPS
+http://brigadistasbd.pages.dev/*   https://brigadistasbd.pages.dev/:splat  301
+
+# Eliminar www
+http://www.brigadistasbd.pages.dev/*  https://brigadistasbd.pages.dev/:splat  301
+
+# ===== Fallback SPA =====
+# Si nada coincide, servir index.html (para rutas del cliente)
+/*    /index.html   200
