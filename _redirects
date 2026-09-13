@@ -1,5 +1,1 @@
 # Reglas específicas para /share/ (sin extensión → con .html)
-/share/post/:slug    /share/post/:slug.html    200
-/share/ruta/:slug    /share/ruta/:slug.html    200
-/share/m/:slug       /share/m/:slug.html       200
-/admin               /admin.html               200
