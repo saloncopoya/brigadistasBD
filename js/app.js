@@ -65,8 +65,8 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
 
   // ==================== ESTADO GLOBAL ====================
   const state = {
-    currentPage: 'home',
-    currentTab: 'home',
+    currentPage: 'routes',
+    currentTab: 'routes',
     routeMode: 'rutas',
     routes: [],
     posts: [],
@@ -1591,9 +1591,9 @@ const url = location.origin + '/share/m/' + id;
       } catch (e) { console.warn('SW:', e); }
     }
 
-    // Leer URL inicial
+       // Leer URL inicial
     const params = new URLSearchParams(location.search);
-    const tab = params.get('tab') || 'home';
+    const tab = params.get('tab') || 'routes';
     const postParam = params.get('post');
     const rutaParam = params.get('ruta');
     const marketParam = params.get('market');
