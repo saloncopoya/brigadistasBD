@@ -1,0 +1,2 @@
+/ruta/:slug    /paginas/:slug.html    200
+/api/*         /functions/api/:splat  200
