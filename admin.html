@@ -732,12 +732,12 @@ button{cursor:pointer;border:none;background:none}
     if(tool==='undo'){
       state.routeDraft.puntos.pop();
       const m = state.layers.markers.pop(); if(m) state.map.removeLayer(m);
-      redrawLines(); updateEditorStatus(); return;
+      scheduleRedraw(); updateEditorStatus(); return;
     }
-    if(tool==='clear'){
+        if(tool==='clear'){
       state.routeDraft.puntos=[]; state.routeDraft.calles=[]; state.routeDraft.pois=[];
       state.layers.markers.forEach(m=>state.map.removeLayer(m));
-      state.layers.markers=[]; redrawLines(); updateEditorStatus(); return;
+      state.layers.markers=[]; scheduleRedraw(); updateEditorStatus(); return;
     }
     if(tool==='gps'){
       toggleGPS(b); return;
