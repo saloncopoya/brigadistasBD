@@ -1,5 +1,14 @@
 [
   {
+    "title": "Segundo",
+    "slug": "segundo",
+    "description": "Descripción corta",
+    "image": "",
+    "date": "2026-09-13",
+    "url": "paginas/segundo.html",
+    "content": "Contenido"
+  },
+  {
     "title": "Kekek",
     "slug": "kekek",
     "description": "Jejwj",
