@@ -634,9 +634,16 @@ button{cursor:pointer;border:none;background:none}
     build($('#colorVuelta'), state.routeDraft.colorVuelta, c=>{ state.routeDraft.colorVuelta=c; redrawLines(); });
   }
 
+   // -------- Debounce para redibujar el trazo (evita múltiples fetch a OSRM) --------
+  let redrawTimer = null;
+  function scheduleRedraw(){
+    if(redrawTimer) clearTimeout(redrawTimer);
+    redrawTimer = setTimeout(() => redrawLines(), 250);
+  }
+
   function initEditorMap(){
     if(state.map) return;
-state.map = L.map('editorMap',{zoomControl:true}).setView([16.7530,-93.1150],13);
+    state.map = L.map('editorMap',{zoomControl:true}).setView([16.7530,-93.1150],13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
       maxZoom:19, attribution:'© OpenStreetMap'
     }).addTo(state.map);
@@ -644,27 +651,59 @@ state.map = L.map('editorMap',{zoomControl:true}).setView([16.7530,-93.1150],13)
       if(!state.drawing) return;
       state.routeDraft.puntos.push([e.latlng.lat,e.latlng.lng]);
       addMarker(e.latlng.lat,e.latlng.lng);
-      redrawLines();
+      scheduleRedraw();   // ← antes decía redrawLines();
       updateEditorStatus();
     });
+  }
+
+  // Snap-to-road usando OSRM (gratuito, sin API key)
+  async function snapToRoad(lat, lng){
+    try{
+      const url = `https://router.project-osrm.org/nearest/v1/driving/${lng},${lat}?number=1`;
+      const r = await fetch(url);
+      const j = await r.json();
+      if(j.code === 'Ok' && j.waypoints && j.waypoints[0]){
+        const [sLng, sLat] = j.waypoints[0].location;
+        return [sLat, sLng];
+      }
+    }catch(err){ /* fallback: punto original */ }
+    return [lat, lng];
   }
   function addMarker(lat,lng){
     const m = L.circleMarker([lat,lng],{radius:5,color:'#ef4444',fillColor:'#ef4444',fillOpacity:1,weight:2}).addTo(state.map);
     state.layers.markers.push(m);
   }
-  function redrawLines(){
+   async function redrawLines(){
     if(!state.map) return;
     if(state.layers.ida) state.map.removeLayer(state.layers.ida);
     if(state.layers.vuelta) state.map.removeLayer(state.layers.vuelta);
     const pts = state.routeDraft.puntos;
     if(pts.length>1){
-      state.layers.ida = L.polyline(pts,{color:state.routeDraft.colorIda||'#00e5ff',weight:5,opacity:.9}).addTo(state.map);
+      const geom = await getRouteGeometry(pts);
+      state.layers.ida = L.polyline(geom,{color:state.routeDraft.colorIda||'#00e5ff',weight:5,opacity:.9}).addTo(state.map);
     }
     const pv = state.routeDraft.puntosVuelta;
     if(pv.length>1){
-      state.layers.vuelta = L.polyline(pv,{color:state.routeDraft.colorVuelta||'#a855f7',weight:5,opacity:.9,dashArray:'8,6'}).addTo(state.map);
+      const geomV = await getRouteGeometry(pv);
+      state.layers.vuelta = L.polyline(geomV,{color:state.routeDraft.colorVuelta||'#a855f7',weight:5,opacity:.9,dashArray:'8,6'}).addTo(state.map);
     }
-    if(pts.length) state.map.fitBounds(L.latLngBounds(pts).pad(0.15));
+    // Sin fitBounds para respetar la vista del usuario
+  }
+
+  // Obtiene la geometría real de la calle entre los puntos usando OSRM
+  async function getRouteGeometry(points){
+    if(points.length < 2) return points;
+    try{
+      const coords = points.map(p => `${p[1]},${p[0]}`).join(';');
+      const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
+      const r = await fetch(url);
+      const j = await r.json();
+      if(j.code === 'Ok' && j.routes && j.routes[0]){
+        // Convertir [lng,lat] a [lat,lng] para Leaflet
+        return j.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+      }
+    }catch(err){ /* fallback a línea recta */ }
+    return points;
   }
   function updateEditorStatus(){
     $('#editorStatus').textContent = `Puntos: ${state.routeDraft.puntos.length} · Calles: ${state.routeDraft.calles.length} · POIs: ${state.routeDraft.pois.length}`;
@@ -706,7 +745,13 @@ state.map = L.map('editorMap',{zoomControl:true}).setView([16.7530,-93.1150],13)
     if(tool==='detect'){
       detectStreets(); return;
     }
-    // draw / poi: modos
+      // draw / poi: toggle de modo
+    if(state.drawMode === tool){
+      b.classList.remove('active');
+      state.drawing = false;
+      state.drawMode = null;
+      return;
+    }
     $$('.tb').forEach(x=>x.classList.remove('active'));
     b.classList.add('active');
     state.drawing = true;
