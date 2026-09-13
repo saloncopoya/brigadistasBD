@@ -605,7 +605,7 @@ button{cursor:pointer;border:none;background:none}
       likes: state.editingPost?.likes || 0,
       likedBy: state.editingPost?.likedBy || [],
       comments: state.editingPost?.comments || [],
-      url: `/share/post/${id}.html`
+      url: `/share/post/${id}`
     };
     await DB.put('posts', post);
     try{
@@ -972,7 +972,7 @@ button{cursor:pointer;border:none;background:none}
       geometriaVuelta: state.routeDraft.geometriaVuelta || [],
       timestamp: state.editingRoute?.timestamp || Date.now(),
       updatedAt: Date.now(),
-      url:`/share/ruta/${id}.html`
+      url:`/share/ruta/${id}`
     };
     await DB.put('routes', route);
     try{
@@ -1165,7 +1165,7 @@ button{cursor:pointer;border:none;background:none}
       price:$('#mkPrice').value.trim(), phone:$('#mkPhone').value.trim(),
       description:$('#mkDesc').value.trim(), image:$('#mkImgUrl').value.trim(),
       tipo:'market', timestamp: state.editingMarket?.timestamp||Date.now(),
-      updatedAt:Date.now(), url:`/share/m/${id}.html`
+      updatedAt:Date.now(), url:`/share/m/${id}`
     };
     await DB.put('market',ad);
     try{
