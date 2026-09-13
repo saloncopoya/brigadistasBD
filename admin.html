@@ -323,10 +323,14 @@ button{cursor:pointer;border:none;background:none}
         <div class="map-wrap" style="margin:0">
           <div id="editorMap"></div>
           <div class="map-toolbar">
-<button class="tb" data-tool="draw">
+<button class="tb" data-tool="draw-ida">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
-              Dibujar
-            </button>
+  Ida
+</button>
+<button class="tb" data-tool="draw-vuelta">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
+  Regreso
+</button>
             <button class="tb" data-tool="gps">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
               GPS
@@ -466,7 +470,8 @@ button{cursor:pointer;border:none;background:none}
     gpsWatch: null,
     currentLineColor: '#00e5ff',
     map: null,
-    layers: { ida: null, vuelta: null, markers: [] }
+    layers: { ida: null, vuelta: null, markers: [] },
+    markerMeta: []   // ← nuevo: guarda {tipo:'ida'|'vuelta'|'poi'} por cada marker
   };
 
   // ---------- Firebase ----------
@@ -600,7 +605,7 @@ button{cursor:pointer;border:none;background:none}
       likes: state.editingPost?.likes || 0,
       likedBy: state.editingPost?.likedBy || [],
       comments: state.editingPost?.comments || [],
-      url: `/share/post/${id}`
+      url: `/share/post/${id}.html`
     };
     await DB.put('posts', post);
     try{
@@ -648,21 +653,28 @@ button{cursor:pointer;border:none;background:none}
       maxZoom:19, attribution:'© OpenStreetMap'
     }).addTo(state.map);
      state.map.on('click', async e=>{
-      if(!state.drawing) return;
-      if(state.drawMode === 'poi'){
-        const snapped = await snapToRoad(e.latlng.lat, e.latlng.lng);
-        state.routeDraft.pois.push(snapped);
-        const poiMarker = L.circleMarker([snapped[0], snapped[1]],{radius:7,color:'#a855f7',fillColor:'#a855f7',fillOpacity:1,weight:2}).addTo(state.map);
-        state.layers.markers.push(poiMarker);
-        updateEditorStatus();
-        return;
-      }
-      const snapped = await snapToRoad(e.latlng.lat, e.latlng.lng);
-      state.routeDraft.puntos.push(snapped);
-      addMarker(snapped[0], snapped[1]);
-      scheduleRedraw();
-      updateEditorStatus();
-    });
+  if(!state.drawing) return;
+  const snapped = await snapToRoad(e.latlng.lat, e.latlng.lng);
+
+  if(state.drawMode === 'poi'){
+    state.routeDraft.pois.push(snapped);
+    const poiMarker = L.circleMarker([snapped[0], snapped[1]],{radius:7,color:'#a855f7',fillColor:'#a855f7',fillOpacity:1,weight:2}).addTo(state.map);
+    state.layers.markers.push(poiMarker);
+    state.markerMeta.push({ tipo: 'poi' });   // ← AÑADIR ESTA LÍNEA
+    updateEditorStatus();
+    return;
+  }
+
+  if(state.drawMode === 'draw-vuelta'){
+    state.routeDraft.puntosVuelta.push(snapped);
+    addMarker(snapped[0], snapped[1], state.routeDraft.colorVuelta || '#a855f7', 'vuelta');
+  } else {
+    state.routeDraft.puntos.push(snapped);
+    addMarker(snapped[0], snapped[1], state.routeDraft.colorIda || '#ef4444', 'ida');
+  }
+  scheduleRedraw();
+  updateEditorStatus();
+});
   }
 
   // Snap-to-road usando OSRM (gratuito, sin API key)
@@ -678,25 +690,62 @@ button{cursor:pointer;border:none;background:none}
     }catch(err){ /* fallback: punto original */ }
     return [lat, lng];
   }
-  function addMarker(lat,lng){
-    const m = L.circleMarker([lat,lng],{radius:5,color:'#ef4444',fillColor:'#ef4444',fillOpacity:1,weight:2}).addTo(state.map);
-    state.layers.markers.push(m);
+ function addMarker(lat,lng,color='#ef4444',tipo='ida'){
+  const m = L.circleMarker([lat,lng],{radius:5,color,fillColor:color,fillOpacity:1,weight:2}).addTo(state.map);
+  state.layers.markers.push(m);
+  state.markerMeta.push({ tipo });
+}
+  // Offset perpendicular a una polyline (separa ida y regreso en la misma calle)
+  function offsetPolyline(coords, offsetMeters){
+    if(!coords || coords.length < 2) return coords;
+    const out = [];
+    const R = 6371000;
+    for(let i=0;i<coords.length;i++){
+      const p = coords[i];
+      const prev = coords[Math.max(0,i-1)];
+      const next = coords[Math.min(coords.length-1,i+1)];
+      const dLat = next[0]-prev[0];
+      const dLng = next[1]-prev[1];
+      const len = Math.hypot(dLat,dLng) || 1;
+      // Perpendicular unitaria
+      const perpLat = -dLng/len;
+      const perpLng =  dLat/len;
+      // Convertir metros a grados
+      const dLatDeg = (offsetMeters / R) * (180/Math.PI);
+      const dLngDeg = (offsetMeters / (R*Math.cos(p[0]*Math.PI/180))) * (180/Math.PI);
+      out.push([p[0] + perpLat*dLatDeg, p[1] + perpLng*dLngDeg]);
+    }
+    return out;
   }
-   async function redrawLines(){
+
+  async function redrawLines(){
     if(!state.map) return;
     if(state.layers.ida) state.map.removeLayer(state.layers.ida);
     if(state.layers.vuelta) state.map.removeLayer(state.layers.vuelta);
+
     const pts = state.routeDraft.puntos;
+    const pv = state.routeDraft.puntosVuelta;
+
     if(pts.length>1){
       const geom = await getRouteGeometry(pts);
       state.routeDraft.geometriaIda = geom;
-      state.layers.ida = L.polyline(geom,{color:state.routeDraft.colorIda||'#00e5ff',weight:5,opacity:.9}).addTo(state.map);
+      // Offset hacia la derecha (ida) — 4 metros
+      const offsetGeom = offsetPolyline(geom, 4);
+      state.layers.ida = L.polyline(offsetGeom,{
+        color: state.routeDraft.colorIda || '#00e5ff',
+        weight: 4, opacity: .95
+      }).addTo(state.map);
     }
-    const pv = state.routeDraft.puntosVuelta;
+
     if(pv.length>1){
       const geomV = await getRouteGeometry(pv);
       state.routeDraft.geometriaVuelta = geomV;
-      state.layers.vuelta = L.polyline(geomV,{color:state.routeDraft.colorVuelta||'#a855f7',weight:5,opacity:.9,dashArray:'8,6'}).addTo(state.map);
+      // Offset hacia la izquierda (regreso) — -4 metros
+      const offsetGeomV = offsetPolyline(geomV, -4);
+      state.layers.vuelta = L.polyline(offsetGeomV,{
+        color: state.routeDraft.colorVuelta || '#a855f7',
+        weight: 4, opacity: .95
+      }).addTo(state.map);
     }
   }
 
@@ -715,8 +764,10 @@ button{cursor:pointer;border:none;background:none}
     }catch(err){ /* fallback a línea recta */ }
     return points;
   }
-  function updateEditorStatus(){
-    $('#editorStatus').textContent = `Puntos: ${state.routeDraft.puntos.length} · Calles: ${state.routeDraft.calles.length} · POIs: ${state.routeDraft.pois.length}`;
+   function updateEditorStatus(){
+    const el = $('#editorStatus');
+    if(!el) return;
+    el.textContent = `Ida: ${state.routeDraft.puntos.length} · Regreso: ${state.routeDraft.puntosVuelta.length} · Calles: ${state.routeDraft.calles.length} · POIs: ${state.routeDraft.pois.length}`;
   }
 
   $$('.route-step').forEach((s,i)=>{});
@@ -736,20 +787,39 @@ button{cursor:pointer;border:none;background:none}
         initEditorMap();
         if(state.map){
           state.map.invalidateSize();
+
+          // Limpiar TODOS los markers y las líneas previas
+          state.layers.markers.forEach(m=>state.map.removeLayer(m));
+          state.layers.markers = [];
+          state.markerMeta = [];
+          if(state.layers.ida){ state.map.removeLayer(state.layers.ida); state.layers.ida = null; }
+          if(state.layers.vuelta){ state.map.removeLayer(state.layers.vuelta); state.layers.vuelta = null; }
+
+          // Dibujar puntos de IDA con su color
           if(state.routeDraft.puntos && state.routeDraft.puntos.length){
-            state.layers.markers.forEach(m=>state.map.removeLayer(m));
-            state.layers.markers = [];
             state.routeDraft.puntos.forEach(p=>{
-              addMarker(p[0], p[1]);
+              addMarker(p[0], p[1], state.routeDraft.colorIda || '#ef4444', 'ida');
             });
-            redrawLines();
           }
+
+          // Dibujar puntos de REGRESO con su color
+          if(state.routeDraft.puntosVuelta && state.routeDraft.puntosVuelta.length){
+            state.routeDraft.puntosVuelta.forEach(p=>{
+              addMarker(p[0], p[1], state.routeDraft.colorVuelta || '#a855f7', 'vuelta');
+            });
+          }
+
+                   // Dibujar POIs
           if(state.routeDraft.pois && state.routeDraft.pois.length){
             state.routeDraft.pois.forEach(p=>{
               const poiMarker = L.circleMarker([p[0], p[1]],{radius:7,color:'#a855f7',fillColor:'#a855f7',fillOpacity:1,weight:2}).addTo(state.map);
               state.layers.markers.push(poiMarker);
+              state.markerMeta.push({ tipo: 'poi' });   // ← añadir esta línea
             });
           }
+
+          // Redibujar las líneas (ida + vuelta con offset)
+          redrawLines();
           updateEditorStatus();
         }
       },200);
@@ -758,26 +828,47 @@ button{cursor:pointer;border:none;background:none}
   $('#routePrev').onclick = ()=>goStep(Math.max(1,state.routeStep-1));
   $('#routeNext').onclick = ()=>goStep(Math.min(3,state.routeStep+1));
 
-  // Toolbar del mapa
+   // Toolbar del mapa
   $$('.tb').forEach(b=>b.onclick=()=>{
     const tool = b.dataset.tool;
+
     if(tool==='undo'){
-      state.routeDraft.puntos.pop();
-      const m = state.layers.markers.pop(); if(m) state.map.removeLayer(m);
+      // Quitar el último marker REALMENTE añadido (por orden cronológico)
+      const meta = state.markerMeta.pop();
+      const m = state.layers.markers.pop();
+      if(m) state.map.removeLayer(m);
+
+      if(meta){
+        if(meta.tipo === 'vuelta')      state.routeDraft.puntosVuelta.pop();
+        else if(meta.tipo === 'poi')    state.routeDraft.pois.pop();
+        else                            state.routeDraft.puntos.pop();
+      }
       scheduleRedraw(); updateEditorStatus(); return;
     }
-        if(tool==='clear'){
-      state.routeDraft.puntos=[]; state.routeDraft.calles=[]; state.routeDraft.pois=[];
+
+    if(tool==='clear'){
+      state.routeDraft.puntos=[];
+      state.routeDraft.puntosVuelta=[];
+      state.routeDraft.calles=[];
+      state.routeDraft.pois=[];
+      state.routeDraft.poisVuelta=[];
+      state.routeDraft.geometriaIda=[];
+      state.routeDraft.geometriaVuelta=[];
       state.layers.markers.forEach(m=>state.map.removeLayer(m));
-      state.layers.markers=[]; scheduleRedraw(); updateEditorStatus(); return;
+      state.layers.markers=[];
+            state.markerMeta=[]; 
+      scheduleRedraw(); updateEditorStatus(); return;
     }
+
     if(tool==='gps'){
       toggleGPS(b); return;
     }
+
     if(tool==='detect'){
       detectStreets(); return;
     }
-      // draw / poi: toggle de modo
+
+    // draw-ida / draw-vuelta / poi: toggle de modo
     if(state.drawMode === tool){
       b.classList.remove('active');
       state.drawing = false;
@@ -797,18 +888,32 @@ button{cursor:pointer;border:none;background:none}
       toast('GPS detenido'); return;
     }
     if(!navigator.geolocation){ toast('GPS no disponible','err'); return; }
+
+    // Si no hay modo activo, asumimos ida por defecto
+    if(!state.drawMode) { state.drawMode = 'draw-ida'; state.drawing = true; }
+
     btn.classList.add('active');
-    toast('Grabando GPS...');
+    const modo = state.drawMode === 'draw-vuelta' ? 'REGRESO' : 'IDA';
+    toast('Grabando GPS en modo ' + modo + '...');
+
     state.gpsWatch = navigator.geolocation.watchPosition(pos=>{
       const {latitude:lat,longitude:lng} = pos.coords;
-      state.routeDraft.puntos.push([lat,lng]);
-      addMarker(lat,lng); scheduleRedraw(); updateEditorStatus();
+      if(state.drawMode === 'draw-vuelta'){
+        state.routeDraft.puntosVuelta.push([lat,lng]);
+        addMarker(lat,lng, state.routeDraft.colorVuelta || '#a855f7', 'vuelta');
+      } else {
+        state.routeDraft.puntos.push([lat,lng]);
+        addMarker(lat,lng, state.routeDraft.colorIda || '#ef4444', 'ida');
+      }
+      scheduleRedraw(); updateEditorStatus();
     },err=>{ toast('GPS: '+err.message,'err'); },{enableHighAccuracy:true,maximumAge:0,timeout:15000});
   }
 
   async function detectStreets(){
-    const pts = state.routeDraft.puntos;
-    if(pts.length<2){ toast('Traza al menos 2 puntos','err'); return; }
+    const ptsIda = state.routeDraft.puntos;
+    const ptsVuelta = state.routeDraft.puntosVuelta;
+    const pts = ptsIda.length >= 2 ? ptsIda : ptsVuelta;
+    if(pts.length<2){ toast('Traza al menos 2 puntos (ida o regreso)','err'); return; }
     const prog = $('#detectProg'); prog.classList.remove('hidden');
     const samples = samplePoints(pts, 12);
     const streets = new Set(state.routeDraft.calles);
@@ -867,7 +972,7 @@ button{cursor:pointer;border:none;background:none}
       geometriaVuelta: state.routeDraft.geometriaVuelta || [],
       timestamp: state.editingRoute?.timestamp || Date.now(),
       updatedAt: Date.now(),
-      url:`/share/ruta/${id}`
+      url:`/share/ruta/${id}.html`
     };
     await DB.put('routes', route);
     try{
@@ -884,21 +989,38 @@ button{cursor:pointer;border:none;background:none}
   };
 
   function resetRouteForm(){
-    state.editingRoute=null;
-    state.routeDraft = {puntos:[],calles:[],pois:[],puntosVuelta:[],callesVuelta:[],poisVuelta:[],
+    state.editingRoute = null;
+    state.routeDraft = {
+      puntos:[], puntosVuelta:[],
+      calles:[], callesVuelta:[],
+      pois:[], poisVuelta:[],
       geometriaIda:[], geometriaVuelta:[],
-      colorIda:colores[0], colorVuelta:colores[1]};
+      colorIda: colores[0], colorVuelta: colores[1]
+    };
     state.drawMode = null;
     state.drawing = false;
+
     ['routeName','routeTarifa','routeFrec','routeHoraIni','routeHoraFin','routeNotas',
-     'routeParadas','routeRetornos','routePoisIda','routePoisVuelta','routeCalles'].forEach(i=>$('#'+i).value='');
-    if(state.map && state.layers.markers.length){ state.layers.markers.forEach(m=>state.map.removeLayer(m)); state.layers.markers=[]; }
-    if(state.layers.ida && state.map) state.map.removeLayer(state.layers.ida);
-    if(state.layers.vuelta && state.map) state.map.removeLayer(state.layers.vuelta);
-    if(state.map) redrawLines();
+     'routeParadas','routeRetornos','routePoisIda','routePoisVuelta','routeCalles']
+      .forEach(i=>{ const el=$('#'+i); if(el) el.value=''; });
+
+    if(state.map){
+      // Quitar TODOS los markers
+      state.layers.markers.forEach(m=>state.map.removeLayer(m));
+      state.layers.markers = [];
+      state.markerMeta = [];
+      // Quitar líneas
+      if(state.layers.ida) { state.map.removeLayer(state.layers.ida); state.layers.ida = null; }
+      if(state.layers.vuelta) { state.map.removeLayer(state.layers.vuelta); state.layers.vuelta = null; }
+    }
+
+    // Quitar cualquier botón de la toolbar activo
+    $$('.tb').forEach(x=>x.classList.remove('active'));
+
     updateEditorStatus();
-    $('#routeFormTitle').textContent='Registrar nueva ruta';
-    initColorSwatches(); goStep(1);
+    $('#routeFormTitle').textContent = 'Registrar nueva ruta';
+    initColorSwatches();
+    goStep(1);
   }
 
   async function loadRoutes(){
@@ -922,15 +1044,20 @@ button{cursor:pointer;border:none;background:none}
       </div>`).join('');
     el.querySelectorAll('.list-item').forEach(row=>{
       const id=row.dataset.id;
-      row.querySelector('[data-act="edit"]').onclick=async()=>{
+          row.querySelector('[data-act="edit"]').onclick=async()=>{
         const r = await DB.get('routes',id); if(!r) return;
         state.editingRoute = r;
         state.routeDraft = {
-          puntos: r.puntos||[], puntosVuelta: r.puntosVuelta||[],
-          calles: r.calles||[], pois: r.pois||[],
+          puntos: r.puntos||[],
+          puntosVuelta: r.puntosVuelta||[],
+          calles: r.calles||[],
+          callesVuelta: r.callesVuelta||[],
+          pois: r.pois||[],
+          poisVuelta: r.poisVuelta||[],
           geometriaIda: r.geometriaIda||[],
           geometriaVuelta: r.geometriaVuelta||[],
-          colorIda: r.colorIda||colores[0], colorVuelta: r.colorVuelta||colores[1]
+          colorIda: r.colorIda||colores[0],
+          colorVuelta: r.colorVuelta||colores[1]
         };
         $('#routeFormTitle').textContent='Editar ruta';
         $('#routeName').value=r.nombre||'';
@@ -947,8 +1074,19 @@ button{cursor:pointer;border:none;background:none}
         $('#routePoisIda').value=(r.pois||[]).join(', ');
         $('#routePoisVuelta').value=(r.poisVuelta||[]).join(', ');
         $('#routeCalles').value=(r.calles||[]).join(', ');
-        initColorSwatches(); goStep(1); window.scrollTo({top:0,behavior:'smooth'});
+             initColorSwatches(); goStep(1);
+        // Centrar el mapa en la ruta cargada
+        if(state.map && (r.puntos?.length || r.puntosVuelta?.length)){
+          setTimeout(()=>{
+            const all = (r.puntos||[]).concat(r.puntosVuelta||[]);
+            if(all.length){
+              try{ state.map.fitBounds(L.latLngBounds(all).pad(0.15)); }catch(e){}
+            }
+          }, 300);
+        }
+        window.scrollTo({top:0,behavior:'smooth'});
         toast('Ruta cargada para edición');
+            
       };
       row.querySelector('[data-act="del"]').onclick=async()=>{
         if(!confirm('¿Eliminar esta ruta?')) return;
@@ -1027,7 +1165,7 @@ button{cursor:pointer;border:none;background:none}
       price:$('#mkPrice').value.trim(), phone:$('#mkPhone').value.trim(),
       description:$('#mkDesc').value.trim(), image:$('#mkImgUrl').value.trim(),
       tipo:'market', timestamp: state.editingMarket?.timestamp||Date.now(),
-      updatedAt:Date.now(), url:`/share/m/${id}`
+      updatedAt:Date.now(), url:`/share/m/${id}.html`
     };
     await DB.put('market',ad);
     try{
