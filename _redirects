@@ -1,27 +1,6 @@
-# ===== Rewrites internos (200) =====
-/share/post/*  /share/post/:splat  200
-/share/ruta/*  /share/ruta/:splat  200
-/share/m/*     /share/m/:splat     200
-
-# Ruta corta /ruta/:slug → /share/ruta/:slug.html
-/ruta/:slug    /share/ruta/:slug.html  200
-
-# Ruta corta /p/:slug → /share/post/:slug.html
-/p/:slug       /share/post/:slug.html  200
-
-# Ruta corta /m/:slug → /share/m/:slug.html
-/m/:slug       /share/m/:slug.html     200
-
-# API interna
-/api/*         /functions/api/:splat   200
-
-# ===== Redirecciones =====
-/blog/:slug    /share/post/:slug.html  301
-
-# ===== Admin sin extensión =====
 /admin        /admin.html   200
 /admin/       /admin.html   200
-
-# ===== Forzar HTTPS y quitar www =====
-http://brigadistasbd.pages.dev/*   https://brigadistasbd.pages.dev/:splat  301
-http://www.brigadistasbd.pages.dev/*  https://brigadistasbd.pages.dev/:splat  301
+/ruta/:slug   /share/ruta/:slug.html   200
+/p/:slug      /share/post/:slug.html   200
+/m/:slug      /share/m/:slug.html      200
+/api/*        /functions/api/:splat    200
