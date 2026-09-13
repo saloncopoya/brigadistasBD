@@ -3,16 +3,16 @@
     {
       "slug": "123+13+9",
       "title": "123",
-      "description": "asd",
+      "description": "Ruta 123",
       "image": "",
-      "url": "/share/post/123+13+9.html",
-      "tipo": "post",
-      "timestamp": 1789289520777,
-      "updatedAt": "2026-09-13T08:52:00.777Z"
+      "url": "/share/ruta/123+13+9.html",
+      "tipo": "ruta",
+      "timestamp": 1789289563612,
+      "updatedAt": "2026-09-13T08:52:43.612Z"
     }
   ],
   "total": 1,
-  "updatedAt": "2026-09-13T08:52:00.777Z",
+  "updatedAt": "2026-09-13T08:52:43.612Z",
   "version": 1,
-  "__sha": "552c9a7f7101090759507f2288ee630dba01aa85"
+  "__sha": "8a5ba5464c176dec06b3bcf7f4e047f9fca6dd61"
 }
