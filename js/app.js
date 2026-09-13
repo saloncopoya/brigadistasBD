@@ -701,7 +701,11 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
         ${route.horarioIni ? `<span class="chip mini">🕐 ${esc(route.horarioIni)} - ${esc(route.horarioFin || '')}</span>` : ''}
         <span class="chip mini">📅 ${esc(route.dias || 'todos')}</span>
       </div>
-      <div class="share-row">
+      <div class="share-row" style="display:flex; gap:8px;">
+        <button class="btn btn-ghost btn-sm" id="btnBackRoute">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          Regresar
+        </button>
         <button class="btn btn-primary btn-sm" id="btnShareRoute">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
           Compartir ruta
