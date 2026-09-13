@@ -1,74 +1,153 @@
-// js/db.js — Capa de base de datos local (IndexedDB) con fallback
-import { openDB } from 'https://cdn.jsdelivr.net/npm/idb@8.0.0/+esm';
+/* ==========================================================================
+   DB.JS — Capa de base de datos local con IndexedDB (idb)
+   Proporciona CRUD offline para: posts, routes, market, sync queue, tiles
+   ========================================================================== */
+(function (global) {
+  'use strict';
 
-const DB_NAME = 'brigadistas_db';
-const DB_VERSION = 1;
+  const DB_NAME = 'tgz_offline_db';
+  const DB_VERSION = 3;
 
-let dbPromise = null;
+  let dbPromise = null;
 
-function getDB() {
-  if (!dbPromise) {
-    dbPromise = openDB(DB_NAME, DB_VERSION, {
+  async function openDB() {
+    if (dbPromise) return dbPromise;
+    dbPromise = idb.openDB(DB_NAME, DB_VERSION, {
       upgrade(db) {
-        if (!db.objectStoreNames.contains('routes'))   db.createObjectStore('routes',   { keyPath: 'id' });
-        if (!db.objectStoreNames.contains('posts'))    db.createObjectStore('posts',    { keyPath: 'id' });
-        if (!db.objectStoreNames.contains('market'))   db.createObjectStore('market',   { keyPath: 'id' });
-        if (!db.objectStoreNames.contains('tiles'))    db.createObjectStore('tiles',    { keyPath: 'url' });
-        if (!db.objectStoreNames.contains('syncQueue'))db.createObjectStore('syncQueue',{ keyPath: 'qid', autoIncrement: true });
-        if (!db.objectStoreNames.contains('meta'))     db.createObjectStore('meta',     { keyPath: 'k' });
+        ['posts', 'routes', 'market', 'syncQueue', 'tiles', 'meta', 'history'].forEach(store => {
+          if (!db.objectStoreNames.contains(store)) {
+            const s = db.createObjectStore(store, { keyPath: 'id' });
+            if (store === 'posts' || store === 'routes' || store === 'market') {
+              s.createIndex('timestamp', 'timestamp');
+              s.createIndex('updatedAt', 'updatedAt');
+              s.createIndex('tipo', 'tipo');
+            }
+            if (store === 'syncQueue') {
+              s.createIndex('createdAt', 'createdAt');
+            }
+          }
+        });
       }
     });
+    return dbPromise;
   }
-  return dbPromise;
-}
 
-// ── Rutas ──
-export const saveRoute    = async (r) => (await getDB()).put('routes', r);
-export const getRoutes    = async () => (await getDB()).getAll('routes');
-export const getRoute     = async (id) => (await getDB()).get('routes', id);
-export const deleteRoute  = async (id) => (await getDB()).delete('routes', id);
+  // ---------- CRUD genérico ----------
+  async function get(store, id) {
+    const db = await openDB();
+    return db.get(store, id);
+  }
 
-// ── Posts ──
-export const savePost     = async (p) => (await getDB()).put('posts', p);
-export const getPosts     = async () => {
-  const all = await (await getDB()).getAll('posts');
-  return all.sort((a,b) => (b.ts||0) - (a.ts||0));
-};
-export const getPost      = async (id) => (await getDB()).get('posts', id);
-export const deletePost   = async (id) => (await getDB()).delete('posts', id);
+  async function getAll(store) {
+    const db = await openDB();
+    return db.getAll(store);
+  }
 
-// ── Market ──
-export const saveMarket   = async (m) => (await getDB()).put('market', m);
-export const getMarket    = async () => (await getDB()).getAll('market');
-export const getMarketOne = async (id) => (await getDB()).get('market', id);
-export const deleteMarket = async (id) => (await getDB()).delete('market', id);
+  async function put(store, value) {
+    const db = await openDB();
+    return db.put(store, value);
+  }
 
-// ── Cola de sincronización ──
-export const queueSync = async (op) => (await getDB()).add('syncQueue', { ...op, ts: Date.now() });
-export const getQueue  = async () => (await getDB()).getAll('syncQueue');
-export const clearQueue= async () => (await getDB()).clear('syncQueue');
-export const removeQ   = async (qid) => (await getDB()).delete('syncQueue', qid);
+  async function del(store, id) {
+    const db = await openDB();
+    return db.delete(store, id);
+  }
 
-// ── Meta ──
-export const setMeta = async (k, v) => (await getDB()).put('meta', { k, v });
-export const getMeta = async (k) => (await getDB()).get('meta', k);
+  async function clear(store) {
+    const db = await openDB();
+    return db.clear(store);
+  }
 
-// ── Tiles del mapa (offline) ──
-export const saveTile = async (url, blob) => (await getDB()).put('tiles', { url, blob, ts: Date.now() });
-export const getTile  = async (url) => (await getDB()).get('tiles', url);
-export const countTiles = async () => (await getDB()).count('tiles');
+  async function count(store) {
+    const db = await openDB();
+    return db.count(store);
+  }
 
-// ── Utilidad: generar ID corto ──
-export function slugify(str) {
-  return String(str || '')
-    .toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 60) || 'item';
-}
-export function genId(name) {
-  const d = new Date();
-  const stamp = `${d.getDate()}${d.getMonth()+1}${d.getFullYear()}`;
-  return `${slugify(name)}-${stamp}-${Math.random().toString(36).slice(2,6)}`;
-}
+  // ---------- Cola de sincronización ----------
+  async function queueSync(op) {
+    const db = await openDB();
+    const item = {
+      id: 'sync_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+      createdAt: Date.now(),
+      ...op
+    };
+    await db.put('syncQueue', item);
+    return item;
+  }
+
+  async function getQueue() {
+    const db = await openDB();
+    return db.getAll('syncQueue');
+  }
+
+  async function clearQueue() {
+    const db = await openDB();
+    return db.clear('syncQueue');
+  }
+
+  async function removeQueueItem(id) {
+    const db = await openDB();
+    return db.delete('syncQueue', id);
+  }
+
+  // ---------- Meta helpers ----------
+  async function setMeta(key, value) {
+    return put('meta', { id: key, value, updatedAt: Date.now() });
+  }
+  async function getMeta(key) {
+    const r = await get('meta', key);
+    return r ? r.value : null;
+  }
+
+  // ---------- Historial local ----------
+  async function pushHistory(entry) {
+    const db = await openDB();
+    const item = { id: 'h_' + Date.now(), ...entry };
+    await db.put('history', item);
+    // Limitar a 200 entradas
+    const all = await db.getAll('history');
+    if (all.length > 200) {
+      all.sort((a, b) => a.id.localeCompare(b.id));
+      const excess = all.slice(0, all.length - 200);
+      for (const e of excess) await db.delete('history', e.id);
+    }
+    return item;
+  }
+  async function getHistory() {
+    const db = await openDB();
+    const all = await db.getAll('history');
+    return all.sort((a, b) => b.id.localeCompare(a.id));
+  }
+
+  // ---------- Export/Import ----------
+  async function exportAll() {
+    const [posts, routes, market] = await Promise.all([
+      getAll('posts'), getAll('routes'), getAll('market')
+    ]);
+    return { posts, routes, market, exportedAt: Date.now(), version: DB_VERSION };
+  }
+
+  async function importAll(data) {
+    const db = await openDB();
+    const tx = db.transaction(['posts', 'routes', 'market'], 'readwrite');
+    if (data.posts) for (const p of data.posts) await tx.objectStore('posts').put(p);
+    if (data.routes) for (const r of data.routes) await tx.objectStore('routes').put(r);
+    if (data.market) for (const m of data.market) await tx.objectStore('market').put(m);
+    await tx.done;
+  }
+
+  // ---------- API pública ----------
+  global.DB = {
+    openDB, get, getAll, put, delete: del, clear, count,
+    queueSync, getQueue, clearQueue, removeQueueItem,
+    setMeta, getMeta, pushHistory, getHistory,
+    exportAll, importAll
+  };
+
+  // Aliases para compatibilidad con código que use otros nombres
+  global.dbGet = get;
+  global.dbPut = put;
+  global.dbDel = del;
+  global.dbAll = getAll;
+
+})(window);

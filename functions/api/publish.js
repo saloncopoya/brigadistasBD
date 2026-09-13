@@ -1,207 +1,399 @@
-// functions/api/publish.js — Cloudflare Pages Function
-// Crea/actualiza el HTML SEO de post/ruta/market en GitHub, actualiza index y sitemap.
-
-const GH_API = 'https://api.github.com';
-
-const FOLDER = { p: 'share/p', r: 'share/r', m: 'share/m' };
-const TYPE_LABEL = { p: 'Publicación', r: 'Ruta', m: 'Marketplace' };
+/* ==========================================================================
+   PUBLISH.JS — Cloudflare Function para publicar posts, rutas y market
+   en GitHub con SEO completo (Open Graph, Schema.org, sitemap, índice)
+   ========================================================================== */
 
 export async function onRequest(context) {
   const { request, env } = context;
-  const cors = {
+  const headers = {
+    'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, DELETE, OPTIONS',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type'
   };
 
-  if (request.method === 'OPTIONS') return new Response(null, { headers: cors });
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { headers });
+  }
+
+  if (request.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Método no permitido' }), { status: 405, headers });
+  }
 
   try {
     const body = await request.json();
-    if (body.password !== env.ADMIN_PASSWORD) {
-      return json({ ok: false, error: 'Contraseña incorrecta' }, 401, cors);
+    const { password, tipo, slug, title, content, image, extra } = body;
+
+    // Verificar contraseña
+    if (!env.ADMIN_PASSWORD || password !== env.ADMIN_PASSWORD) {
+      return new Response(JSON.stringify({ error: 'Contraseña incorrecta' }), { status: 401, headers });
     }
 
-    if (request.method === 'DELETE') return await handleDelete(body, env, cors);
-    return await handlePublish(body, env, cors);
-  } catch (e) {
-    return json({ ok: false, error: e.message }, 500, cors);
+    // Si es solo verificación
+    if (body.__check) {
+      return new Response(JSON.stringify({ ok: true }), { headers });
+    }
+
+    if (!slug || !title) {
+      return new Response(JSON.stringify({ error: 'Faltan slug o título' }), { status: 400, headers });
+    }
+
+    const {
+      GITHUB_TOKEN, REPO_OWNER, REPO_NAME, SITE_DOMAIN
+    } = env;
+
+    if (!GITHUB_TOKEN || !REPO_OWNER || !REPO_NAME) {
+      return new Response(JSON.stringify({ error: 'Configuración de GitHub incompleta' }), { status: 500, headers });
+    }
+
+    const domain = SITE_DOMAIN || 'brigadistasbd.pages.dev';
+    const cleanDomain = domain.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    const baseUrl = `https://${cleanDomain}`;
+
+    // Determinar carpeta según tipo
+    let folder = 'share/post';
+    if (tipo === 'ruta') folder = 'share/ruta';
+    else if (tipo === 'market') folder = 'share/m';
+
+    const safeSlug = slug.replace(/[^a-z0-9+\-_]/gi, '-').toLowerCase();
+    const htmlPath = `${folder}/${safeSlug}.html`;
+    const pageUrl = `${baseUrl}/${htmlPath}`;
+
+    // ---------- Generar HTML con SEO completo ----------
+    const html = generateHTML({
+      tipo, title, content, image, slug: safeSlug, pageUrl, baseUrl, extra
+    });
+
+    // ---------- Subir a GitHub ----------
+    const ghHeaders = {
+      'Authorization': `Bearer ${GITHUB_TOKEN}`,
+      'Accept': 'application/vnd.github+json',
+      'User-Agent': 'brigadistasbd-publisher',
+      'X-GitHub-Api-Version': '2022-11-28'
+    };
+
+    const apiBase = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents`;
+
+    // Obtener SHA si el archivo existe
+    let sha = null;
+    try {
+      const checkRes = await fetch(`${apiBase}/${htmlPath}?ref=main`, { headers: ghHeaders });
+      if (checkRes.ok) {
+        const checkJson = await checkRes.json();
+        sha = checkJson.sha;
+      }
+    } catch (e) {}
+
+    // Crear/actualizar archivo HTML
+    const putBody = {
+      message: `publicar: ${tipo} ${safeSlug}`,
+      content: b64EncodeUnicode(html),
+      branch: 'main'
+    };
+    if (sha) putBody.sha = sha;
+
+    const putRes = await fetch(`${apiBase}/${htmlPath}`, {
+      method: 'PUT',
+      headers: ghHeaders,
+      body: JSON.stringify(putBody)
+    });
+
+    if (!putRes.ok) {
+      const errTxt = await putRes.text();
+      return new Response(JSON.stringify({ error: 'Error al subir HTML', detail: errTxt }), { status: 502, headers });
+    }
+
+    // ---------- Actualizar índice posts-index.json ----------
+    const indexPath = 'share/posts-index.json';
+    let index = { posts: [], total: 0, updatedAt: null };
+    try {
+      const idxRes = await fetch(`${apiBase}/${indexPath}?ref=main`, { headers: ghHeaders });
+      if (idxRes.ok) {
+        const idxJson = await idxRes.json();
+        const decoded = decodeURIComponent(escape(atob(idxJson.content.replace(/\n/g, ''))));
+        index = JSON.parse(decoded);
+        index.__sha = idxJson.sha;
+      }
+    } catch (e) {}
+
+    index.posts = index.posts || [];
+    // Eliminar duplicados por slug
+    index.posts = index.posts.filter(p => p.slug !== safeSlug);
+    index.posts.unshift({
+      slug: safeSlug,
+      title,
+      description: (content || '').slice(0, 160),
+      image: image || '',
+      url: `/${htmlPath}`,
+      tipo: tipo || 'post',
+      timestamp: Date.now(),
+      updatedAt: new Date().toISOString()
+    });
+    index.total = index.posts.length;
+    index.updatedAt = new Date().toISOString();
+
+    const idxPutBody = {
+      message: `actualizar índice: ${safeSlug}`,
+      content: b64EncodeUnicode(JSON.stringify(index, null, 2)),
+      branch: 'main'
+    };
+    if (index.__sha) idxPutBody.sha = index.__sha;
+
+    await fetch(`${apiBase}/${indexPath}`, {
+      method: 'PUT',
+      headers: ghHeaders,
+      body: JSON.stringify(idxPutBody)
+    }).catch(() => {});
+
+    // ---------- Regenerar sitemap.xml ----------
+    await regenerateSitemap(env, ghHeaders, baseUrl, index);
+
+    return new Response(JSON.stringify({
+      ok: true,
+      url: pageUrl,
+      canonical: pageUrl,
+      index,
+      folder
+    }), { headers });
+
+  } catch (err) {
+    return new Response(JSON.stringify({ error: 'Error interno', detail: err.message }), { status: 500, headers });
   }
 }
 
-async function handlePublish(b, env, cors) {
-  const { type, slug, title, description, content, image, extra } = b;
-  if (!type || !slug || !title) return json({ ok: false, error: 'Faltan campos' }, 400, cors);
-
-  const folder = FOLDER[type] || 'share/p';
-  const site = env.SITE_DOMAIN || 'https://brigadistasbd.pages.dev';
-  const canonical = `${site}/${folder}/${slug}.html`;
-
-  const html = buildHtml({ type, slug, title, description, content, image, extra, canonical, site });
-
-  // 1) Subir HTML individual
-  await ghPut(env, `${folder}/${slug}.html`, html, `Publicar ${type}: ${slug}`);
-
-  // 2) Actualizar posts-index.json
-  const index = await getJson(env, 'share/posts-index.json') || { posts: [], updatedAt: 0, total: 0 };
-  index.posts = index.posts.filter(p => !(p.slug === slug && p.type === type));
-  index.posts.unshift({
-    slug, type, title, description: description || '',
-    image: image || '', url: `/${folder}/${slug}.html`,
-    ts: Date.now()
-  });
-  index.posts = index.posts.slice(0, 2000);
-  index.updatedAt = Date.now();
-  index.total = index.posts.length;
-  await ghPut(env, 'share/posts-index.json', JSON.stringify(index, null, 2), `Update index: ${slug}`);
-
-  // 3) Regenerar sitemap.xml
-  await regenerateSitemap(env, index, site);
-
-  return json({ ok: true, url: `/${folder}/${slug}.html`, canonical }, 200, cors);
+// ==========================================================================
+//  Utilidades
+// ==========================================================================
+function b64EncodeUnicode(str) {
+  return btoa(unescape(encodeURIComponent(str)));
 }
 
-async function handleDelete(b, env, cors) {
-  const { type, slug } = b;
-  const folder = FOLDER[type] || 'share/p';
-  await ghDelete(env, `${folder}/${slug}.html`, `Eliminar ${type}: ${slug}`);
-
-  const index = await getJson(env, 'share/posts-index.json') || { posts: [] };
-  index.posts = index.posts.filter(p => !(p.slug === slug && p.type === type));
-  index.updatedAt = Date.now();
-  index.total = index.posts.length;
-  await ghPut(env, 'share/posts-index.json', JSON.stringify(index, null, 2), `Update index (delete): ${slug}`);
-  await regenerateSitemap(env, index, env.SITE_DOMAIN);
-  return json({ ok: true }, 200, cors);
+function escapeHTML(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
 }
 
-// ═══ GitHub helpers ═══
-async function ghPut(env, path, contentStr, message) {
-  const url = `${GH_API}/repos/${env.REPO_OWNER}/${env.REPO_NAME}/contents/${path}`;
-  const headers = ghHeaders(env);
-  // Obtener SHA si existe
-  let sha = null;
-  const cur = await fetch(url, { headers });
-  if (cur.ok) { const j = await cur.json(); sha = j.sha; }
-  const content = btoa(unescape(encodeURIComponent(contentStr)));
-  const res = await fetch(url, {
-    method: 'PUT', headers,
-    body: JSON.stringify({ message, content, sha: sha || undefined, branch: 'main' })
-  });
-  if (!res.ok) throw new Error(`GitHub PUT ${path}: ${res.status} ${await res.text()}`);
-}
+// ==========================================================================
+//  Generador de HTML
+// ==========================================================================
+function generateHTML({ tipo, title, content, image, slug, pageUrl, baseUrl, extra }) {
+  const safeTitle = escapeHTML(title);
+  const safeDesc = escapeHTML((content || '').slice(0, 160));
+  const safeImage = image ? escapeHTML(image) : `${baseUrl}/assets/icon.svg`;
 
-async function ghDelete(env, path, message) {
-  const url = `${GH_API}/repos/${env.REPO_OWNER}/${env.REPO_NAME}/contents/${path}`;
-  const headers = ghHeaders(env);
-  const cur = await fetch(url, { headers });
-  if (!cur.ok) return; // ya no existe
-  const { sha } = await cur.json();
-  await fetch(url, { method: 'DELETE', headers, body: JSON.stringify({ message, sha, branch: 'main' }) });
-}
+  const typeLabel = tipo === 'ruta' ? 'Ruta' : tipo === 'market' ? 'Anuncio' : 'Publicación';
 
-async function getJson(env, path) {
-  const url = `${GH_API}/repos/${env.REPO_OWNER}/${env.REPO_NAME}/contents/${path}`;
-  const res = await fetch(url, { headers: ghHeaders(env) });
-  if (!res.ok) return null;
-  const j = await res.json();
-  const txt = decodeURIComponent(escape(atob(j.content)));
-  return JSON.parse(txt);
-}
+  // Schema.org
+  let schema;
+  if (tipo === 'ruta') {
+    schema = {
+      '@context': 'https://schema.org',
+      '@type': 'BusTrip',
+      name: title,
+      description: safeDesc,
+      url: pageUrl,
+      image: safeImage,
+      provider: { '@type': 'Organization', name: 'Rutas BGD', url: baseUrl }
+    };
+  } else if (tipo === 'market') {
+    schema = {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: title,
+      description: safeDesc,
+      image: safeImage,
+      url: pageUrl,
+      offers: {
+        '@type': 'Offer',
+        price: extra?.market?.price || '0',
+        priceCurrency: 'MXN',
+        availability: 'https://schema.org/InStock'
+      }
+    };
+  } else {
+    schema = {
+      '@context': 'https://schema.org',
+      '@type': 'BlogPosting',
+      headline: title,
+      description: safeDesc,
+      image: safeImage,
+      url: pageUrl,
+      datePublished: new Date().toISOString(),
+      author: { '@type': 'Organization', name: 'Rutas BGD' },
+      publisher: {
+        '@type': 'Organization',
+        name: 'Rutas BGD',
+        logo: { '@type': 'ImageObject', url: `${baseUrl}/assets/icon.svg` }
+      }
+    };
+  }
 
-function ghHeaders(env) {
-  return {
-    'Authorization': `Bearer ${env.GITHUB_TOKEN}`,
-    'Accept': 'application/vnd.github+json',
-    'User-Agent': 'brigadistas-bd',
-    'Content-Type': 'application/json'
-  };
-}
-
-async function regenerateSitemap(env, index, site) {
-  const urls = ['/'];
-  index.posts.forEach(p => urls.push(p.url));
-  const now = new Date().toISOString();
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.map(u => `  <url><loc>${site}${u}</loc><lastmod>${now}</lastmod><changefreq>weekly</changefreq><priority>${u === '/' ? '1.0' : '0.8'}</priority></url>`).join('\n')}
-</urlset>`;
-  await ghPut(env, 'sitemap.xml', xml, 'Regenerar sitemap');
-}
-
-// ═══ HTML con SEO completo ═══
-function buildHtml({ type, slug, title, description, content, image, extra, canonical, site }) {
-  const img = image || `${site}/assets/icon.svg`;
-  const desc = (description || (content || '').slice(0, 155)).replace(/[<>]/g, '');
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': type === 'r' ? 'TouristTrip' : type === 'm' ? 'Product' : 'BlogPosting',
-    name: title,
-    headline: title,
-    description: desc,
-    image: img,
-    url: canonical,
-    publisher: { '@type': 'Organization', name: 'Brigadistas BD', logo: { '@type': 'ImageObject', url: `${site}/assets/icon.svg` } },
-    datePublished: new Date().toISOString()
-  };
+  const bodyContent = tipo === 'ruta' && extra?.route
+    ? renderRouteBody(extra.route)
+    : tipo === 'market' && extra?.market
+      ? renderMarketBody(extra.market)
+      : `<div class="post-content">${escapeHTML(content).replace(/\n/g, '<br>')}</div>`;
 
   return `<!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>${esc(title)} · Brigadistas BD</title>
-<meta name="description" content="${esc(desc)}"/>
-<link rel="canonical" href="${canonical}"/>
-<meta name="robots" content="index,follow"/>
-<meta property="og:type" content="article"/>
-<meta property="og:title" content="${esc(title)}"/>
-<meta property="og:description" content="${esc(desc)}"/>
-<meta property="og:image" content="${esc(img)}"/>
-<meta property="og:url" content="${canonical}"/>
-<meta property="og:site_name" content="Brigadistas BD"/>
-<meta name="twitter:card" content="summary_large_image"/>
-<meta name="twitter:title" content="${esc(title)}"/>
-<meta name="twitter:description" content="${esc(desc)}"/>
-<meta name="twitter:image" content="${esc(img)}"/>
-<link rel="icon" href="/assets/icon.svg"/>
-<script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${safeTitle} · Rutas BGD</title>
+<meta name="description" content="${safeDesc}">
+<link rel="canonical" href="${pageUrl}">
+
+<!-- Open Graph -->
+<meta property="og:type" content="${tipo === 'post' ? 'article' : 'website'}">
+<meta property="og:title" content="${safeTitle}">
+<meta property="og:description" content="${safeDesc}">
+<meta property="og:image" content="${safeImage}">
+<meta property="og:url" content="${pageUrl}">
+<meta property="og:site_name" content="Rutas BGD">
+<meta property="og:locale" content="es_MX">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${safeTitle}">
+<meta name="twitter:description" content="${safeDesc}">
+<meta name="twitter:image" content="${safeImage}">
+
+<!-- PWA -->
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" type="image/svg+xml" href="/assets/icon.svg">
+<meta name="theme-color" content="#0a0e1a">
+
+<!-- Schema.org -->
+<script type="application/ld+json">${JSON.stringify(schema)}</script>
+
 <style>
-body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#0a0e1a;color:#e6edf7;line-height:1.6}
-header{position:sticky;top:0;background:rgba(10,14,26,.9);backdrop-filter:blur(12px);border-bottom:1px solid #1f2a44;padding:12px 16px;display:flex;align-items:center;gap:12px}
-header a{color:#00e5ff;text-decoration:none;font-weight:700}
-main{max-width:800px;margin:0 auto;padding:20px}
-img.hero{width:100%;max-height:480px;object-fit:cover;border-radius:14px;margin-bottom:16px}
-h1{font-size:26px;margin:0 0 8px}
-.meta{color:#9aa7bd;font-size:13px;margin-bottom:16px}
-.content{white-space:pre-wrap;font-size:16px}
-.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
-.chip{padding:5px 10px;background:#131a2b;border:1px solid #1f2a44;border-radius:8px;font-size:12px}
-footer{text-align:center;padding:30px;color:#9aa7bd;font-size:13px}
-a.btn{display:inline-block;background:#00e5ff;color:#001820;padding:10px 18px;border-radius:10px;font-weight:800;text-decoration:none;margin-top:16px}
+:root{--cyan:#00e5ff;--bg:#0a0e1a;--surface:#141c30;--text:#e8edf7;--text-2:#a9b4cc;--border:#26314f}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding:0}
+.wrap{max-width:760px;margin:0 auto;padding:20px}
+.back{display:inline-flex;align-items:center;gap:6px;color:var(--cyan);text-decoration:none;font-size:13px;font-weight:700;margin-bottom:16px}
+h1{font-size:26px;font-weight:900;letter-spacing:-.4px;margin-bottom:8px;line-height:1.2}
+.meta{color:var(--text-2);font-size:13px;margin-bottom:20px}
+.post-content{font-size:15.5px;line-height:1.7;color:var(--text);background:var(--surface);padding:18px;border-radius:14px;border:1px solid var(--border);margin-bottom:20px}
+.post-image{width:100%;border-radius:14px;margin-bottom:20px;border:1px solid var(--border)}
+.badge{display:inline-block;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin-bottom:12px}
+.badge-urbana{background:rgba(0,229,255,.16);color:var(--cyan)}
+.badge-foranea{background:rgba(168,85,247,.18);color:#a855f7}
+.badge-green{background:rgba(16,185,129,.16);color:#10b981}
+.block{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px}
+.block h3{font-size:14px;font-weight:800;margin-bottom:10px;color:var(--cyan)}
+.block ul{list-style:none;padding:0}
+.block li{padding:7px 0;border-bottom:1px solid var(--border);font-size:14px}
+.block li:last-child{border-bottom:none}
+.cta{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:11px 18px;border-radius:10px;font-weight:700;font-size:13.5px;text-decoration:none;border:none;cursor:pointer;font-family:inherit}
+.btn-primary{background:linear-gradient(135deg,var(--cyan),#00b8cc);color:#00121a}
+.btn-ghost{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+.price{font-size:22px;font-weight:900;color:#10b981;margin:10px 0}
+footer{margin-top:30px;padding-top:20px;border-top:1px solid var(--border);color:var(--text-2);font-size:12px;text-align:center}
 </style>
 </head>
 <body>
-<header>
-  <a href="/">← Brigadistas BD</a>
-</header>
-<main>
-  <h1>${esc(title)}</h1>
-  <div class="meta">${TYPE_LABEL[type] || 'Publicación'} · ${new Date().toLocaleDateString('es-MX')}</div>
-  ${image ? `<img class="hero" src="${esc(image)}" alt="${esc(title)}"/>` : ''}
-  <div class="content">${esc(content || '')}</div>
-  ${extra && Object.keys(extra).length ? `<div class="chips">${Object.entries(extra).map(([k,v]) => `<span class="chip">${esc(k)}: ${esc(String(v))}</span>`).join('')}</div>` : ''}
-  <a class="btn" href="/">Ver rutas y más en Brigadistas BD</a>
-</main>
-<footer>© ${new Date().getFullYear()} Brigadistas BD · Tuxtla Gutiérrez, Chiapas</footer>
-<script src="/js/blog.js" defer></script>
+<div class="wrap">
+  <a class="back" href="${baseUrl}/">← Volver a Rutas BGD</a>
+  <span class="badge badge-${tipo === 'ruta' ? (extra?.route?.categoria === 'foranea' ? 'foranea' : 'urbana') : tipo === 'market' ? 'green' : 'urbana'}">${typeLabel}</span>
+  <h1>${safeTitle}</h1>
+  <div class="meta">${new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+  ${image ? `<img class="post-image" src="${safeImage}" alt="${safeTitle}">` : ''}
+  ${bodyContent}
+  <div class="cta">
+    <a class="btn btn-primary" href="${baseUrl}/">🚌 Ver todas las rutas</a>
+    <a class="btn btn-ghost" href="${baseUrl}/?tab=market">🛒 Marketplace</a>
+  </div>
+  <footer>© ${new Date().getFullYear()} Rutas BGD · <a href="${baseUrl}" style="color:var(--cyan)">${cleanDomain(baseUrl)}</a></footer>
+</div>
 </body>
 </html>`;
 }
 
-function esc(s) {
-  return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function cleanDomain(baseUrl) {
+  return baseUrl.replace(/^https?:\/\//, '');
 }
-function json(obj, status, cors) {
-  return new Response(JSON.stringify(obj), { status, headers: { 'Content-Type': 'application/json', ...cors } });
+
+function renderRouteBody(route) {
+  const blocks = [];
+  if (route.paradas?.length) blocks.push(`<div class="block"><h3>📍 Paradas</h3><ul>${route.paradas.map(p => `<li>${escapeHTML(p)}</li>`).join('')}</ul></div>`);
+  if (route.retornos?.length) blocks.push(`<div class="block"><h3>↩️ Retornos</h3><ul>${route.retornos.map(p => `<li>${escapeHTML(p)}</li>`).join('')}</ul></div>`);
+  if (route.pois?.length) blocks.push(`<div class="block"><h3>🏥 POIs de Ida</h3><ul>${route.pois.map(p => `<li>${escapeHTML(p)}</li>`).join('')}</ul></div>`);
+  if (route.poisVuelta?.length) blocks.push(`<div class="block"><h3>🏥 POIs de Regreso</h3><ul>${route.poisVuelta.map(p => `<li>${escapeHTML(p)}</li>`).join('')}</ul></div>`);
+  if (route.calles?.length) blocks.push(`<div class="block"><h3>🛣️ Calles</h3><ul>${route.calles.map(p => `<li>${escapeHTML(p)}</li>`).join('')}</ul></div>`);
+  const info = [];
+  if (route.tarifa) info.push(`<li>💰 Tarifa: ${escapeHTML(route.tarifa)}</li>`);
+  if (route.frecuencia) info.push(`<li>⏱️ Frecuencia: ${escapeHTML(route.frecuencia)}</li>`);
+  if (route.horarioIni) info.push(`<li>🕐 Horario: ${escapeHTML(route.horarioIni)} - ${escapeHTML(route.horarioFin || '')}</li>`);
+  if (route.dias) info.push(`<li>📅 Días: ${escapeHTML(route.dias)}</li>`);
+  if (info.length) blocks.unshift(`<div class="block"><h3>ℹ️ Información</h3><ul>${info.join('')}</ul></div>`);
+  return blocks.join('');
+}
+
+function renderMarketBody(market) {
+  return `
+    ${market.price ? `<div class="price">${escapeHTML(market.price)}</div>` : ''}
+    <div class="post-content">${escapeHTML(market.description || '').replace(/\n/g, '<br>')}</div>
+    ${market.phone ? `<div class="block"><h3>📞 Contacto</h3><a class="btn btn-primary" href="https://wa.me/${market.phone.replace(/\D/g, '')}?text=${encodeURIComponent('Hola, me interesa: ' + market.title)}" target="_blank" rel="noopener">💬 WhatsApp</a></div>` : ''}
+  `;
+}
+
+// ==========================================================================
+//  Regenerar sitemap.xml
+// ==========================================================================
+async function regenerateSitemap(env, ghHeaders, baseUrl, index) {
+  const { REPO_OWNER, REPO_NAME, GITHUB_TOKEN } = env;
+  const apiBase = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents`;
+
+  const today = new Date().toISOString().split('T')[0];
+  const urls = [
+    { loc: baseUrl + '/', priority: '1.0', changefreq: 'daily' },
+    { loc: baseUrl + '/?tab=routes', priority: '0.95', changefreq: 'daily' },
+    { loc: baseUrl + '/?tab=home', priority: '0.9', changefreq: 'daily' },
+    { loc: baseUrl + '/?tab=market', priority: '0.9', changefreq: 'daily' }
+  ];
+
+  (index.posts || []).forEach(p => {
+    urls.push({
+      loc: `${baseUrl}${p.url}`,
+      priority: '0.8',
+      changefreq: 'weekly',
+      image: p.image || null,
+      lastmod: p.updatedAt || today
+    });
+  });
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+${urls.map(u => `  <url>
+    <loc>${u.loc}</loc>
+    <lastmod>${u.lastmod || today}</lastmod>
+    <changefreq>${u.changefreq}</changefreq>
+    <priority>${u.priority}</priority>${u.image ? `
+    <image:image><image:loc>${u.image}</image:loc></image:image>` : ''}
+  </url>`).join('\n')}
+</urlset>`;
+
+  // Obtener SHA si existe
+  let sha = null;
+  try {
+    const res = await fetch(`${apiBase}/sitemap.xml?ref=main`, { headers: ghHeaders });
+    if (res.ok) { const j = await res.json(); sha = j.sha; }
+  } catch (e) {}
+
+  const body = {
+    message: 'actualizar sitemap.xml',
+    content: b64EncodeUnicode(xml),
+    branch: 'main'
+  };
+  if (sha) body.sha = sha;
+
+  await fetch(`${apiBase}/sitemap.xml`, {
+    method: 'PUT',
+    headers: ghHeaders,
+    body: JSON.stringify(body)
+  }).catch(() => {});
 }
