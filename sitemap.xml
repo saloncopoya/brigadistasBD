@@ -26,6 +26,12 @@
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>https://brigadistasbd.pages.dev/share/ruta/listo139</loc>
+    <lastmod>2026-09-13T21:35:05.904Z</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://brigadistasbd.pages.dev/share/ruta/jsjw139</loc>
     <lastmod>2026-09-13T21:27:43.754Z</lastmod>
     <changefreq>weekly</changefreq>
@@ -37,12 +43,6 @@
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image><image:loc>https://res.cloudinary.com/davovja1g/image/upload/v1789334006/dvkm6lbvn3kvj9hydobe.jpg</image:loc></image:image>
-  </url>
-  <url>
-    <loc>https://brigadistasbd.pages.dev/share/ruta/listo139</loc>
-    <lastmod>2026-09-13T20:14:03.364Z</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://brigadistasbd.pages.dev/share/ruta/7139.html</loc>
