@@ -1,28 +1,5 @@
-[
-  {
-    "title": "Tercer",
-    "slug": "tercer",
-    "description": "Corta descripción ",
-    "image": "https://images.milenio.com/HMd2llieV_9k1OAOtnleHdiYNCk=/345x195/uploads/media/2026/09/11/alumnos-unam-leon-protestan-transporte.jpg",
-    "date": "2026-09-13",
-    "url": "paginas/tercer.html",
-    "content": "Contenido texto lego "
-  },
-  {
-    "title": "Segundo",
-    "slug": "segundo",
-    "description": "Descripción corta",
-    "image": "",
-    "date": "2026-09-13",
-    "url": "paginas/segundo.html",
-    "content": "Contenido"
-  },
-  {
-    "title": "Kekek",
-    "slug": "kekek",
-    "description": "Jejwj",
-    "image": "",
-    "date": "2026-09-13",
-    "url": "paginas/kekek"
-  }
-]
+{
+  "posts": [],
+  "updatedAt": "2025-01-01T00:00:00.000Z",
+  "total": 0
+}
