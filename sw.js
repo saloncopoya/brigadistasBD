@@ -1,103 +1,126 @@
-const CACHE_NAME = 'cotejo-offline-v2.1.0.5'; 
-const urlsToCache = [
-    '/',
-   "/index.html",
-  "/admin.html",
-  "/offline.html",
-  "/css/style.css",
-  "/js/main.js",
-  "/js/publisher.js",
-  "/js/db.js",
-  "/manifest.json",
-  "/paginas/posts-index.json",
-    'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js'
+/* SW.JS — v4 · Corregido para /admin y navegación HTML */
+const VERSION = 'bgd-v4';
+const STATIC_CACHE = `${VERSION}-static`;
+const HTML_CACHE = `${VERSION}-html`;
+const TILES_CACHE = `${VERSION}-tiles`;
+
+const PRECACHE = [
+  '/',
+  '/index.html',
+  '/admin.html',
+  '/offline.html',
+  '/manifest.json',
+  '/robots.txt',
+  '/sitemap.xml',
+  '/assets/icon.svg',
+  '/js/db.js',
+  '/js/publisher.js',
+  '/js/app.js',
+  '/js/main.js',
+  '/js/blog.js'
 ];
 
-// Instalar Service Worker
 self.addEventListener('install', event => {
-    console.log('⚡ Service Worker instalando...');
-    event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(async cache => {
-                console.log('📦 Cacheando archivos base...');
-                
-                for (const url of urlsToCache) {
-                    try {
-                        await cache.add(url);
-                        console.log('✅ Cacheado:', url);
-                    } catch (err) {
-                        console.warn('⚠️ No se pudo cachear:', url, err);
-                    }
-                }
-            })
-    );
-    self.skipWaiting();
+  event.waitUntil((async () => {
+    const cache = await caches.open(STATIC_CACHE);
+    await Promise.all(PRECACHE.map(async url => {
+      try {
+        const res = await fetch(url, { cache: 'reload' });
+        if (res.ok) await cache.put(url, res);
+      } catch (e) { console.warn('[SW precache fail]', url); }
+    }));
+    await self.skipWaiting();
+  })());
 });
 
-// Activar Service Worker
 self.addEventListener('activate', event => {
-    console.log('✅ Service Worker activado');
-    event.waitUntil(
-        caches.keys().then(cacheNames => {
-            return Promise.all(
-                cacheNames.map(cache => {
-                    if (cache !== CACHE_NAME) {
-                        console.log('🧹 Eliminando cache antiguo:', cache);
-                        return caches.delete(cache);
-                    }
-                })
-            );
-        })
-    );
-    self.clients.claim();
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.filter(k => !k.startsWith(VERSION)).map(k => caches.delete(k)));
+    await self.clients.claim();
+  })());
 });
 
-// Interceptar peticiones
 self.addEventListener('fetch', event => {
-    const url = new URL(event.request.url);
-    
-    // Estrategia: Primero caché, luego red
-    event.respondWith(
-        caches.match(event.request)
-            .then(response => {
-                // Si el archivo está en caché, lo devolvemos inmediatamente
-                if (response) {
-                    console.log('✅ Desde CACHÉ:', url.pathname);
-                    return response;
-                }
-                
-                // Si NO está en caché, vamos a internet
-                console.log('🌐 Desde INTERNET:', url.pathname);
-                const fetchRequest = event.request.clone();
-                
-                return fetch(fetchRequest).then(response => {
-                    // Verificar que la respuesta sea válida
-                    if (!response || response.status !== 200 || response.type !== 'basic') {
-                        return response;
-                    }
-                    
-                    // Clonar la respuesta para guardarla y devolverla
-                    const responseToCache = response.clone();
-                    
-                    // Guardar automáticamente en caché el archivo visitado
-                    caches.open(CACHE_NAME).then(cache => {
-                        cache.put(event.request, responseToCache);
-                        console.log('💾 Guardado en CACHÉ:', url.pathname);
-                    });
-                    
-                    return response;
-                }).catch(() => {
-                    // Si falla la red y no está en caché, mostrar index.html
-                    if (event.request.mode === 'navigate') {
-                        console.log('📴 Offline - Mostrando index.html');
-                        return caches.match('/index.html');
-                    }
-                    return new Response('Contenido no disponible offline', {
-                        status: 503,
-                        statusText: 'Offline',
-                        headers: new Headers({ 'Content-Type': 'text/plain' })
-                    });
-                });
-            })
-    );
+  const req = event.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+
+  // Tiles OSM
+  if (url.hostname.endsWith('tile.openstreetmap.org')) {
+    event.respondWith(tileStrategy(req));
+    return;
+  }
+
+  // Externos (CDNs, Firebase, Nominatim, Cloudinary) → red directa
+  if (url.origin !== self.location.origin) return;
+
+  // HTML (navegación) → network-first SIN fallback a index.html
+  if (req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html')) {
+    event.respondWith(htmlStrategy(req));
+    return;
+  }
+
+  // Estáticos propios → cache-first
+  event.respondWith(cacheFirst(req, STATIC_CACHE));
+});
+
+async function htmlStrategy(req) {
+  const cache = await caches.open(HTML_CACHE);
+  try {
+    const fresh = await fetch(req);
+    if (fresh && fresh.ok && fresh.status === 200) {
+      cache.put(req, fresh.clone());
+      console.log('🌐 Desde INTERNET:', new URL(req.url).pathname);
+      return fresh;
+    }
+    // Si la red responde error (404, 308, 503...) intentamos cache
+    throw new Error('bad status ' + fresh.status);
+  } catch (err) {
+    const cached = await cache.match(req);
+    if (cached) {
+      console.log('✅ Desde CACHÉ:', new URL(req.url).pathname);
+      return cached;
+    }
+    // Sin cache → offline.html
+    const offline = await caches.match('/offline.html');
+    if (offline) return offline;
+    return new Response('<h1>Sin conexión</h1>', {
+      status: 503, headers: { 'Content-Type': 'text/html' }
+    });
+  }
+}
+
+async function cacheFirst(req, cacheName) {
+  const cache = await caches.open(cacheName);
+  const cached = await cache.match(req);
+  if (cached) { console.log('✅ Desde CACHÉ:', new URL(req.url).pathname); return cached; }
+  try {
+    const fresh = await fetch(req);
+    if (fresh && fresh.ok) cache.put(req, fresh.clone());
+    console.log('🌐 Desde INTERNET:', new URL(req.url).pathname);
+    return fresh;
+  } catch (e) { return cached || Response.error(); }
+}
+
+async function tileStrategy(req) {
+  const cache = await caches.open(TILES_CACHE);
+  const cached = await cache.match(req);
+  if (cached) return cached;
+  try {
+    const fresh = await fetch(req, { mode: 'cors' });
+    if (fresh && fresh.ok) {
+      cache.put(req, fresh.clone());
+      const keys = await cache.keys();
+      if (keys.length > 500) await cache.delete(keys[0]);
+    }
+    return fresh;
+  } catch (e) { return new Response('', { status: 504 }); }
+}
+
+self.addEventListener('message', event => {
+  if (event.data === 'SKIP_WAITING') self.skipWaiting();
+  if (event.data === 'CLEAR_CACHE') {
+    event.waitUntil(caches.keys().then(ks => Promise.all(ks.map(k => caches.delete(k)))));
+  }
 });
