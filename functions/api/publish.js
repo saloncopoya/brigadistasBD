@@ -1,442 +1,399 @@
-// functions/api/publish.js
-// Cloudflare Pages Function: recibe post, verifica contraseña y sube a GitHub
+/* ==========================================================================
+   PUBLISH.JS — Cloudflare Function para publicar posts, rutas y market
+   en GitHub con SEO completo (Open Graph, Schema.org, sitemap, índice)
+   ========================================================================== */
 
-export async function onRequestPost(context) {
+export async function onRequest(context) {
   const { request, env } = context;
-
-  // CORS
-  const corsHeaders = {
+  const headers = {
+    'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type'
   };
+
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { headers });
+  }
+
+  if (request.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Método no permitido' }), { status: 405, headers });
+  }
 
   try {
     const body = await request.json();
-    const {
-      password,
-      slug,
-      title,
-      description,
-      content,
-      image,
-      metadata,
-      mapPoints,
-      streets,
-      pois,
-      routeData,
-    } = body;
+    const { password, tipo, slug, title, content, image, extra } = body;
 
-    // 1. Verificar contraseña
-    if (!password || password !== env.ADMIN_PASSWORD) {
-      return new Response(
-        JSON.stringify({ ok: false, error: 'Contraseña incorrecta' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // Verificar contraseña
+    if (!env.ADMIN_PASSWORD || password !== env.ADMIN_PASSWORD) {
+      return new Response(JSON.stringify({ error: 'Contraseña incorrecta' }), { status: 401, headers });
     }
 
-    // 2. Validar campos
+    // Si es solo verificación
+    if (body.__check) {
+      return new Response(JSON.stringify({ ok: true }), { headers });
+    }
+
     if (!slug || !title) {
-      return new Response(
-        JSON.stringify({ ok: false, error: 'Faltan campos obligatorios' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ error: 'Faltan slug o título' }), { status: 400, headers });
     }
 
-    const cleanSlug = slug
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9-]+/g, '-')
-      .replace(/^-+|-+$/g, '');
+    const {
+      GITHUB_TOKEN, REPO_OWNER, REPO_NAME, SITE_DOMAIN
+    } = env;
 
-    const domain = env.SITE_DOMAIN || 'https://rutas-tuxtla.pages.dev';
-    const canonical = `${domain}/paginas/${cleanSlug}.html`;
-    const now = new Date().toISOString();
-
-    // 3. Leer posts-index.json actual desde GitHub
-    const owner = env.REPO_OWNER;
-    const repo = env.REPO_NAME;
-    const token = env.GITHUB_TOKEN;
-    const branch = 'main';
-
-    if (!owner || !repo || !token) {
-      return new Response(
-        JSON.stringify({ ok: false, error: 'Configuración del servidor incompleta' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    if (!GITHUB_TOKEN || !REPO_OWNER || !REPO_NAME) {
+      return new Response(JSON.stringify({ error: 'Configuración de GitHub incompleta' }), { status: 500, headers });
     }
 
-    const ghApi = `https://api.github.com/repos/${owner}/${repo}/contents`;
-    const ghHeaders = {
-      Authorization: `Bearer ${token}`,
-      Accept: 'application/vnd.github+json',
-      'User-Agent': 'RutasTuxtlaBot',
-      'X-GitHub-Api-Version': '2022-11-28',
-    };
+    const domain = SITE_DOMAIN || 'brigadistasbd.pages.dev';
+    const cleanDomain = domain.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    const baseUrl = `https://${cleanDomain}`;
 
-    // Leer índice actual
-    let currentIndex = { posts: [], updatedAt: now, total: 0 };
-    let indexSha = null;
+    // Determinar carpeta según tipo
+    let folder = 'share/post';
+    if (tipo === 'ruta') folder = 'share/ruta';
+    else if (tipo === 'market') folder = 'share/m';
 
-    try {
-      const idxRes = await fetch(`${ghApi}/paginas/posts-index.json?ref=${branch}`, {
-        headers: ghHeaders,
-      });
-      if (idxRes.ok) {
-        const idxData = await idxRes.json();
-        indexSha = idxData.sha;
-        const decoded = atob(idxData.content.replace(/\n/g, ''));
-        currentIndex = JSON.parse(decoded);
-      }
-    } catch (e) {
-      // Si no existe, se crea nuevo
-    }
+    const safeSlug = slug.replace(/[^a-z0-9+\-_]/gi, '-').toLowerCase();
+    const htmlPath = `${folder}/${safeSlug}.html`;
+    const pageUrl = `${baseUrl}/${htmlPath}`;
 
-    // 4. Generar HTML del post individual
-    const postHtml = generatePostHtml({
-      slug: cleanSlug,
-      title,
-      description,
-      content,
-      image,
-      metadata,
-      canonical,
-      domain,
-      now,
+    // ---------- Generar HTML con SEO completo ----------
+    const html = generateHTML({
+      tipo, title, content, image, slug: safeSlug, pageUrl, baseUrl, extra
     });
 
-    // 5. Subir HTML del post a GitHub
-    const postPath = `paginas/${cleanSlug}.html`;
-    let postSha = null;
+    // ---------- Subir a GitHub ----------
+    const ghHeaders = {
+      'Authorization': `Bearer ${GITHUB_TOKEN}`,
+      'Accept': 'application/vnd.github+json',
+      'User-Agent': 'brigadistasbd-publisher',
+      'X-GitHub-Api-Version': '2022-11-28'
+    };
 
+    const apiBase = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents`;
+
+    // Obtener SHA si el archivo existe
+    let sha = null;
     try {
-      const existRes = await fetch(`${ghApi}/${postPath}?ref=${branch}`, {
-        headers: ghHeaders,
-      });
-      if (existRes.ok) {
-        const existData = await existRes.json();
-        postSha = existData.sha;
+      const checkRes = await fetch(`${apiBase}/${htmlPath}?ref=main`, { headers: ghHeaders });
+      if (checkRes.ok) {
+        const checkJson = await checkRes.json();
+        sha = checkJson.sha;
       }
     } catch (e) {}
 
-    const postPayload = {
-      message: `feat(post): ${title}`,
-      content: btoa(unescape(encodeURIComponent(postHtml))),
-      branch,
+    // Crear/actualizar archivo HTML
+    const putBody = {
+      message: `publicar: ${tipo} ${safeSlug}`,
+      content: b64EncodeUnicode(html),
+      branch: 'main'
     };
-    if (postSha) postPayload.sha = postSha;
+    if (sha) putBody.sha = sha;
 
-    const postRes = await fetch(`${ghApi}/${postPath}`, {
+    const putRes = await fetch(`${apiBase}/${htmlPath}`, {
       method: 'PUT',
       headers: ghHeaders,
-      body: JSON.stringify(postPayload),
+      body: JSON.stringify(putBody)
     });
 
-    if (!postRes.ok) {
-      const err = await postRes.text();
-      throw new Error(`Error subiendo post: ${err}`);
+    if (!putRes.ok) {
+      const errTxt = await putRes.text();
+      return new Response(JSON.stringify({ error: 'Error al subir HTML', detail: errTxt }), { status: 502, headers });
     }
 
-    // 6. Actualizar índice
-    const newEntry = {
-      slug: cleanSlug,
+    // ---------- Actualizar índice posts-index.json ----------
+    const indexPath = 'share/posts-index.json';
+    let index = { posts: [], total: 0, updatedAt: null };
+    try {
+      const idxRes = await fetch(`${apiBase}/${indexPath}?ref=main`, { headers: ghHeaders });
+      if (idxRes.ok) {
+        const idxJson = await idxRes.json();
+        const decoded = decodeURIComponent(escape(atob(idxJson.content.replace(/\n/g, ''))));
+        index = JSON.parse(decoded);
+        index.__sha = idxJson.sha;
+      }
+    } catch (e) {}
+
+    index.posts = index.posts || [];
+    // Eliminar duplicados por slug
+    index.posts = index.posts.filter(p => p.slug !== safeSlug);
+    index.posts.unshift({
+      slug: safeSlug,
       title,
-      description: description || '',
+      description: (content || '').slice(0, 160),
       image: image || '',
-      url: `paginas/${cleanSlug}.html`,
-      canonical,
-      tipo: metadata?.tipo || 'ida',
-      color: metadata?.color || '#1e40af',
-      empresa: metadata?.empresa || '',
-      tarifa: metadata?.tarifa || '',
-      frecuencia: metadata?.frecuencia || '',
-      horario: metadata?.horario || '',
-      dias: metadata?.dias || 'todos',
-      accesible: metadata?.accesible || 'no',
-      puntos: Array.isArray(mapPoints) ? mapPoints.length : 0,
-      calles: Array.isArray(streets) ? streets.length : 0,
-      pois: Array.isArray(pois) ? pois.length : 0,
-      createdAt: now,
-      updatedAt: now,
+      url: `/${htmlPath}`,
+      tipo: tipo || 'post',
+      timestamp: Date.now(),
+      updatedAt: new Date().toISOString()
+    });
+    index.total = index.posts.length;
+    index.updatedAt = new Date().toISOString();
+
+    const idxPutBody = {
+      message: `actualizar índice: ${safeSlug}`,
+      content: b64EncodeUnicode(JSON.stringify(index, null, 2)),
+      branch: 'main'
     };
+    if (index.__sha) idxPutBody.sha = index.__sha;
 
-    // Remover duplicados por slug
-    currentIndex.posts = currentIndex.posts.filter((p) => p.slug !== cleanSlug);
-    currentIndex.posts.unshift(newEntry);
-    currentIndex.updatedAt = now;
-    currentIndex.total = currentIndex.posts.length;
-
-    const indexPayload = {
-      message: `chore(index): actualizar índice - ${title}`,
-      content: btoa(unescape(encodeURIComponent(JSON.stringify(currentIndex, null, 2)))),
-      branch,
-    };
-    if (indexSha) indexPayload.sha = indexSha;
-
-    const indexRes = await fetch(`${ghApi}/paginas/posts-index.json`, {
+    await fetch(`${apiBase}/${indexPath}`, {
       method: 'PUT',
       headers: ghHeaders,
-      body: JSON.stringify(indexPayload),
-    });
+      body: JSON.stringify(idxPutBody)
+    }).catch(() => {});
 
-    if (!indexRes.ok) {
-      const err = await indexRes.text();
-      throw new Error(`Error actualizando índice: ${err}`);
-    }
+    // ---------- Regenerar sitemap.xml ----------
+    await regenerateSitemap(env, ghHeaders, baseUrl, index);
 
-    // 7. Actualizar sitemap.xml
-    await updateSitemap({ ghApi, ghHeaders, branch, domain, posts: currentIndex.posts });
+    return new Response(JSON.stringify({
+      ok: true,
+      url: pageUrl,
+      canonical: pageUrl,
+      index,
+      folder
+    }), { headers });
 
-    return new Response(
-      JSON.stringify({
-        ok: true,
-        slug: cleanSlug,
-        url: `/${postPath}`,
-        canonical,
-        message: 'Post publicado correctamente',
-      }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  } catch (error) {
-    console.error('Error en publish:', error);
-    return new Response(
-      JSON.stringify({ ok: false, error: error.message || 'Error interno' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+  } catch (err) {
+    return new Response(JSON.stringify({ error: 'Error interno', detail: err.message }), { status: 500, headers });
   }
 }
 
-export async function onRequestOptions() {
-  return new Response(null, {
-    status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    },
-  });
+// ==========================================================================
+//  Utilidades
+// ==========================================================================
+function b64EncodeUnicode(str) {
+  return btoa(unescape(encodeURIComponent(str)));
 }
 
-/* ============================================================
-   Genera el HTML del post individual
-   ============================================================ */
-function generatePostHtml({ slug, title, description, content, image, metadata, canonical, domain, now }) {
-  const safeTitle = escapeHtml(title);
-  const safeDesc = escapeHtml(description || '');
-  const imageUrl = image || `${domain}/assets/icon.svg`;
-  const dateStr = new Date(now).toLocaleDateString('es-MX', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+function escapeHTML(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
 
-  // Schema.org JSON-LD
-  const schema = {
-    '@context': 'https://schema.org',
-    '@type': 'Article',
-    headline: title,
-    description: description || '',
-    image: imageUrl,
-    author: { '@type': 'Organization', name: 'Rutas Tuxtla Gutiérrez' },
-    publisher: {
-      '@type': 'Organization',
-      name: 'Rutas Tuxtla Gutiérrez',
-      logo: { '@type': 'ImageObject', url: `${domain}/assets/icon.svg` },
-    },
-    datePublished: now,
-    dateModified: now,
-    mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
-  };
+// ==========================================================================
+//  Generador de HTML
+// ==========================================================================
+function generateHTML({ tipo, title, content, image, slug, pageUrl, baseUrl, extra }) {
+  const safeTitle = escapeHTML(title);
+  const safeDesc = escapeHTML((content || '').slice(0, 160));
+  const safeImage = image ? escapeHTML(image) : `${baseUrl}/assets/icon.svg`;
 
-  // Breadcrumb schema
-  const breadcrumb = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Inicio', item: domain },
-      { '@type': 'ListItem', position: 2, name: 'Rutas', item: `${domain}/#rutas` },
-      { '@type': 'ListItem', position: 3, name: title, item: canonical },
-    ],
-  };
+  const typeLabel = tipo === 'ruta' ? 'Ruta' : tipo === 'market' ? 'Anuncio' : 'Publicación';
 
-  const streetsList = (metadata?.streets || [])
-    .map(
-      (s, i) => `
-      <li>
-        <span class="num">${i + 1}</span>
-        <span>${escapeHtml(typeof s === 'string' ? s : s.nombre || '')}</span>
-      </li>`
-    )
-    .join('');
+  // Schema.org
+  let schema;
+  if (tipo === 'ruta') {
+    schema = {
+      '@context': 'https://schema.org',
+      '@type': 'BusTrip',
+      name: title,
+      description: safeDesc,
+      url: pageUrl,
+      image: safeImage,
+      provider: { '@type': 'Organization', name: 'Rutas BGD', url: baseUrl }
+    };
+  } else if (tipo === 'market') {
+    schema = {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: title,
+      description: safeDesc,
+      image: safeImage,
+      url: pageUrl,
+      offers: {
+        '@type': 'Offer',
+        price: extra?.market?.price || '0',
+        priceCurrency: 'MXN',
+        availability: 'https://schema.org/InStock'
+      }
+    };
+  } else {
+    schema = {
+      '@context': 'https://schema.org',
+      '@type': 'BlogPosting',
+      headline: title,
+      description: safeDesc,
+      image: safeImage,
+      url: pageUrl,
+      datePublished: new Date().toISOString(),
+      author: { '@type': 'Organization', name: 'Rutas BGD' },
+      publisher: {
+        '@type': 'Organization',
+        name: 'Rutas BGD',
+        logo: { '@type': 'ImageObject', url: `${baseUrl}/assets/icon.svg` }
+      }
+    };
+  }
+
+  const bodyContent = tipo === 'ruta' && extra?.route
+    ? renderRouteBody(extra.route)
+    : tipo === 'market' && extra?.market
+      ? renderMarketBody(extra.market)
+      : `<div class="post-content">${escapeHTML(content).replace(/\n/g, '<br>')}</div>`;
 
   return `<!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>${safeTitle} | Rutas Tuxtla Gutiérrez</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${safeTitle} · Rutas BGD</title>
 <meta name="description" content="${safeDesc}">
-<meta name="keywords" content="ruta, transporte, Tuxtla Gutiérrez, Chiapas, colectivo, ${safeTitle}">
-<meta name="robots" content="index, follow, max-image-preview:large">
-<link rel="canonical" href="${canonical}">
+<link rel="canonical" href="${pageUrl}">
 
 <!-- Open Graph -->
-<meta property="og:type" content="article">
+<meta property="og:type" content="${tipo === 'post' ? 'article' : 'website'}">
 <meta property="og:title" content="${safeTitle}">
 <meta property="og:description" content="${safeDesc}">
-<meta property="og:image" content="${imageUrl}">
-<meta property="og:url" content="${canonical}">
-<meta property="og:site_name" content="Rutas Tuxtla Gutiérrez">
+<meta property="og:image" content="${safeImage}">
+<meta property="og:url" content="${pageUrl}">
+<meta property="og:site_name" content="Rutas BGD">
 <meta property="og:locale" content="es_MX">
 
-<!-- Twitter -->
+<!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${safeTitle}">
 <meta name="twitter:description" content="${safeDesc}">
-<meta name="twitter:image" content="${imageUrl}">
+<meta name="twitter:image" content="${safeImage}">
 
-<!-- Theme -->
-<meta name="theme-color" content="#1e40af">
-<link rel="icon" href="${domain}/assets/icon.svg" type="image/svg+xml">
-
-<!-- CSS -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="${domain}/css/styles.css">
+<!-- PWA -->
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" type="image/svg+xml" href="/assets/icon.svg">
+<meta name="theme-color" content="#0a0e1a">
 
 <!-- Schema.org -->
 <script type="application/ld+json">${JSON.stringify(schema)}</script>
-<script type="application/ld+json">${JSON.stringify(breadcrumb)}</script>
+
+<style>
+:root{--cyan:#00e5ff;--bg:#0a0e1a;--surface:#141c30;--text:#e8edf7;--text-2:#a9b4cc;--border:#26314f}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding:0}
+.wrap{max-width:760px;margin:0 auto;padding:20px}
+.back{display:inline-flex;align-items:center;gap:6px;color:var(--cyan);text-decoration:none;font-size:13px;font-weight:700;margin-bottom:16px}
+h1{font-size:26px;font-weight:900;letter-spacing:-.4px;margin-bottom:8px;line-height:1.2}
+.meta{color:var(--text-2);font-size:13px;margin-bottom:20px}
+.post-content{font-size:15.5px;line-height:1.7;color:var(--text);background:var(--surface);padding:18px;border-radius:14px;border:1px solid var(--border);margin-bottom:20px}
+.post-image{width:100%;border-radius:14px;margin-bottom:20px;border:1px solid var(--border)}
+.badge{display:inline-block;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin-bottom:12px}
+.badge-urbana{background:rgba(0,229,255,.16);color:var(--cyan)}
+.badge-foranea{background:rgba(168,85,247,.18);color:#a855f7}
+.badge-green{background:rgba(16,185,129,.16);color:#10b981}
+.block{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px}
+.block h3{font-size:14px;font-weight:800;margin-bottom:10px;color:var(--cyan)}
+.block ul{list-style:none;padding:0}
+.block li{padding:7px 0;border-bottom:1px solid var(--border);font-size:14px}
+.block li:last-child{border-bottom:none}
+.cta{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:11px 18px;border-radius:10px;font-weight:700;font-size:13.5px;text-decoration:none;border:none;cursor:pointer;font-family:inherit}
+.btn-primary{background:linear-gradient(135deg,var(--cyan),#00b8cc);color:#00121a}
+.btn-ghost{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+.price{font-size:22px;font-weight:900;color:#10b981;margin:10px 0}
+footer{margin-top:30px;padding-top:20px;border-top:1px solid var(--border);color:var(--text-2);font-size:12px;text-align:center}
+</style>
 </head>
-<body class="post-page">
-
-<header class="post-hero">
-  <div class="post-badges">
-    <span class="badge">🚌 ${escapeHtml(metadata?.tipo || 'ida')}</span>
-    <span class="badge">📍 ${escapeHtml(metadata?.empresa || 'Transporte público')}</span>
-  </div>
+<body>
+<div class="wrap">
+  <a class="back" href="${baseUrl}/">← Volver a Rutas BGD</a>
+  <span class="badge badge-${tipo === 'ruta' ? (extra?.route?.categoria === 'foranea' ? 'foranea' : 'urbana') : tipo === 'market' ? 'green' : 'urbana'}">${typeLabel}</span>
   <h1>${safeTitle}</h1>
-  <p>${safeDesc}</p>
-</header>
-
-<main class="post-content" itemscope itemtype="https://schema.org/Article">
-  <meta itemprop="datePublished" content="${now}">
-  <meta itemprop="dateModified" content="${now}">
-
-  ${image ? `<img src="${imageUrl}" alt="${safeTitle}" style="width:100%;border-radius:16px;margin-bottom:24px" itemprop="image">` : ''}
-
-  <div class="post-info-grid">
-    ${metadata?.tarifa ? `<div class="post-info-box"><div class="label">💰 Tarifa</div><div class="value">${escapeHtml(metadata.tarifa)}</div></div>` : ''}
-    ${metadata?.frecuencia ? `<div class="post-info-box"><div class="label">⏱️ Frecuencia</div><div class="value">${escapeHtml(metadata.frecuencia)}</div></div>` : ''}
-    ${metadata?.horario ? `<div class="post-info-box"><div class="label">🕐 Horario</div><div class="value">${escapeHtml(metadata.horario)}</div></div>` : ''}
-    ${metadata?.dias ? `<div class="post-info-box"><div class="label">📅 Días</div><div class="value">${escapeHtml(metadata.dias)}</div></div>` : ''}
-    ${metadata?.accesible ? `<div class="post-info-box"><div class="label">♿ Accesible</div><div class="value">${escapeHtml(metadata.accesible)}</div></div>` : ''}
+  <div class="meta">${new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+  ${image ? `<img class="post-image" src="${safeImage}" alt="${safeTitle}">` : ''}
+  ${bodyContent}
+  <div class="cta">
+    <a class="btn btn-primary" href="${baseUrl}/">🚌 Ver todas las rutas</a>
+    <a class="btn btn-ghost" href="${baseUrl}/?tab=market">🛒 Marketplace</a>
   </div>
-
-  <h2>📝 Descripción del recorrido</h2>
-  <div itemprop="articleBody">${content || `<p>${safeDesc}</p>`}</div>
-
-  ${streetsList ? `
-  <h2>🛣️ Calles por las que pasa</h2>
-  <ul class="post-streets">${streetsList}</ul>
-  ` : ''}
-
-  ${metadata?.mapPoints && metadata.mapPoints.length >= 2 ? `
-  <h2>🗺️ Mapa de la ruta</h2>
-  <div id="route-map" class="post-map"></div>
-  <script>
-    window.__ROUTE_POINTS__ = ${JSON.stringify(metadata.mapPoints)};
-    window.__ROUTE_COLOR__ = ${JSON.stringify(metadata.color || '#1e40af')};
-    window.__ROUTE_NAME__ = ${JSON.stringify(title)};
-  </script>
-  ` : ''}
-
-  <div class="post-cta">
-    <h3>¿Necesitas buscar esta ruta?</h3>
-    <p>Abre la app interactiva para ver el mapa en tiempo real, buscar rutas cercanas y más.</p>
-    <a href="${domain}/" class="btn">🚌 Abrir la App</a>
-  </div>
-
-  <p style="font-size:13px;color:#64748b;text-align:center;margin-top:40px">
-    Publicado el ${dateStr}
-  </p>
-</main>
-
-<footer class="post-footer">
-  <p>© ${new Date().getFullYear()} Rutas Tuxtla Gutiérrez · <a href="${domain}">Inicio</a></p>
-</footer>
-
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-(function(){
-  var pts = window.__ROUTE_POINTS__;
-  if(!pts || pts.length < 2) return;
-  var el = document.getElementById('route-map');
-  if(!el) return;
-  var map = L.map('route-map', { zoomControl: true, attributionControl: true });
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '© OpenStreetMap'
-  }).addTo(map);
-  var coords = pts.map(function(p){ return [p.lat, p.lng]; });
-  var line = L.polyline(coords, { color: window.__ROUTE_COLOR__, weight: 5, opacity: .85 }).addTo(map);
-  L.marker(coords[0]).addTo(map).bindPopup('<b>Inicio</b>');
-  L.marker(coords[coords.length-1]).addTo(map).bindPopup('<b>Fin</b>');
-  map.fitBounds(line.getBounds(), { padding: [40, 40] });
-})();
-</script>
+  <footer>© ${new Date().getFullYear()} Rutas BGD · <a href="${baseUrl}" style="color:var(--cyan)">${cleanDomain(baseUrl)}</a></footer>
+</div>
 </body>
 </html>`;
 }
 
-function escapeHtml(text) {
-  if (text == null) return '';
-  return String(text)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+function cleanDomain(baseUrl) {
+  return baseUrl.replace(/^https?:\/\//, '');
 }
 
-/* ============================================================
-   Actualiza sitemap.xml en el repo
-   ============================================================ */
-async function updateSitemap({ ghApi, ghHeaders, branch, domain, posts }) {
-  const now = new Date().toISOString().split('T')[0];
+function renderRouteBody(route) {
+  const blocks = [];
+  if (route.paradas?.length) blocks.push(`<div class="block"><h3>📍 Paradas</h3><ul>${route.paradas.map(p => `<li>${escapeHTML(p)}</li>`).join('')}</ul></div>`);
+  if (route.retornos?.length) blocks.push(`<div class="block"><h3>↩️ Retornos</h3><ul>${route.retornos.map(p => `<li>${escapeHTML(p)}</li>`).join('')}</ul></div>`);
+  if (route.pois?.length) blocks.push(`<div class="block"><h3>🏥 POIs de Ida</h3><ul>${route.pois.map(p => `<li>${escapeHTML(p)}</li>`).join('')}</ul></div>`);
+  if (route.poisVuelta?.length) blocks.push(`<div class="block"><h3>🏥 POIs de Regreso</h3><ul>${route.poisVuelta.map(p => `<li>${escapeHTML(p)}</li>`).join('')}</ul></div>`);
+  if (route.calles?.length) blocks.push(`<div class="block"><h3>🛣️ Calles</h3><ul>${route.calles.map(p => `<li>${escapeHTML(p)}</li>`).join('')}</ul></div>`);
+  const info = [];
+  if (route.tarifa) info.push(`<li>💰 Tarifa: ${escapeHTML(route.tarifa)}</li>`);
+  if (route.frecuencia) info.push(`<li>⏱️ Frecuencia: ${escapeHTML(route.frecuencia)}</li>`);
+  if (route.horarioIni) info.push(`<li>🕐 Horario: ${escapeHTML(route.horarioIni)} - ${escapeHTML(route.horarioFin || '')}</li>`);
+  if (route.dias) info.push(`<li>📅 Días: ${escapeHTML(route.dias)}</li>`);
+  if (info.length) blocks.unshift(`<div class="block"><h3>ℹ️ Información</h3><ul>${info.join('')}</ul></div>`);
+  return blocks.join('');
+}
 
+function renderMarketBody(market) {
+  return `
+    ${market.price ? `<div class="price">${escapeHTML(market.price)}</div>` : ''}
+    <div class="post-content">${escapeHTML(market.description || '').replace(/\n/g, '<br>')}</div>
+    ${market.phone ? `<div class="block"><h3>📞 Contacto</h3><a class="btn btn-primary" href="https://wa.me/${market.phone.replace(/\D/g, '')}?text=${encodeURIComponent('Hola, me interesa: ' + market.title)}" target="_blank" rel="noopener">💬 WhatsApp</a></div>` : ''}
+  `;
+}
+
+// ==========================================================================
+//  Regenerar sitemap.xml
+// ==========================================================================
+async function regenerateSitemap(env, ghHeaders, baseUrl, index) {
+  const { REPO_OWNER, REPO_NAME, GITHUB_TOKEN } = env;
+  const apiBase = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents`;
+
+  const today = new Date().toISOString().split('T')[0];
   const urls = [
-    `<url><loc>${domain}/</loc><lastmod>${now}</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>`,
-    ...posts.map(
-      (p) =>
-        `<url><loc>${domain}/${p.url}</loc><lastmod>${now}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>`
-    ),
+    { loc: baseUrl + '/', priority: '1.0', changefreq: 'daily' },
+    { loc: baseUrl + '/?tab=routes', priority: '0.95', changefreq: 'daily' },
+    { loc: baseUrl + '/?tab=home', priority: '0.9', changefreq: 'daily' },
+    { loc: baseUrl + '/?tab=market', priority: '0.9', changefreq: 'daily' }
   ];
 
-  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.join('\n')}
+  (index.posts || []).forEach(p => {
+    urls.push({
+      loc: `${baseUrl}${p.url}`,
+      priority: '0.8',
+      changefreq: 'weekly',
+      image: p.image || null,
+      lastmod: p.updatedAt || today
+    });
+  });
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+${urls.map(u => `  <url>
+    <loc>${u.loc}</loc>
+    <lastmod>${u.lastmod || today}</lastmod>
+    <changefreq>${u.changefreq}</changefreq>
+    <priority>${u.priority}</priority>${u.image ? `
+    <image:image><image:loc>${u.image}</image:loc></image:image>` : ''}
+  </url>`).join('\n')}
 </urlset>`;
 
-  let sitemapSha = null;
+  // Obtener SHA si existe
+  let sha = null;
   try {
-    const res = await fetch(`${ghApi}/sitemap.xml?ref=${branch}`, { headers: ghHeaders });
-    if (res.ok) {
-      const data = await res.json();
-      sitemapSha = data.sha;
-    }
+    const res = await fetch(`${apiBase}/sitemap.xml?ref=main`, { headers: ghHeaders });
+    if (res.ok) { const j = await res.json(); sha = j.sha; }
   } catch (e) {}
 
-  const payload = {
-    message: 'chore(sitemap): actualizar sitemap',
-    content: btoa(unescape(encodeURIComponent(sitemap))),
-    branch,
+  const body = {
+    message: 'actualizar sitemap.xml',
+    content: b64EncodeUnicode(xml),
+    branch: 'main'
   };
-  if (sitemapSha) payload.sha = sitemapSha;
+  if (sha) body.sha = sha;
 
-  await fetch(`${ghApi}/sitemap.xml`, {
+  await fetch(`${apiBase}/sitemap.xml`, {
     method: 'PUT',
     headers: ghHeaders,
-    body: JSON.stringify(payload),
-  });
+    body: JSON.stringify(body)
+  }).catch(() => {});
 }
