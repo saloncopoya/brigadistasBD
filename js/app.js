@@ -712,7 +712,8 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
         </button>
       </div>`;
     $('#btnShareRoute').onclick = () => shareRoute(route);
-
+    $('#btnBackRoute').onclick = () => navigateTo('routes');
+     
     // Panel inferior
     const panel = $('#routePanel');
     const blocks = [
