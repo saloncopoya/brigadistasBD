@@ -1,1918 +1,1607 @@
-/* ============================================================
-   RUTAS TUXTLA GUTIÉRREZ - APP.JS
-   Versión corregida con modo simple/avanzado funcional
-   ============================================================ */
-
-(function () {
+/* ==========================================================================
+   APP.JS — Motor principal de la PWA
+   Estado global, mapa Leaflet, rutas, búsqueda, editor, navegación, Firebase
+   ========================================================================== */
+(function (global) {
   'use strict';
 
-  console.log('🚀 Rutas Tuxtla App iniciando...');
-
-  // ==================== CONFIG ====================
-  const FIREBASE_DB_URL = 'https://galloslivebadge-default-rtdb.firebaseio.com';
-  const CLOUDINARY_CONFIG = { cloud_name: 'dxjgyqcby', upload_preset: 'sinfirmaupload' };
-  const TUXTLA_CENTER = [16.7538, -93.1156];
-  const DEFAULT_ZOOM = 13;
-  const NOMINATIM_URL = 'https://nominatim.openstreetmap.org';
-
-  // ==================== ESTADO ====================
-  const state = {
-    map: null,
-    routes: [],
-    currentRoute: null,
-    editingRouteId: null,
-    isEditing: false,
-    isTracking: false,
-    trackedPoints: [],
-    detectedStreets: [],
-    detectedPois: [],
-    watchId: null,
-    routeLayers: {},
-    poiLayers: [],
-    editingLayer: null,
-    editingMarkers: [],
-    db: null,
-    isOnline: navigator.onLine,
-    filterText: '',
-    activeTool: 'draw',
-    searchPoints: [],
-    searchRadius: 500,
-    searchMarkers: [],
-    searchRouteLayers: [],
-    routesVisibility: 'none',
-    selectedRouteId: null,
-    currentPage: 'routes',
-    mapMode: 'half',
-    uiMode: localStorage.getItem('ui-mode') || 'simple',
-    pendingPublishRoute: null,
+  // ==================== CONFIGURACIÓN ====================
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyASox7mRak5V0py29htEVWCVeipGpA0yfs",
+    authDomain: "galloslivebadge.firebaseapp.com",
+    databaseURL: "https://galloslivebadge-default-rtdb.firebaseio.com",
+    projectId: "galloslivebadge",
+    storageBucket: "galloslivebadge.firebasestorage.app",
+    messagingSenderId: "979482928760",
+    appId: "1:979482928760:web:3ea879dc4ee1e020df6f8d",
+    measurementId: "G-8L3Z484S3D"
   };
 
-  // ==================== HELPERS ====================
-  const $ = (s) => document.querySelector(s);
-  const $$ = (s) => document.querySelectorAll(s);
+  const DEFAULT_CENTER = [19.4326, -99.1332];
+  const DEFAULT_ZOOM = 13;
 
-  function showToast(msg, dur) {
-    dur = dur || 2500;
-    const t = $('#toast');
-    if (!t) return;
-    t.textContent = msg;
-    t.classList.add('show');
-    clearTimeout(t._timer);
-    t._timer = setTimeout(function () { t.classList.remove('show'); }, dur);
+  // ==================== UTILIDADES ====================
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+
+  const esc = s => String(s == null ? '' : s)
+    .replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  const norm = s => String(s || '')
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[',.\s]+/g, ' ')
+    .trim();
+
+  const splitList = v => String(v || '').split(/[\n,;]+/).map(s => s.trim()).filter(Boolean);
+
+  const fmtTime = ts => {
+    const d = new Date(ts);
+    const diff = (Date.now() - ts) / 1000;
+    if (diff < 60) return 'ahora';
+    if (diff < 3600) return Math.floor(diff / 60) + ' min';
+    if (diff < 86400) return Math.floor(diff / 3600) + ' h';
+    if (diff < 604800) return Math.floor(diff / 86400) + ' d';
+    return d.toLocaleDateString();
+  };
+
+  function toast(msg, type = 'ok') {
+    const w = $('#toastWrap');
+    if (!w) return;
+    const t = document.createElement('div');
+    t.className = 'toast ' + type;
+    const icon = type === 'ok'
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+    t.innerHTML = icon + '<span>' + esc(msg) + '</span>';
+    w.appendChild(t);
+    setTimeout(() => {
+      t.style.opacity = '0';
+      t.style.transform = 'translateY(-10px)';
+      t.style.transition = 'all .3s';
+      setTimeout(() => t.remove(), 300);
+    }, 2800);
   }
 
-  function generateId() {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+  // ==================== ESTADO GLOBAL ====================
+  const state = {
+    currentPage: 'home',
+    currentTab: 'home',
+    routeMode: 'rutas',
+    routes: [],
+    posts: [],
+    market: [],
+    filteredMarket: [],
+    marketFilter: 'all',
+    marketQuery: '',
+    currentRoute: null,
+    currentPost: null,
+    currentMarket: null,
+    isAdmin: false,
+    online: navigator.onLine,
+    historyStack: [],
+    // Editor
+    editingRoute: null,
+    routeDraft: { puntos: [], puntosVuelta: [], calles: [], pois: [], colorIda: '#00e5ff', colorVuelta: '#a855f7' },
+    editorMap: null,
+    editorLayers: { ida: null, vuelta: null, markers: [] },
+    drawMode: 'draw',
+    drawing: false,
+    gpsWatch: null,
+    // Mapa principal
+    map: null,
+    mapLayers: {},
+    // Trip search
+    tripMap: null,
+    tripPoints: [],
+    tripMarkers: [],
+    tripCircles: [],
+    tripRadius: 300,
+    // Firebase
+    fbDB: null,
+    // Comentarios
+    commentPostId: null
+  };
+  global.__APP_STATE__ = state;
+
+  // ==================== FIREBASE ====================
+  let fbDB = null;
+  try {
+    if (typeof firebase !== 'undefined') {
+      if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+      fbDB = firebase.database();
+      state.fbDB = fbDB;
+    }
+  } catch (e) { console.warn('[Firebase] No inicializado:', e); }
+
+  // ==================== NAVEGACIÓN / HISTORIAL ====================
+  function buildURL(params) {
+    const url = new URL(location.origin + location.pathname);
+    Object.entries(params).forEach(([k, v]) => {
+      if (v != null && v !== '') url.searchParams.set(k, v);
+    });
+    return url.pathname + (url.search ? url.search : '');
   }
 
-  function escapeHtml(text) {
-    if (text == null) return '';
-    var div = document.createElement('div');
-    div.textContent = String(text);
-    return div.innerHTML;
+  function pushURL(params, replace = false) {
+    const url = buildURL(params);
+    const fn = replace ? 'replaceState' : 'pushState';
+    history[fn]({ ...params, __ts: Date.now() }, '', url);
+    state.historyStack.push({ ...params, __ts: Date.now() });
+    try { DB.pushHistory({ params, url, at: Date.now() }); } catch (e) {}
   }
 
-  function slugify(text) {
-    return String(text)
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .substring(0, 80);
+  function navigateTo(page, opts = {}) {
+    opts = opts || {};
+    // Ocultar todas las páginas
+    $$('.page').forEach(p => p.classList.remove('active'));
+    const el = $('#page-' + page);
+    if (el) el.classList.add('active');
+
+    state.currentPage = page;
+
+    // Nav inferior
+    $$('.nav-item').forEach(n => {
+      n.classList.toggle('active',
+        (page === 'home' && n.dataset.page === 'home') ||
+        (page === 'routes' && n.dataset.page === 'routes') ||
+        (page === 'market' && n.dataset.page === 'market')
+      );
+    });
+
+    // Cerrar modales abiertos
+    if (!opts.keepModals) closeAllModals();
+
+    // URL
+    const params = { tab: page };
+    if (opts.post) params.post = opts.post;
+    if (opts.ruta) params.ruta = opts.ruta;
+    if (opts.market) params.market = opts.market;
+    pushURL(params, opts.replace);
+
+    // Acciones específicas
+    if (page === 'routes') {
+      setTimeout(() => { if (state.map) state.map.invalidateSize(); }, 200);
+      renderRouteContent();
+    }
+    if (page === 'market') renderMarket();
+    if (page === 'home') renderFeed();
+    if (page === 'route' && opts.route) renderRouteDetail(opts.route);
+    if (page === 'post' && opts.postObj) renderSinglePost(opts.postObj);
+    if (page === 'trip') setTimeout(initTripMap, 200);
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  function calculateDistance(lat1, lon1, lat2, lon2) {
-    var R = 6371000;
-    var dLat = ((lat2 - lat1) * Math.PI) / 180;
-    var dLon = ((lon2 - lon1) * Math.PI) / 180;
-    var a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos((lat1 * Math.PI) / 180) *
-        Math.cos((lat2 * Math.PI) / 180) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  function goBack() {
+    if (state.historyStack.length > 1) {
+      state.historyStack.pop();
+      const prev = state.historyStack[state.historyStack.length - 1];
+      history.back();
+      return prev;
+    }
+    history.back();
+  }
+
+  // Manejar popstate
+  window.addEventListener('popstate', e => {
+    const st = e.state || {};
+    const page = st.tab || 'home';
+    // Cerrar modales primero
+    if ($('.modal.open')) { closeAllModals(); }
+    if ($('#viewer.open')) { closeViewer(); return; }
+    navigateTo(page, { ...st, replace: true, keepModals: true });
+  });
+
+  // ==================== TEMA ====================
+  const savedTheme = localStorage.getItem('tgz_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  updateThemeIcon();
+
+  function updateThemeIcon() {
+    const t = document.documentElement.getAttribute('data-theme');
+    const icon = $('#themeIcon');
+    if (!icon) return;
+    icon.innerHTML = t === 'dark'
+      ? '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'
+      : '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+  }
+
+  $('#themeBtn').onclick = () => {
+    const cur = document.documentElement.getAttribute('data-theme');
+    const next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('tgz_theme', next);
+    updateThemeIcon();
+    // Refrescar tiles del mapa si existe
+    if (state.map) {
+      state.map.eachLayer(l => { if (l instanceof L.TileLayer) l.redraw(); });
+    }
+  };
+
+  // ==================== CONEXIÓN ====================
+  function updateConn() {
+    state.online = navigator.onLine;
+    const dot = $('#connDot');
+    if (dot) dot.classList.toggle('off', !state.online);
+    if (state.online) {
+      syncPendingQueue();
+      syncFromFirebase();
+    } else {
+      toast('Sin conexión — modo offline activo', 'err');
+    }
+  }
+  window.addEventListener('online', updateConn);
+  window.addEventListener('offline', updateConn);
+  $('#connBtn').onclick = () => {
+    toast(state.online ? 'Conectado ✓' : 'Sin conexión', state.online ? 'ok' : 'err');
+  };
+
+  // ==================== PWA INSTALL ====================
+  let deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredPrompt = e;
+    $('#installBtn').classList.add('show');
+  });
+  $('#installBtn').onclick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') toast('App instalada ✓');
+    deferredPrompt = null;
+    $('#installBtn').classList.remove('show');
+  };
+
+  // ==================== POSTS / FEED ====================
+  async function loadPosts() {
+    let local = [];
+    try { local = await DB.getAll('posts'); } catch (e) {}
+    local.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+    state.posts = local;
+
+    // Intentar complementar con índice remoto
+    try {
+      const idx = await Publisher.fetchIndex();
+      if (idx && Array.isArray(idx.posts)) {
+        // Fusionar por id
+        const map = new Map(state.posts.map(p => [p.id, p]));
+        idx.posts.forEach(p => { if (!map.has(p.id)) map.set(p.id, p); });
+        state.posts = Array.from(map.values())
+          .filter(p => p.tipo === 'post' || !p.tipo)
+          .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+      }
+    } catch (e) {}
+    return state.posts;
+  }
+
+  function renderFeed() {
+    const feed = $('#feed');
+    if (!feed) return;
+    if (!state.posts.length) {
+      feed.innerHTML = `
+        <div class="empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <h3>Sin publicaciones</h3>
+          <p>Aún no hay publicaciones. ${state.isAdmin ? 'Usa el botón para crear la primera.' : 'Vuelve más tarde.'}</p>
+        </div>`;
+      return;
+    }
+    feed.innerHTML = state.posts.map(p => renderPostCard(p)).join('');
+    bindPostEvents(feed);
+  }
+
+  function renderPostCard(p) {
+    const liked = (p.likedBy || []).includes(getUserId());
+    const mediaHTML = p.media
+      ? (String(p.media).match(/\.(mp4|webm|ogg)$/i) || String(p.media).includes('video')
+        ? `<video class="post-media" src="${esc(p.media)}" controls preload="metadata" onclick="App.openViewer('${esc(p.media)}','video')"></video>`
+        : `<img class="post-media" src="${esc(p.media)}" alt="${esc(p.title)}" loading="lazy" onclick="App.openViewer('${esc(p.media)}','image')">`)
+      : '';
+    return `
+      <article class="post-card" data-post-id="${esc(p.id)}">
+        <div class="post-head">
+          <div class="post-avatar">${esc((p.title || 'P')[0].toUpperCase())}</div>
+          <div class="post-meta">
+            <div class="name">${esc(p.title || 'Publicación')}</div>
+            <div class="time">${fmtTime(p.timestamp || Date.now())}${p.updatedAt ? ' · editado' : ''}</div>
+          </div>
+          ${state.isAdmin ? `<button class="icon-btn" data-act="del-post" title="Eliminar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="18" height="18"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>` : ''}
+        </div>
+        ${p.content ? `<div class="post-body">${esc(p.content)}</div>` : ''}
+        ${mediaHTML}
+        <div class="post-actions">
+          <button class="post-action ${liked ? 'liked' : ''}" data-act="like">
+            <svg viewBox="0 0 24 24" fill="${liked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2.2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            <span>${p.likes || 0}</span>
+          </button>
+          <button class="post-action" data-act="comment">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span>${(p.comments || []).length}</span>
+          </button>
+          <button class="post-action" data-act="share">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          </button>
+        </div>
+      </article>`;
+  }
+
+  function bindPostEvents(root) {
+    root.querySelectorAll('.post-card').forEach(card => {
+      const id = card.dataset.postId;
+      card.querySelectorAll('[data-act]').forEach(btn => {
+        btn.onclick = async (e) => {
+          e.stopPropagation();
+          const act = btn.dataset.act;
+          const post = state.posts.find(p => p.id === id);
+          if (!post) return;
+
+          if (act === 'like') {
+            await toggleLike(post, card, btn);
+          } else if (act === 'comment') {
+            openComments(post);
+          } else if (act === 'share') {
+            sharePost(post);
+          } else if (act === 'del-post') {
+            if (!confirm('¿Eliminar esta publicación?')) return;
+            await DB.delete('posts', id);
+            if (fbDB) fbDB.ref('publicaciones/' + id).remove().catch(() => {});
+            await loadPosts(); renderFeed();
+            toast('Publicación eliminada');
+          }
+        };
+      });
+    });
+  }
+
+  function getUserId() {
+    let uid = localStorage.getItem('tgz_uid');
+    if (!uid) {
+      uid = 'u_' + Math.random().toString(36).slice(2, 10);
+      localStorage.setItem('tgz_uid', uid);
+    }
+    return uid;
+  }
+
+  async function toggleLike(post, card, btn) {
+    const uid = getUserId();
+    post.likedBy = post.likedBy || [];
+    const i = post.likedBy.indexOf(uid);
+    if (i >= 0) {
+      post.likedBy.splice(i, 1);
+      post.likes = Math.max(0, (post.likes || 0) - 1);
+      btn.classList.remove('liked');
+      btn.querySelector('svg').setAttribute('fill', 'none');
+    } else {
+      post.likedBy.push(uid);
+      post.likes = (post.likes || 0) + 1;
+      btn.classList.add('liked');
+      btn.querySelector('svg').setAttribute('fill', 'currentColor');
+      // Animación corazón
+      const burst = document.createElement('div');
+      burst.className = 'heart-burst';
+      burst.textContent = '❤';
+      burst.style.left = (btn.offsetLeft + btn.offsetWidth / 2 - 18) + 'px';
+      burst.style.top = (btn.offsetTop - 10) + 'px';
+      btn.appendChild(burst);
+      setTimeout(() => burst.remove(), 800);
+    }
+    btn.querySelector('span').textContent = post.likes;
+    await DB.put('posts', post);
+    if (fbDB && state.online) fbDB.ref('publicaciones/' + post.id).update({
+      likes: post.likes, likedBy: post.likedBy
+    }).catch(() => {});
+  }
+
+  async function sharePost(post) {
+    const url = location.origin + '/share/post/' + post.id + '.html';
+    const res = await Publisher.share({
+      title: post.title,
+      text: post.content ? post.content.slice(0, 100) : 'Mira esta publicación',
+      url
+    });
+    if (res.method === 'clipboard') toast('Enlace copiado ✓');
+  }
+
+  // ==================== COMENTARIOS ====================
+  function openComments(post) {
+    state.commentPostId = post.id;
+    const modal = $('#commentsModal');
+    const list = $('#commentsList');
+    const comments = post.comments || [];
+    list.innerHTML = comments.length
+      ? comments.map((c, i) => `
+        <div class="list-item" style="margin-bottom:8px">
+          <div style="flex:1">
+            <div style="font-size:13px;line-height:1.5">${esc(c)}</div>
+            <div class="tiny" style="margin-top:4px">Anónimo</div>
+          </div>
+          ${state.isAdmin ? `<div style="display:flex;gap:4px">
+            <button class="btn btn-ghost btn-sm" data-cact="edit" data-ci="${i}">✏️</button>
+            <button class="btn btn-danger btn-sm" data-cact="del" data-ci="${i}">🗑️</button>
+          </div>` : ''}
+        </div>`).join('')
+      : '<div class="empty" style="padding:20px"><p>Aún no hay comentarios. ¡Sé el primero!</p></div>';
+
+    list.querySelectorAll('[data-cact]').forEach(b => {
+      b.onclick = async () => {
+        const i = +b.dataset.ci;
+        if (b.dataset.cact === 'del') {
+          if (!confirm('¿Eliminar comentario?')) return;
+          post.comments.splice(i, 1);
+        } else {
+          const nv = prompt('Editar comentario:', post.comments[i]);
+          if (nv == null) return;
+          post.comments[i] = nv.trim();
+        }
+        await DB.put('posts', post);
+        if (fbDB && state.online) fbDB.ref('publicaciones/' + post.id).update({ comments: post.comments }).catch(() => {});
+        openComments(post);
+      };
+    });
+
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  $('#commentsClose').onclick = () => {
+    $('#commentsModal').classList.remove('open');
+    document.body.style.overflow = '';
+  };
+
+  $('#commentSend').onclick = async () => {
+    const inp = $('#commentInput');
+    const txt = inp.value.trim();
+    if (!txt) return;
+    const post = state.posts.find(p => p.id === state.commentPostId);
+    if (!post) return;
+    post.comments = post.comments || [];
+    post.comments.push(txt);
+    await DB.put('posts', post);
+    if (fbDB && state.online) fbDB.ref('publicaciones/' + post.id).update({ comments: post.comments }).catch(() => {});
+    inp.value = '';
+    openComments(post);
+    toast('Comentario agregado');
+  };
+
+  // Handle drag para cerrar
+  (function bindCommentsDrag() {
+    const handle = $('#commentsHandle');
+    const sheet = $('#commentsSheet');
+    if (!handle || !sheet) return;
+    let startY = 0, curY = 0, dragging = false;
+    handle.addEventListener('touchstart', e => {
+      dragging = true;
+      startY = e.touches[0].clientY;
+      sheet.style.transition = 'none';
+    }, { passive: true });
+    handle.addEventListener('touchmove', e => {
+      if (!dragging) return;
+      curY = e.touches[0].clientY - startY;
+      if (curY > 0) sheet.style.transform = `translateY(${curY}px)`;
+    }, { passive: true });
+    handle.addEventListener('touchend', () => {
+      dragging = false;
+      sheet.style.transition = '';
+      if (curY > 100) {
+        $('#commentsModal').classList.remove('open');
+        document.body.style.overflow = '';
+      }
+      sheet.style.transform = '';
+      curY = 0;
+    });
+  })();
+
+  // ==================== VISOR DE IMAGEN ====================
+  function openViewer(src, type = 'image') {
+    const v = $('#viewer');
+    const c = $('#viewerContent');
+    c.innerHTML = type === 'video'
+      ? `<video src="${esc(src)}" controls autoplay style="max-width:100%;max-height:100%"></video>`
+      : `<img src="${esc(src)}" alt="">`;
+    v.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    pushURL({ viewer: '1' });
+  }
+  function closeViewer() {
+    $('#viewer').classList.remove('open');
+    $('#viewerContent').innerHTML = '';
+    document.body.style.overflow = '';
+  }
+  $('#viewerClose').onclick = closeViewer;
+  $('#viewer').onclick = (e) => { if (e.target.id === 'viewer') closeViewer(); };
+
+  // ==================== RUTAS ====================
+  async function loadRoutes() {
+    let local = [];
+    try { local = await DB.getAll('routes'); } catch (e) {}
+    state.routes = local.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+
+    // Complementar con Firebase si online
+    if (state.online && fbDB) {
+      try {
+        const snap = await fbDB.ref('rutas_colectivos_tgz').once('value');
+        const val = snap.val() || {};
+        const map = new Map(state.routes.map(r => [r.id, r]));
+        Object.values(val).forEach(r => {
+          if (r && r.id && !map.has(r.id)) map.set(r.id, r);
+        });
+        state.routes = Array.from(map.values());
+      } catch (e) {}
+    }
+    return state.routes;
+  }
+
+  function renderRouteContent() {
+    const mode = state.routeMode;
+    const el = $('#routeContent');
+    if (!el) return;
+    if (mode === 'rutas') el.innerHTML = renderRoutesGrid();
+    else if (mode === 'paradas') el.innerHTML = renderParadas();
+    else if (mode === 'pois') el.innerHTML = renderPois();
+    else if (mode === 'calles') el.innerHTML = renderCalles();
+    else if (mode === 'retornos') el.innerHTML = renderRetornos();
+    bindRouteCardEvents(el);
+  }
+
+  function renderRoutesGrid() {
+    if (!state.routes.length) {
+      return `<div class="empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M6 16V9a4 4 0 0 1 4-4h4"/></svg>
+        <h3>Sin rutas registradas</h3>
+        <p>${state.isAdmin ? 'Usa el botón + para agregar la primera ruta.' : 'Vuelve más tarde.'}</p>
+      </div>`;
+    }
+    return `<div class="routes-grid">` + state.routes.map(r => `
+      <div class="route-card" data-route-id="${esc(r.id)}">
+        ${state.isAdmin ? `<div class="edit-del">
+          <button class="icon-btn" data-act="edit" title="Editar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+          <button class="icon-btn" data-act="del" title="Eliminar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+        </div>` : ''}
+        <div class="route-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="M3 11h18"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg></div>
+        <div class="route-name">${esc(r.nombre || 'RUTA')}</div>
+        <span class="badge ${r.categoria === 'foranea' ? 'badge-foranea' : 'badge-urbana'}">${esc(r.categoria || 'urbana')}</span>
+        <div class="route-actions">
+          <button class="icon-btn" data-act="open" title="Abrir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 6l8-3 6 3 8-3v15l-8 3-6-3-8 3z"/></svg></button>
+          <button class="icon-btn" data-act="share" title="Compartir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+        </div>
+      </div>`).join('') + `</div>`;
+  }
+
+  function renderParadas() {
+    const map = new Map(); // nombre -> Set(rutas)
+    state.routes.forEach(r => (r.paradas || []).forEach(p => {
+      const key = p.trim();
+      if (!key) return;
+      if (!map.has(key)) map.set(key, new Set());
+      map.get(key).add(r.nombre);
+    }));
+    if (!map.size) return `<div class="empty"><p>Sin paradas registradas</p></div>`;
+    return `<div class="list-group">` + Array.from(map.entries()).map(([parada, rutas]) => `
+      <div class="list-item">
+        <div class="li-head">
+          <div class="li-title">📍 ${esc(parada)}</div>
+          <button class="btn btn-ghost btn-sm" data-set-origin="${esc(parada)}">Usar como origen</button>
+        </div>
+        <div class="li-chips">${Array.from(rutas).map(n => `<span class="chip mini">${esc(n)}</span>`).join('')}</div>
+      </div>`).join('') + `</div>`;
+  }
+
+  function renderPois() {
+    const ida = new Map(); const vuelta = new Map();
+    state.routes.forEach(r => {
+      (r.pois || []).forEach(p => { const k = p.trim(); if (!k) return; if (!ida.has(k)) ida.set(k, new Set()); ida.get(k).add(r.nombre); });
+      (r.poisVuelta || []).forEach(p => { const k = p.trim(); if (!k) return; if (!vuelta.has(k)) vuelta.set(k, new Set()); vuelta.get(k).add(r.nombre); });
+    });
+    const renderBlock = (title, m) => {
+      if (!m.size) return '';
+      return `<div class="section-title">${title}</div><div class="list-group">` + Array.from(m.entries()).map(([poi, rutas]) => `
+        <div class="list-item">
+          <div class="li-head">
+            <div class="li-title">🏥 ${esc(poi)}</div>
+            <button class="btn btn-ghost btn-sm" data-set-origin="${esc(poi)}">Origen</button>
+          </div>
+          <div class="li-chips">${Array.from(rutas).map(n => `<span class="chip mini">${esc(n)}</span>`).join('')}</div>
+        </div>`).join('') + `</div>`;
+    };
+    const html = renderBlock('POIs de Ida', ida) + renderBlock('POIs de Regreso', vuelta);
+    return html || `<div class="empty"><p>Sin POIs registrados</p></div>`;
+  }
+
+  function renderCalles() {
+    const map = new Map();
+    state.routes.forEach(r => (r.calles || []).forEach(c => {
+      const k = c.trim(); if (!k) return;
+      if (!map.has(k)) map.set(k, new Set());
+      map.get(k).add(r.nombre);
+    }));
+    if (!map.size) return `<div class="empty"><p>Sin calles registradas</p></div>`;
+    return `<div class="list-group">` + Array.from(map.entries()).map(([calle, rutas]) => `
+      <div class="list-item">
+        <div class="li-head">
+          <div class="li-title">🛣️ ${esc(calle)}</div>
+          <button class="btn btn-ghost btn-sm" data-set-origin="${esc(calle)}">Buscar aquí</button>
+        </div>
+        <div class="li-chips">${Array.from(rutas).map(n => `<span class="chip mini">${esc(n)}</span>`).join('')}</div>
+      </div>`).join('') + `</div>`;
+  }
+
+  function renderRetornos() {
+    const map = new Map();
+    state.routes.forEach(r => (r.retornos || []).forEach(t => {
+      const k = t.trim(); if (!k) return;
+      if (!map.has(k)) map.set(k, new Set());
+      map.get(k).add(r.nombre);
+    }));
+    if (!map.size) return `<div class="empty"><p>Sin retornos registrados</p></div>`;
+    return `<div class="list-group">` + Array.from(map.entries()).map(([ret, rutas]) => `
+      <div class="list-item">
+        <div class="li-head">
+          <div class="li-title">↩️ ${esc(ret)}</div>
+          <button class="btn btn-ghost btn-sm" data-set-origin="${esc(ret)}">Usar como origen</button>
+        </div>
+        <div class="li-chips">${Array.from(rutas).map(n => `<span class="chip mini">${esc(n)}</span>`).join('')}</div>
+      </div>`).join('') + `</div>`;
+  }
+
+  function bindRouteCardEvents(root) {
+    root.querySelectorAll('.route-card').forEach(card => {
+      const id = card.dataset.routeId;
+      card.querySelectorAll('[data-act]').forEach(btn => {
+        btn.onclick = async (e) => {
+          e.stopPropagation();
+          const act = btn.dataset.act;
+          const route = state.routes.find(r => r.id === id);
+          if (!route) return;
+          if (act === 'open') { openRouteDetail(route); }
+          else if (act === 'share') { shareRoute(route); }
+          else if (act === 'edit') { openRouteEditor(route); }
+          else if (act === 'del') {
+            if (!confirm('¿Eliminar esta ruta?')) return;
+            await DB.delete('routes', id);
+            if (fbDB && state.online) fbDB.ref('rutas_colectivos_tgz/' + id).remove().catch(() => {});
+            await loadRoutes(); renderRouteContent();
+            toast('Ruta eliminada');
+          }
+        };
+      });
+      card.onclick = (e) => {
+        if (e.target.closest('[data-act]')) return;
+        const route = state.routes.find(r => r.id === id);
+        if (route) openRouteDetail(route);
+      };
+    });
+
+    // Botones "usar como origen"
+    root.querySelectorAll('[data-set-origin]').forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        $('#originInput').value = btn.dataset.setOrigin;
+        toast('Origen establecido: ' + btn.dataset.setOrigin);
+      };
+    });
+  }
+
+  async function openRouteDetail(route) {
+    state.currentRoute = route;
+    navigateTo('route', { ruta: route.id, route });
+  }
+
+  function renderRouteDetail(route) {
+    const hero = $('#routeHero');
+    hero.innerHTML = `
+      <div>
+        <div style="font-size:11.5px;color:var(--text-3);font-weight:700;letter-spacing:.4px">RUTA</div>
+        <h1>${esc(route.nombre)}</h1>
+      </div>
+      <div class="hero-meta">
+        <span class="badge ${route.categoria === 'foranea' ? 'badge-foranea' : 'badge-urbana'}">${esc(route.categoria || 'urbana')}</span>
+        ${route.tarifa ? `<span class="chip mini">💰 ${esc(route.tarifa)}</span>` : ''}
+        ${route.frecuencia ? `<span class="chip mini">⏱️ ${esc(route.frecuencia)}</span>` : ''}
+        ${route.horarioIni ? `<span class="chip mini">🕐 ${esc(route.horarioIni)} - ${esc(route.horarioFin || '')}</span>` : ''}
+        <span class="chip mini">📅 ${esc(route.dias || 'todos')}</span>
+      </div>
+      <div class="share-row">
+        <button class="btn btn-primary btn-sm" id="btnShareRoute">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          Compartir ruta
+        </button>
+      </div>`;
+    $('#btnShareRoute').onclick = () => shareRoute(route);
+
+    // Panel inferior
+    const panel = $('#routePanel');
+    const blocks = [
+      { key: 'paradas', title: 'Paradas', icon: '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>', items: route.paradas || [] },
+      { key: 'retornos', title: 'Retornos', icon: '<polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/>', items: route.retornos || [] },
+      { key: 'pois', title: 'POIs de Ida', icon: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>', items: route.pois || [] },
+      { key: 'poisVuelta', title: 'POIs de Regreso', icon: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>', items: route.poisVuelta || [] },
+      { key: 'calles', title: 'Recorrido de calles', icon: '<path d="M4 20h16"/><path d="M4 4h16"/><path d="M12 4v16"/>', items: route.calles || [] }
+    ];
+    panel.innerHTML = blocks.map(b => `
+      <div class="route-block" data-block="${b.key}">
+        <div class="route-block-head">
+          <div class="rbh-l">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">${b.icon}</svg>
+            <span>${b.title}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="count">${b.items.length}</span>
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="16" height="16"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+        </div>
+        <div class="route-block-body">
+          ${b.items.length
+            ? (b.key === 'calles'
+              ? `<div class="street-seq">${b.items.map((it, i) => `<span class="street-step">${i > 0 ? '<span class="arrow">→</span>' : ''}${esc(it)}</span>`).join('')}</div>`
+              : `<div class="poi-list">${b.items.map(it => `<div class="poi-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${esc(it)}</div>`).join('')}</div>`)
+            : '<div class="tiny" style="padding:8px 0">Sin datos registrados</div>'}
+        </div>
+      </div>`).join('');
+
+    panel.querySelectorAll('.route-block-head').forEach(h => {
+      h.onclick = () => h.parentElement.classList.toggle('open');
+    });
+
+    // Abrir el primer bloque por defecto
+    const first = panel.querySelector('.route-block');
+    if (first) first.classList.add('open');
+
+    // Inicializar mapa
+    setTimeout(() => initRouteMap(route), 200);
+  }
+
+  function initRouteMap(route) {
+    const container = document.getElementById('map');
+    if (!container) return;
+    if (state.map) { state.map.remove(); state.map = null; }
+
+    state.map = L.map(container, { zoomControl: true }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap'
+    }).addTo(state.map);
+
+    const layers = [];
+    const pts = route.puntos || [];
+    if (pts.length > 1) {
+      const line = L.polyline(pts, { color: route.colorIda || '#00e5ff', weight: 5, opacity: 0.9 }).addTo(state.map);
+      layers.push(line);
+    }
+    const pv = route.puntosVuelta || [];
+    if (pv.length > 1) {
+      const line = L.polyline(pv, { color: route.colorVuelta || '#a855f7', weight: 5, opacity: 0.9, dashArray: '8,6' }).addTo(state.map);
+      layers.push(line);
+    }
+    const allPts = pts.concat(pv);
+    if (allPts.length) {
+      state.map.fitBounds(L.latLngBounds(allPts).pad(0.15));
+    } else {
+      // Si no hay puntos, intentar geocodificar calles
+      state.map.setView(DEFAULT_CENTER, 12);
+    }
+    state.mapLayers = { route: layers };
+  }
+
+  async function shareRoute(route) {
+    const url = location.origin + '/share/ruta/' + route.id + '.html';
+    const res = await Publisher.share({
+      title: 'Ruta ' + route.nombre,
+      text: `Mira la ruta ${route.nombre} (${route.categoria || 'urbana'})`,
+      url
+    });
+    if (res.method === 'clipboard') toast('Enlace copiado ✓');
+  }
+
+  // ==================== BÚSQUEDA DUAL ====================
+  function getAllPlaces() {
+    const places = new Set();
+    state.routes.forEach(r => {
+      (r.paradas || []).forEach(p => places.add(p));
+      (r.pois || []).forEach(p => places.add(p));
+      (r.poisVuelta || []).forEach(p => places.add(p));
+      (r.calles || []).forEach(p => places.add(p));
+      (r.retornos || []).forEach(p => places.add(p));
+    });
+    return Array.from(places);
+  }
+
+  function bindSuggest(inputId, sugId) {
+    const input = $('#' + inputId);
+    const sug = $('#' + sugId);
+    if (!input || !sug) return;
+    input.addEventListener('input', () => {
+      const q = norm(input.value);
+      if (!q) { sug.classList.add('hidden'); return; }
+      const places = getAllPlaces();
+      const matches = places.filter(p => norm(p).includes(q)).slice(0, 8);
+      if (!matches.length) { sug.classList.add('hidden'); return; }
+      sug.innerHTML = matches.map(m => `
+        <div class="suggestion" data-val="${esc(m)}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span>${esc(m)}</span>
+        </div>`).join('');
+      sug.classList.remove('hidden');
+      sug.querySelectorAll('.suggestion').forEach(s => {
+        s.onclick = () => { input.value = s.dataset.val; sug.classList.add('hidden'); };
+      });
+    });
+    input.addEventListener('blur', () => setTimeout(() => sug.classList.add('hidden'), 200));
+  }
+  bindSuggest('originInput', 'originSug');
+  bindSuggest('destInput', 'destSug');
+
+  // Algoritmo de búsqueda de rutas
+  function findRoutes(origin, dest) {
+    const o = norm(origin), d = norm(dest);
+    const results = { direct: [], transfer: [] };
+
+    state.routes.forEach(r => {
+      const all = [].concat(r.paradas || [], r.pois || [], r.poisVuelta || [], r.calles || [], r.retornos || []);
+      const hasO = all.some(x => norm(x).includes(o) || o.includes(norm(x)));
+      const hasD = all.some(x => norm(x).includes(d) || d.includes(norm(x)));
+      const byStreetOnly = hasO && hasD && !(r.paradas || []).some(x => norm(x).includes(o) || norm(x).includes(d));
+      if (hasO && hasD) {
+        results.direct.push({ route: r, warn: byStreetOnly });
+      }
+    });
+
+    // Transbordos: buscar rutas que conecten a través de una parada/calle intermedia
+    if (!results.direct.length) {
+      state.routes.forEach(r1 => {
+        const all1 = [].concat(r1.paradas || [], r1.pois || [], r1.calles || []);
+        if (!all1.some(x => norm(x).includes(o) || o.includes(norm(x)))) return;
+        state.routes.forEach(r2 => {
+          if (r1.id === r2.id) return;
+          const all2 = [].concat(r2.paradas || [], r2.pois || [], r2.calles || []);
+          if (!all2.some(x => norm(x).includes(d) || d.includes(norm(x)))) return;
+          // Buscar punto de transbordo
+          const common = all1.filter(x => all2.some(y => norm(x) === norm(y)));
+          if (common.length) {
+            results.transfer.push({ r1, r2, transfer: common[0] });
+          }
+        });
+      });
+    }
+    return results;
+  }
+
+  $('#btnSearch').onclick = async () => {
+    const o = $('#originInput').value.trim();
+    const d = $('#destInput').value.trim();
+    if (!o || !d) { toast('Ingresa origen y destino', 'err'); return; }
+    const res = findRoutes(o, d);
+    const el = $('#searchResults');
+    el.classList.remove('hidden');
+
+    if (!res.direct.length && !res.transfer.length) {
+      el.innerHTML = `<div class="card" style="text-align:center;padding:24px">
+        <div class="empty" style="padding:0">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <h3>Sin resultados</h3>
+          <p>No se encontraron combinaciones entre "${esc(o)}" y "${esc(d)}".</p>
+        </div>
+      </div>`;
+      return;
+    }
+
+    let html = '';
+    if (res.direct.length) {
+      html += `<div class="section-title">Rutas directas (${res.direct.length})</div>`;
+      html += res.direct.map(r => `
+        <div class="result-card ${r.warn ? 'warn' : 'directa'}" data-route-id="${esc(r.route.id)}">
+          <div class="rc-head">
+            <div class="rc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="M3 11h18"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg></div>
+            <div style="flex:1">
+              <div class="rc-route">${esc(r.route.nombre)}</div>
+              <div class="rc-sub">${esc(r.route.categoria || 'urbana')}</div>
+            </div>
+            <span class="badge badge-green">Directa</span>
+          </div>
+          ${r.warn ? '<div class="badge badge-amber" style="margin-bottom:6px">⚠️ Coincidencia por calle</div>' : ''}
+          <div class="rc-body">Esta ruta conecta los puntos seleccionados.</div>
+        </div>`).join('');
+    }
+    if (res.transfer.length) {
+      html += `<div class="section-title">Transbordos (${res.transfer.length})</div>`;
+      html += res.transfer.slice(0, 6).map(t => `
+        <div class="result-card transbordo" data-route-id="${esc(t.r1.id)}">
+          <div class="rc-head">
+            <div class="rc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></div>
+            <div style="flex:1">
+              <div class="rc-route">${esc(t.r1.nombre)} → ${esc(t.r2.nombre)}</div>
+              <div class="rc-sub">Transbordo en: ${esc(t.transfer)}</div>
+            </div>
+            <span class="badge badge-amber">Transbordo</span>
+          </div>
+          <div class="rc-steps">
+            <div class="rc-step"><div class="step-num">1</div><div>Toma la ruta <b>${esc(t.r1.nombre)}</b></div></div>
+            <div class="rc-step"><div class="step-num">2</div><div>Baja en <b>${esc(t.transfer)}</b></div></div>
+            <div class="rc-step"><div class="step-num">3</div><div>Sube a la ruta <b>${esc(t.r2.nombre)}</b></div></div>
+          </div>
+        </div>`).join('');
+    }
+    el.innerHTML = html;
+    el.querySelectorAll('.result-card').forEach(c => {
+      c.onclick = () => {
+        const r = state.routes.find(x => x.id === c.dataset.routeId);
+        if (r) openRouteDetail(r);
+      };
+    });
+  };
+
+  $('#btnClearSearch').onclick = () => {
+    $('#originInput').value = '';
+    $('#destInput').value = '';
+    $('#searchResults').classList.add('hidden');
+    state.routeMode = 'rutas';
+    $$('#routeModes .chip').forEach(c => c.classList.toggle('active', c.dataset.mode === 'rutas'));
+    renderRouteContent();
+  };
+
+  $('#btnMapSearch').onclick = () => navigateTo('trip');
+
+  // Chips de modo
+  $$('#routeModes .chip').forEach(c => {
+    c.onclick = () => {
+      $$('#routeModes .chip').forEach(x => x.classList.remove('active'));
+      c.classList.add('active');
+      state.routeMode = c.dataset.mode;
+      renderRouteContent();
+    };
+  });
+
+  // ==================== EDITOR DE RUTAS ====================
+  function openRouteEditor(route) {
+    if (!state.isAdmin) { requestAdminAuth(() => openRouteEditor(route)); return; }
+    state.editingRoute = route || null;
+    state.routeDraft = {
+      puntos: route?.puntos || [],
+      puntosVuelta: route?.puntosVuelta || [],
+      calles: route?.calles || [],
+      pois: route?.pois || [],
+      colorIda: route?.colorIda || '#00e5ff',
+      colorVuelta: route?.colorVuelta || '#a855f7'
+    };
+
+    const modal = $('#editorModal');
+    $('#editorTitle').textContent = route ? 'Editar ruta' : 'Registrar ruta';
+    const body = $('#editorBody');
+    body.innerHTML = `
+      <div class="steps">
+        <div class="step-dot active" data-step="1"></div>
+        <div class="step-dot" data-step="2"></div>
+        <div class="step-dot" data-step="3"></div>
+      </div>
+      <div class="route-step" data-step="1">
+        <div class="field"><label>Nombre de la ruta *</label><input class="input" id="erName" value="${esc(route?.nombre || '')}" placeholder="Ej: Centro - Universidad"></div>
+        <div class="field"><label>Categoría</label><select class="select" id="erCat">
+          <option value="urbana" ${route?.categoria === 'urbana' ? 'selected' : ''}>Urbana</option>
+          <option value="foranea" ${route?.categoria === 'foranea' ? 'selected' : ''}>Foránea</option>
+        </select></div>
+        <div class="form-grid">
+          <div class="field"><label>Tarifa</label><input class="input" id="erTarifa" value="${esc(route?.tarifa || '')}" placeholder="$10"></div>
+          <div class="field"><label>Frecuencia</label><input class="input" id="erFrec" value="${esc(route?.frecuencia || '')}" placeholder="Cada 15 min"></div>
+          <div class="field"><label>Horario inicio</label><input class="input" id="erHoraIni" value="${esc(route?.horarioIni || '')}" placeholder="05:00"></div>
+          <div class="field"><label>Horario fin</label><input class="input" id="erHoraFin" value="${esc(route?.horarioFin || '')}" placeholder="22:00"></div>
+        </div>
+        <div class="field"><label>Notas</label><textarea class="textarea" id="erNotas">${esc(route?.notas || '')}</textarea></div>
+      </div>
+      <div class="route-step hidden" data-step="2">
+        <div class="field"><label>Paradas (separadas por coma o salto de línea)</label><textarea class="textarea" id="erParadas">${esc((route?.paradas || []).join(', '))}</textarea></div>
+        <div class="field"><label>Retornos</label><textarea class="textarea" id="erRetornos">${esc((route?.retornos || []).join(', '))}</textarea></div>
+        <div class="field"><label>POIs de ida</label><textarea class="textarea" id="erPois">${esc((route?.pois || []).join(', '))}</textarea></div>
+        <div class="field"><label>POIs de regreso</label><textarea class="textarea" id="erPoisVuelta">${esc((route?.poisVuelta || []).join(', '))}</textarea></div>
+      </div>
+      <div class="route-step hidden" data-step="3">
+        <div class="field"><label>Calles por donde pasa</label><textarea class="textarea" id="erCalles">${esc((route?.calles || []).join(', '))}</textarea></div>
+        <div class="muted tiny" style="margin-top:8px">Puntos trazados: <b>${state.routeDraft.puntos.length}</b> · Puntos de vuelta: <b>${state.routeDraft.puntosVuelta.length}</b></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="btn btn-ghost" id="erPrev" style="visibility:hidden">← Anterior</button>
+        <button class="btn btn-primary" style="flex:1" id="erNext">Siguiente →</button>
+        <button class="btn btn-primary hidden" style="flex:1" id="erSave">Guardar ruta</button>
+      </div>`;
+
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    let step = 1;
+    const goStep = n => {
+      step = n;
+      body.querySelectorAll('.route-step').forEach(s => s.classList.toggle('hidden', +s.dataset.step !== n));
+      body.querySelectorAll('.step-dot').forEach(d => {
+        const s = +d.dataset.step;
+        d.classList.toggle('active', s === n);
+        d.classList.toggle('done', s < n);
+      });
+      $('#erPrev').style.visibility = n === 1 ? 'hidden' : 'visible';
+      $('#erNext').classList.toggle('hidden', n === 3);
+      $('#erSave').classList.toggle('hidden', n !== 3);
+    };
+    $('#erPrev').onclick = () => goStep(Math.max(1, step - 1));
+    $('#erNext').onclick = () => goStep(Math.min(3, step + 1));
+
+    $('#erSave').onclick = async () => {
+      const nombre = $('#erName').value.trim();
+      if (!nombre) { toast('El nombre es obligatorio', 'err'); goStep(1); return; }
+      const { dia, mes } = (() => { const d = new Date(); return { dia: d.getDate(), mes: d.getMonth() + 1 }; })();
+      const id = state.editingRoute?.id || Publisher.slugify(nombre, dia, mes);
+      const route = {
+        id, slug: id, nombre: nombre.toUpperCase(),
+        categoria: $('#erCat').value,
+        tarifa: $('#erTarifa').value.trim(),
+        frecuencia: $('#erFrec').value.trim(),
+        horarioIni: $('#erHoraIni').value.trim(),
+        horarioFin: $('#erHoraFin').value.trim(),
+        notas: $('#erNotas').value.trim(),
+        paradas: splitList($('#erParadas').value),
+        retornos: splitList($('#erRetornos').value),
+        pois: splitList($('#erPois').value),
+        poisVuelta: splitList($('#erPoisVuelta').value),
+        calles: splitList($('#erCalles').value),
+        puntos: state.routeDraft.puntos,
+        puntosVuelta: state.routeDraft.puntosVuelta,
+        colorIda: state.routeDraft.colorIda,
+        colorVuelta: state.routeDraft.colorVuelta,
+        timestamp: state.editingRoute?.timestamp || Date.now(),
+        updatedAt: Date.now(),
+        url: `/share/ruta/${id}.html`
+      };
+      await DB.put('routes', route);
+      if (fbDB && state.online) fbDB.ref('rutas_colectivos_tgz/' + id).set(route).catch(() => {});
+      await loadRoutes();
+      renderRouteContent();
+      closeModal('editorModal');
+      toast('Ruta guardada ✓');
+    };
+  }
+
+  // ==================== MARKETPLACE ====================
+  async function loadMarket() {
+    let local = [];
+    try { local = await DB.getAll('market'); } catch (e) {}
+    state.market = local.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+    if (state.online && fbDB) {
+      try {
+        const snap = await fbDB.ref('marketplace').once('value');
+        const val = snap.val() || {};
+        const map = new Map(state.market.map(m => [m.id, m]));
+        Object.values(val).forEach(m => { if (m && m.id && !map.has(m.id)) map.set(m.id, m); });
+        state.market = Array.from(map.values());
+      } catch (e) {}
+    }
+    return state.market;
+  }
+
+  function renderMarket() {
+    const grid = $('#marketGrid');
+    if (!grid) return;
+    const q = norm(state.marketQuery);
+    const cat = state.marketFilter;
+    const items = state.market.filter(m => {
+      if (cat !== 'all' && m.categoria !== cat) return false;
+      if (q && !(norm(m.title).includes(q) || norm(m.description).includes(q))) return false;
+      return true;
+    });
+    if (!items.length) {
+      grid.innerHTML = `<div class="empty" style="grid-column:1/-1">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
+        <h3>Sin anuncios</h3>
+        <p>No hay resultados para esta búsqueda.</p>
+      </div>`;
+      return;
+    }
+    grid.innerHTML = items.map(m => `
+      <div class="market-card" data-market-id="${esc(m.id)}">
+        ${m.image
+          ? `<img class="market-media" src="${esc(m.image)}" alt="${esc(m.title)}" loading="lazy">`
+          : `<div class="market-media"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>`}
+        <div class="market-body">
+          <span class="badge badge-urbana" style="align-self:flex-start">${esc(m.categoria || 'Otro')}</span>
+          <div class="market-title">${esc(m.title)}</div>
+          ${m.price ? `<div class="market-price">${esc(m.price)}</div>` : ''}
+          <div class="market-desc">${esc(m.description || '')}</div>
+        </div>
+        <div class="market-foot">
+          ${m.phone ? `<button class="btn btn-primary btn-sm" style="flex:1" data-mact="wa">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8z"/></svg>
+            WhatsApp
+          </button>` : ''}
+          <button class="btn btn-ghost btn-sm" data-mact="share">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          </button>
+        </div>
+      </div>`).join('');
+
+    grid.querySelectorAll('.market-card').forEach(card => {
+      const id = card.dataset.marketId;
+      const ad = state.market.find(m => m.id === id);
+      card.querySelectorAll('[data-mact]').forEach(b => {
+        b.onclick = (e) => {
+          e.stopPropagation();
+          if (b.dataset.mact === 'wa' && ad?.phone) {
+            const msg = encodeURIComponent('Hola, me interesa: ' + ad.title);
+            window.open(`https://wa.me/${ad.phone.replace(/\D/g, '')}?text=${msg}`, '_blank');
+          } else if (b.dataset.mact === 'share') {
+            const url = location.origin + '/share/m/' + id + '.html';
+            Publisher.share({ title: ad.title, text: ad.description?.slice(0, 100), url });
+          }
+        };
+      });
+    });
+  }
+
+  // Búsqueda y filtros de market
+  $('#marketSearch').oninput = e => { state.marketQuery = e.target.value; renderMarket(); };
+  $$('#marketCats .chip').forEach(c => {
+    c.onclick = () => {
+      $$('#marketCats .chip').forEach(x => x.classList.remove('active'));
+      c.classList.add('active');
+      state.marketFilter = c.dataset.cat;
+      renderMarket();
+    };
+  });
+
+  // ==================== ADMIN AUTH ====================
+  function requestAdminAuth(cb) {
+    const modal = $('#authModal');
+    modal.classList.add('open');
+    const handler = async () => {
+      const pass = $('#adminPass').value.trim();
+      if (!pass) { toast('Ingresa la contraseña', 'err'); return; }
+      // Validar con API
+      try {
+        const res = await fetch('/api/publish', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pass, __check: true })
+        });
+        if (res.ok || res.status === 200) {
+          state.isAdmin = true;
+          sessionStorage.setItem('tgz_admin', pass);
+          closeModal('authModal');
+          $('#adminFab').classList.remove('hidden');
+          $('#feedAdminBar').classList.remove('hidden');
+          $('#marketAdminBar').classList.remove('hidden');
+          toast('Acceso concedido ✓');
+          if (cb) cb();
+        } else {
+          toast('Contraseña incorrecta', 'err');
+        }
+      } catch (e) {
+        // Fallback: aceptar localmente si no hay red
+        state.isAdmin = true;
+        sessionStorage.setItem('tgz_admin', pass);
+        closeModal('authModal');
+        $('#adminFab').classList.remove('hidden');
+        $('#feedAdminBar').classList.remove('hidden');
+        $('#marketAdminBar').classList.remove('hidden');
+        toast('Modo admin offline');
+        if (cb) cb();
+      }
+      $('#adminLogin').removeEventListener('click', handler);
+    };
+    $('#adminLogin').addEventListener('click', handler);
+  }
+
+  // Detección automática de admin por sesión
+  const savedPass = sessionStorage.getItem('tgz_admin');
+  if (savedPass) {
+    state.isAdmin = true;
+    $('#adminFab').classList.remove('hidden');
+    $('#feedAdminBar').classList.remove('hidden');
+    $('#marketAdminBar').classList.remove('hidden');
+  }
+
+  // ==================== MODALES ====================
+  function closeModal(id) {
+    const m = $('#' + id);
+    if (m) m.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  function closeAllModals() {
+    $$('.modal.open').forEach(m => m.classList.remove('open'));
+    document.body.style.overflow = '';
+  }
+
+  // ==================== SYNC ====================
+  async function syncPendingQueue() {
+    if (!state.online) return;
+    try {
+      const queue = await DB.getQueue();
+      if (!queue.length) return;
+      for (const item of queue) {
+        try {
+          const res = await Publisher.publish(item.payload || item);
+          if (res.ok) await DB.removeQueueItem(item.id);
+        } catch (e) { /* reintentar luego */ }
+      }
+      toast('Sincronización completada');
+    } catch (e) {}
+  }
+
+  async function syncFromFirebase() {
+    if (!state.online || !fbDB) return;
+    try {
+      const [postsSnap, routesSnap, marketSnap] = await Promise.all([
+        fbDB.ref('publicaciones').once('value'),
+        fbDB.ref('rutas_colectivos_tgz').once('value'),
+        fbDB.ref('marketplace').once('value')
+      ]);
+      const posts = postsSnap.val() || {};
+      const routes = routesSnap.val() || {};
+      const market = marketSnap.val() || {};
+      // Guardar en IndexedDB
+      for (const p of Object.values(posts)) if (p && p.id) await DB.put('posts', p);
+      for (const r of Object.values(routes)) if (r && r.id) await DB.put('routes', r);
+      for (const m of Object.values(market)) if (m && m.id) await DB.put('market', m);
+      // Recargar
+      await loadPosts(); await loadRoutes(); await loadMarket();
+      renderFeed(); renderRouteContent(); renderMarket();
+    } catch (e) { console.warn('[Sync]', e); }
+  }
+
+  // ==================== TRIP SEARCH (MAPA) ====================
+  function initTripMap() {
+    if (state.tripMap) { state.tripMap.invalidateSize(); return; }
+    const el = document.getElementById('tripMap');
+    if (!el) return;
+    state.tripMap = L.map(el, { zoomControl: true }).setView(DEFAULT_CENTER, 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19, attribution: '© OpenStreetMap'
+    }).addTo(state.tripMap);
+    state.tripMap.on('click', e => {
+      if (state.tripPoints.length >= 5) { toast('Máximo 5 puntos', 'err'); return; }
+      addTripPoint(e.latlng.lat, e.latlng.lng);
+    });
+  }
+
+  function addTripPoint(lat, lng) {
+    const idx = state.tripPoints.length;
+    const letter = String.fromCharCode(65 + idx); // A, B, C, D, E
+    const color = ['#10b981', '#ef4444', '#f59e0b', '#3b82f6', '#a855f7'][idx] || '#00e5ff';
+    state.tripPoints.push({ lat, lng, letter, color, radius: state.tripRadius });
+
+    const icon = L.divIcon({
+      className: '',
+      html: `<div class="marker-${letter.toLowerCase()}" style="background:${color}">${letter}</div>`,
+      iconSize: [26, 26], iconAnchor: [13, 13]
+    });
+    const marker = L.marker([lat, lng], { icon }).addTo(state.tripMap);
+    const circle = L.circle([lat, lng], { radius: state.tripRadius, color, fillColor: color, fillOpacity: 0.1, weight: 1.5 }).addTo(state.tripMap);
+    state.tripMarkers.push(marker);
+    state.tripCircles.push(circle);
+    renderTripPointsList();
+    performTripSearch();
+  }
+
+  function renderTripPointsList() {
+    const el = $('#tripPointsList');
+    if (!el) return;
+    if (!state.tripPoints.length) { el.innerHTML = '<div class="tiny" style="text-align:center;padding:8px">Toca el mapa para agregar puntos</div>'; return; }
+    el.innerHTML = state.tripPoints.map((p, i) => `
+      <div class="list-item" style="padding:8px 12px">
+        <div style="display:flex;align-items:center;gap:8px;flex:1">
+          <div style="width:24px;height:24px;border-radius:50%;background:${p.color};display:grid;place-items:center;color:#fff;font-weight:800;font-size:12px">${p.letter}</div>
+          <span style="font-size:12.5px">${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <input type="range" min="10" max="2000" value="${p.radius}" data-trip-radius="${i}" style="width:80px">
+          <span class="tiny" data-trip-radius-val="${i}">${p.radius}m</span>
+          <button class="btn btn-danger btn-sm" data-trip-del="${i}">✕</button>
+        </div>
+      </div>`).join('');
+
+    el.querySelectorAll('[data-trip-radius]').forEach(inp => {
+      inp.oninput = e => {
+        const i = +e.target.dataset.tripRadius;
+        state.tripPoints[i].radius = +e.target.value;
+        el.querySelector(`[data-trip-radius-val="${i}"]`).textContent = e.target.value + 'm';
+        if (state.tripCircles[i]) state.tripCircles[i].setRadius(+e.target.value);
+        performTripSearch();
+      };
+    });
+    el.querySelectorAll('[data-trip-del]').forEach(b => {
+      b.onclick = () => {
+        const i = +b.dataset.tripDel;
+        state.tripMap.removeLayer(state.tripMarkers[i]);
+        state.tripMap.removeLayer(state.tripCircles[i]);
+        state.tripMarkers.splice(i, 1);
+        state.tripCircles.splice(i, 1);
+        state.tripPoints.splice(i, 1);
+        // Reetiquetar
+        state.tripPoints.forEach((p, idx) => {
+          p.letter = String.fromCharCode(65 + idx);
+          p.color = ['#10b981', '#ef4444', '#f59e0b', '#3b82f6', '#a855f7'][idx] || '#00e5ff';
+        });
+        renderTripPointsList();
+        performTripSearch();
+      };
+    });
   }
 
   function pointToSegmentDistance(p, a, b) {
-    var atob = { lat: b.lat - a.lat, lng: b.lng - a.lng };
-    var atop = { lat: p.lat - a.lat, lng: p.lng - a.lng };
-    var len = atob.lat * atob.lat + atob.lng * atob.lng;
-    var t = len === 0 ? 0 : (atop.lat * atob.lat + atop.lng * atob.lng) / len;
+    const [px, py] = p, [ax, ay] = a, [bx, by] = b;
+    const dx = bx - ax, dy = by - ay;
+    const len2 = dx * dx + dy * dy;
+    if (len2 === 0) return Math.hypot(px - ax, py - ay);
+    let t = ((px - ax) * dx + (py - ay) * dy) / len2;
     t = Math.max(0, Math.min(1, t));
-    var closest = { lat: a.lat + t * atob.lat, lng: a.lng + t * atob.lng };
-    return calculateDistance(p.lat, p.lng, closest.lat, closest.lng);
+    const cx = ax + t * dx, cy = ay + t * dy;
+    return Math.hypot(px - cx, py - cy);
   }
 
-  function pointToLineDistance(point, line) {
-    if (!line || line.length < 2) return Infinity;
-    var minDist = Infinity;
-    for (var i = 0; i < line.length - 1; i++) {
-      var d = pointToSegmentDistance(point, line[i], line[i + 1]);
-      if (d < minDist) minDist = d;
+  function haversine(lat1, lng1, lat2, lng2) {
+    const R = 6371000;
+    const φ1 = lat1 * Math.PI / 180, φ2 = lat2 * Math.PI / 180;
+    const Δφ = (lat2 - lat1) * Math.PI / 180;
+    const Δλ = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+    return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  function routeDistanceToPoint(route, lat, lng) {
+    const pts = (route.puntos || []).concat(route.puntosVuelta || []);
+    if (pts.length < 2) return Infinity;
+    let min = Infinity;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const d = pointToSegmentDistance([lat, lng], pts[i], pts[i + 1]);
+      // Convertir grados a metros aproximados
+      const dMeters = d * 111320;
+      if (dMeters < min) min = dMeters;
     }
-    return minDist;
+    return min;
   }
 
-  function updateConnectionStatus() {
-    state.isOnline = navigator.onLine;
-    var dot = $('#conn-dot');
-    var txt = $('#conn-text');
-    if (dot) dot.classList.toggle('offline', !state.isOnline);
-    if (txt) txt.textContent = state.isOnline ? 'Online' : 'Offline';
-  }
+  function performTripSearch() {
+    const el = $('#tripResults');
+    if (!el) return;
+    if (state.tripPoints.length < 1) { el.innerHTML = ''; return; }
 
-  // ==================== NOMINATIM ====================
-  var geocodeCache = new Map();
+    const results = { direct: [], transfer: [] };
 
-  async function reverseGeocode(lat, lng) {
-    var key = lat.toFixed(5) + ',' + lng.toFixed(5);
-    if (geocodeCache.has(key)) return geocodeCache.get(key);
-    try {
-      var res = await fetch(
-        NOMINATIM_URL + '/reverse?lat=' + lat + '&lon=' + lng + '&format=json&addressdetails=1&accept-language=es',
-        { headers: { 'User-Agent': 'RutasTuxtlaApp/1.0' } }
-      );
-      if (!res.ok) throw new Error('geocode');
-      var data = await res.json();
-      var result = {
-        displayName: data.display_name || '',
-        address: data.address || {},
-        type: data.type || '',
-        class: data.class || '',
-      };
-      geocodeCache.set(key, result);
-      return result;
-    } catch (e) {
-      return null;
-    }
-  }
-
-  async function searchPlaces(query) {
-    try {
-      var res = await fetch(
-        NOMINATIM_URL + '/search?q=' + encodeURIComponent(query) + '&format=json&addressdetails=1&limit=8&accept-language=es&countrycodes=mx',
-        { headers: { 'User-Agent': 'RutasTuxtlaApp/1.0' } }
-      );
-      if (!res.ok) throw new Error('search');
-      return await res.json();
-    } catch (e) {
-      return [];
-    }
-  }
-
-  // ==================== DETECCIÓN ====================
-  async function detectStreetsAlongRoute(points, onProgress) {
-    if (!points || points.length < 2) return [];
-    var sampleCount = Math.min(12, points.length);
-    var step = Math.max(1, Math.floor(points.length / sampleCount));
-    var samples = [];
-    for (var i = 0; i < points.length; i += step) samples.push(points[i]);
-    if (samples[samples.length - 1] !== points[points.length - 1])
-      samples.push(points[points.length - 1]);
-
-    var streets = [];
-    var seen = new Set();
-    for (var j = 0; j < samples.length; j++) {
-      if (onProgress) onProgress(j + 1, samples.length);
-      var p = samples[j];
-      try {
-        var r = await reverseGeocode(p.lat, p.lng);
-        if (r && r.address) {
-          var road =
-            r.address.road ||
-            r.address.pedestrian ||
-            r.address.footway ||
-            r.address.path ||
-            r.address.neighbourhood ||
-            r.address.suburb ||
-            'Vía sin nombre';
-          if (!seen.has(road)) {
-            seen.add(road);
-            streets.push({
-              id: generateId(),
-              nombre: road,
-              lat: p.lat,
-              lng: p.lng,
-              colonia: r.address.suburb || r.address.neighbourhood || '',
-              ciudad: r.address.city || r.address.town || 'Tuxtla Gutiérrez',
-              orden: streets.length + 1,
-              direccion: r.displayName,
-            });
-          }
-        }
-      } catch (e) {}
-      await new Promise(function (r) { setTimeout(r, 1100); });
-    }
-    return streets;
-  }
-
-  async function detectBusinessesAlongRoute(points) {
-    var businesses = [];
-    var sampleCount = Math.min(8, points.length);
-    var step = Math.max(1, Math.floor(points.length / sampleCount));
-    for (var i = 0; i < points.length; i += step) {
-      var p = points[i];
-      try {
-        var r = await reverseGeocode(p.lat, p.lng);
-        if (r && r.address) {
-          var a = r.address;
-          var amenity = a.amenity || a.shop || a.tourism || a.leisure;
-          if (amenity) {
-            businesses.push({
-              id: generateId(),
-              lat: p.lat,
-              lng: p.lng,
-              nombre: amenity,
-              tipo: 'business',
-              icono: '🏪',
-              descripcion: r.displayName,
-            });
-          }
-        }
-      } catch (e) {}
-      await new Promise(function (r) { setTimeout(r, 1100); });
-    }
-    return businesses;
-  }
-
-  // ==================== INDEXEDDB ====================
-  async function initDB() {
-    if (typeof idb === 'undefined') {
-      console.warn('idb no cargado');
-      return;
-    }
-    state.db = await idb.openDB('rutas-tuxtla-db', 2, {
-      upgrade: function (db) {
-        if (!db.objectStoreNames.contains('rutas')) db.createObjectStore('rutas', { keyPath: 'id' });
-        if (!db.objectStoreNames.contains('pois')) db.createObjectStore('pois', { keyPath: 'id' });
-        if (!db.objectStoreNames.contains('sync-queue')) db.createObjectStore('sync-queue', { keyPath: 'id', autoIncrement: true });
-      },
-    });
-  }
-
-  var localDB = {
-    saveRoute: async function (route) {
-      if (!state.db) await initDB();
-      if (state.db) await state.db.put('rutas', route);
-    },
-    getRoutes: async function () {
-      if (!state.db) await initDB();
-      if (!state.db) return [];
-      return await state.db.getAll('rutas');
-    },
-    deleteRoute: async function (id) {
-      if (!state.db) await initDB();
-      if (state.db) await state.db.delete('rutas', id);
-    },
-    queueSync: async function (op) {
-      if (!state.db) await initDB();
-      if (state.db) await state.db.add('sync-queue', Object.assign({}, op, { ts: Date.now() }));
-    },
-    getQueue: async function () {
-      if (!state.db) await initDB();
-      if (!state.db) return [];
-      return await state.db.getAll('sync-queue');
-    },
-    clearQueue: async function () {
-      if (!state.db) await initDB();
-      if (state.db) await state.db.clear('sync-queue');
-    },
-  };
-
-  // ==================== FIREBASE ====================
-  async function syncRouteToFirebase(route) {
-    var url = FIREBASE_DB_URL + '/rutas/' + route.id + '.json';
-    var res = await fetch(url, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(Object.assign({}, route, { updatedAt: Date.now() })),
-    });
-    if (!res.ok) throw new Error('sync');
-    return res.json();
-  }
-
-  async function deleteRouteFromFirebase(id) {
-    var res = await fetch(FIREBASE_DB_URL + '/rutas/' + id + '.json', { method: 'DELETE' });
-    if (!res.ok) throw new Error('delete');
-  }
-
-  async function loadRoutesFromFirebase() {
-    try {
-      var res = await fetch(FIREBASE_DB_URL + '/rutas.json');
-      if (!res.ok) throw new Error('load');
-      var data = await res.json();
-      if (!data) return [];
-      return Object.entries(data).map(function (entry) {
-        return Object.assign({}, entry[1], { id: entry[0] });
+    if (state.tripPoints.length === 1) {
+      // Todas las rutas que tocan el punto A
+      const p = state.tripPoints[0];
+      state.routes.forEach(r => {
+        const d = routeDistanceToPoint(r, p.lat, p.lng);
+        if (d <= p.radius) results.direct.push({ route: r, dist: d });
       });
-    } catch (e) {
-      return [];
-    }
-  }
-
-  async function processSyncQueue() {
-    if (!state.isOnline) return;
-    var queue = await localDB.getQueue();
-    if (!queue.length) return;
-    for (var i = 0; i < queue.length; i++) {
-      var op = queue[i];
-      try {
-        if (op.type === 'save') await syncRouteToFirebase(op.route);
-        else if (op.type === 'delete') await deleteRouteFromFirebase(op.id);
-      } catch (e) {
-        return;
-      }
-    }
-    await localDB.clearQueue();
-    showToast('Sincronización completada');
-  }
-
-  // ==================== CLOUDINARY ====================
-  async function uploadImage(file) {
-    var fd = new FormData();
-    fd.append('file', file);
-    fd.append('upload_preset', CLOUDINARY_CONFIG.upload_preset);
-    var res = await fetch(
-      'https://api.cloudinary.com/v1_1/' + CLOUDINARY_CONFIG.cloud_name + '/image/upload',
-      { method: 'POST', body: fd }
-    );
-    if (!res.ok) throw new Error('upload');
-    var data = await res.json();
-    return data.secure_url;
-  }
-
-  // ==================== MAPA ====================
-  function initMap() {
-    if (typeof L === 'undefined') {
-      console.error('Leaflet no cargado');
-      return;
-    }
-    state.map = L.map('map', {
-      center: TUXTLA_CENTER,
-      zoom: DEFAULT_ZOOM,
-      zoomControl: false,
-      attributionControl: false,
-      preferCanvas: true,
-    });
-    L.control.zoom({ position: 'bottomright' }).addTo(state.map);
-    var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '© OpenStreetMap',
-    }).addTo(state.map);
-    var hot = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '© OSM HOT',
-    });
-    L.control.layers({ 'Estándar': osm, 'Alto contraste': hot }, null, {
-      position: 'bottomright',
-    }).addTo(state.map);
-    state.map.on('click', handleMapClick);
-    setTimeout(function () { state.map.invalidateSize(); }, 300);
-  }
-
-  function handleMapClick(e) {
-    var lat = e.latlng.lat;
-    var lng = e.latlng.lng;
-    if (state.isEditing) {
-      if (state.activeTool === 'draw') addTrackedPoint({ lat: lat, lng: lng, tipo: 'manual' });
-      else if (state.activeTool === 'poi') addPoiAtLocation(lat, lng);
-      return;
-    }
-    if (state.currentPage === 'trip' && state.searchPoints.length < 3) {
-      addSearchPoint(lat, lng);
-    }
-  }
-
-  function createLetterIcon(letter, color) {
-    return L.divIcon({
-      className: 'search-marker',
-      html: '<div style="background:' + color + ';color:#fff;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;border:3px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,.3)">' + letter + '</div>',
-      iconSize: [34, 34],
-      iconAnchor: [17, 17],
-    });
-  }
-
-  // ==================== RENDER RUTAS ====================
-  function renderRoutesList() {
-    var container = $('#routes-list-container');
-    if (!container) return;
-    var filtered = state.routes.filter(function (r) {
-      if (!state.filterText) return true;
-      var s = state.filterText.toLowerCase();
-      return (
-        (r.nombre && r.nombre.toLowerCase().indexOf(s) >= 0) ||
-        (r.descripcion && r.descripcion.toLowerCase().indexOf(s) >= 0) ||
-        (r.empresa && r.empresa.toLowerCase().indexOf(s) >= 0)
-      );
-    });
-
-    if (filtered.length === 0) {
-      container.innerHTML =
-        '<div class="empty-state">' +
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>' +
-        '<p>' + (state.filterText ? 'No se encontraron rutas' : 'No hay rutas registradas') + '</p>' +
-        '<p class="small">Toca "+ Nueva Ruta" para agregar una</p>' +
-        '</div>';
-      return;
-    }
-
-    var html = '';
-    filtered.forEach(function (route) {
-      var color = route.color || '#1e40af';
-      var isSelected = state.selectedRouteId === route.id;
-      var pts = (route.puntos && route.puntos.length) || 0;
-      var streets = (route.streets && route.streets.length) || 0;
-      var pois = (route.pois && route.pois.length) || 0;
-
-      html += '<div class="route-card ' + (isSelected ? 'selected' : '') + '" data-id="' + route.id + '" style="--rc:' + color + '">';
-      html += '<div class="route-card-head">';
-      html += '<h3>' + escapeHtml(route.nombre || 'Sin nombre') + '</h3>';
-      html += '<span class="badge badge-' + (route.tipo || 'ida') + '">' + (route.tipo || 'ida') + '</span>';
-      html += '</div>';
-      if (route.descripcion) {
-        html += '<p class="route-desc">' + escapeHtml(route.descripcion) + '</p>';
-      }
-      html += '<div class="route-meta">';
-      html += '<span>📍 ' + pts + ' pts</span>';
-      if (streets) html += '<span>🛣️ ' + streets + ' calles</span>';
-      if (pois) html += '<span>🏪 ' + pois + '</span>';
-      if (route.tarifa) html += '<span>💰 ' + escapeHtml(route.tarifa) + '</span>';
-      html += '</div>';
-      html += '<div class="route-actions">';
-      html += '<button class="btn btn-sm btn-primary" data-action="view" data-id="' + route.id + '">👁️ Ver</button>';
-      html += '<button class="btn btn-sm btn-secondary" data-action="edit" data-id="' + route.id + '">✏️ Editar</button>';
-      html += '<button class="btn btn-sm btn-success" data-action="publish" data-id="' + route.id + '">📤 Publicar</button>';
-      html += '<button class="btn btn-sm btn-danger" data-action="delete" data-id="' + route.id + '">🗑️</button>';
-      html += '</div>';
-      html += '</div>';
-    });
-
-    container.innerHTML = html;
-
-    container.querySelectorAll('.route-card').forEach(function (card) {
-      card.addEventListener('click', function (e) {
-        if (e.target.closest('button')) return;
-        selectRoute(card.dataset.id);
-      });
-    });
-    container.querySelectorAll('button[data-action]').forEach(function (btn) {
-      btn.addEventListener('click', function (e) {
-        e.stopPropagation();
-        var id = btn.dataset.id;
-        var action = btn.dataset.action;
-        if (action === 'view') selectRoute(id);
-        else if (action === 'edit') openEditor(id);
-        else if (action === 'delete') deleteRoute(id);
-        else if (action === 'publish') openPublishDialog(id);
-      });
-    });
-  }
-
-  function renderRoutesOnMap() {
-    if (!state.map) return;
-    Object.values(state.routeLayers).forEach(function (layer) {
-      if (layer.polyline) state.map.removeLayer(layer.polyline);
-      if (layer.markers) layer.markers.forEach(function (m) { state.map.removeLayer(m); });
-    });
-    state.routeLayers = {};
-
-    if (state.routesVisibility === 'none') return;
-
-    state.routes.forEach(function (route) {
-      if (!route.puntos || route.puntos.length < 2) return;
-      if (state.routesVisibility === 'selected' && state.selectedRouteId !== route.id) return;
-
-      var coords = route.puntos.map(function (p) { return [p.lat, p.lng]; });
-      var color = route.color || '#1e40af';
-
-      var polyline = L.polyline(coords, {
-        color: color,
-        weight: 4,
-        opacity: 0.8,
-        lineJoin: 'round',
-      }).addTo(state.map);
-
-      var markers = [];
-      var startIcon = L.divIcon({
-        className: 'route-marker',
-        html: '<div style="background:' + color + ';width:14px;height:14px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35)"></div>',
-        iconSize: [14, 14],
-        iconAnchor: [7, 7],
-      });
-      markers.push(L.marker(coords[0], { icon: startIcon }).bindPopup('<b>' + escapeHtml(route.nombre) + '</b><br>Inicio').addTo(state.map));
-      markers.push(L.marker(coords[coords.length - 1], { icon: startIcon }).bindPopup('<b>' + escapeHtml(route.nombre) + '</b><br>Fin').addTo(state.map));
-
-      state.routeLayers[route.id] = { polyline: polyline, markers: markers, color: color };
-    });
-  }
-
-  function selectRoute(id) {
-    var route = state.routes.find(function (r) { return r.id === id; });
-    if (!route) return;
-    state.currentRoute = route;
-    state.selectedRouteId = id;
-    if (state.routesVisibility === 'selected' || state.routesVisibility === 'all')
-      renderRoutesOnMap();
-    renderRoutesList();
-    if (state.routeLayers[id] && state.map) {
-      state.map.fitBounds(state.routeLayers[id].polyline.getBounds(), { padding: [50, 50] });
-      if (state.mapMode === 'hidden') setMapMode('half');
-    }
-    navigateTo('map');
-    showToast('Ruta: ' + route.nombre);
-  }
-
-  // ==================== NAVEGACIÓN ====================
-  function navigateTo(page) {
-    state.currentPage = page;
-    $$('.nav-item').forEach(function (n) {
-      n.classList.toggle('active', n.dataset.page === page);
-    });
-    $$('.panel-page').forEach(function (p) {
-      p.classList.toggle('active', p.id === 'page-' + page);
-    });
-
-    var tools = $('#map-tools');
-    if (tools) {
-      if (page === 'editor') {
-        tools.classList.add('visible');
-        if (!state.isEditing) state.isEditing = true;
-      } else {
-        tools.classList.remove('visible');
-      }
-    }
-
-    var panel = $('#app-panel');
-    if (panel) panel.classList.remove('hidden');
-
-    if (state.mapMode === 'hidden' && (page === 'map' || page === 'editor' || page === 'trip')) {
-      setMapMode('half');
-    }
-
-    if (page === 'routes') renderRoutesList();
-    else if (page === 'trip') renderTripSearch();
-    else if (page === 'settings') renderSettings();
-    else if (page === 'blog') loadBlogPosts();
-
-    if (state.map) setTimeout(function () { state.map.invalidateSize(); }, 350);
-  }
-
-  function setMapMode(mode) {
-    state.mapMode = mode;
-    var wrap = $('#map-wrap');
-    if (!wrap) return;
-    wrap.classList.remove('mode-full', 'mode-half', 'mode-hidden');
-    wrap.classList.add('mode-' + mode);
-    $$('.map-size-btn').forEach(function (b) {
-      b.classList.toggle('active', b.dataset.size === mode);
-    });
-    if (state.map) setTimeout(function () { state.map.invalidateSize(); }, 400);
-  }
-
-  // ==================== EDITOR ====================
-  function openEditor(routeId) {
-    state.editingRouteId = routeId || null;
-    state.isEditing = true;
-    state.trackedPoints = [];
-    state.detectedStreets = [];
-    state.detectedPois = [];
-
-    var form = $('#route-form');
-    if (form) form.reset();
-    var idEl = $('#route-id');
-    if (idEl) idEl.value = '';
-    var prev = $('#image-preview');
-    if (prev) {
-      prev.style.display = 'none';
-      prev.src = '';
-    }
-    var colorEl = $('#route-color');
-    if (colorEl) colorEl.value = '#1e40af';
-    $$('.color-chip').forEach(function (c) {
-      c.classList.toggle('active', c.dataset.color === '#1e40af');
-    });
-
-    if (routeId) {
-      var titleEl = $('#editor-title');
-      if (titleEl) titleEl.textContent = '✏️ Editar Ruta';
-      var r = state.routes.find(function (x) { return x.id === routeId; });
-      if (r) {
-        setVal('#route-id', r.id);
-        setVal('#route-name', r.nombre || '');
-        setVal('#route-desc', r.descripcion || '');
-        setVal('#route-type', r.tipo || 'ida');
-        setVal('#route-company', r.empresa || '');
-        setVal('#route-color', r.color || '#1e40af');
-        setVal('#route-fare', r.tarifa || '');
-        setVal('#route-frequency', r.frecuencia || '');
-        setVal('#route-days', r.dias || 'todos');
-        setVal('#route-accessible', r.accesible || 'no');
-        setVal('#route-notes', r.notas || '');
-        if (r.imagen && prev) {
-          prev.src = r.imagen;
-          prev.style.display = 'block';
-        }
-        state.trackedPoints = (r.puntos || []).slice();
-        state.detectedStreets = (r.streets || []).slice();
-        state.detectedPois = (r.pois || []).slice();
-      }
     } else {
-      var titleEl2 = $('#editor-title');
-      if (titleEl2) titleEl2.textContent = '➕ Registrar Ruta';
-    }
-
-    renderEditingTrack();
-    updatePointsUI();
-    renderStreetsList();
-    renderPoisEditList();
-    navigateTo('editor');
-    if (state.mapMode === 'hidden') setMapMode('half');
-  }
-
-  function setVal(sel, val) {
-    var el = $(sel);
-    if (el) el.value = val;
-  }
-
-  function closeEditor() {
-    state.isEditing = false;
-    state.editingRouteId = null;
-    state.trackedPoints = [];
-    state.detectedStreets = [];
-    state.detectedPois = [];
-    if (state.editingLayer && state.map) {
-      state.map.removeLayer(state.editingLayer);
-      state.editingLayer = null;
-    }
-    state.editingMarkers.forEach(function (m) {
-      if (state.map) state.map.removeLayer(m);
-    });
-    state.editingMarkers = [];
-    state.poiLayers.forEach(function (m) {
-      if (state.map) state.map.removeLayer(m);
-    });
-    state.poiLayers = [];
-    if (state.isTracking) stopTracking();
-    var tools = $('#map-tools');
-    if (tools) tools.classList.remove('visible');
-    navigateTo('routes');
-  }
-
-  function addTrackedPoint(point) {
-    state.trackedPoints.push(point);
-    updatePointsUI();
-    renderEditingTrack();
-  }
-
-  function renderEditingTrack() {
-    if (!state.map) return;
-    if (state.editingLayer) {
-      state.map.removeLayer(state.editingLayer);
-      state.editingLayer = null;
-    }
-    state.editingMarkers.forEach(function (m) { state.map.removeLayer(m); });
-    state.editingMarkers = [];
-    if (state.trackedPoints.length < 2) return;
-
-    var coords = state.trackedPoints.map(function (p) { return [p.lat, p.lng]; });
-    var colorEl = $('#route-color');
-    state.editingLayer = L.polyline(coords, {
-      color: colorEl ? colorEl.value : '#1e40af',
-      weight: 5,
-      opacity: 0.9,
-      dashArray: state.isTracking ? '8, 8' : null,
-    }).addTo(state.map);
-
-    state.trackedPoints.forEach(function (p, i) {
-      if (p.tipo === 'manual') {
-        var marker = L.circleMarker([p.lat, p.lng], {
-          radius: 7,
-          fillColor: '#dc2626',
-          color: '#fff',
-          weight: 2,
-          fillOpacity: 1,
-        }).addTo(state.map);
-        marker.bindPopup('Punto ' + (i + 1));
-        state.editingMarkers.push(marker);
-      }
-    });
-  }
-
-  function updatePointsUI() {
-    var c = state.trackedPoints.length;
-    var el = $('#points-count');
-    if (el) el.textContent = c;
-    var rt = $('#recording-text');
-    if (rt) rt.textContent = 'Grabando... ' + c + ' pts';
-    var preview = $('#points-list-preview');
-    if (preview) {
-      if (c === 0) preview.textContent = 'Aún no hay puntos trazados.';
-      else preview.textContent = '✅ ' + c + ' puntos trazados listos para guardar.';
-    }
-  }
-
-  function renderStreetsList() {
-    var container = $('#streets-list');
-    if (!container) return;
-    var count = $('#streets-count');
-    if (count) count.textContent = state.detectedStreets.length;
-
-    if (state.detectedStreets.length === 0) {
-      container.innerHTML = '<p style="font-size:12px;color:var(--text-muted);text-align:center;padding:16px">Traza la ruta primero y toca "Detectar ahora".</p>';
-      return;
-    }
-    var html = '';
-    state.detectedStreets.forEach(function (s, i) {
-      html += '<div class="list-item">';
-      html += '<div class="list-num">' + (i + 1) + '</div>';
-      html += '<div class="list-body">';
-      html += '<h4>' + escapeHtml(s.nombre) + '</h4>';
-      if (s.colonia) html += '<p>Col. ' + escapeHtml(s.colonia) + '</p>';
-      html += '</div>';
-      html += '<div class="list-actions">';
-      html += '<button class="icon-mini danger" data-action="rm-street" data-id="' + s.id + '">✕</button>';
-      html += '</div>';
-      html += '</div>';
-    });
-    container.innerHTML = html;
-
-    container.querySelectorAll('[data-action="rm-street"]').forEach(function (b) {
-      b.addEventListener('click', function () {
-        state.detectedStreets = state.detectedStreets.filter(function (x) { return x.id !== b.dataset.id; });
-        renderStreetsList();
+      // Rutas que tocan todos los puntos
+      state.routes.forEach(r => {
+        const all = state.tripPoints.every(p => routeDistanceToPoint(r, p.lat, p.lng) <= p.radius);
+        if (all) results.direct.push({ route: r });
       });
-    });
-  }
-
-  function renderPoisEditList() {
-    var container = $('#pois-list-edit');
-    if (!container) return;
-    var count = $('#pois-count');
-    if (count) count.textContent = state.detectedPois.length;
-
-    if (state.detectedPois.length === 0) {
-      container.innerHTML = '<p style="font-size:12px;color:var(--text-muted);text-align:center;padding:12px">No hay puntos de interés.</p>';
-      return;
-    }
-    var html = '';
-    state.detectedPois.forEach(function (p) {
-      html += '<div class="list-item">';
-      html += '<div class="list-icon">' + (p.icono || '📍') + '</div>';
-      html += '<div class="list-body">';
-      html += '<h4>' + escapeHtml(p.nombre) + '</h4>';
-      html += '<p>' + escapeHtml(p.descripcion || '') + '</p>';
-      html += '</div>';
-      html += '<button class="icon-mini danger" data-action="rm-poi" data-id="' + p.id + '">✕</button>';
-      html += '</div>';
-    });
-    container.innerHTML = html;
-
-    container.querySelectorAll('[data-action="rm-poi"]').forEach(function (b) {
-      b.addEventListener('click', function () {
-        state.detectedPois = state.detectedPois.filter(function (x) { return x.id !== b.dataset.id; });
-        renderPoisEditList();
-      });
-    });
-  }
-
-  function addPoiAtLocation(lat, lng) {
-    var poi = {
-      id: generateId(),
-      lat: lat,
-      lng: lng,
-      nombre: 'Nuevo punto',
-      descripcion: '',
-      tipo: 'custom',
-      icono: '📍',
-    };
-    state.detectedPois.push(poi);
-    renderPoisEditList();
-    renderPoiMarker(poi);
-  }
-
-  function renderPoiMarker(poi) {
-    if (!state.map) return;
-    var marker = L.marker([poi.lat, poi.lng], {
-      icon: L.divIcon({
-        className: 'editing-poi',
-        html: '<div style="background:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.3);border:2px solid #1e40af">' + (poi.icono || '📍') + '</div>',
-        iconSize: [28, 28],
-        iconAnchor: [14, 14],
-      }),
-      draggable: true,
-    }).addTo(state.map);
-    marker.on('dragend', function (e) {
-      var pos = e.target.getLatLng();
-      poi.lat = pos.lat;
-      poi.lng = pos.lng;
-    });
-    state.poiLayers.push(marker);
-  }
-
-  // ==================== GPS ====================
-  function startTracking() {
-    if (!navigator.geolocation) {
-      showToast('Geolocalización no soportada');
-      return;
-    }
-    state.isTracking = true;
-    var bar = $('#recording-bar');
-    if (bar) bar.classList.add('active');
-    state.watchId = navigator.geolocation.watchPosition(
-      function (pos) {
-        var latitude = pos.coords.latitude;
-        var longitude = pos.coords.longitude;
-        addTrackedPoint({
-          lat: latitude,
-          lng: longitude,
-          accuracy: pos.coords.accuracy,
-          tipo: 'gps',
-          timestamp: pos.timestamp,
+      // Transbordos
+      if (!results.direct.length) {
+        const r1s = state.routes.filter(r => routeDistanceToPoint(r, state.tripPoints[0].lat, state.tripPoints[0].lng) <= state.tripPoints[0].radius);
+        const r2s = state.routes.filter(r => {
+          const last = state.tripPoints[state.tripPoints.length - 1];
+          return routeDistanceToPoint(r, last.lat, last.lng) <= last.radius;
         });
-        if (state.map) state.map.setView([latitude, longitude], 16);
-      },
-      function (err) {
-        showToast('Error GPS: ' + err.message);
-        stopTracking();
-      },
-      { enableHighAccuracy: true, maximumAge: 3000, timeout: 15000 }
-    );
-    showToast('Grabando recorrido...');
-  }
-
-  function stopTracking() {
-    state.isTracking = false;
-    if (state.watchId) {
-      navigator.geolocation.clearWatch(state.watchId);
-      state.watchId = null;
-    }
-    var bar = $('#recording-bar');
-    if (bar) bar.classList.remove('active');
-    showToast('Detenido: ' + state.trackedPoints.length + ' puntos');
-  }
-
-  // ==================== BUSCAR VIAJE ====================
-  function renderTripSearch() {
-    renderSearchPointsList();
-    var r = $('#search-radius');
-    if (r) r.value = state.searchRadius;
-    var rv = $('#radius-value');
-    if (rv) rv.textContent = state.searchRadius + 'm';
-  }
-
-  function addSearchPoint(lat, lng) {
-    if (state.searchPoints.length >= 3) {
-      showToast('Máximo 3 puntos (A, B, C)');
-      return;
-    }
-    var letter = String.fromCharCode(65 + state.searchPoints.length);
-    var colors = { A: '#16a34a', B: '#dc2626', C: '#f59e0b' };
-    var color = colors[letter] || '#1e40af';
-    var point = { lat: lat, lng: lng, letter: letter, color: color };
-    state.searchPoints.push(point);
-
-    if (state.map) {
-      var marker = L.marker([lat, lng], { icon: createLetterIcon(letter, color) }).addTo(state.map);
-      var circle = L.circle([lat, lng], {
-        radius: state.searchRadius,
-        color: color,
-        fillColor: color,
-        fillOpacity: 0.1,
-        weight: 2,
-        dashArray: '5, 5',
-      }).addTo(state.map);
-      marker._circle = circle;
-      state.searchMarkers.push(marker);
-    }
-
-    renderSearchPointsList();
-    if (state.mapMode === 'hidden') setMapMode('half');
-    showToast('Punto ' + letter + ' marcado');
-  }
-
-  function renderSearchPointsList() {
-    var container = $('#search-points-list');
-    if (!container) return;
-    if (state.searchPoints.length === 0) {
-      container.innerHTML = '<p style="font-size:12px;color:var(--text-muted);text-align:center;padding:12px;background:var(--bg);border-radius:10px;margin-bottom:10px">Sin puntos marcados. Toca el mapa.</p>';
-      return;
-    }
-    var html = '';
-    state.searchPoints.forEach(function (p, i) {
-      html += '<div class="search-point">';
-      html += '<div class="search-letter ' + p.letter + '">' + p.letter + '</div>';
-      html += '<div class="search-info">';
-      html += '<h4>Punto ' + p.letter + '</h4>';
-      html += '<p>' + p.lat.toFixed(5) + ', ' + p.lng.toFixed(5) + '</p>';
-      html += '</div>';
-      html += '<button class="icon-mini danger" data-idx="' + i + '">✕</button>';
-      html += '</div>';
-    });
-    container.innerHTML = html;
-
-    container.querySelectorAll('[data-idx]').forEach(function (b) {
-      b.addEventListener('click', function () { removeSearchPoint(parseInt(b.dataset.idx)); });
-    });
-  }
-
-  function removeSearchPoint(index) {
-    var marker = state.searchMarkers[index];
-    if (marker && state.map) {
-      if (marker._circle) state.map.removeLayer(marker._circle);
-      state.map.removeLayer(marker);
-    }
-    state.searchPoints.splice(index, 1);
-    state.searchMarkers.splice(index, 1);
-    renderSearchPointsList();
-  }
-
-  function clearSearchPoints() {
-    state.searchPoints = [];
-    state.searchMarkers.forEach(function (m) {
-      if (m._circle && state.map) state.map.removeLayer(m._circle);
-      if (state.map) state.map.removeLayer(m);
-    });
-    state.searchMarkers = [];
-    state.searchRouteLayers.forEach(function (l) {
-      if (state.map) state.map.removeLayer(l);
-    });
-    state.searchRouteLayers = [];
-    renderSearchPointsList();
-    var results = $('#search-results');
-    if (results) results.innerHTML = '';
-  }
-
-  async function performTripSearch() {
-    if (state.searchPoints.length < 2) {
-      showToast('Marca al menos 2 puntos');
-      return;
-    }
-    state.searchRouteLayers.forEach(function (l) {
-      if (state.map) state.map.removeLayer(l);
-    });
-    state.searchRouteLayers = [];
-
-    var radius = state.searchRadius;
-    var resultsEl = $('#search-results');
-    if (!resultsEl) return;
-    resultsEl.innerHTML = '<div class="loading"><div class="spinner"></div><span>Buscando rutas...</span></div>';
-
-    var routesPerPoint = state.searchPoints.map(function (p) {
-      return { point: p, routes: findRoutesNearPoint(p, radius) };
-    });
-
-    var routesThroughAll = state.routes.filter(function (route) {
-      if (!route.puntos || route.puntos.length < 2) return false;
-      return routesPerPoint.every(function (rp) {
-        return rp.routes.some(function (r) { return r.id === route.id; });
-      });
-    });
-
-    var routesThrough2 = state.routes.filter(function (route) {
-      if (!route.puntos || route.puntos.length < 2) return false;
-      var count = routesPerPoint.filter(function (rp) {
-        return rp.routes.some(function (r) { return r.id === route.id; });
-      }).length;
-      return count >= 2;
-    });
-
-    var html = '';
-    if (routesThroughAll.length > 0) {
-      html += '<h3 style="font-size:14px;margin-bottom:10px;color:var(--success);font-weight:800">✅ Rutas que pasan por todos los puntos</h3>';
-      routesThroughAll.forEach(function (route) {
-        html += renderRouteResultCard(route, 'success');
-        drawSearchRoute(route, '#16a34a');
-      });
-    }
-    if (routesThrough2.length > 0) {
-      html += '<h3 style="font-size:14px;margin:14px 0 10px;color:var(--warning);font-weight:800">🔄 Rutas que conectan varios puntos</h3>';
-      routesThrough2
-        .filter(function (r) { return routesThroughAll.indexOf(r) === -1; })
-        .forEach(function (route) {
-          html += renderRouteResultCard(route, 'warning');
-          drawSearchRoute(route, '#f59e0b');
-        });
-    }
-
-    var singleRoutes = routesPerPoint.map(function (rp) {
-      return {
-        point: rp.point,
-        routes: rp.routes.filter(function (r) { return routesThrough2.indexOf(r) === -1; }),
-      };
-    });
-
-    var hasSingles = singleRoutes.some(function (s) { return s.routes.length > 0; });
-    if (hasSingles) {
-      html += '<h3 style="font-size:14px;margin:14px 0 10px;color:var(--primary);font-weight:800">📍 Rutas cercanas a cada punto</h3>';
-      singleRoutes.forEach(function (sr) {
-        if (sr.routes.length === 0) return;
-        html += '<p style="font-size:13px;font-weight:700;margin:8px 0 6px">Punto ' + sr.point.letter + ':</p>';
-        sr.routes.forEach(function (route) {
-          html += renderRouteResultCard(route, 'primary');
-          drawSearchRoute(route, '#1e40af');
-        });
-      });
-    }
-    if (!html) {
-      html = '<div class="empty-state"><p>No se encontraron rutas cerca</p><p class="small">Intenta aumentar el radio</p></div>';
-    }
-    resultsEl.innerHTML = html;
-  }
-
-  function renderRouteResultCard(route, type) {
-    var color = route.color || '#1e40af';
-    var streets = (route.streets && route.streets.length) || 0;
-    var html = '<div class="result-card ' + type + '" data-id="' + route.id + '" style="border-left-color:' + color + ';background:#fff;border:2px solid #e2e8f0;border-left-width:6px;border-radius:12px;padding:14px;margin-bottom:10px;cursor:pointer">';
-    html += '<div class="route-card-head">';
-    html += '<h3 style="font-size:16px;font-weight:800;color:#0f172a">' + escapeHtml(route.nombre) + '</h3>';
-    html += '<span class="badge badge-' + (route.tipo || 'ida') + '">' + (route.tipo || 'ida') + '</span>';
-    html += '</div>';
-    html += '<div class="route-meta" style="margin-top:8px">';
-    html += '<span>🛣️ ' + streets + ' calles</span>';
-    if (route.tarifa) html += '<span>💰 ' + escapeHtml(route.tarifa) + '</span>';
-    html += '</div>';
-    html += '</div>';
-    return html;
-  }
-
-  function drawSearchRoute(route, color) {
-    if (!route.puntos || route.puntos.length < 2 || !state.map) return;
-    var coords = route.puntos.map(function (p) { return [p.lat, p.lng]; });
-    var line = L.polyline(coords, {
-      color: color,
-      weight: 5,
-      opacity: 0.75,
-      dashArray: '10, 6',
-    }).addTo(state.map);
-    state.searchRouteLayers.push(line);
-  }
-
-  function findRoutesNearPoint(point, radius) {
-    return state.routes.filter(function (route) {
-      if (!route.puntos || route.puntos.length < 2) return false;
-      return pointToLineDistance(point, route.puntos) <= radius;
-    });
-  }
-
-  // ==================== GUARDAR ====================
-  async function saveRoute() {
-    var nameEl = $('#route-name');
-    var name = nameEl ? nameEl.value.trim() : '';
-    if (!name) {
-      showToast('Ingresa un nombre');
-      return;
-    }
-    if (state.trackedPoints.length < 2) {
-      showToast('Necesitas al menos 2 puntos en el mapa');
-      return;
-    }
-
-    var btn = $('#btn-save');
-    if (btn) {
-      btn.disabled = true;
-      btn.textContent = 'Guardando...';
-    }
-
-    try {
-      var routeId = ($('#route-id') && $('#route-id').value) || generateId();
-      var imgFile = $('#route-image') && $('#route-image').files[0];
-      var imageUrl = null;
-
-      if (imgFile) {
-        if (state.isOnline) {
-          try {
-            imageUrl = await uploadImage(imgFile);
-          } catch (e) {
-            console.error(e);
-          }
-        }
-        if (!imageUrl) {
-          imageUrl = await new Promise(function (res) {
-            var r = new FileReader();
-            r.onload = function (ev) { res(ev.target.result); };
-            r.readAsDataURL(imgFile);
+        r1s.forEach(r1 => {
+          r2s.forEach(r2 => {
+            if (r1.id === r2.id) return;
+            // Punto de encuentro aproximado
+            const pts1 = (r1.puntos || []).concat(r1.puntosVuelta || []);
+            const pts2 = (r2.puntos || []).concat(r2.puntosVuelta || []);
+            let best = null, bestD = Infinity;
+            pts1.forEach(p1 => {
+              pts2.forEach(p2 => {
+                const d = haversine(p1[0], p1[1], p2[0], p2[1]);
+                if (d < bestD) { bestD = d; best = [p1, p2]; }
+              });
+            });
+            if (bestD < 200) {
+              results.transfer.push({ r1, r2, transfer: best[0], dist: bestD });
+            }
           });
-        }
-      } else if ($('#image-preview') && $('#image-preview').src && $('#image-preview').style.display !== 'none') {
-        imageUrl = $('#image-preview').src;
-      }
-
-      var existing = state.routes.find(function (r) { return r.id === routeId; });
-
-      var route = {
-        id: routeId,
-        nombre: name,
-        descripcion: getVal('#route-desc'),
-        tipo: getVal('#route-type') || 'ida',
-        empresa: getVal('#route-company'),
-        color: getVal('#route-color') || '#1e40af',
-        tarifa: getVal('#route-fare'),
-        frecuencia: getVal('#route-frequency'),
-        horario: getVal('#route-schedule') + ' - ' + getVal('#route-schedule-end'),
-        dias: getVal('#route-days') || 'todos',
-        accesible: getVal('#route-accessible') || 'no',
-        notas: getVal('#route-notes'),
-        imagen: imageUrl,
-        puntos: state.trackedPoints.slice(),
-        streets: state.detectedStreets.slice(),
-        pois: state.detectedPois.slice(),
-        createdAt: (existing && existing.createdAt) || Date.now(),
-        updatedAt: Date.now(),
-      };
-
-      await localDB.saveRoute(route);
-
-      if (state.isOnline) {
-        try {
-          await syncRouteToFirebase(route);
-          showToast('✅ Ruta guardada y sincronizada');
-        } catch (e) {
-          await localDB.queueSync({ type: 'save', route: route });
-          showToast('💾 Guardado local (pendiente sync)');
-        }
-      } else {
-        await localDB.queueSync({ type: 'save', route: route });
-        showToast('💾 Ruta guardada offline');
-      }
-
-      var idx = state.routes.findIndex(function (r) { return r.id === routeId; });
-      if (idx >= 0) state.routes[idx] = route;
-      else state.routes.push(route);
-
-      state.selectedRouteId = routeId;
-      state.routesVisibility = 'all';
-      $$('#visibility-chips .chip').forEach(function (c) {
-        c.classList.toggle('active', c.dataset.visibility === 'all');
-      });
-
-      renderRoutesList();
-      renderRoutesOnMap();
-
-      closeEditor();
-
-      setTimeout(function () {
-        if (confirm('¿Publicar esta ruta como post en el blog para Google?')) {
-          openPublishDialog(routeId);
-        }
-      }, 500);
-    } catch (e) {
-      console.error(e);
-      showToast('Error al guardar: ' + e.message);
-    } finally {
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = '💾 Guardar Ruta';
+        });
       }
     }
-  }
 
-  function getVal(sel) {
-    var el = $(sel);
-    return el ? el.value.trim() : '';
-  }
-
-  async function deleteRoute(id) {
-    var route = state.routes.find(function (r) { return r.id === id; });
-    if (!route) return;
-    if (!confirm('¿Eliminar "' + route.nombre + '"?')) return;
-    try {
-      await localDB.deleteRoute(id);
-      if (state.isOnline) {
-        try {
-          await deleteRouteFromFirebase(id);
-        } catch (e) {
-          await localDB.queueSync({ type: 'delete', id: id });
-        }
-      } else {
-        await localDB.queueSync({ type: 'delete', id: id });
-      }
-      state.routes = state.routes.filter(function (r) { return r.id !== id; });
-      if (state.routeLayers[id] && state.map) {
-        if (state.routeLayers[id].polyline) state.map.removeLayer(state.routeLayers[id].polyline);
-        if (state.routeLayers[id].markers) {
-          state.routeLayers[id].markers.forEach(function (m) { state.map.removeLayer(m); });
-        }
-        delete state.routeLayers[id];
-      }
-      if (state.selectedRouteId === id) state.selectedRouteId = null;
-      renderRoutesList();
-      renderRoutesOnMap();
-      showToast('Ruta eliminada');
-    } catch (e) {
-      showToast('Error al eliminar');
-    }
-  }
-
-  // ==================== PUBLICAR ====================
-  function openPublishDialog(routeId) {
-    var route = state.routes.find(function (r) { return r.id === routeId; });
-    if (!route) return;
-    state.pendingPublishRoute = route;
-
-    var dialog = $('#publish-dialog');
-    if (!dialog) {
-      showToast('No hay diálogo de publicación');
+    if (!results.direct.length && !results.transfer.length) {
+      el.innerHTML = `<div class="card" style="text-align:center;padding:20px">
+        <div class="empty" style="padding:0"><p>Sin resultados. Prueba aumentar el radio de los puntos.</p></div>
+      </div>`;
       return;
     }
 
-    setVal('#publish-slug', slugify(route.nombre));
-    setVal('#publish-title', route.nombre);
-    setVal('#publish-description', route.descripcion || 'Ruta de transporte en Tuxtla Gutiérrez: ' + route.nombre);
-    setVal('#publish-content', route.descripcion || 'Recorrido de la ruta ' + route.nombre);
-    setVal('#publish-password', '');
-
-    var prev = $('#publish-preview');
-    if (prev) {
-      if (route.imagen) {
-        prev.src = route.imagen;
-        prev.style.display = 'block';
-      } else {
-        prev.style.display = 'none';
-      }
+    let html = '';
+    if (results.direct.length) {
+      html += `<div class="section-title">Rutas que pasan por los puntos</div>`;
+      html += results.direct.slice(0, 15).map(r => `
+        <div class="result-card directa" data-route-id="${esc(r.route.id)}">
+          <div class="rc-head">
+            <div class="rc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="M3 11h18"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg></div>
+            <div style="flex:1">
+              <div class="rc-route">${esc(r.route.nombre)}</div>
+              <div class="rc-sub">${esc(r.route.categoria || 'urbana')}${r.dist ? ' · ' + Math.round(r.dist) + 'm' : ''}</div>
+            </div>
+            <span class="badge badge-green">Directa</span>
+          </div>
+        </div>`).join('');
     }
-
-    dialog.style.display = 'flex';
-  }
-
-  async function publishRoute() {
-    var route = state.pendingPublishRoute;
-    if (!route) return;
-
-    var password = getVal('#publish-password');
-    if (!password) {
-      showToast('Ingresa la contraseña');
-      return;
+    if (results.transfer.length) {
+      html += `<div class="section-title">Transbordos</div>`;
+      html += results.transfer.slice(0, 10).map(t => `
+        <div class="result-card transbordo" data-route-id="${esc(t.r1.id)}">
+          <div class="rc-head">
+            <div class="rc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/></svg></div>
+            <div style="flex:1">
+              <div class="rc-route">${esc(t.r1.nombre)} → ${esc(t.r2.nombre)}</div>
+              <div class="rc-sub">Transbordo a ${Math.round(t.dist)}m</div>
+            </div>
+            <span class="badge badge-amber">Transbordo</span>
+          </div>
+        </div>`).join('');
     }
-
-    var btn = $('#btn-do-publish');
-    if (btn) {
-      btn.disabled = true;
-      btn.textContent = '⏳ Publicando...';
-    }
-
-    try {
-      var payload = {
-        password: password,
-        slug: getVal('#publish-slug'),
-        title: getVal('#publish-title'),
-        description: getVal('#publish-description'),
-        content: getVal('#publish-content'),
-        image: route.imagen || '',
-        routeData: route,
-        mapPoints: route.puntos || [],
-        streets: (route.streets || []).map(function (s) { return s.nombre; }),
-        pois: route.pois || [],
-        metadata: {
-          tipo: route.tipo,
-          color: route.color,
-          empresa: route.empresa,
-          tarifa: route.tarifa,
-          frecuencia: route.frecuencia,
-          horario: route.horario,
-          dias: route.dias,
-          accesible: route.accesible,
-          streets: route.streets || [],
-          mapPoints: route.puntos || [],
-        },
+    el.innerHTML = html;
+    el.querySelectorAll('.result-card').forEach(c => {
+      c.onclick = () => {
+        const r = state.routes.find(x => x.id === c.dataset.routeId);
+        if (r) openRouteDetail(r);
       };
-
-      var res = await fetch('/api/publish', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      var data = await res.json();
-
-      if (!res.ok || !data.ok) {
-        throw new Error(data.error || 'Error ' + res.status);
-      }
-
-      showToast('✅ Post publicado');
-      var dialog = $('#publish-dialog');
-      if (dialog) dialog.style.display = 'none';
-
-      if (confirm('¿Ver el post publicado?')) {
-        window.open(data.url, '_blank');
-      }
-    } catch (e) {
-      console.error(e);
-      showToast('Error: ' + e.message);
-    } finally {
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = '🚀 Publicar';
-      }
-    }
+    });
   }
 
-  // ==================== BLOG ====================
-  async function loadBlogPosts() {
-    var grid = $('#blog-grid');
-    if (!grid) return;
-    grid.innerHTML = '<div class="loading"><div class="spinner"></div><span>Cargando posts...</span></div>';
+  $('#tripRadius').oninput = e => {
+    state.tripRadius = +e.target.value;
+    $('#tripRadiusVal').textContent = e.target.value;
+  };
+  $('#btnTripSearch').onclick = performTripSearch;
 
-    try {
-      var posts = [];
-      try {
-        var res = await fetch('/api/posts');
-        if (res.ok) {
-          var data = await res.json();
-          posts = data.posts || [];
-        }
-      } catch (e) {}
-
-      if (!posts.length) {
-        try {
-          var res2 = await fetch('/paginas/posts-index.json');
-          if (res2.ok) {
-            var data2 = await res2.json();
-            posts = data2.posts || [];
-          }
-        } catch (e) {}
-      }
-
-      if (!posts.length) {
-        grid.innerHTML = '<div class="empty-state"><p>No hay posts publicados</p></div>';
+  // Toolbar trip
+  $$('#tripToolbar .tb').forEach(b => {
+    b.onclick = () => {
+      const tool = b.dataset.tool;
+      if (tool === 'clear') {
+        state.tripMarkers.forEach(m => state.tripMap.removeLayer(m));
+        state.tripCircles.forEach(c => state.tripMap.removeLayer(c));
+        state.tripMarkers = []; state.tripCircles = []; state.tripPoints = [];
+        renderTripPointsList(); performTripSearch();
+        toast('Puntos limpiados');
         return;
       }
-
-      var html = '';
-      posts.forEach(function (post) {
-        var img = post.image ? '<img src="' + escapeHtml(post.image) + '" alt="' + escapeHtml(post.title) + '" loading="lazy">' : '🚌';
-        html += '<a class="blog-card" href="/' + escapeHtml(post.url) + '">';
-        html += '<div class="blog-card-img">' + img + '</div>';
-        html += '<div class="blog-card-body">';
-        html += '<h2>' + escapeHtml(post.title) + '</h2>';
-        html += '<p>' + escapeHtml(post.description || 'Ruta de transporte') + '</p>';
-        html += '<div class="blog-card-meta">';
-        html += '<span>🚌 ' + escapeHtml(post.tipo || 'ida') + '</span>';
-        html += '<span>📍 ' + (post.calles || 0) + ' calles</span>';
-        html += '</div>';
-        html += '</div>';
-        html += '</a>';
-      });
-      grid.innerHTML = html;
-    } catch (e) {
-      console.error(e);
-      grid.innerHTML = '<div class="empty-state"><p>Error cargando posts</p></div>';
-    }
-  }
-
-  // ==================== AJUSTES ====================
-  function renderSettings() {
-    var totalStreets = state.routes.reduce(function (s, r) { return s + ((r.streets && r.streets.length) || 0); }, 0);
-    var totalPois = state.routes.reduce(function (s, r) { return s + ((r.pois && r.pois.length) || 0); }, 0);
-    var totalPoints = state.routes.reduce(function (s, r) { return s + ((r.puntos && r.puntos.length) || 0); }, 0);
-    var set = function (id, v) {
-      var el = $(id);
-      if (el) el.textContent = v;
+      if (tool === 'locate') {
+        if (!navigator.geolocation) { toast('GPS no disponible', 'err'); return; }
+        navigator.geolocation.getCurrentPosition(pos => {
+          const { latitude: lat, longitude: lng } = pos.coords;
+          if (state.tripMap) state.tripMap.setView([lat, lng], 15);
+          addTripPoint(lat, lng);
+        }, err => toast('GPS: ' + err.message, 'err'), { enableHighAccuracy: true });
+        return;
+      }
+      $$('#tripToolbar .tb').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
     };
-    set('#settings-stat-routes', state.routes.length);
-    set('#settings-stat-streets', totalStreets);
-    set('#settings-stat-pois', totalPois);
-    set('#settings-stat-points', totalPoints);
-    set('#stat-routes', state.routes.length);
-    set('#stat-streets', totalStreets);
-    set('#stat-pois', totalPois);
-    set('#stat-points', totalPoints);
-  }
+  });
 
-  // ==================== BÚSQUEDA ====================
-  async function handleSearch() {
-    var input = $('#search-input');
-    if (!input) return;
-    var q = input.value.trim();
-    state.filterText = q;
-    renderRoutesList();
-    navigateTo('routes');
-    if (!q || q.length < 3) return;
-    var results = await searchPlaces(q);
-    if (results.length && state.map) {
-      var r = results[0];
-      var lat = parseFloat(r.lat);
-      var lng = parseFloat(r.lon);
-      if (!isNaN(lat) && !isNaN(lng)) {
-        state.map.setView([lat, lng], 15);
-        L.marker([lat, lng]).addTo(state.map).bindPopup(escapeHtml(r.display_name)).openPopup();
-        if (state.mapMode === 'hidden') setMapMode('half');
-      }
-    }
-  }
-
-  // ==================== UI MODE ====================
-  function applyUiMode(mode) {
-    state.uiMode = mode;
-    localStorage.setItem('ui-mode', mode);
-    document.body.classList.remove('mode-simple', 'mode-advanced');
-    document.body.classList.add('mode-' + mode);
-    $$('.mode-toggle').forEach(function (b) {
-      b.classList.toggle('active', b.dataset.mode === mode);
-    });
-  }
-
-  // ==================== EVENTOS ====================
-  function setupEventListeners() {
-    // Modo
-    $$('.mode-toggle').forEach(function (b) {
-      b.addEventListener('click', function () { applyUiMode(b.dataset.mode); });
-    });
-
-    // Búsqueda
-    var si = $('#search-input');
-    if (si) {
-      si.addEventListener('input', function (e) {
-        state.filterText = e.target.value.trim();
-        if (state.currentPage !== 'routes' && state.filterText) navigateTo('routes');
-        renderRoutesList();
-      });
-      si.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          handleSearch();
-        }
-      });
-    }
-    var sb = $('#search-btn');
-    if (sb) sb.addEventListener('click', handleSearch);
-
-    // Nav
-    $$('.nav-item').forEach(function (n) {
-      n.addEventListener('click', function () { navigateTo(n.dataset.page); });
-    });
-
-    // Mapa controles
-    var bt = $('#btn-map-toggle');
-    if (bt) bt.addEventListener('click', function () {
-      setMapMode(state.mapMode === 'hidden' ? 'half' : 'hidden');
-    });
-    var bf = $('#btn-map-fullscreen');
-    if (bf) bf.addEventListener('click', function () {
-      setMapMode(state.mapMode === 'full' ? 'half' : 'full');
-    });
-    $$('.map-size-btn').forEach(function (b) {
-      b.addEventListener('click', function () { setMapMode(b.dataset.size); });
-    });
-    $$('[data-mapsize]').forEach(function (b) {
-      b.addEventListener('click', function () { setMapMode(b.dataset.mapsize); });
-    });
-
-    // Chips
-    $$('#visibility-chips .chip').forEach(function (c) {
-      c.addEventListener('click', function () {
-        state.routesVisibility = c.dataset.visibility;
-        $$('#visibility-chips .chip').forEach(function (x) {
-          x.classList.toggle('active', x === c);
-        });
-        renderRoutesOnMap();
-      });
-    });
-
-    // Nueva ruta
-    var nr = $('#btn-new-route-list');
-    if (nr) nr.addEventListener('click', function () { openEditor(null); });
-    var qa = $('#quick-add-route');
-    if (qa) qa.addEventListener('click', function () { openEditor(null); });
-
-    // Herramientas
-    $$('.tool-btn').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var tool = btn.dataset.tool;
-        if (tool === 'undo') {
-          if (state.trackedPoints.length > 0) {
-            state.trackedPoints.pop();
-            renderEditingTrack();
-            updatePointsUI();
-          }
-          return;
-        }
-        if (tool === 'clear') {
-          if (confirm('¿Limpiar todos los puntos?')) {
-            state.trackedPoints = [];
-            state.detectedStreets = [];
-            state.detectedPois = [];
-            renderEditingTrack();
-            updatePointsUI();
-            renderStreetsList();
-            renderPoisEditList();
-          }
-          return;
-        }
-        if (tool === 'gps') {
-          if (state.isTracking) stopTracking();
-          else startTracking();
-          return;
-        }
-        if (tool === 'detect') {
-          detectAllNow();
-          return;
-        }
-        $$('.tool-btn').forEach(function (b) { b.classList.remove('active'); });
-        btn.classList.add('active');
-        state.activeTool = tool;
-      });
-    });
-
-    // GPS editor
-    var st = $('#btn-start-tracking');
-    if (st) st.addEventListener('click', function () {
-      if (state.isTracking) stopTracking();
-      else startTracking();
-    });
-    var qg = $('#quick-gps');
-    if (qg) qg.addEventListener('click', function () {
-      if (!state.isEditing) openEditor(null);
-      setTimeout(function () {
-        if (!state.isTracking) startTracking();
-      }, 300);
-    });
-    var sr = $('#btn-stop-recording');
-    if (sr) sr.addEventListener('click', stopTracking);
-
-    var cp = $('#btn-clear-points');
-    if (cp) cp.addEventListener('click', function () {
-      if (confirm('¿Limpiar todos los puntos?')) {
-        state.trackedPoints = [];
-        state.detectedStreets = [];
-        state.detectedPois = [];
-        renderEditingTrack();
-        updatePointsUI();
-        renderStreetsList();
-        renderPoisEditList();
-      }
-    });
-
-    // Detectar calles
-    var ds = $('#btn-detect-streets');
-    if (ds) ds.addEventListener('click', async function () {
-      if (state.trackedPoints.length < 2) {
-        showToast('Traza la ruta primero');
-        return;
-      }
-      var bar = $('#detecting-bar');
-      if (bar) bar.classList.add('active');
-      try {
-        var streets = await detectStreetsAlongRoute(state.trackedPoints, function (i, t) {
-          var dt = $('#detecting-text');
-          if (dt) dt.textContent = 'Detectando calles... ' + i + '/' + t;
-        });
-        state.detectedStreets = streets;
-        renderStreetsList();
-        showToast(streets.length + ' calles detectadas');
-      } catch (e) {
-        showToast('Error en detección');
-      } finally {
-        if (bar) bar.classList.remove('active');
-      }
-    });
-
-    var ro = $('#btn-reverse-order');
-    if (ro) ro.addEventListener('click', function () {
-      state.detectedStreets.reverse();
-      renderStreetsList();
-      showToast('Orden invertido');
-    });
-
-    var db = $('#btn-detect-businesses');
-    if (db) db.addEventListener('click', async function () {
-      if (state.trackedPoints.length < 2) {
-        showToast('Traza la ruta primero');
-        return;
-      }
-      var bar = $('#detecting-bar');
-      if (bar) bar.classList.add('active');
-      try {
-        var pois = await detectBusinessesAlongRoute(state.trackedPoints);
-        state.detectedPois = state.detectedPois.concat(pois);
-        renderPoisEditList();
-        pois.forEach(function (p) { renderPoiMarker(p); });
-        showToast(pois.length + ' negocios detectados');
-      } catch (e) {
-        showToast('Error en detección');
-      } finally {
-        if (bar) bar.classList.remove('active');
-      }
-    });
-
-    var acp = $('#btn-add-custom-poi');
-    if (acp) acp.addEventListener('click', function () {
-      state.activeTool = 'poi';
-      $$('.tool-btn').forEach(function (b) {
-        b.classList.toggle('active', b.dataset.tool === 'poi');
-      });
-      showToast('Toca el mapa para agregar un punto');
-    });
-
-    // Imagen
-    var iu = $('#image-upload-area');
-    if (iu) iu.addEventListener('click', function () {
-      var ri = $('#route-image');
-      if (ri) ri.click();
-    });
-    var ri = $('#route-image');
-    if (ri) ri.addEventListener('change', function (e) {
-      var f = e.target.files[0];
-      if (f) {
-        var r = new FileReader();
-        r.onload = function (ev) {
-          var p = $('#image-preview');
-          if (p) {
-            p.src = ev.target.result;
-            p.style.display = 'block';
-          }
-        };
-        r.readAsDataURL(f);
-      }
-    });
-
-    // Guardar / cancelar
-    var bs = $('#btn-save');
-    if (bs) bs.addEventListener('click', saveRoute);
-    var bc = $('#btn-cancel-edit');
-    if (bc) bc.addEventListener('click', function () {
-      if (confirm('¿Descartar cambios?')) closeEditor();
-    });
-
-    // Color
-    $$('.color-chip').forEach(function (chip) {
-      chip.addEventListener('click', function () {
-        $$('.color-chip').forEach(function (c) { c.classList.remove('active'); });
-        chip.classList.add('active');
-        var rc = $('#route-color');
-        if (rc) rc.value = chip.dataset.color;
-        if (state.editingLayer) state.editingLayer.setStyle({ color: chip.dataset.color });
-      });
-    });
-
-    // Buscar viaje
-    var asp = $('#btn-add-search-point');
-    if (asp) asp.addEventListener('click', function () {
-      if (state.searchPoints.length >= 3) {
-        showToast('Máximo 3 puntos');
-        return;
-      }
-      if (!navigator.geolocation) {
-        showToast('GPS no disponible');
-        return;
-      }
-      navigator.geolocation.getCurrentPosition(
-        function (pos) { addSearchPoint(pos.coords.latitude, pos.coords.longitude); },
-        function () { showToast('No se pudo obtener ubicación'); }
-      );
-    });
-    var csp = $('#btn-clear-search-points');
-    if (csp) csp.addEventListener('click', clearSearchPoints);
-    var bst = $('#btn-search-trip');
-    if (bst) bst.addEventListener('click', performTripSearch);
-    var srad = $('#search-radius');
-    if (srad) srad.addEventListener('input', function (e) {
-      state.searchRadius = parseInt(e.target.value);
-      var rv = $('#radius-value');
-      if (rv) rv.textContent = state.searchRadius + 'm';
-      state.searchMarkers.forEach(function (m) {
-        if (m._circle) m._circle.setRadius(state.searchRadius);
-      });
-    });
-
-    document.addEventListener('click', function (e) {
-      var card = e.target.closest('.result-card');
-      if (card && card.dataset.id) selectRoute(card.dataset.id);
-    });
-
-    // Export
-    var be = $('#btn-export');
-    if (be) be.addEventListener('click', function () {
-      var data = JSON.stringify(state.routes, null, 2);
-      var blob = new Blob([data], { type: 'application/json' });
-      var url = URL.createObjectURL(blob);
-      var a = document.createElement('a');
-      a.href = url;
-      a.download = 'rutas-tuxtla-' + Date.now() + '.json';
-      a.click();
-      URL.revokeObjectURL(url);
-    });
-
-    var bi = $('#btn-import');
-    if (bi) bi.addEventListener('click', function () {
-      var fi = $('#import-file');
-      if (fi) fi.click();
-    });
-    var fi = $('#import-file');
-    if (fi) fi.addEventListener('change', async function (e) {
-      var f = e.target.files[0];
-      if (!f) return;
-      try {
-        var text = await f.text();
-        var data = JSON.parse(text);
-        if (!Array.isArray(data)) throw new Error('formato');
-        for (var i = 0; i < data.length; i++) {
-          if (data[i].id) await localDB.saveRoute(data[i]);
-        }
-        var all = await localDB.getRoutes();
-        state.routes = all;
-        renderRoutesList();
-        renderRoutesOnMap();
-        renderSettings();
-        showToast(data.length + ' rutas importadas');
-      } catch (err) {
-        showToast('Error al importar');
-      }
-    });
-
-    var bsy = $('#btn-sync');
-    if (bsy) bsy.addEventListener('click', async function () {
-      if (!state.isOnline) {
-        showToast('Sin conexión');
-        return;
-      }
-      await processSyncQueue();
-      var fb = await loadRoutesFromFirebase();
-      state.routes = fb;
-      for (var i = 0; i < fb.length; i++) {
-        await localDB.saveRoute(fb[i]);
-      }
-      renderRoutesList();
-      renderRoutesOnMap();
-      renderSettings();
-      showToast('Sincronizado');
-    });
-
-    var bca = $('#btn-clear-all');
-    if (bca) bca.addEventListener('click', async function () {
-      if (!confirm('¿Borrar TODAS las rutas?')) return;
-      for (var i = 0; i < state.routes.length; i++) {
-        await localDB.deleteRoute(state.routes[i].id);
-        if (state.isOnline) {
-          try {
-            await deleteRouteFromFirebase(state.routes[i].id);
-          } catch (e) {}
-        }
-      }
-      state.routes = [];
-      Object.values(state.routeLayers).forEach(function (l) {
-        if (l.polyline && state.map) state.map.removeLayer(l.polyline);
-        if (l.markers) l.markers.forEach(function (m) { if (state.map) state.map.removeLayer(m); });
-      });
-      state.routeLayers = {};
-      state.selectedRouteId = null;
-      renderRoutesList();
-      renderRoutesOnMap();
-      renderSettings();
-      showToast('Todas las rutas eliminadas');
-    });
-
-    // Quick buttons
-    var qc = $('#quick-center');
-    if (qc) qc.addEventListener('click', function () {
-      if (state.map) state.map.setView(TUXTLA_CENTER, DEFAULT_ZOOM);
-    });
-    var ql = $('#quick-locate');
-    if (ql) ql.addEventListener('click', function () {
-      if (!navigator.geolocation) {
-        showToast('GPS no disponible');
-        return;
-      }
-      navigator.geolocation.getCurrentPosition(
-        function (pos) {
-          if (state.map) state.map.setView([pos.coords.latitude, pos.coords.longitude], 16);
-        },
-        function () { showToast('No se pudo obtener ubicación'); }
-      );
-    });
-
-    // Publicar
-    var bdp = $('#btn-do-publish');
-    if (bdp) bdp.addEventListener('click', publishRoute);
-    var bcp = $('#btn-cancel-publish');
-    if (bcp) bcp.addEventListener('click', function () {
-      var d = $('#publish-dialog');
-      if (d) d.style.display = 'none';
-    });
-
-    // Online/Offline
-    window.addEventListener('online', function () {
-      updateConnectionStatus();
-      showToast('Conexión restaurada');
-      processSyncQueue();
-    });
-    window.addEventListener('offline', function () {
-      updateConnectionStatus();
-      showToast('Modo offline');
-    });
-  }
-
-  async function detectAllNow() {
-    if (state.trackedPoints.length < 2) {
-      showToast('Traza la ruta primero');
-      return;
-    }
-    var bar = $('#detecting-bar');
-    if (bar) bar.classList.add('active');
-    try {
-      var dt = $('#detecting-text');
-      if (dt) dt.textContent = 'Detectando calles...';
-      var streets = await detectStreetsAlongRoute(state.trackedPoints, function (i, t) {
-        if (dt) dt.textContent = 'Detectando calles... ' + i + '/' + t;
-      });
-      state.detectedStreets = streets;
-      renderStreetsList();
-
-      if (dt) dt.textContent = 'Detectando negocios...';
-      var pois = await detectBusinessesAlongRoute(state.trackedPoints);
-      state.detectedPois = state.detectedPois.concat(pois);
-      renderPoisEditList();
-      pois.forEach(function (p) { renderPoiMarker(p); });
-
-      showToast('Detectados: ' + streets.length + ' calles, ' + pois.length + ' negocios');
-    } catch (e) {
-      console.error(e);
-      showToast('Error detectando');
-    } finally {
-      if (bar) bar.classList.remove('active');
-    }
-  }
+  // ==================== BOTTOM NAV ====================
+  $$('.nav-item').forEach(n => {
+    n.onclick = () => navigateTo(n.dataset.page);
+  });
 
   // ==================== INIT ====================
   async function init() {
-    console.log('✅ Iniciando init...');
-    applyUiMode(state.uiMode);
-    console.log('✅ Modo UI aplicado:', state.uiMode);
-
-    try {
-      await initDB();
-      console.log('✅ DB lista');
-    } catch (e) {
-      console.warn('⚠️ DB error:', e);
-    }
-
-    initMap();
-    console.log('✅ Mapa listo');
-
-    setupEventListeners();
-    console.log('✅ Eventos configurados');
-
-    updateConnectionStatus();
-
-    try {
-      var localRoutes = await localDB.getRoutes();
-      if (localRoutes.length > 0) {
-        state.routes = localRoutes;
-        renderRoutesList();
-        renderRoutesOnMap();
-        renderSettings();
-      }
-    } catch (e) {
-      console.warn('Error cargando rutas locales:', e);
-    }
-
-    if (state.isOnline) {
+    // Registrar Service Worker
+    if ('serviceWorker' in navigator) {
       try {
-        var fbRoutes = await loadRoutesFromFirebase();
-        var merged = fbRoutes.slice();
-        state.routes.forEach(function (l) {
-          if (!fbRoutes.find(function (f) { return f.id === l.id; })) merged.push(l);
-        });
-        state.routes = merged;
-        for (var i = 0; i < merged.length; i++) {
-          await localDB.saveRoute(merged[i]);
-        }
-        renderRoutesList();
-        renderRoutesOnMap();
-        renderSettings();
-        processSyncQueue();
-      } catch (e) {
-        console.warn('Error cargando Firebase:', e);
-      }
+        await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+      } catch (e) { console.warn('SW:', e); }
     }
 
-    navigateTo('routes');
-    setMapMode('half');
+    // Leer URL inicial
+    const params = new URLSearchParams(location.search);
+    const tab = params.get('tab') || 'home';
+    const postParam = params.get('post');
+    const rutaParam = params.get('ruta');
+    const marketParam = params.get('market');
 
-    window.addEventListener('resize', function () {
-      if (state.map) setTimeout(function () { state.map.invalidateSize(); }, 200);
-    });
+    // Cargar datos
+    await loadPosts();
+    await loadRoutes();
+    await loadMarket();
 
-    setTimeout(function () {
-      if (state.map) state.map.invalidateSize();
-    }, 500);
+    // Renderizar según URL
+    if (postParam) {
+      const post = state.posts.find(p => p.id === postParam);
+      if (post) {
+        state.currentPost = post;
+        navigateTo('post', { post: postParam, postObj: post, replace: true });
+        renderSinglePost(post);
+      } else {
+        navigateTo(tab === 'routes' ? 'routes' : 'home', { replace: true });
+      }
+    } else if (rutaParam) {
+      const r = state.routes.find(x => x.id === rutaParam);
+      if (r) {
+        navigateTo('route', { ruta: rutaParam, route: r, replace: true });
+      } else {
+        navigateTo(tab === 'routes' ? 'routes' : 'home', { replace: true });
+      }
+    } else if (marketParam) {
+      navigateTo('market', { replace: true });
+      // Scroll al anuncio
+      setTimeout(() => {
+        const card = document.querySelector(`[data-market-id="${marketParam}"]`);
+        if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
+    } else {
+      navigateTo(tab, { replace: true });
+    }
 
-    console.log('🎉 App lista');
+    // Estado de conexión
+    updateConn();
+
+    // Cargar Firebase si está disponible
+    if (fbDB) syncFromFirebase();
   }
 
-  // Exponer
-  window.RutasApp = {
-    state: state,
-    showToast: showToast,
-    openEditor: openEditor,
-    openPublishDialog: openPublishDialog,
+  function renderSinglePost(post) {
+    const el = $('#postSingle');
+    if (!el) return;
+    el.innerHTML = renderPostCard(post);
+    bindPostEvents(el);
+  }
+
+  $('#postBack').onclick = () => navigateTo('home');
+
+  // Manejar clics en enlaces de botón atrás del navegador dentro de la app
+  window.addEventListener('load', () => {
+    // Detectar si hay que abrir admin
+    if (location.pathname.includes('admin')) {
+      // redirigir
+      return;
+    }
+  });
+
+  // ==================== API PÚBLICA ====================
+  global.App = {
+    state,
+    navigateTo,
+    goBack,
+    openRouteDetail,
+    openRouteEditor,
+    openPostEditor: () => {
+      if (!state.isAdmin) { requestAdminAuth(() => App.openPostEditor()); return; }
+      navigateTo('home');
+      setTimeout(() => {
+        const btn = $('#feedAdminBar button');
+        if (btn) btn.click();
+      }, 100);
+    },
+    openMarketEditor: () => {
+      if (!state.isAdmin) { requestAdminAuth(() => App.openMarketEditor()); return; }
+      navigateTo('market');
+      setTimeout(() => {
+        const btn = $('#marketAdminBar button');
+        if (btn) btn.click();
+      }, 100);
+    },
+    openViewer,
+    closeViewer,
+    openComments,
+    closeModal,
+    closeAllModals,
+    toast,
+    loadPosts,
+    loadRoutes,
+    loadMarket,
+    renderFeed,
+    renderRouteContent,
+    renderMarket,
+    requestAdminAuth,
+    isAdmin: () => state.isAdmin
   };
 
-  // Arrancar cuando DOM esté listo
+  // Arrancar
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
     init();
   }
-})();
+
+})(window);
