@@ -1,234 +1,442 @@
-export async function onRequestPost(context) {
-  const origin = context.request.headers.get("Origin") || "";
-  const allowed = context.env.SITE_DOMAIN
-    ? `https://${context.env.SITE_DOMAIN}`
-    : "*";
+// functions/api/publish.js
+// Cloudflare Pages Function: recibe post, verifica contraseña y sube a GitHub
 
+export async function onRequestPost(context) {
+  const { request, env } = context;
+
+  // CORS
   const corsHeaders = {
-    "Access-Control-Allow-Origin": allowed,
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    "Vary": "Origin",
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
   };
 
   try {
-    const { title, slug, description, image, content, secretPass } =
-      await context.request.json();
+    const body = await request.json();
+    const {
+      password,
+      slug,
+      title,
+      description,
+      content,
+      image,
+      metadata,
+      mapPoints,
+      streets,
+      pois,
+      routeData,
+    } = body;
 
-    const ADMIN_PASSWORD = context.env.ADMIN_PASSWORD;
-    if (!ADMIN_PASSWORD || secretPass !== ADMIN_PASSWORD) {
-      return json({ error: "Contraseña incorrecta" }, 403, corsHeaders);
+    // 1. Verificar contraseña
+    if (!password || password !== env.ADMIN_PASSWORD) {
+      return new Response(
+        JSON.stringify({ ok: false, error: 'Contraseña incorrecta' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    if (!title || !slug || !content) {
-      return json({ error: "Faltan campos obligatorios" }, 400, corsHeaders);
+    // 2. Validar campos
+    if (!slug || !title) {
+      return new Response(
+        JSON.stringify({ ok: false, error: 'Faltan campos obligatorios' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
-
-    const GITHUB_TOKEN = context.env.GITHUB_TOKEN;
-    const REPO_OWNER = context.env.REPO_OWNER;
-    const REPO_NAME = context.env.REPO_NAME;
-    const DOMAIN = context.env.SITE_DOMAIN || "tu-pagina.pages.dev";
 
     const cleanSlug = slug
       .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9-]/g, "-")
-      .replace(/-+/g, "-")
-      .replace(/^-|-$/g, "");
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9-]+/g, '-')
+      .replace(/^-+|-+$/g, '');
 
-    const dateStr = new Date().toISOString().split("T")[0];
-    const postPath = `paginas/${cleanSlug}.html`;
-    const url = `paginas/${cleanSlug}.html`;
+    const domain = env.SITE_DOMAIN || 'https://rutas-tuxtla.pages.dev';
+    const canonical = `${domain}/paginas/${cleanSlug}.html`;
+    const now = new Date().toISOString();
 
-    const escapeHtml = (s = "") =>
-      String(s)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;");
+    // 3. Leer posts-index.json actual desde GitHub
+    const owner = env.REPO_OWNER;
+    const repo = env.REPO_NAME;
+    const token = env.GITHUB_TOKEN;
+    const branch = 'main';
 
-    const postHtmlContent = `<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${escapeHtml(title)}</title>
-  <meta name="description" content="${escapeHtml(description || "")}">
-  <meta property="og:title" content="${escapeHtml(title)}">
-  <meta property="og:description" content="${escapeHtml(description || "")}">
-  <meta property="og:image" content="${escapeHtml(image || "")}">
-  <meta property="og:type" content="article">
-  <link rel="canonical" href="https://${DOMAIN}/${url}">
-  <link rel="stylesheet" href="../css/style.css">
-  <link rel="manifest" href="../manifest.json">
-  <meta name="theme-color" content="#0f172a">
-</head>
-<body>
-  <header class="site-header">
-    <div class="container header-inner">
-      <a href="../" class="logo">📝 Mi Blog</a>
-      <nav><a href="../">Inicio</a></nav>
-    </div>
-  </header>
-  <main class="container post-container">
-    <article class="post">
-      <h1>${escapeHtml(title)}</h1>
-      <div class="post-meta">
-        <time datetime="${dateStr}">${dateStr}</time>
-      </div>
-      ${image ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(title)}" class="post-cover" loading="lazy">` : ""}
-      <div class="post-body">
-        ${content}
-      </div>
-    </article>
-    <a href="../" class="back-link">← Volver al inicio</a>
-  </main>
-  <script src="../js/db.js"></script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('../sw.js', { scope: '../' });
-    }
-  </script>
-</body>
-</html>`;
-
-    const githubApi = async (path, method = "GET", body = null) => {
-      const options = {
-        method,
-        headers: {
-          Authorization: `Bearer ${GITHUB_TOKEN}`,
-          "User-Agent": "Cloudflare-Pages-Publisher",
-          Accept: "application/vnd.github.v3+json",
-          "Content-Type": "application/json",
-        },
-      };
-      if (body) options.body = JSON.stringify(body);
-      return await fetch(
-        `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${path}`,
-        options
+    if (!owner || !repo || !token) {
+      return new Response(
+        JSON.stringify({ ok: false, error: 'Configuración del servidor incompleta' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
-    };
-
-    const toBase64 = (str) => {
-      const bytes = new TextEncoder().encode(str);
-      let binary = "";
-      for (let i = 0; i < bytes.byteLength; i++) {
-        binary += String.fromCharCode(bytes[i]);
-      }
-      return btoa(binary);
-    };
-
-    const fromBase64 = (b64) => {
-      const clean = b64.replace(/\n/g, "");
-      const bin = atob(clean);
-      const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
-      return new TextDecoder().decode(bytes);
-    };
-
-    // 1. Subir HTML del post
-    const getPostRes = await githubApi(postPath);
-    const postSha = getPostRes.status === 200 ? (await getPostRes.json()).sha : null;
-
-    const putPost = await githubApi(postPath, "PUT", {
-      message: `Publish: ${cleanSlug}`,
-      content: toBase64(postHtmlContent),
-      sha: postSha || undefined,
-    });
-    if (!putPost.ok) {
-      const e = await putPost.json();
-      throw new Error(`GitHub post: ${e.message}`);
     }
 
-    // 2. Actualizar posts-index.json
-    const indexPath = "paginas/posts-index.json";
-    const getIndexRes = await githubApi(indexPath);
-    let indexData = [];
+    const ghApi = `https://api.github.com/repos/${owner}/${repo}/contents`;
+    const ghHeaders = {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/vnd.github+json',
+      'User-Agent': 'RutasTuxtlaBot',
+      'X-GitHub-Api-Version': '2022-11-28',
+    };
+
+    // Leer índice actual
+    let currentIndex = { posts: [], updatedAt: now, total: 0 };
     let indexSha = null;
 
-    if (getIndexRes.status === 200) {
-      const jsonFile = await getIndexRes.json();
-      indexSha = jsonFile.sha;
-      try {
-        indexData = JSON.parse(fromBase64(jsonFile.content));
-      } catch {
-        indexData = [];
+    try {
+      const idxRes = await fetch(`${ghApi}/paginas/posts-index.json?ref=${branch}`, {
+        headers: ghHeaders,
+      });
+      if (idxRes.ok) {
+        const idxData = await idxRes.json();
+        indexSha = idxData.sha;
+        const decoded = atob(idxData.content.replace(/\n/g, ''));
+        currentIndex = JSON.parse(decoded);
       }
+    } catch (e) {
+      // Si no existe, se crea nuevo
     }
 
-    indexData = indexData.filter((p) => p.slug !== cleanSlug);
-    indexData.unshift({
-      title,
+    // 4. Generar HTML del post individual
+    const postHtml = generatePostHtml({
       slug: cleanSlug,
-      description: description || "",
-      image: image || "",
-      date: dateStr,
-      url,
-      content, // guardamos el HTML del cuerpo para cachear offline
+      title,
+      description,
+      content,
+      image,
+      metadata,
+      canonical,
+      domain,
+      now,
     });
 
-    const putIndex = await githubApi(indexPath, "PUT", {
-      message: `Update index: ${cleanSlug}`,
-      content: toBase64(JSON.stringify(indexData, null, 2)),
-      sha: indexSha || undefined,
+    // 5. Subir HTML del post a GitHub
+    const postPath = `paginas/${cleanSlug}.html`;
+    let postSha = null;
+
+    try {
+      const existRes = await fetch(`${ghApi}/${postPath}?ref=${branch}`, {
+        headers: ghHeaders,
+      });
+      if (existRes.ok) {
+        const existData = await existRes.json();
+        postSha = existData.sha;
+      }
+    } catch (e) {}
+
+    const postPayload = {
+      message: `feat(post): ${title}`,
+      content: btoa(unescape(encodeURIComponent(postHtml))),
+      branch,
+    };
+    if (postSha) postPayload.sha = postSha;
+
+    const postRes = await fetch(`${ghApi}/${postPath}`, {
+      method: 'PUT',
+      headers: ghHeaders,
+      body: JSON.stringify(postPayload),
     });
-    if (!putIndex.ok) {
-      const e = await putIndex.json();
-      throw new Error(`GitHub index: ${e.message}`);
+
+    if (!postRes.ok) {
+      const err = await postRes.text();
+      throw new Error(`Error subiendo post: ${err}`);
     }
 
-    // 3. Actualizar sitemap.xml
-    const sitemapPath = "sitemap.xml";
-    const getSitemapRes = await githubApi(sitemapPath);
-    let sitemapSha = null;
-    let urls = [`https://${DOMAIN}/`];
+    // 6. Actualizar índice
+    const newEntry = {
+      slug: cleanSlug,
+      title,
+      description: description || '',
+      image: image || '',
+      url: `paginas/${cleanSlug}.html`,
+      canonical,
+      tipo: metadata?.tipo || 'ida',
+      color: metadata?.color || '#1e40af',
+      empresa: metadata?.empresa || '',
+      tarifa: metadata?.tarifa || '',
+      frecuencia: metadata?.frecuencia || '',
+      horario: metadata?.horario || '',
+      dias: metadata?.dias || 'todos',
+      accesible: metadata?.accesible || 'no',
+      puntos: Array.isArray(mapPoints) ? mapPoints.length : 0,
+      calles: Array.isArray(streets) ? streets.length : 0,
+      pois: Array.isArray(pois) ? pois.length : 0,
+      createdAt: now,
+      updatedAt: now,
+    };
 
-    if (getSitemapRes.status === 200) {
-      const smFile = await getSitemapRes.json();
-      sitemapSha = smFile.sha;
-      const smContent = fromBase64(smFile.content);
-      const matches = smContent.match(/<loc>(.*?)<\/loc>/g) || [];
-      urls = matches.map((m) => m.replace(/<\/?loc>/g, ""));
-    }
+    // Remover duplicados por slug
+    currentIndex.posts = currentIndex.posts.filter((p) => p.slug !== cleanSlug);
+    currentIndex.posts.unshift(newEntry);
+    currentIndex.updatedAt = now;
+    currentIndex.total = currentIndex.posts.length;
 
-    const newUrl = `https://${DOMAIN}/${url}`;
-    urls = urls.filter((u) => u !== newUrl);
-    urls.unshift(newUrl);
+    const indexPayload = {
+      message: `chore(index): actualizar índice - ${title}`,
+      content: btoa(unescape(encodeURIComponent(JSON.stringify(currentIndex, null, 2)))),
+      branch,
+    };
+    if (indexSha) indexPayload.sha = indexSha;
 
-    const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.map((u) => `  <url><loc>${u}</loc><lastmod>${dateStr}</lastmod></url>`).join("\n")}
-</urlset>`;
-
-    await githubApi(sitemapPath, "PUT", {
-      message: `Update sitemap: ${cleanSlug}`,
-      content: toBase64(sitemapXml),
-      sha: sitemapSha || undefined,
+    const indexRes = await fetch(`${ghApi}/paginas/posts-index.json`, {
+      method: 'PUT',
+      headers: ghHeaders,
+      body: JSON.stringify(indexPayload),
     });
 
-    return json({ success: true, url: `/${url}` }, 200, corsHeaders);
-  } catch (err) {
-    return json({ error: err.message }, 500, corsHeaders);
+    if (!indexRes.ok) {
+      const err = await indexRes.text();
+      throw new Error(`Error actualizando índice: ${err}`);
+    }
+
+    // 7. Actualizar sitemap.xml
+    await updateSitemap({ ghApi, ghHeaders, branch, domain, posts: currentIndex.posts });
+
+    return new Response(
+      JSON.stringify({
+        ok: true,
+        slug: cleanSlug,
+        url: `/${postPath}`,
+        canonical,
+        message: 'Post publicado correctamente',
+      }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  } catch (error) {
+    console.error('Error en publish:', error);
+    return new Response(
+      JSON.stringify({ ok: false, error: error.message || 'Error interno' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
   }
 }
 
-export async function onRequestOptions(context) {
-  const allowed = context.env?.SITE_DOMAIN
-    ? `https://${context.env.SITE_DOMAIN}`
-    : "*";
+export async function onRequestOptions() {
   return new Response(null, {
+    status: 204,
     headers: {
-      "Access-Control-Allow-Origin": allowed,
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      Vary: "Origin",
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
     },
   });
 }
 
-function json(obj, status, headers) {
-  return new Response(JSON.stringify(obj), {
-    status,
-    headers: { ...headers, "Content-Type": "application/json" },
+/* ============================================================
+   Genera el HTML del post individual
+   ============================================================ */
+function generatePostHtml({ slug, title, description, content, image, metadata, canonical, domain, now }) {
+  const safeTitle = escapeHtml(title);
+  const safeDesc = escapeHtml(description || '');
+  const imageUrl = image || `${domain}/assets/icon.svg`;
+  const dateStr = new Date(now).toLocaleDateString('es-MX', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  // Schema.org JSON-LD
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: title,
+    description: description || '',
+    image: imageUrl,
+    author: { '@type': 'Organization', name: 'Rutas Tuxtla Gutiérrez' },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Rutas Tuxtla Gutiérrez',
+      logo: { '@type': 'ImageObject', url: `${domain}/assets/icon.svg` },
+    },
+    datePublished: now,
+    dateModified: now,
+    mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
+  };
+
+  // Breadcrumb schema
+  const breadcrumb = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Inicio', item: domain },
+      { '@type': 'ListItem', position: 2, name: 'Rutas', item: `${domain}/#rutas` },
+      { '@type': 'ListItem', position: 3, name: title, item: canonical },
+    ],
+  };
+
+  const streetsList = (metadata?.streets || [])
+    .map(
+      (s, i) => `
+      <li>
+        <span class="num">${i + 1}</span>
+        <span>${escapeHtml(typeof s === 'string' ? s : s.nombre || '')}</span>
+      </li>`
+    )
+    .join('');
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>${safeTitle} | Rutas Tuxtla Gutiérrez</title>
+<meta name="description" content="${safeDesc}">
+<meta name="keywords" content="ruta, transporte, Tuxtla Gutiérrez, Chiapas, colectivo, ${safeTitle}">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<link rel="canonical" href="${canonical}">
+
+<!-- Open Graph -->
+<meta property="og:type" content="article">
+<meta property="og:title" content="${safeTitle}">
+<meta property="og:description" content="${safeDesc}">
+<meta property="og:image" content="${imageUrl}">
+<meta property="og:url" content="${canonical}">
+<meta property="og:site_name" content="Rutas Tuxtla Gutiérrez">
+<meta property="og:locale" content="es_MX">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${safeTitle}">
+<meta name="twitter:description" content="${safeDesc}">
+<meta name="twitter:image" content="${imageUrl}">
+
+<!-- Theme -->
+<meta name="theme-color" content="#1e40af">
+<link rel="icon" href="${domain}/assets/icon.svg" type="image/svg+xml">
+
+<!-- CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="${domain}/css/styles.css">
+
+<!-- Schema.org -->
+<script type="application/ld+json">${JSON.stringify(schema)}</script>
+<script type="application/ld+json">${JSON.stringify(breadcrumb)}</script>
+</head>
+<body class="post-page">
+
+<header class="post-hero">
+  <div class="post-badges">
+    <span class="badge">🚌 ${escapeHtml(metadata?.tipo || 'ida')}</span>
+    <span class="badge">📍 ${escapeHtml(metadata?.empresa || 'Transporte público')}</span>
+  </div>
+  <h1>${safeTitle}</h1>
+  <p>${safeDesc}</p>
+</header>
+
+<main class="post-content" itemscope itemtype="https://schema.org/Article">
+  <meta itemprop="datePublished" content="${now}">
+  <meta itemprop="dateModified" content="${now}">
+
+  ${image ? `<img src="${imageUrl}" alt="${safeTitle}" style="width:100%;border-radius:16px;margin-bottom:24px" itemprop="image">` : ''}
+
+  <div class="post-info-grid">
+    ${metadata?.tarifa ? `<div class="post-info-box"><div class="label">💰 Tarifa</div><div class="value">${escapeHtml(metadata.tarifa)}</div></div>` : ''}
+    ${metadata?.frecuencia ? `<div class="post-info-box"><div class="label">⏱️ Frecuencia</div><div class="value">${escapeHtml(metadata.frecuencia)}</div></div>` : ''}
+    ${metadata?.horario ? `<div class="post-info-box"><div class="label">🕐 Horario</div><div class="value">${escapeHtml(metadata.horario)}</div></div>` : ''}
+    ${metadata?.dias ? `<div class="post-info-box"><div class="label">📅 Días</div><div class="value">${escapeHtml(metadata.dias)}</div></div>` : ''}
+    ${metadata?.accesible ? `<div class="post-info-box"><div class="label">♿ Accesible</div><div class="value">${escapeHtml(metadata.accesible)}</div></div>` : ''}
+  </div>
+
+  <h2>📝 Descripción del recorrido</h2>
+  <div itemprop="articleBody">${content || `<p>${safeDesc}</p>`}</div>
+
+  ${streetsList ? `
+  <h2>🛣️ Calles por las que pasa</h2>
+  <ul class="post-streets">${streetsList}</ul>
+  ` : ''}
+
+  ${metadata?.mapPoints && metadata.mapPoints.length >= 2 ? `
+  <h2>🗺️ Mapa de la ruta</h2>
+  <div id="route-map" class="post-map"></div>
+  <script>
+    window.__ROUTE_POINTS__ = ${JSON.stringify(metadata.mapPoints)};
+    window.__ROUTE_COLOR__ = ${JSON.stringify(metadata.color || '#1e40af')};
+    window.__ROUTE_NAME__ = ${JSON.stringify(title)};
+  </script>
+  ` : ''}
+
+  <div class="post-cta">
+    <h3>¿Necesitas buscar esta ruta?</h3>
+    <p>Abre la app interactiva para ver el mapa en tiempo real, buscar rutas cercanas y más.</p>
+    <a href="${domain}/" class="btn">🚌 Abrir la App</a>
+  </div>
+
+  <p style="font-size:13px;color:#64748b;text-align:center;margin-top:40px">
+    Publicado el ${dateStr}
+  </p>
+</main>
+
+<footer class="post-footer">
+  <p>© ${new Date().getFullYear()} Rutas Tuxtla Gutiérrez · <a href="${domain}">Inicio</a></p>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function(){
+  var pts = window.__ROUTE_POINTS__;
+  if(!pts || pts.length < 2) return;
+  var el = document.getElementById('route-map');
+  if(!el) return;
+  var map = L.map('route-map', { zoomControl: true, attributionControl: true });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
+  var coords = pts.map(function(p){ return [p.lat, p.lng]; });
+  var line = L.polyline(coords, { color: window.__ROUTE_COLOR__, weight: 5, opacity: .85 }).addTo(map);
+  L.marker(coords[0]).addTo(map).bindPopup('<b>Inicio</b>');
+  L.marker(coords[coords.length-1]).addTo(map).bindPopup('<b>Fin</b>');
+  map.fitBounds(line.getBounds(), { padding: [40, 40] });
+})();
+</script>
+</body>
+</html>`;
+}
+
+function escapeHtml(text) {
+  if (text == null) return '';
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/* ============================================================
+   Actualiza sitemap.xml en el repo
+   ============================================================ */
+async function updateSitemap({ ghApi, ghHeaders, branch, domain, posts }) {
+  const now = new Date().toISOString().split('T')[0];
+
+  const urls = [
+    `<url><loc>${domain}/</loc><lastmod>${now}</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>`,
+    ...posts.map(
+      (p) =>
+        `<url><loc>${domain}/${p.url}</loc><lastmod>${now}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>`
+    ),
+  ];
+
+  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.join('\n')}
+</urlset>`;
+
+  let sitemapSha = null;
+  try {
+    const res = await fetch(`${ghApi}/sitemap.xml?ref=${branch}`, { headers: ghHeaders });
+    if (res.ok) {
+      const data = await res.json();
+      sitemapSha = data.sha;
+    }
+  } catch (e) {}
+
+  const payload = {
+    message: 'chore(sitemap): actualizar sitemap',
+    content: btoa(unescape(encodeURIComponent(sitemap))),
+    branch,
+  };
+  if (sitemapSha) payload.sha = sitemapSha;
+
+  await fetch(`${ghApi}/sitemap.xml`, {
+    method: 'PUT',
+    headers: ghHeaders,
+    body: JSON.stringify(payload),
   });
 }
