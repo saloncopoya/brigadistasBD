@@ -1,129 +1,153 @@
-// js/db.js — capa de IndexedDB compartida
-const DB_NAME = "blog-offline-db";
-const DB_VERSION = 1;
-const STORES = ["posts", "pages", "images", "meta"];
+/* ==========================================================================
+   DB.JS — Capa de base de datos local con IndexedDB (idb)
+   Proporciona CRUD offline para: posts, routes, market, sync queue, tiles
+   ========================================================================== */
+(function (global) {
+  'use strict';
 
-let dbPromise = null;
+  const DB_NAME = 'tgz_offline_db';
+  const DB_VERSION = 3;
 
-function openDB() {
-  if (dbPromise) return dbPromise;
-  dbPromise = new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, DB_VERSION);
-    req.onupgradeneeded = (e) => {
-      const db = e.target.result;
-      STORES.forEach((name) => {
-        if (!db.objectStoreNames.contains(name)) {
-          db.createObjectStore(name, { keyPath: "id" });
-        }
-      });
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-  return dbPromise;
-}
+  let dbPromise = null;
 
-async function tx(store, mode = "readonly") {
-  const db = await openDB();
-  return db.transaction(store, mode).objectStore(store);
-}
-
-const DB = {
-  async put(store, value) {
-    const s = await tx(store, "readwrite");
-    return new Promise((res, rej) => {
-      const r = s.put(value);
-      r.onsuccess = () => res(r.result);
-      r.onerror = () => rej(r.error);
-    });
-  },
-  async get(store, id) {
-    const s = await tx(store);
-    return new Promise((res, rej) => {
-      const r = s.get(id);
-      r.onsuccess = () => res(r.result);
-      r.onerror = () => rej(r.error);
-    });
-  },
-  async all(store) {
-    const s = await tx(store);
-    return new Promise((res, rej) => {
-      const r = s.getAll();
-      r.onsuccess = () => res(r.result);
-      r.onerror = () => rej(r.error);
-    });
-  },
-  async clear(store) {
-    const s = await tx(store, "readwrite");
-    return new Promise((res, rej) => {
-      const r = s.clear();
-      r.onsuccess = () => res();
-      r.onerror = () => rej(r.error);
-    });
-  },
-};
-
-// Exponer global
-self.DB = DB;
-
-// ===== Helpers de negocio =====
-
-// Guarda todos los posts del índice en IndexedDB
-async function cachePostsIndex(posts) {
-  for (const p of posts) {
-    await DB.put("posts", { id: p.slug, ...p });
-  }
-  await DB.put("meta", { id: "lastSync", value: Date.now() });
-}
-
-// Devuelve los posts locales ordenados por fecha
-async function getLocalPosts() {
-  const all = await DB.all("posts");
-  return all.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
-}
-
-// Guarda el HTML completo de una página (url -> html)
-async function cachePage(url, html) {
-  await DB.put("pages", { id: url, html, ts: Date.now() });
-}
-
-async function getPage(url) {
-  return DB.get("pages", url);
-}
-
-// Precarga y cachea el HTML de cada post + su imagen
-async function precacheAllPosts(posts) {
-  for (const p of posts) {
-    const url = "/" + p.url;
-    try {
-      const cached = await getPage(url);
-      if (cached) continue;
-      const res = await fetch(url, { cache: "no-store" });
-      if (res.ok) {
-        const html = await res.text();
-        await cachePage(url, html);
+  async function openDB() {
+    if (dbPromise) return dbPromise;
+    dbPromise = idb.openDB(DB_NAME, DB_VERSION, {
+      upgrade(db) {
+        ['posts', 'routes', 'market', 'syncQueue', 'tiles', 'meta', 'history'].forEach(store => {
+          if (!db.objectStoreNames.contains(store)) {
+            const s = db.createObjectStore(store, { keyPath: 'id' });
+            if (store === 'posts' || store === 'routes' || store === 'market') {
+              s.createIndex('timestamp', 'timestamp');
+              s.createIndex('updatedAt', 'updatedAt');
+              s.createIndex('tipo', 'tipo');
+            }
+            if (store === 'syncQueue') {
+              s.createIndex('createdAt', 'createdAt');
+            }
+          }
+        });
       }
-    } catch (e) {
-      // offline, se guardará después
-    }
-    if (p.image) {
-      try {
-        const already = await DB.get("images", p.image);
-        if (already) continue;
-        const r = await fetch(p.image, { mode: "cors" });
-        if (r.ok) {
-          const blob = await r.blob();
-          await DB.put("images", { id: p.image, blob });
-        }
-      } catch {}
-    }
+    });
+    return dbPromise;
   }
-}
 
-self.BlogCache = {
-  cachePostsIndex,
-  getLocalPosts,
-  cachePage,
-  getPage,
-  precacheAllPosts,
-};
+  // ---------- CRUD genérico ----------
+  async function get(store, id) {
+    const db = await openDB();
+    return db.get(store, id);
+  }
+
+  async function getAll(store) {
+    const db = await openDB();
+    return db.getAll(store);
+  }
+
+  async function put(store, value) {
+    const db = await openDB();
+    return db.put(store, value);
+  }
+
+  async function del(store, id) {
+    const db = await openDB();
+    return db.delete(store, id);
+  }
+
+  async function clear(store) {
+    const db = await openDB();
+    return db.clear(store);
+  }
+
+  async function count(store) {
+    const db = await openDB();
+    return db.count(store);
+  }
+
+  // ---------- Cola de sincronización ----------
+  async function queueSync(op) {
+    const db = await openDB();
+    const item = {
+      id: 'sync_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+      createdAt: Date.now(),
+      ...op
+    };
+    await db.put('syncQueue', item);
+    return item;
+  }
+
+  async function getQueue() {
+    const db = await openDB();
+    return db.getAll('syncQueue');
+  }
+
+  async function clearQueue() {
+    const db = await openDB();
+    return db.clear('syncQueue');
+  }
+
+  async function removeQueueItem(id) {
+    const db = await openDB();
+    return db.delete('syncQueue', id);
+  }
+
+  // ---------- Meta helpers ----------
+  async function setMeta(key, value) {
+    return put('meta', { id: key, value, updatedAt: Date.now() });
+  }
+  async function getMeta(key) {
+    const r = await get('meta', key);
+    return r ? r.value : null;
+  }
+
+  // ---------- Historial local ----------
+  async function pushHistory(entry) {
+    const db = await openDB();
+    const item = { id: 'h_' + Date.now(), ...entry };
+    await db.put('history', item);
+    // Limitar a 200 entradas
+    const all = await db.getAll('history');
+    if (all.length > 200) {
+      all.sort((a, b) => a.id.localeCompare(b.id));
+      const excess = all.slice(0, all.length - 200);
+      for (const e of excess) await db.delete('history', e.id);
+    }
+    return item;
+  }
+  async function getHistory() {
+    const db = await openDB();
+    const all = await db.getAll('history');
+    return all.sort((a, b) => b.id.localeCompare(a.id));
+  }
+
+  // ---------- Export/Import ----------
+  async function exportAll() {
+    const [posts, routes, market] = await Promise.all([
+      getAll('posts'), getAll('routes'), getAll('market')
+    ]);
+    return { posts, routes, market, exportedAt: Date.now(), version: DB_VERSION };
+  }
+
+  async function importAll(data) {
+    const db = await openDB();
+    const tx = db.transaction(['posts', 'routes', 'market'], 'readwrite');
+    if (data.posts) for (const p of data.posts) await tx.objectStore('posts').put(p);
+    if (data.routes) for (const r of data.routes) await tx.objectStore('routes').put(r);
+    if (data.market) for (const m of data.market) await tx.objectStore('market').put(m);
+    await tx.done;
+  }
+
+  // ---------- API pública ----------
+  global.DB = {
+    openDB, get, getAll, put, delete: del, clear, count,
+    queueSync, getQueue, clearQueue, removeQueueItem,
+    setMeta, getMeta, pushHistory, getHistory,
+    exportAll, importAll
+  };
+
+  // Aliases para compatibilidad con código que use otros nombres
+  global.dbGet = get;
+  global.dbPut = put;
+  global.dbDel = del;
+  global.dbAll = getAll;
+
+})(window);
