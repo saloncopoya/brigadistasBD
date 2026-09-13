@@ -124,8 +124,8 @@ export async function onRequest(context) {
       title,
       description: (content || '').slice(0, 160),
       image: image || '',
-      url: `/${htmlPath}`,
-      tipo: tipo || 'post',
+      url: `/${cleanPath}`,
+       tipo: tipo || 'post',
       timestamp: Date.now(),
       updatedAt: new Date().toISOString()
     });
