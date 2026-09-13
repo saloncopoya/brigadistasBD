@@ -394,8 +394,8 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
   }
 
   async function sharePost(post) {
-    const url = location.origin + '/share/post/' + post.id + '.html';
-    const res = await Publisher.share({
+    const url = location.origin + '/share/post/' + post.id;
+     const res = await Publisher.share({
       title: post.title,
       text: post.content ? post.content.slice(0, 100) : 'Mira esta publicación',
       url
@@ -768,17 +768,17 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
     }).addTo(state.map);
 
     const layers = [];
-    const pts = route.puntos || [];
+    const pts = (route.geometriaIda && route.geometriaIda.length) ? route.geometriaIda : (route.puntos || []);
     if (pts.length > 1) {
       const line = L.polyline(pts, { color: route.colorIda || '#00e5ff', weight: 5, opacity: 0.9 }).addTo(state.map);
       layers.push(line);
     }
-    const pv = route.puntosVuelta || [];
+    const pv = (route.geometriaVuelta && route.geometriaVuelta.length) ? route.geometriaVuelta : (route.puntosVuelta || []);
     if (pv.length > 1) {
       const line = L.polyline(pv, { color: route.colorVuelta || '#a855f7', weight: 5, opacity: 0.9, dashArray: '8,6' }).addTo(state.map);
       layers.push(line);
     }
-    const allPts = pts.concat(pv);
+    const allPts = (route.puntos || []).concat(route.puntosVuelta || []);
     if (allPts.length) {
       state.map.fitBounds(L.latLngBounds(allPts).pad(0.15));
     } else {
@@ -789,8 +789,8 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
   }
 
   async function shareRoute(route) {
-    const url = location.origin + '/share/ruta/' + route.id + '.html';
-    const res = await Publisher.share({
+    const url = location.origin + '/share/ruta/' + route.id;
+     const res = await Publisher.share({
       title: 'Ruta ' + route.nombre,
       text: `Mira la ruta ${route.nombre} (${route.categoria || 'urbana'})`,
       url
@@ -1129,8 +1129,8 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
             const msg = encodeURIComponent('Hola, me interesa: ' + ad.title);
             window.open(`https://wa.me/${ad.phone.replace(/\D/g, '')}?text=${msg}`, '_blank');
           } else if (b.dataset.mact === 'share') {
-            const url = location.origin + '/share/m/' + id + '.html';
-            Publisher.share({ title: ad.title, text: ad.description?.slice(0, 100), url });
+            const url = location.origin + '/share/m/' + id;
+             Publisher.share({ title: ad.title, text: ad.description?.slice(0, 100), url });
           }
         };
       });
