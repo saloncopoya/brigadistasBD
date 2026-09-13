@@ -1,9 +1,6 @@
-const CACHE_NAME = 'cotejo-offline-v1.0.0.61'; 
+const CACHE_NAME = 'cotejo-offline-v1.0.0.3'; 
 const urlsToCache = [
     '/',
-    '/index.html',
-    '/manifest.json',
-     '/img.png',
    "/index.html",
   "/admin.html",
   "/offline.html",
