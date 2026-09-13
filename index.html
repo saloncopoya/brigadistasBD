@@ -1,512 +1,745 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#1e40af">
-<title>Rutas Tuxtla Gutiérrez - App y Blog de Transporte</title>
-<meta name="description" content="Consulta, registra y busca rutas de transporte público en Tuxtla Gutiérrez, Chiapas. App interactiva con mapa, blog de rutas y guía completa.">
-<meta name="keywords" content="rutas, transporte, Tuxtla Gutiérrez, Chiapas, colectivo, camión, combi, mapa, app">
-<meta name="robots" content="index, follow, max-image-preview:large">
-<meta name="author" content="Rutas Tuxtla Gutiérrez">
-<link rel="canonical" href="/">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0e1a">
+<meta name="description" content="Consulta, explora y administra rutas de colectivos. Blog y marketplace con mapas interactivos, GPS en tiempo real y modo offline.">
+<title>Rutas Colectivos · Blog & Market</title>
 
-<!-- Open Graph -->
-<meta property="og:type" content="website">
-<meta property="og:title" content="Rutas Tuxtla Gutiérrez - App y Blog">
-<meta property="og:description" content="Todas las rutas de transporte público de Tuxtla Gutiérrez en un solo lugar.">
-<meta property="og:image" content="/assets/icon.svg">
-<meta property="og:url" content="/">
-<meta property="og:locale" content="es_MX">
-
-<!-- Twitter -->
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Rutas Tuxtla Gutiérrez">
-<meta name="twitter:description" content="App interactiva + blog de rutas de transporte.">
-<meta name="twitter:image" content="/assets/icon.svg">
-
-<!-- Icons -->
-<link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" type="image/svg+xml" href="/assets/icon.svg">
 <link rel="apple-touch-icon" href="/assets/icon.svg">
+<link rel="preconnect" href="https://unpkg.com">
+<link rel="preconnect" href="https://tile.openstreetmap.org">
+<link rel="preconnect" href="https://res.cloudinary.com">
+<link rel="preconnect" href="https://www.gstatic.com">
 
-<!-- CSS -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-<link rel="stylesheet" href="/css/styles.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 
-<!-- Schema.org Organization -->
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "WebApplication",
-  "name": "Rutas Tuxtla Gutiérrez",
-  "description": "Aplicación para consultar y registrar rutas de transporte público en Tuxtla Gutiérrez.",
-  "applicationCategory": "TravelApplication",
-  "operatingSystem": "Web",
-  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "MXN" }
+<style>
+/* ============================================================
+   VARIABLES Y TEMAS
+   ============================================================ */
+:root{
+  --cyan:#00e5ff;
+  --cyan-d:#00b8cc;
+  --cyan-glow:rgba(0,229,255,.35);
+  --purple:#a855f7;
+  --green:#10b981;
+  --amber:#f59e0b;
+  --red:#ef4444;
+  --pink:#ec4899;
+  --radius:14px;
+  --radius-sm:10px;
+  --radius-lg:22px;
+  --shadow:0 10px 30px rgba(0,0,0,.35);
+  --shadow-sm:0 4px 12px rgba(0,0,0,.25);
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --nav-h:64px;
+  --header-h:58px;
+  --transition:.25s cubic-bezier(.4,0,.2,1);
 }
-</script>
+[data-theme="dark"]{
+  --bg:#0a0e1a;
+  --bg-2:#0f1526;
+  --bg-3:#161e33;
+  --surface:#141c30;
+  --surface-2:#1c2540;
+  --surface-3:#242f4d;
+  --border:#26314f;
+  --border-2:#334066;
+  --text:#e8edf7;
+  --text-2:#a9b4cc;
+  --text-3:#6b7793;
+  --input-bg:#0f1626;
+  --overlay:rgba(5,8,16,.85);
+  --map-filter:none;
+}
+[data-theme="light"]{
+  --bg:#f4f6fb;
+  --bg-2:#ffffff;
+  --bg-3:#eef1f8;
+  --surface:#ffffff;
+  --surface-2:#f4f6fb;
+  --surface-3:#e8ecf5;
+  --border:#dde3ee;
+  --border-2:#c5cfe2;
+  --text:#0c1322;
+  --text-2:#4a5773;
+  --text-3:#8a95ad;
+  --input-bg:#f8fafd;
+  --overlay:rgba(15,20,35,.55);
+  --map-filter:none;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:var(--font);
+  background:var(--bg);
+  color:var(--text);
+  overflow-x:hidden;
+  overscroll-behavior-y:none;
+  transition:background var(--transition),color var(--transition);
+  -webkit-font-smoothing:antialiased;
+}
+button,input,textarea,select{font-family:inherit;font-size:inherit;color:inherit}
+button{cursor:pointer;border:none;background:none}
+a{color:var(--cyan);text-decoration:none}
+img{max-width:100%;display:block}
+.hidden{display:none!important}
+::selection{background:var(--cyan);color:#00121a}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:8px}
+::-webkit-scrollbar-thumb:hover{background:var(--cyan-d)}
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+.header{
+  position:fixed;top:0;left:0;right:0;height:var(--header-h);
+  background:color-mix(in srgb,var(--surface) 92%,transparent);
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 14px;z-index:1000;
+}
+.header-brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px;letter-spacing:-.3px}
+.header-brand .logo{
+  width:32px;height:32px;border-radius:9px;
+  background:linear-gradient(135deg,var(--cyan),var(--cyan-d));
+  display:grid;place-items:center;color:#00121a;font-size:17px;
+  box-shadow:0 0 18px var(--cyan-glow);
+}
+.header-brand .logo svg{width:20px;height:20px}
+.header-brand .brand-txt{background:linear-gradient(90deg,var(--cyan),#7dd3fc);-webkit-background-clip:text;background-clip:text;color:transparent}
+.header-actions{display:flex;align-items:center;gap:6px}
+.icon-btn{
+  width:40px;height:40px;border-radius:11px;display:grid;place-items:center;
+  color:var(--text-2);transition:var(--transition);position:relative;
+}
+.icon-btn:hover{background:var(--surface-2);color:var(--cyan)}
+.icon-btn:active{transform:scale(.92)}
+.icon-btn svg{width:20px;height:20px}
+.conn-dot{
+  position:absolute;bottom:6px;right:6px;width:8px;height:8px;border-radius:50%;
+  background:var(--green);border:2px solid var(--surface);transition:var(--transition);
+}
+.conn-dot.off{background:var(--red)}
+.install-btn{
+  display:none;align-items:center;gap:6px;padding:8px 12px;border-radius:10px;
+  background:linear-gradient(135deg,var(--cyan),var(--cyan-d));color:#00121a;
+  font-weight:700;font-size:12.5px;
+}
+.install-btn.show{display:flex}
+
+/* ============================================================
+   LAYOUT PRINCIPAL
+   ============================================================ */
+.app{padding-top:var(--header-h);padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom));min-height:100vh}
+.page{display:none;animation:fadeIn .3s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.container{max-width:1100px;margin:0 auto;padding:14px}
+
+/* ============================================================
+   NAV INFERIOR
+   ============================================================ */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav-h) + env(safe-area-inset-bottom));
+  padding-bottom:env(safe-area-inset-bottom);
+  background:color-mix(in srgb,var(--surface) 96%,transparent);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border-top:1px solid var(--border);
+  display:grid;grid-template-columns:repeat(3,1fr);z-index:1000;
+}
+.nav-item{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;color:var(--text-3);font-size:11px;font-weight:600;
+  transition:var(--transition);position:relative;
+}
+.nav-item svg{width:23px;height:23px;transition:var(--transition)}
+.nav-item.active{color:var(--cyan)}
+.nav-item.active svg{transform:translateY(-2px) scale(1.08)}
+.nav-item.active::before{
+  content:"";position:absolute;top:6px;width:44px;height:3px;border-radius:0 0 4px 4px;
+  background:var(--cyan);box-shadow:0 0 14px var(--cyan-glow);
+}
+.nav-item:active{transform:scale(.94)}
+
+/* ============================================================
+   TARJETAS / UI GENERAL
+   ============================================================ */
+.card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px;transition:var(--transition);
+}
+.card:hover{border-color:var(--border-2)}
+.section-title{
+  font-size:15px;font-weight:800;letter-spacing:.3px;margin:18px 0 10px;
+  display:flex;align-items:center;gap:8px;color:var(--text);
+}
+.section-title svg{width:18px;height:18px;color:var(--cyan)}
+.muted{color:var(--text-2);font-size:13px}
+.tiny{color:var(--text-3);font-size:11.5px}
+
+/* Botones */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:11px 16px;border-radius:var(--radius-sm);font-weight:700;font-size:13.5px;
+  transition:var(--transition);border:1px solid transparent;
+}
+.btn svg{width:17px;height:17px}
+.btn:active{transform:scale(.96)}
+.btn-primary{background:linear-gradient(135deg,var(--cyan),var(--cyan-d));color:#00121a;box-shadow:0 6px 18px -6px var(--cyan-glow)}
+.btn-primary:hover{filter:brightness(1.08);box-shadow:0 8px 22px -6px var(--cyan-glow)}
+.btn-ghost{background:var(--surface-2);color:var(--text);border-color:var(--border)}
+.btn-ghost:hover{background:var(--surface-3);border-color:var(--border-2)}
+.btn-danger{background:color-mix(in srgb,var(--red) 18%,transparent);color:var(--red);border-color:color-mix(in srgb,var(--red) 35%,transparent)}
+.btn-danger:hover{background:color-mix(in srgb,var(--red) 28%,transparent)}
+.btn-block{width:100%}
+.btn-sm{padding:8px 12px;font-size:12.5px}
+.btn-icon{padding:9px;width:38px;height:38px}
+
+/* Chips */
+.chips{display:flex;gap:8px;overflow-x:auto;padding:4px 2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{
+  flex-shrink:0;padding:8px 14px;border-radius:99px;font-size:12.5px;font-weight:700;
+  background:var(--surface-2);color:var(--text-2);border:1px solid var(--border);
+  transition:var(--transition);white-space:nowrap;
+}
+.chip:hover{border-color:var(--border-2);color:var(--text)}
+.chip.active{background:linear-gradient(135deg,var(--cyan),var(--cyan-d));color:#00121a;border-color:transparent;box-shadow:0 4px 14px -4px var(--cyan-glow)}
+.chip.mini{padding:4px 10px;font-size:11px;font-weight:600}
+
+/* Inputs */
+.input,.textarea,.select{
+  width:100%;padding:12px 14px;border-radius:var(--radius-sm);
+  background:var(--input-bg);border:1px solid var(--border);color:var(--text);
+  font-size:14px;transition:var(--transition);
+}
+.input:focus,.textarea:focus,.select:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px color-mix(in srgb,var(--cyan) 18%,transparent)}
+.textarea{resize:vertical;min-height:90px;line-height:1.5}
+.select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7793' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;background-size:16px;padding-right:38px}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.field label{font-size:12.5px;font-weight:700;color:var(--text-2);letter-spacing:.2px}
+.form-grid{display:grid;grid-template-columns:1fr;gap:0}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;font-size:10.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase}
+.badge-urbana{background:color-mix(in srgb,var(--cyan) 16%,transparent);color:var(--cyan);border:1px solid color-mix(in srgb,var(--cyan) 30%,transparent)}
+.badge-foranea{background:color-mix(in srgb,var(--purple) 18%,transparent);color:var(--purple);border:1px solid color-mix(in srgb,var(--purple) 32%,transparent)}
+.badge-green{background:color-mix(in srgb,var(--green) 16%,transparent);color:var(--green);border:1px solid color-mix(in srgb,var(--green) 30%,transparent)}
+.badge-amber{background:color-mix(in srgb,var(--amber) 18%,transparent);color:var(--amber);border:1px solid color-mix(in srgb,var(--amber) 32%,transparent)}
+
+/* Empty state */
+.empty{text-align:center;padding:40px 20px;color:var(--text-3)}
+.empty svg{width:56px;height:56px;margin-bottom:12px;opacity:.4}
+.empty h3{font-size:15px;margin-bottom:6px;color:var(--text-2)}
+.empty p{font-size:13px;max-width:300px;margin:0 auto}
+
+/* Toast */
+.toast-wrap{position:fixed;top:calc(var(--header-h) + 10px);left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;width:calc(100% - 24px);max-width:400px}
+.toast{
+  background:var(--surface-3);color:var(--text);padding:12px 16px;border-radius:var(--radius-sm);
+  border:1px solid var(--border-2);box-shadow:var(--shadow);font-size:13.5px;font-weight:600;
+  display:flex;align-items:center;gap:10px;pointer-events:auto;
+  animation:toastIn .3s cubic-bezier(.4,0,.2,1);
+}
+.toast.ok{border-color:color-mix(in srgb,var(--green) 50%,transparent)}
+.toast.err{border-color:color-mix(in srgb,var(--red) 50%,transparent)}
+.toast svg{width:18px;height:18px;flex-shrink:0}
+.toast.ok svg{color:var(--green)}
+.toast.err svg{color:var(--red)}
+@keyframes toastIn{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:none}}
+
+/* Modal base */
+.modal{
+  position:fixed;inset:0;background:var(--overlay);z-index:2000;
+  display:flex;align-items:flex-end;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .25s ease;
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+}
+.modal.open{opacity:1;pointer-events:auto}
+.modal.center{align-items:center;padding:16px}
+.modal-sheet{
+  background:var(--surface);width:100%;max-width:560px;border-radius:var(--radius-lg) var(--radius-lg) 0 0;
+  max-height:92vh;display:flex;flex-direction:column;
+  transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1);
+  border-top:1px solid var(--border-2);
+}
+.modal.open .modal-sheet{transform:translateY(0)}
+.modal.center .modal-sheet{border-radius:var(--radius-lg);transform:scale(.94);border:1px solid var(--border-2)}
+.modal.center.open .modal-sheet{transform:scale(1)}
+.sheet-handle{padding:10px 0 4px;display:grid;place-items:center;cursor:grab}
+.sheet-handle::before{content:"";width:40px;height:4px;border-radius:99px;background:var(--border-2)}
+.sheet-head{padding:6px 18px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.sheet-head h3{font-size:16px;font-weight:800}
+.sheet-body{padding:16px 18px;overflow-y:auto;flex:1}
+
+/* Visor imagen */
+.viewer{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:3000;display:none;align-items:center;justify-content:center;padding:20px}
+.viewer.open{display:flex}
+.viewer img,.viewer video{max-width:100%;max-height:100%;border-radius:8px;object-fit:contain}
+.viewer-close{position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.12);display:grid;place-items:center;color:#fff;backdrop-filter:blur(8px)}
+.viewer-close svg{width:22px;height:22px}
+
+/* ============================================================
+   FEED (INICIO)
+   ============================================================ */
+.feed{display:flex;flex-direction:column;gap:14px;max-width:620px;margin:0 auto;padding:14px}
+.post-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:var(--transition)}
+.post-card:hover{border-color:var(--border-2)}
+.post-head{display:flex;align-items:center;gap:10px;padding:12px 14px}
+.post-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--cyan-d));display:grid;place-items:center;color:#00121a;font-weight:800;font-size:16px;flex-shrink:0}
+.post-meta{flex:1;min-width:0}
+.post-meta .name{font-weight:700;font-size:14px}
+.post-meta .time{font-size:11.5px;color:var(--text-3)}
+.post-body{padding:0 14px 12px;font-size:14.5px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
+.post-media{width:100%;max-height:520px;object-fit:cover;background:#000;cursor:zoom-in}
+.post-actions{display:flex;border-top:1px solid var(--border);padding:4px}
+.post-action{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px;border-radius:8px;color:var(--text-2);font-size:13px;font-weight:700;transition:var(--transition);position:relative}
+.post-action:hover{background:var(--surface-2);color:var(--text)}
+.post-action.liked{color:var(--pink)}
+.post-action svg{width:19px;height:19px}
+.heart-burst{position:absolute;pointer-events:none;font-size:38px;animation:heartBurst .8s ease forwards}
+@keyframes heartBurst{0%{transform:scale(0);opacity:1}50%{transform:scale(1.4)}100%{transform:scale(1.8) translateY(-40px);opacity:0}}
+
+/* ============================================================
+   RUTAS
+   ============================================================ */
+.search-bar{display:grid;gap:10px;margin-bottom:14px}
+.search-row{display:flex;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px 4px 4px 14px;position:relative}
+.search-row svg{width:18px;height:18px;color:var(--text-3);flex-shrink:0}
+.search-row input{flex:1;border:none;background:transparent;padding:11px 8px;font-size:14px}
+.search-row input:focus{outline:none}
+.search-row .swap{background:var(--surface-2);border-radius:8px;width:36px;height:36px;display:grid;place-items:center;color:var(--cyan);flex-shrink:0}
+.suggestions{
+  position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--surface-3);
+  border:1px solid var(--border-2);border-radius:var(--radius-sm);z-index:50;
+  max-height:260px;overflow-y:auto;box-shadow:var(--shadow);
+}
+.suggestion{padding:11px 14px;display:flex;align-items:center;gap:10px;font-size:13.5px;cursor:pointer;transition:var(--transition)}
+.suggestion:hover,.suggestion.hl{background:var(--surface-2);color:var(--cyan)}
+.suggestion svg{width:16px;height:16px;color:var(--cyan);flex-shrink:0}
+
+.routes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.route-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px 14px;position:relative;transition:var(--transition);overflow:hidden;
+  display:flex;flex-direction:column;gap:10px;min-height:120px;
+}
+.route-card:hover{border-color:var(--cyan);transform:translateY(-2px);box-shadow:var(--shadow-sm)}
+.route-card .route-icon{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,var(--cyan),var(--cyan-d));display:grid;place-items:center;color:#00121a}
+.route-card .route-icon svg{width:24px;height:24px}
+.route-card .route-name{font-weight:800;font-size:14px;letter-spacing:.3px;text-transform:uppercase;line-height:1.25;word-break:break-word}
+.route-card .route-actions{display:flex;gap:6px;margin-top:auto}
+.route-card .route-actions .icon-btn{width:32px;height:32px;background:var(--surface-2);border-radius:8px}
+.route-card .route-actions .icon-btn svg{width:15px;height:15px}
+.route-card .edit-del{position:absolute;top:8px;right:8px;display:flex;gap:4px;opacity:0;transition:var(--transition)}
+.route-card:hover .edit-del,.route-card:focus-within .edit-del{opacity:1}
+.route-card .edit-del .icon-btn{width:28px;height:28px;background:var(--surface-3);border-radius:7px}
+.route-card .edit-del .icon-btn svg{width:14px;height:14px}
+
+.list-group{display:flex;flex-direction:column;gap:10px}
+.list-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.list-item .li-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.list-item .li-title{font-weight:700;font-size:13.5px}
+.list-item .li-chips{display:flex;flex-wrap:wrap;gap:6px}
+
+/* Resultados búsqueda */
+.result-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px;transition:var(--transition);cursor:pointer}
+.result-card:hover{border-color:var(--cyan);box-shadow:var(--shadow-sm)}
+.result-card.directa{border-left:3px solid var(--green)}
+.result-card.transbordo{border-left:3px solid var(--amber)}
+.result-card.warn{border-left:3px solid var(--amber);background:color-mix(in srgb,var(--amber) 6%,var(--surface))}
+.result-card .rc-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.result-card .rc-head .rc-icon{width:36px;height:36px;border-radius:9px;background:var(--surface-2);display:grid;place-items:center;color:var(--cyan)}
+.result-card .rc-head .rc-icon svg{width:20px;height:20px}
+.result-card .rc-route{font-weight:800;font-size:14px;text-transform:uppercase}
+.result-card .rc-sub{font-size:11.5px;color:var(--text-3)}
+.result-card .rc-body{font-size:13px;color:var(--text-2);line-height:1.5}
+.result-card .rc-steps{margin-top:8px;display:flex;flex-direction:column;gap:6px}
+.rc-step{display:flex;gap:8px;font-size:12.5px;padding:8px 10px;background:var(--surface-2);border-radius:8px}
+.rc-step .step-num{width:20px;height:20px;border-radius:50%;background:var(--cyan);color:#00121a;display:grid;place-items:center;font-weight:800;font-size:11px;flex-shrink:0}
+
+/* Mapa */
+.map-wrap{position:relative;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);background:var(--surface-2)}
+#map,#mapFull{width:100%;height:60vh;min-height:340px;z-index:1}
+.map-toolbar{
+  position:absolute;top:10px;left:10px;right:10px;z-index:500;
+  display:flex;gap:6px;flex-wrap:wrap;pointer-events:none;
+}
+.map-toolbar .tb{pointer-events:auto;background:color-mix(in srgb,var(--surface) 94%,transparent);backdrop-filter:blur(10px);border:1px solid var(--border-2);border-radius:10px;padding:8px 11px;font-size:12px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:5px;box-shadow:var(--shadow-sm);transition:var(--transition)}
+.map-toolbar .tb svg{width:15px;height:15px}
+.map-toolbar .tb:hover{border-color:var(--cyan);color:var(--cyan)}
+.map-toolbar .tb.active{background:var(--cyan);color:#00121a;border-color:transparent}
+.map-back{position:absolute;top:12px;left:12px;z-index:600;background:color-mix(in srgb,var(--surface) 96%,transparent);border:1px solid var(--border-2);border-radius:12px;width:42px;height:42px;display:grid;place-items:center;color:var(--text);box-shadow:var(--shadow);backdrop-filter:blur(10px)}
+.map-back svg{width:22px;height:22px}
+.map-full-btn{position:absolute;top:12px;right:12px;z-index:600;background:color-mix(in srgb,var(--surface) 96%,transparent);border:1px solid var(--border-2);border-radius:12px;width:42px;height:42px;display:grid;place-items:center;color:var(--text);box-shadow:var(--shadow);backdrop-filter:blur(10px)}
+.map-full-btn svg{width:20px;height:20px}
+
+.leaflet-container{background:var(--bg-2)!important;font-family:var(--font)!important}
+.leaflet-control-zoom a{background:var(--surface)!important;color:var(--text)!important;border-color:var(--border)!important}
+.leaflet-control-attribution{background:color-mix(in srgb,var(--surface) 88%,transparent)!important;color:var(--text-2)!important;font-size:10px!important}
+.leaflet-control-attribution a{color:var(--cyan)!important}
+.leaflet-popup-content-wrapper{background:var(--surface-3)!important;color:var(--text)!important;border-radius:12px!important;border:1px solid var(--border-2)!important}
+.leaflet-popup-tip{background:var(--surface-3)!important}
+.marker-a,.marker-b,.marker-c,.marker-d,.marker-e{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:12px;color:#fff;border:2.5px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.5)}
+.marker-a{background:#10b981}.marker-b{background:#ef4444}.marker-c{background:#f59e0b}.marker-d{background:#3b82f6}.marker-e{background:#a855f7}
+
+/* Panel ruta individual */
+.route-hero{padding:14px;display:flex;flex-direction:column;gap:10px}
+.route-hero h1{font-size:24px;font-weight:900;letter-spacing:-.4px;text-transform:uppercase;line-height:1.15}
+.route-hero .hero-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.route-hero .share-row{display:flex;gap:8px;margin-top:4px}
+.route-panel{margin-top:14px;display:flex;flex-direction:column;gap:10px}
+.route-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.route-block-head{padding:12px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
+.route-block-head .rbh-l{display:flex;align-items:center;gap:9px;font-weight:800;font-size:13.5px}
+.route-block-head .rbh-l svg{width:17px;height:17px;color:var(--cyan)}
+.route-block-head .count{font-size:11.5px;color:var(--text-3);background:var(--surface-2);padding:3px 9px;border-radius:99px;font-weight:700}
+.route-block-body{padding:0 14px 14px;display:none}
+.route-block.open .route-block-body{display:block;animation:fadeIn .25s ease}
+.route-block-head .chev{transition:transform .25s ease}
+.route-block.open .route-block-head .chev{transform:rotate(180deg)}
+.poi-list{display:flex;flex-direction:column;gap:6px}
+.poi-item{padding:9px 12px;background:var(--surface-2);border-radius:9px;font-size:13px;display:flex;align-items:center;gap:9px;cursor:pointer;transition:var(--transition)}
+.poi-item:hover{background:var(--surface-3);color:var(--cyan)}
+.poi-item svg{width:14px;height:14px;color:var(--cyan);flex-shrink:0}
+
+/* Calles con flechas */
+.street-seq{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.street-step{display:inline-flex;align-items:center;gap:6px;padding:7px 11px;background:var(--surface-2);border-radius:99px;font-size:12.5px;font-weight:600}
+.street-step .arrow{color:var(--cyan);font-weight:800}
+
+/* ============================================================
+   MARKETPLACE
+   ============================================================ */
+.market-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.market-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:var(--transition);display:flex;flex-direction:column}
+.market-card:hover{border-color:var(--cyan);transform:translateY(-3px);box-shadow:var(--shadow)}
+.market-media{width:100%;aspect-ratio:4/3;object-fit:cover;background:var(--surface-3);display:grid;place-items:center;color:var(--text-3)}
+.market-media svg{width:44px;height:44px}
+.market-body{padding:12px 14px;display:flex;flex-direction:column;gap:8px;flex:1}
+.market-title{font-weight:800;font-size:14.5px;line-height:1.3}
+.market-price{font-weight:800;font-size:16px;color:var(--green)}
+.market-desc{font-size:12.5px;color:var(--text-2);line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.market-foot{display:flex;gap:6px;padding:0 14px 14px;margin-top:auto}
+
+/* Admin */
+.admin-bar{position:fixed;bottom:calc(var(--nav-h) + 14px);right:14px;z-index:900}
+.fab{width:54px;height:54px;border-radius:16px;background:linear-gradient(135deg,var(--cyan),var(--cyan-d));color:#00121a;display:grid;place-items:center;box-shadow:0 10px 28px -8px var(--cyan-glow);transition:var(--transition)}
+.fab:hover{transform:translateY(-3px) scale(1.04)}
+.fab:active{transform:scale(.94)}
+.fab svg{width:26px;height:26px}
+
+/* Pasos wizard */
+.steps{display:flex;align-items:center;gap:6px;margin-bottom:16px}
+.step-dot{flex:1;height:5px;border-radius:99px;background:var(--border);transition:var(--transition)}
+.step-dot.done{background:var(--green)}
+.step-dot.active{background:var(--cyan);box-shadow:0 0 10px var(--cyan-glow)}
+.step-num{font-size:11px;font-weight:800;color:var(--text-3);text-align:center;margin-bottom:4px}
+
+/* Barra progreso */
+.progress{height:6px;border-radius:99px;background:var(--surface-3);overflow:hidden}
+.progress > div{height:100%;background:linear-gradient(90deg,var(--cyan),var(--cyan-d));transition:width .3s ease;border-radius:99px}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media(min-width:720px){
+  .form-grid{grid-template-columns:1fr 1fr;gap:0 14px}
+  .form-grid .field.full{grid-column:1/-1}
+  .routes-grid{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
+  .feed{max-width:680px}
+}
+@media(min-width:1000px){
+  .app{max-width:1200px;margin:0 auto}
+  .bottom-nav{max-width:560px;left:50%;transform:translateX(-50%);border-radius:18px 18px 0 0;border-left:1px solid var(--border);border-right:1px solid var(--border)}
+  #map{height:70vh}
+}
+@media(max-width:380px){
+  .routes-grid{grid-template-columns:repeat(2,1fr)}
+  .header-brand .brand-txt{font-size:14px}
+}
+</style>
 </head>
-<body class="mode-simple">
+<body>
 
-<div id="app">
-
-  <!-- ======= HEADER ======= -->
-  <header class="app-header">
-    <h1>
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-        <circle cx="12" cy="9" r="2.5"/>
+<!-- ============================ HEADER ============================ -->
+<header class="header">
+  <div class="header-brand">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+        <circle cx="12" cy="10" r="3"/>
       </svg>
-      <span>Rutas Tuxtla</span>
-    </h1>
-    <div class="header-actions">
-      <div class="conn-dot" id="conn-dot" title="Estado conexión"></div>
-      <span class="conn-text" id="conn-text">Online</span>
-
-      <!-- Toggle modo simple / avanzado -->
-      <button class="header-btn mode-toggle active" data-mode="simple" title="Modo fácil">👶</button>
-      <button class="header-btn mode-toggle" data-mode="advanced" title="Modo completo">⚙️</button>
-
-      <button class="header-btn" id="btn-map-toggle" title="Mostrar/ocultar mapa">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
-      </button>
     </div>
-  </header>
+    <span class="brand-txt">Rutas BGD</span>
+  </div>
+  <div class="header-actions">
+    <button class="install-btn" id="installBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Instalar
+    </button>
+    <button class="icon-btn" id="themeBtn" title="Cambiar tema">
+      <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <button class="icon-btn" id="connBtn" title="Estado de conexión">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+      <span class="conn-dot" id="connDot"></span>
+    </button>
+  </div>
+</header>
 
-  <!-- ======= STAGE ======= -->
-  <div class="app-stage">
+<!-- ============================ APP ============================ -->
+<main class="app" id="app">
 
-    <!-- MAPA -->
-    <div id="map-wrap" class="mode-half">
-      <div id="map"></div>
+  <!-- ===================== PÁGINA: INICIO (FEED) ===================== -->
+  <section class="page active" id="page-home">
+    <div class="container">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Publicaciones recientes
+      </div>
+      <div class="feed" id="feed"></div>
+      <div id="feedAdminBar" class="hidden" style="max-width:620px;margin:0 auto 14px">
+        <button class="btn btn-primary btn-block" onclick="App.openPostEditor()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Nueva publicación
+        </button>
+      </div>
+    </div>
+  </section>
 
-      <div class="map-top-controls">
-        <div class="search-box">
-          <input type="text" id="search-input" placeholder="🔍 Buscar rutas, calles, negocios...">
-          <button id="search-btn" aria-label="Buscar">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+  <!-- ===================== PÁGINA: RUTAS ===================== -->
+  <section class="page" id="page-routes">
+    <div class="container">
+      <!-- Buscador dual -->
+      <div class="search-bar">
+        <div class="search-row">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <input type="text" id="originInput" placeholder="Estoy en..." autocomplete="off">
+          <div class="suggestions hidden" id="originSug"></div>
+        </div>
+        <div class="search-row">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+          <input type="text" id="destInput" placeholder="¿A dónde vamos?" autocomplete="off">
+          <div class="suggestions hidden" id="destSug"></div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-primary" style="flex:1" id="btnSearch">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            BUSCAR RUTAS
+          </button>
+          <button class="btn btn-ghost btn-icon" id="btnClearSearch" title="Limpiar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          <button class="btn btn-ghost btn-icon" id="btnMapSearch" title="Buscar en mapa">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
           </button>
         </div>
       </div>
 
-      <button class="map-expand-btn" id="btn-map-fullscreen" title="Pantalla completa">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/></svg>
+      <!-- Modos de vista -->
+      <div class="chips" id="routeModes">
+        <button class="chip active" data-mode="rutas">🚌 Rutas</button>
+        <button class="chip" data-mode="paradas">📍 Paradas</button>
+        <button class="chip" data-mode="pois">🏥 POIs</button>
+        <button class="chip" data-mode="calles">🛣️ Calles</button>
+        <button class="chip" data-mode="retornos">↩️ Retornos</button>
+      </div>
+
+      <!-- Resultados búsqueda -->
+      <div id="searchResults" class="hidden" style="margin-top:14px"></div>
+
+      <!-- Contenido por modo -->
+      <div id="routeContent" style="margin-top:14px"></div>
+
+      <!-- Admin FAB -->
+      <div class="admin-bar hidden" id="adminFab">
+        <button class="fab" onclick="App.openRouteEditor()" title="Registrar ruta">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== PÁGINA: MARKETPLACE ===================== -->
+  <section class="page" id="page-market">
+    <div class="container">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Marketplace
+      </div>
+      <input class="input" id="marketSearch" placeholder="Buscar productos o servicios..." style="margin-bottom:12px">
+      <div class="chips" id="marketCats">
+        <button class="chip active" data-cat="all">Todos</button>
+        <button class="chip" data-cat="Auto o Camioneta">🚗 Auto</button>
+        <button class="chip" data-cat="Terreno o Lote">🌍 Terreno</button>
+        <button class="chip" data-cat="Casa o Renta">🏠 Casa</button>
+        <button class="chip" data-cat="Servicio">🔧 Servicio</button>
+        <button class="chip" data-cat="Otro">📦 Otro</button>
+      </div>
+      <div class="market-grid" id="marketGrid" style="margin-top:14px"></div>
+      <div id="marketAdminBar" class="hidden" style="margin-top:14px">
+        <button class="btn btn-primary btn-block" onclick="App.openMarketEditor()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Publicar anuncio
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== PÁGINA: RUTA INDIVIDUAL ===================== -->
+  <section class="page" id="page-route">
+    <div class="route-hero" id="routeHero"></div>
+    <div class="map-wrap" style="margin:0 14px">
+      <button class="map-back" id="routeMapBack">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
       </button>
-
-      <div class="map-size-controls">
-        <button class="map-size-btn active" data-size="half" title="Media pantalla">½</button>
-        <button class="map-size-btn" data-size="full" title="Pantalla completa">▣</button>
-        <button class="map-size-btn" data-size="hidden" title="Ocultar mapa">✕</button>
-      </div>
-
-      <div class="map-tools-bar" id="map-tools">
-        <button class="tool-btn active" data-tool="draw">✏️ Dibujar</button>
-        <button class="tool-btn" data-tool="gps">📍 GPS</button>
-        <button class="tool-btn" data-tool="poi">🏪 Punto</button>
-        <button class="tool-btn" data-tool="undo">↩️ Deshacer</button>
-        <button class="tool-btn danger" data-tool="clear">🗑️ Limpiar</button>
-        <button class="tool-btn" data-tool="detect">🔍 Detectar</button>
-      </div>
+      <div id="map"></div>
     </div>
+    <div class="container">
+      <div class="route-panel" id="routePanel"></div>
+    </div>
+  </section>
 
-    <!-- PANEL -->
-    <div class="app-panel" id="app-panel">
-      <div class="panel-scroll">
+  <!-- ===================== PÁGINA: POST INDIVIDUAL ===================== -->
+  <section class="page" id="page-post">
+    <div class="container">
+      <button class="btn btn-ghost btn-sm" id="postBack" style="margin-bottom:12px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Volver
+      </button>
+      <div class="feed" id="postSingle" style="padding:0"></div>
+    </div>
+  </section>
 
-        <!-- PÁGINA: MAPA -->
-        <div class="panel-page" id="page-map">
-          <div class="page-title">🗺️ Vista del Mapa</div>
-          <p class="page-sub">Usa los controles para expandir, contraer u ocultar el mapa.</p>
-
-          <div class="card simple-card">
-            <h3>🖼️ Tamaño del mapa</h3>
-            <div class="btn-row">
-              <button class="btn btn-secondary btn-sm" data-mapsize="half">½ Media</button>
-              <button class="btn btn-secondary btn-sm" data-mapsize="full">▣ Completa</button>
-              <button class="btn btn-secondary btn-sm" data-mapsize="hidden">✕ Ocultar</button>
-            </div>
-          </div>
-
-          <div class="card simple-card">
-            <h3>⚡ Acciones rápidas</h3>
-            <div class="btn-row">
-              <button class="btn btn-primary btn-sm" id="quick-add-route">➕ Nueva Ruta</button>
-              <button class="btn btn-success btn-sm" id="quick-gps">📍 Grabar GPS</button>
-              <button class="btn btn-secondary btn-sm" id="quick-center">🎯 Centrar</button>
-              <button class="btn btn-secondary btn-sm" id="quick-locate">📡 Mi ubicación</button>
-            </div>
-          </div>
-
-          <div class="card simple-card">
-            <h3>📊 Resumen</h3>
-            <div class="stats-grid">
-              <div class="stat-box"><div class="stat-num" id="stat-routes">0</div><div class="stat-lbl">Rutas</div></div>
-              <div class="stat-box"><div class="stat-num" id="stat-streets">0</div><div class="stat-lbl">Calles</div></div>
-              <div class="stat-box"><div class="stat-num" id="stat-pois">0</div><div class="stat-lbl">Puntos</div></div>
-              <div class="stat-box"><div class="stat-num" id="stat-points">0</div><div class="stat-lbl">Puntos GPS</div></div>
-            </div>
-          </div>
-
-          <div class="card simple-card">
-            <h3>❓ ¿Cómo usar?</h3>
-            <p><b>✏️ Dibujar:</b> Toca el mapa para agregar puntos.<br>
-            <b>📍 GPS:</b> Graba tu recorrido real.<br>
-            <b>🏪 Punto:</b> Agrega lugares donde toques.<br>
-            <b>🔍 Detectar:</b> Identifica calles automáticamente.</p>
-          </div>
-        </div>
-
-        <!-- PÁGINA: RUTAS -->
-        <div class="panel-page active" id="page-routes">
-          <div class="page-title">🚌 Rutas registradas</div>
-          <p class="page-sub">Todas las rutas que has guardado.</p>
-
-          <div class="btn-row" style="margin-bottom:14px">
-            <button class="btn btn-primary btn-lg" id="btn-new-route-list">➕ Nueva Ruta</button>
-            <button class="btn btn-secondary btn-sm" id="btn-refresh-routes">🔄 Sincronizar</button>
-          </div>
-
-          <div class="chips advanced-only" id="visibility-chips">
-            <button class="chip active" data-visibility="none">Ocultas en mapa</button>
-            <button class="chip" data-visibility="selected">Solo seleccionada</button>
-            <button class="chip" data-visibility="all">Mostrar todas</button>
-          </div>
-
-          <div id="routes-list-container">
-            <div class="loading"><div class="spinner"></div><span>Cargando rutas...</span></div>
-          </div>
-        </div>
-
-        <!-- PÁGINA: EDITOR -->
-        <div class="panel-page" id="page-editor">
-          <div class="page-title" id="editor-title">➕ Registrar Ruta</div>
-          <p class="page-sub">Completa los datos y traza la ruta en el mapa.</p>
-
-          <form id="route-form" onsubmit="return false">
-            <input type="hidden" id="route-id">
-
-            <div class="card">
-              <div class="section-title">📋 Información básica</div>
-              <div class="form-group">
-                <label for="route-name">Nombre de la ruta *</label>
-                <input type="text" id="route-name" required placeholder="Ej: Ruta 15 - Centro Sur">
-              </div>
-              <div class="form-group">
-                <label for="route-desc">Descripción</label>
-                <textarea id="route-desc" placeholder="Describe el recorrido, frecuencia, etc."></textarea>
-              </div>
-              <div class="form-row">
-                <div class="form-group">
-                  <label for="route-type">Tipo</label>
-                  <select id="route-type">
-                    <option value="ida">Ida</option>
-                    <option value="vuelta">Vuelta</option>
-                    <option value="circular">Circular</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label for="route-company">Empresa</label>
-                  <input type="text" id="route-company" placeholder="Ej: Autotransportes">
-                </div>
-              </div>
-              <div class="form-group">
-                <label>Color de la ruta</label>
-                <div class="color-row" id="color-picker">
-                  <div class="color-chip active" data-color="#1e40af" style="background:#1e40af"></div>
-                  <div class="color-chip" data-color="#16a34a" style="background:#16a34a"></div>
-                  <div class="color-chip" data-color="#dc2626" style="background:#dc2626"></div>
-                  <div class="color-chip" data-color="#ca8a04" style="background:#ca8a04"></div>
-                  <div class="color-chip" data-color="#9333ea" style="background:#9333ea"></div>
-                  <div class="color-chip" data-color="#0891b2" style="background:#0891b2"></div>
-                  <div class="color-chip" data-color="#db2777" style="background:#db2777"></div>
-                  <div class="color-chip" data-color="#ea580c" style="background:#ea580c"></div>
-                </div>
-                <input type="hidden" id="route-color" value="#1e40af">
-              </div>
-            </div>
-
-            <div class="card advanced-only">
-              <div class="section-title">⚙️ Detalles operativos</div>
-              <div class="form-row">
-                <div class="form-group">
-                  <label for="route-fare">Tarifa</label>
-                  <input type="text" id="route-fare" placeholder="$12.00">
-                </div>
-                <div class="form-group">
-                  <label for="route-frequency">Frecuencia</label>
-                  <input type="text" id="route-frequency" placeholder="Cada 10 min">
-                </div>
-              </div>
-              <div class="form-row">
-                <div class="form-group">
-                  <label for="route-schedule">Horario inicio</label>
-                  <input type="time" id="route-schedule" value="05:00">
-                </div>
-                <div class="form-group">
-                  <label for="route-schedule-end">Horario fin</label>
-                  <input type="time" id="route-schedule-end" value="22:00">
-                </div>
-              </div>
-              <div class="form-row">
-                <div class="form-group">
-                  <label for="route-days">Días</label>
-                  <select id="route-days">
-                    <option value="todos">Todos los días</option>
-                    <option value="lun-vie">Lunes a Viernes</option>
-                    <option value="lun-sab">Lunes a Sábado</option>
-                    <option value="finde">Solo fines de semana</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label for="route-accessible">Accesibilidad</label>
-                  <select id="route-accessible">
-                    <option value="no">No accesible</option>
-                    <option value="si">Accesible</option>
-                    <option value="parcial">Parcialmente</option>
-                  </select>
-                </div>
-              </div>
-              <div class="form-group">
-                <label for="route-notes">Notas adicionales</label>
-                <textarea id="route-notes" placeholder="Información extra..."></textarea>
-              </div>
-            </div>
-
-            <div class="card">
-              <div class="section-title">📍 Puntos (<span id="points-count">0</span>)</div>
-              <div class="btn-row" style="margin-bottom:10px">
-                <button type="button" class="btn btn-success btn-sm" id="btn-start-tracking">📍 Grabar GPS</button>
-                <button type="button" class="btn btn-secondary btn-sm" id="btn-clear-points">🗑️ Limpiar</button>
-              </div>
-              <div id="points-list-preview" style="font-size:13px;color:var(--text-muted)"></div>
-            </div>
-
-            <div class="card">
-              <div class="section-title">🛣️ Calles (<span id="streets-count">0</span>)</div>
-              <div class="detecting-bar" id="detecting-bar">
-                <div class="spinner mini"></div>
-                <span id="detecting-text">Detectando...</span>
-              </div>
-              <div class="btn-row" style="margin-bottom:10px">
-                <button type="button" class="btn btn-primary btn-sm" id="btn-detect-streets">🔍 Detectar</button>
-                <button type="button" class="btn btn-secondary btn-sm" id="btn-reverse-order">🔄 Invertir</button>
-              </div>
-              <div id="streets-list"></div>
-            </div>
-
-            <div class="card">
-              <div class="section-title">🏪 Puntos de interés (<span id="pois-count">0</span>)</div>
-              <div class="btn-row" style="margin-bottom:10px">
-                <button type="button" class="btn btn-primary btn-sm" id="btn-add-custom-poi">+ Agregar</button>
-                <button type="button" class="btn btn-secondary btn-sm" id="btn-detect-businesses">🔍 Detectar</button>
-              </div>
-              <div id="pois-list-edit"></div>
-            </div>
-
-            <div class="card">
-              <div class="section-title">📷 Imagen</div>
-              <div class="img-upload" id="image-upload-area" style="border:2px dashed var(--border);border-radius:12px;padding:20px;text-align:center;cursor:pointer">
-                <input type="file" id="route-image" accept="image/*" hidden>
-                <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 8px;opacity:.5">
-                  <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
-                </svg>
-                <p style="font-size:13px;color:var(--text-muted)">Toca para subir imagen</p>
-                <img id="image-preview" style="max-width:100%;max-height:160px;border-radius:10px;margin-top:10px;display:none">
-              </div>
-            </div>
-
-            <div class="btn-row" style="margin:14px 0 20px">
-              <button type="button" class="btn btn-secondary" id="btn-cancel-edit">Cancelar</button>
-              <button type="button" class="btn btn-primary" id="btn-save">💾 Guardar Ruta</button>
-            </div>
-          </form>
-        </div>
-
-        <!-- PÁGINA: BUSCAR VIAJE -->
-        <div class="panel-page" id="page-trip">
-          <div class="page-title">🗺️ Buscar viaje</div>
-          <p class="page-sub">Marca hasta 3 puntos (A, B, C) tocando el mapa.</p>
-
-          <div id="search-points-list"></div>
-
-          <div class="btn-row" style="margin-bottom:10px">
-            <button class="btn btn-secondary btn-sm" id="btn-add-search-point">📍 Mi ubicación</button>
-            <button class="btn btn-secondary btn-sm" id="btn-clear-search-points">🗑️ Limpiar</button>
-          </div>
-
-          <div class="range-row">
-            <span style="font-size:13px;font-weight:700">Radio:</span>
-            <input type="range" id="search-radius" min="100" max="2000" value="500" step="50">
-            <span class="range-val" id="radius-value">500m</span>
-          </div>
-
-          <button class="btn btn-primary btn-block btn-lg" id="btn-search-trip" style="margin-bottom:14px">🔍 Buscar rutas</button>
-
-          <div id="search-results"></div>
-        </div>
-
-        <!-- PÁGINA: POIS -->
-        <div class="panel-page" id="page-pois">
-          <div class="page-title">🏪 Puntos de interés</div>
-          <p class="page-sub">Todos los POIs registrados.</p>
-          <div id="pois-list"></div>
-        </div>
-
-        <!-- PÁGINA: AJUSTES -->
-        <div class="panel-page" id="page-settings">
-          <div class="page-title">⚙️ Ajustes</div>
-          <p class="page-sub">Estadísticas, sincronización y opciones avanzadas.</p>
-
-          <div class="stats-grid">
-            <div class="stat-box"><div class="stat-num" id="settings-stat-routes">0</div><div class="stat-lbl">Rutas</div></div>
-            <div class="stat-box"><div class="stat-num" id="settings-stat-streets">0</div><div class="stat-lbl">Calles</div></div>
-            <div class="stat-box"><div class="stat-num" id="settings-stat-pois">0</div><div class="stat-lbl">Puntos</div></div>
-            <div class="stat-box"><div class="stat-num" id="settings-stat-points">0</div><div class="stat-lbl">Puntos GPS</div></div>
-          </div>
-
-          <div class="card advanced-only">
-            <div class="section-title">💾 Datos</div>
-            <button class="btn btn-secondary btn-block" id="btn-export" style="margin-bottom:8px">📥 Exportar JSON</button>
-            <button class="btn btn-secondary btn-block" id="btn-import" style="margin-bottom:8px">📤 Importar JSON</button>
-            <input type="file" id="import-file" accept="application/json" hidden>
-            <button class="btn btn-secondary btn-block" id="btn-sync" style="margin-bottom:8px">🔄 Sincronizar</button>
-            <button class="btn btn-danger btn-block" id="btn-clear-all">🗑️ Borrar todo</button>
-          </div>
-
-          <div class="card">
-            <div class="section-title">👶 Modo de uso</div>
-            <div class="btn-row">
-              <button class="btn btn-secondary mode-toggle active" data-mode="simple">👶 Fácil</button>
-              <button class="btn btn-secondary mode-toggle" data-mode="advanced">⚙️ Completo</button>
-            </div>
-            <p style="font-size:13px;color:var(--text-muted);margin-top:10px">
-              <b>Fácil:</b> botones grandes, menos opciones.<br>
-              <b>Completo:</b> todas las funciones avanzadas.
-            </p>
-          </div>
-
-          <div class="card">
-            <div class="section-title">📚 Blog de rutas</div>
-            <p style="font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:12px">
-              Cada ruta que publiques se convierte en una página indexable por Google con su propia URL, imagen y metadatos.
-            </p>
-            <a href="/admin.html" class="btn btn-primary btn-block">🛠️ Panel de administración</a>
-          </div>
-
-          <div class="card">
-            <div class="section-title">ℹ️ Acerca de</div>
-            <p style="font-size:13px;color:var(--text-muted);line-height:1.7">
-              <b>Rutas Tuxtla Gutiérrez</b><br>
-              App 100% offline para consultar, registrar y buscar rutas de transporte colectivo. Los datos se guardan localmente (IndexedDB) y se sincronizan en la nube cuando vuelves a estar online.
-            </p>
-          </div>
-        </div>
-
-        <!-- PÁGINA: BLOG -->
-        <div class="panel-page" id="page-blog">
-          <div class="page-title">📚 Blog de rutas</div>
-          <p class="page-sub">Rutas publicadas como posts indexables en Google.</p>
-
-          <div class="blog-toolbar" style="margin-bottom:20px">
-            <input type="text" id="blog-filter" placeholder="🔍 Filtrar rutas publicadas...">
-          </div>
-
-          <div id="blog-grid" class="blog-grid" style="grid-template-columns:1fr"></div>
-        </div>
-
+  <!-- ===================== PÁGINA: BUSCAR VIAJE MAPA ===================== -->
+  <section class="page" id="page-trip">
+    <div class="container">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+        Buscar viaje en mapa
       </div>
+      <div class="map-wrap">
+        <div id="tripMap" style="width:100%;height:52vh;min-height:320px;z-index:1"></div>
+        <div class="map-toolbar" id="tripToolbar">
+          <button class="tb active" data-tool="addpoint">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Agregar punto
+          </button>
+          <button class="tb" data-tool="locate">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+            Mi ubicación
+          </button>
+          <button class="tb" data-tool="clear">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Limpiar
+          </button>
+        </div>
+      </div>
+      <div class="card" style="margin-top:12px">
+        <div class="field">
+          <label>Radio de búsqueda (m): <span id="tripRadiusVal" style="color:var(--cyan);font-weight:800">300</span></label>
+          <input type="range" id="tripRadius" min="10" max="2000" value="300" step="10" style="width:100%">
+        </div>
+        <div id="tripPointsList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px"></div>
+        <button class="btn btn-primary btn-block" id="btnTripSearch">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Buscar rutas
+        </button>
+      </div>
+      <div id="tripResults" style="margin-top:14px"></div>
+    </div>
+  </section>
 
-      <!-- BOTTOM NAV -->
-      <nav class="bottom-nav" id="bottom-nav">
-        <button class="nav-item" data-page="map">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
-          <span>Mapa</span>
-        </button>
-        <button class="nav-item active" data-page="routes">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-          <span>Rutas</span>
-        </button>
-        <button class="nav-item" data-page="editor">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          <span>Nueva</span>
-        </button>
-        <button class="nav-item" data-page="trip">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-          <span>Viaje</span>
-        </button>
-        <button class="nav-item" data-page="blog">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
-          <span>Blog</span>
-        </button>
-        <button class="nav-item" data-page="settings">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-          <span>Ajustes</span>
-        </button>
-      </nav>
+</main>
+
+<!-- ============================ NAV INFERIOR ============================ -->
+<nav class="bottom-nav">
+  <button class="nav-item active" data-page="home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>Inicio</span>
+  </button>
+  <button class="nav-item" data-page="routes">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M6 16V9a4 4 0 0 1 4-4h4"/><path d="M18 8v7a4 4 0 0 1-4 4H9"/></svg>
+    <span>Rutas</span>
+  </button>
+  <button class="nav-item" data-page="market">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+    <span>Market</span>
+  </button>
+</nav>
+
+<!-- ============================ MODALES ============================ -->
+<div class="modal" id="commentsModal">
+  <div class="modal-sheet" id="commentsSheet">
+    <div class="sheet-handle" id="commentsHandle"></div>
+    <div class="sheet-head">
+      <h3>Comentarios</h3>
+      <button class="icon-btn" id="commentsClose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="sheet-body" id="commentsList"></div>
+    <div style="padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:8px">
+      <input class="input" id="commentInput" placeholder="Escribe un comentario...">
+      <button class="btn btn-primary btn-icon" id="commentSend">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
     </div>
   </div>
-
-  <!-- Toast -->
-  <div class="toast" id="toast"></div>
-
-  <!-- Grabación -->
-  <div class="recording-bar" id="recording-bar">
-    <span class="pulse"></span>
-    <span id="recording-text">Grabando... 0 pts</span>
-    <button class="btn btn-sm" id="btn-stop-recording" style="background:#fff;color:var(--danger)">Detener</button>
-  </div>
-
-  <!-- Diálogo de publicación -->
-  <div id="publish-dialog" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center;padding:20px">
-    <div style="background:#fff;border-radius:18px;max-width:600px;width:100%;max-height:90vh;overflow-y:auto;padding:26px">
-      <h2 style="font-size:22px;font-weight:800;margin-bottom:6px">📤 Publicar ruta como post</h2>
-      <p style="font-size:13px;color:var(--text-muted);margin-bottom:20px">
-        Se creará una página individual indexable por Google con su propia URL, imagen y metadatos.
-      </p>
-
-      <div class="form-group">
-        <label for="publish-slug">URL (slug)</label>
-        <input type="text" id="publish-slug" placeholder="ruta-15-centro-sur">
-      </div>
-
-      <div class="form-group">
-        <label for="publish-title">Título del post</label>
-        <input type="text" id="publish-title">
-      </div>
-
-      <div class="form-group">
-        <label for="publish-description">Meta descripción (SEO)</label>
-        <textarea id="publish-description" rows="2" placeholder="Descripción para Google (máx 160 caracteres)"></textarea>
-      </div>
-
-      <div class="form-group">
-        <label for="publish-content">Contenido (HTML permitido)</label>
-        <textarea id="publish-content" rows="6" placeholder="Contenido del post..."></textarea>
-      </div>
-
-      <div class="form-group">
-        <label>Imagen de portada</label>
-        <img id="publish-preview" style="max-width:100%;max-height:180px;border-radius:10px;display:none">
-      </div>
-
-      <div class="form-group">
-        <label for="publish-password">🔒 Contraseña de administrador *</label>
-        <input type="password" id="publish-password" placeholder="Contraseña para autorizar publicación">
-      </div>
-
-      <div class="btn-row">
-        <button class="btn btn-secondary" id="btn-cancel-publish">Cancelar</button>
-        <button class="btn btn-primary" id="btn-do-publish">🚀 Publicar</button>
-      </div>
-    </div>
-  </div>
-
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<div class="modal" id="editorModal">
+  <div class="modal-sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h3 id="editorTitle">Registrar ruta</h3>
+      <button class="icon-btn" onclick="App.closeModal('editorModal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="sheet-body" id="editorBody"></div>
+  </div>
+</div>
+
+<div class="modal center" id="authModal">
+  <div class="modal-sheet">
+    <div class="sheet-head">
+      <h3>🔐 Acceso administrador</h3>
+      <button class="icon-btn" onclick="App.closeModal('authModal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="sheet-body">
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" class="input" id="adminPass" placeholder="••••••••">
+      </div>
+      <button class="btn btn-primary btn-block" id="adminLogin">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<div class="viewer" id="viewer">
+  <button class="viewer-close" id="viewerClose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+  <div id="viewerContent"></div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- ============================ SCRIPTS ============================ -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="https://cdn.jsdelivr.net/npm/idb@8/build/umd.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="/js/db.js"></script>
+<script src="/js/publisher.js"></script>
 <script src="/js/app.js"></script>
-<script src="/js/main.js"></script>
 
 </body>
 </html>
