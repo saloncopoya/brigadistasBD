@@ -4,11 +4,15 @@ const urlsToCache = [
     '/index.html',
     '/manifest.json',
      '/img.png',
-    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
-    'https://cdn.jsdelivr.net/npm/sweetalert2@11',
-    'https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js',
-    'https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+   "/index.html",
+  "/admin.html",
+  "/offline.html",
+  "/css/style.css",
+  "/js/main.js",
+  "/js/publisher.js",
+  "/js/db.js",
+  "/manifest.json",
+  "/paginas/posts-index.json",
     'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js'
 ];
 
