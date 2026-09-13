@@ -647,8 +647,16 @@ button{cursor:pointer;border:none;background:none}
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
       maxZoom:19, attribution:'© OpenStreetMap'
     }).addTo(state.map);
-    state.map.on('click', async e=>{
+     state.map.on('click', async e=>{
       if(!state.drawing) return;
+      if(state.drawMode === 'poi'){
+        const snapped = await snapToRoad(e.latlng.lat, e.latlng.lng);
+        state.routeDraft.pois.push(snapped);
+        const poiMarker = L.circleMarker([snapped[0], snapped[1]],{radius:7,color:'#a855f7',fillColor:'#a855f7',fillOpacity:1,weight:2}).addTo(state.map);
+        state.layers.markers.push(poiMarker);
+        updateEditorStatus();
+        return;
+      }
       const snapped = await snapToRoad(e.latlng.lat, e.latlng.lng);
       state.routeDraft.puntos.push(snapped);
       addMarker(snapped[0], snapped[1]);
