@@ -1,6 +1,30 @@
+# robots.txt para brigadistasbd.pages.dev
 User-agent: *
 Allow: /
 Disallow: /admin.html
+Disallow: /admin
+Disallow: /functions/
 Disallow: /api/
+Disallow: /js/
+Disallow: /assets/private/
 
+# Permitir indexación de contenido compartido
+Allow: /share/
+Allow: /share/post/
+Allow: /share/ruta/
+Allow: /share/m/
+
+# Crawlers específicos
+User-agent: Googlebot
+Allow: /share/
+Disallow: /admin.html
+
+User-agent: Bingbot
+Allow: /share/
+Disallow: /admin.html
+
+# Sitemap
 Sitemap: https://brigadistasbd.pages.dev/sitemap.xml
+
+# Host preferido
+Host: https://brigadistasbd.pages.dev
