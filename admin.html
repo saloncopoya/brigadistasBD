@@ -647,11 +647,12 @@ button{cursor:pointer;border:none;background:none}
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
       maxZoom:19, attribution:'© OpenStreetMap'
     }).addTo(state.map);
-    state.map.on('click', e=>{
+    state.map.on('click', async e=>{
       if(!state.drawing) return;
-      state.routeDraft.puntos.push([e.latlng.lat,e.latlng.lng]);
-      addMarker(e.latlng.lat,e.latlng.lng);
-      scheduleRedraw();   // ← antes decía redrawLines();
+      const snapped = await snapToRoad(e.latlng.lat, e.latlng.lng);
+      state.routeDraft.puntos.push(snapped);
+      addMarker(snapped[0], snapped[1]);
+      scheduleRedraw();
       updateEditorStatus();
     });
   }
@@ -770,7 +771,7 @@ button{cursor:pointer;border:none;background:none}
     state.gpsWatch = navigator.geolocation.watchPosition(pos=>{
       const {latitude:lat,longitude:lng} = pos.coords;
       state.routeDraft.puntos.push([lat,lng]);
-      addMarker(lat,lng); redrawLines(); updateEditorStatus();
+      addMarker(lat,lng); scheduleRedraw(); updateEditorStatus();
     },err=>{ toast('GPS: '+err.message,'err'); },{enableHighAccuracy:true,maximumAge:0,timeout:15000});
   }
 
@@ -855,8 +856,9 @@ button{cursor:pointer;border:none;background:none}
       colorIda:colores[0], colorVuelta:colores[1]};
     ['routeName','routeTarifa','routeFrec','routeHoraIni','routeHoraFin','routeNotas',
      'routeParadas','routeRetornos','routePoisIda','routePoisVuelta','routeCalles'].forEach(i=>$('#'+i).value='');
-    if(state.layers.markers.length){ state.layers.markers.forEach(m=>state.map.removeLayer(m)); state.layers.markers=[]; }
-    redrawLines(); updateEditorStatus();
+    if(state.map && state.layers.markers.length){ state.layers.markers.forEach(m=>state.map.removeLayer(m)); state.layers.markers=[]; }
+    if(state.map) redrawLines();
+    updateEditorStatus();
     $('#routeFormTitle').textContent='Registrar nueva ruta';
     initColorSwatches(); goStep(1);
   }
