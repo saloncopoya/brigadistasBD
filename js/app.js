@@ -1630,7 +1630,6 @@ const url = location.origin + '/share/m/' + id;
     } else {
       navigateTo(tab, { replace: true });
     }
-
     // Estado de conexión
     updateConn();
 
