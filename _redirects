@@ -1,6 +1,0 @@
-/admin        /admin.html   200
-/admin/       /admin.html   200
-/ruta/:slug   /share/ruta/:slug.html   200
-/p/:slug      /share/post/:slug.html   200
-/m/:slug      /share/m/:slug.html      200
-/api/*        /functions/api/:splat    200
