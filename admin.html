@@ -1,70 +1,261 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Panel de Publicación</title>
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0f172a">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Admin · Rutas Tuxtla Gutiérrez</title>
+<link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/css/styles.css">
+<style>
+  body{background:var(--bg);overflow:auto;height:auto}
+  .admin-page{min-height:100vh;padding:24px}
+  .admin-container{max-width:900px;margin:0 auto;background:#fff;border-radius:18px;padding:32px;box-shadow:var(--shadow)}
+  .admin-header{display:flex;align-items:center;gap:14px;margin-bottom:28px;padding-bottom:20px;border-bottom:2px solid var(--border)}
+  .admin-header h1{font-size:26px;font-weight:800}
+  .admin-header p{font-size:13px;color:var(--text-muted);margin-top:4px}
+  .status{display:none;padding:14px 18px;border-radius:12px;margin-bottom:20px;font-weight:600;font-size:14px}
+  .status.show{display:block}
+  .status.success{background:#dcfce7;color:#166534}
+  .status.error{background:#fee2e2;color:#991b1b}
+  .status.info{background:#dbeafe;color:#1e40af}
+  textarea{min-height:120px}
+  .hint{font-size:12px;color:var(--text-muted);margin-top:4px}
+</style>
 </head>
 <body>
-  <header class="site-header">
-    <div class="container header-inner">
-      <a href="/" class="logo">📝 Mi Blog</a>
-      <nav class="nav"><a href="/">Inicio</a></nav>
+
+<div class="admin-page">
+  <div class="admin-container">
+    <div class="admin-header">
+      <a href="/" class="header-btn" style="background:var(--primary);color:#fff;width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;text-decoration:none">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </a>
+      <div>
+        <h1>🛠️ Panel de administración</h1>
+        <p>Publica rutas como posts indexables en Google</p>
+      </div>
     </div>
-  </header>
 
-  <main class="container">
-    <section class="admin-container">
-      <h1>Publicar Nuevo Post</h1>
-      <p class="muted">Rellena los campos y pulsa publicar. El sitio se actualizará automáticamente.</p>
+    <div class="status" id="status"></div>
 
-      <form id="publishForm" class="form">
-        <div class="field">
-          <label for="secretPass">Contraseña de administrador</label>
-          <input type="password" id="secretPass" autocomplete="current-password" required>
+    <form id="publish-form" onsubmit="return false">
+      <div class="card">
+        <div class="section-title">📝 Contenido del post</div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="pub-title">Título *</label>
+            <input type="text" id="pub-title" required placeholder="Ruta 15 - Centro Sur">
+          </div>
+          <div class="form-group">
+            <label for="pub-slug">URL (slug) *</label>
+            <input type="text" id="pub-slug" required placeholder="ruta-15-centro-sur">
+            <div class="hint">Se genera automáticamente del título</div>
+          </div>
         </div>
 
-        <div class="field">
-          <label for="title">Título</label>
-          <input type="text" id="title" placeholder="Mi primer artículo" required>
+        <div class="form-group">
+          <label for="pub-description">Meta descripción (SEO) *</label>
+          <textarea id="pub-description" rows="2" required maxlength="160" placeholder="Descripción corta que aparecerá en Google (máx 160 caracteres)"></textarea>
+          <div class="hint"><span id="desc-count">0</span>/160 caracteres</div>
         </div>
 
-        <div class="field">
-          <label for="slug">Slug (URL)</label>
-          <input type="text" id="slug" placeholder="mi-primer-articulo" required>
+        <div class="form-group">
+          <label for="pub-content">Contenido HTML</label>
+          <textarea id="pub-content" rows="8" placeholder="<p>Describe el recorrido de la ruta...</p>"></textarea>
+          <div class="hint">Puedes usar HTML básico: &lt;p&gt;, &lt;h2&gt;, &lt;ul&gt;, &lt;li&gt;, &lt;strong&gt;</div>
         </div>
+      </div>
 
-        <div class="field">
-          <label for="description">Descripción corta (SEO)</label>
-          <textarea id="description" rows="2" placeholder="Resumen para buscadores…" required></textarea>
+      <div class="card">
+        <div class="section-title">📷 Imagen de portada</div>
+        <div class="form-group">
+          <input type="file" id="pub-image" accept="image/*">
+          <div class="hint">Se sube a Cloudinary automáticamente</div>
         </div>
+        <img id="pub-image-preview" style="max-width:100%;max-height:200px;border-radius:12px;display:none;margin-top:10px">
+      </div>
 
-        <div class="field">
-          <label for="image">URL de imagen destacada</label>
-          <input type="url" id="image" placeholder="https://…/imagen.jpg">
+      <div class="card">
+        <div class="section-title">🗺️ Datos del mapa (opcional)</div>
+        <div class="form-group">
+          <label for="pub-map-points">Puntos del mapa (JSON)</label>
+          <textarea id="pub-map-points" rows="4" placeholder='[{"lat":16.75,"lng":-93.11},{"lat":16.76,"lng":-93.12}]'></textarea>
+          <div class="hint">Array de puntos {lat, lng} para dibujar la ruta en el post</div>
         </div>
-
-        <div class="field">
-          <label for="content">Contenido (HTML permitido)</label>
-          <textarea id="content" rows="12" placeholder="<p>Escribe tu contenido aquí…</p>" required></textarea>
+        <div class="form-group">
+          <label for="pub-streets">Calles (una por línea)</label>
+          <textarea id="pub-streets" rows="4" placeholder="Avenida Central&#10;Calle 5 de Mayo&#10;Blvd. Belisario Domínguez"></textarea>
         </div>
+      </div>
 
-        <button type="submit" id="submitBtn" class="btn-primary">Publicar Artículo</button>
-      </form>
+      <div class="card">
+        <div class="section-title">🔒 Autorización</div>
+        <div class="form-group">
+          <label for="pub-password">Contraseña de administrador *</label>
+          <input type="password" id="pub-password" required placeholder="Contraseña para publicar">
+        </div>
+      </div>
 
-      <div id="statusMessage" class="status" hidden></div>
-    </section>
-  </main>
+      <div class="btn-row" style="margin:20px 0">
+        <button type="button" class="btn btn-secondary" id="btn-preview">👁️ Vista previa</button>
+        <button type="button" class="btn btn-primary btn-lg" id="btn-publish">🚀 Publicar post</button>
+      </div>
+    </form>
 
-  <script src="js/db.js"></script>
-  <script src="js/publisher.js"></script>
-  <script>
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("sw.js").catch(() => {});
+    <div class="card" style="margin-top:30px">
+      <div class="section-title">📚 Posts publicados</div>
+      <div id="admin-posts-list">
+        <div class="loading"><div class="spinner"></div><span>Cargando...</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/publisher.js"></script>
+<script>
+(function(){
+  const $ = s => document.querySelector(s);
+  const statusEl = $('#status');
+
+  function showStatus(msg, type='info'){
+    statusEl.className = 'status show ' + type;
+    statusEl.textContent = msg;
+    if(type === 'success') setTimeout(() => statusEl.classList.remove('show'), 6000);
+  }
+
+  // Auto-slug desde título
+  $('#pub-title').addEventListener('input', e => {
+    $('#pub-slug').value = Publisher.slugify(e.target.value);
+  });
+
+  // Contador descripción
+  $('#pub-description').addEventListener('input', e => {
+    $('#desc-count').textContent = e.target.value.length;
+  });
+
+  // Preview imagen
+  $('#pub-image').addEventListener('change', e => {
+    const f = e.target.files[0];
+    if(!f) return;
+    const r = new FileReader();
+    r.onload = ev => {
+      $('#pub-image-preview').src = ev.target.result;
+      $('#pub-image-preview').style.display = 'block';
+    };
+    r.readAsDataURL(f);
+  });
+
+  // Vista previa
+  $('#btn-preview').addEventListener('click', () => {
+    const title = $('#pub-title').value;
+    const content = $('#pub-content').value;
+    if(!title){ showStatus('Ingresa un título', 'error'); return; }
+    const w = window.open('', '_blank');
+    w.document.write(`<!DOCTYPE html><html><head><title>${title}</title><meta charset="utf-8"><link rel="stylesheet" href="/css/styles.css"></head><body><div class="post-hero"><h1>${title}</h1><p>${$('#pub-description').value}</p></div><div class="post-content">${content}</div></body></html>`);
+    w.document.close();
+  });
+
+  // Publicar
+  $('#btn-publish').addEventListener('click', async () => {
+    const title = $('#pub-title').value.trim();
+    const slug = $('#pub-slug').value.trim();
+    const description = $('#pub-description').value.trim();
+    const content = $('#pub-content').value.trim();
+    const password = $('#pub-password').value;
+
+    if(!title || !slug || !description || !password){
+      showStatus('Completa los campos obligatorios', 'error');
+      return;
     }
-  </script>
+
+    showStatus('⏳ Subiendo imagen...', 'info');
+
+    let imageUrl = '';
+    const imgFile = $('#pub-image').files[0];
+    if(imgFile){
+      try{
+        imageUrl = await Publisher.uploadImage(imgFile);
+      }catch(e){
+        showStatus('Error subiendo imagen: ' + e.message, 'error');
+        return;
+      }
+    }
+
+    let mapPoints = [];
+    try{
+      const mp = $('#pub-map-points').value.trim();
+      if(mp) mapPoints = JSON.parse(mp);
+    }catch(e){}
+
+    const streets = $('#pub-streets').value.split('\n').map(s => s.trim()).filter(Boolean);
+
+    showStatus('🚀 Publicando en GitHub...', 'info');
+
+    try{
+      const result = await Publisher.publish({
+        password,
+        slug,
+        title,
+        description,
+        content,
+        image: imageUrl,
+        mapPoints,
+        streets,
+        metadata: {
+          streets: streets.map(s => ({ nombre: s })),
+          mapPoints,
+        }
+      });
+
+      showStatus('✅ ' + result.message + ' → ' + result.url, 'success');
+      loadPosts();
+    }catch(e){
+      showStatus('❌ ' + e.message, 'error');
+    }
+  });
+
+  // Cargar posts publicados
+  async function loadPosts(){
+    const container = $('#admin-posts-list');
+    try{
+      let posts = [];
+      try{
+        const res = await fetch('/api/posts');
+        if(res.ok){ const data = await res.json(); posts = data.posts || []; }
+      }catch(e){}
+
+      if(!posts.length){
+        try{
+          const res = await fetch('/paginas/posts-index.json');
+          if(res.ok){ const data = await res.json(); posts = data.posts || []; }
+        }catch(e){}
+      }
+
+      if(!posts.length){
+        container.innerHTML = '<p style="font-size:13px;color:var(--text-muted);text-align:center;padding:20px">No hay posts publicados aún</p>';
+        return;
+      }
+
+      container.innerHTML = posts.map(p => `
+        <div class="list-item">
+          <div class="list-icon">🚌</div>
+          <div class="list-body">
+            <h4>${p.title}</h4>
+            <p>${p.url} · ${new Date(p.createdAt).toLocaleDateString('es-MX')}</p>
+          </div>
+          <a href="/${p.url}" target="_blank" class="icon-mini" style="background:var(--primary);color:#fff;text-decoration:none">↗</a>
+        </div>
+      `).join('');
+    }catch(e){
+      container.innerHTML = '<p style="color:var(--danger)">Error cargando posts</p>';
+    }
+  }
+
+  loadPosts();
+})();
+</script>
+
 </body>
 </html>
