@@ -82,7 +82,7 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
     historyStack: [],
     // Editor
     editingRoute: null,
-    routeDraft: { puntos: [], puntosVuelta: [], calles: [], pois: [], colorIda: '#00e5ff', colorVuelta: '#a855f7' },
+    routeDraft: { puntos: [], puntosVuelta: [], calles: [], pois: [], geometriaIda: [], geometriaVuelta: [], colorIda: '#00e5ff', colorVuelta: '#a855f7' },
     editorMap: null,
     editorLayers: { ida: null, vuelta: null, markers: [] },
     drawMode: 'draw',
@@ -965,6 +965,8 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
       puntosVuelta: route?.puntosVuelta || [],
       calles: route?.calles || [],
       pois: route?.pois || [],
+      geometriaIda: route?.geometriaIda || [],
+      geometriaVuelta: route?.geometriaVuelta || [],
       colorIda: route?.colorIda || '#00e5ff',
       colorVuelta: route?.colorVuelta || '#a855f7'
     };
@@ -1047,11 +1049,13 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
         calles: splitList($('#erCalles').value),
         puntos: state.routeDraft.puntos,
         puntosVuelta: state.routeDraft.puntosVuelta,
+        geometriaIda: state.routeDraft.geometriaIda || [],
+        geometriaVuelta: state.routeDraft.geometriaVuelta || [],
         colorIda: state.routeDraft.colorIda,
         colorVuelta: state.routeDraft.colorVuelta,
         timestamp: state.editingRoute?.timestamp || Date.now(),
         updatedAt: Date.now(),
-        url: `/share/ruta/${id}.html`
+        url: `/share/ruta/${id}`
       };
       await DB.put('routes', route);
       if (fbDB && state.online) fbDB.ref('rutas_colectivos_tgz/' + id).set(route).catch(() => {});
