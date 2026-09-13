@@ -1,61 +1,85 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("publishForm");
-  const statusMsg = document.getElementById("statusMessage");
-  const submitBtn = document.getElementById("submitBtn");
+// js/publisher.js
+// Conecta el formulario admin con /api/publish
 
-  const setStatus = (text, type) => {
-    statusMsg.hidden = false;
-    statusMsg.className = "status " + (type || "");
-    statusMsg.innerHTML = text;
-  };
+(function () {
+  'use strict';
 
-  document.getElementById("title").addEventListener("input", (e) => {
-    document.getElementById("slug").value = e.target.value
+  const API_URL = '/api/publish';
+
+  const $ = (s) => document.querySelector(s);
+
+  // Genera slug a partir del título
+  function slugify(text) {
+    return String(text)
       .toLowerCase()
-      .trim()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9 -]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/-+/g, "-");
-  });
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .substring(0, 80);
+  }
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    submitBtn.disabled = true;
-    setStatus("Publicando… guardando en GitHub y actualizando Cloudflare.", "info");
+  window.Publisher = {
+    slugify,
 
-    const payload = {
-      secretPass: document.getElementById("secretPass").value,
-      title: document.getElementById("title").value,
-      slug: document.getElementById("slug").value,
-      description: document.getElementById("description").value,
-      image: document.getElementById("image").value,
-      content: document.getElementById("content").value,
-    };
+    async publish(formData) {
+      const btn = $('#btn-publish');
+      const originalText = btn ? btn.textContent : '';
 
-    try {
-      const response = await fetch("/api/publish", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const resData = await response.json().catch(() => ({}));
-
-      if (response.ok && resData.success) {
-        setStatus(
-          `¡Post publicado exitosamente! <a href="${resData.url}" target="_blank" rel="noopener">Ver publicación</a>`,
-          "success"
-        );
-        form.reset();
-      } else {
-        throw new Error(resData.error || "Error al publicar");
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = '⏳ Publicando...';
       }
-    } catch (err) {
-      setStatus("Error: " + err.message, "error");
-    } finally {
-      submitBtn.disabled = false;
-    }
-  });
-});
+
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || !data.ok) {
+          throw new Error(data.error || `Error ${res.status}`);
+        }
+
+        return data;
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = originalText;
+        }
+      }
+    },
+
+    async uploadImage(file) {
+      // Sube imagen a Cloudinary (o devuelve base64 si falla)
+      const CLOUD_NAME = 'dxjgyqcby';
+      const UPLOAD_PRESET = 'sinfirmaupload';
+
+      try {
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('upload_preset', UPLOAD_PRESET);
+
+        const res = await fetch(
+          `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+          { method: 'POST', body: fd }
+        );
+
+        if (!res.ok) throw new Error('upload');
+
+        const data = await res.json();
+        return data.secure_url;
+      } catch (e) {
+        // Fallback: base64
+        return await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (ev) => resolve(ev.target.result);
+          reader.readAsDataURL(file);
+        });
+      }
+    },
+  };
+})();
