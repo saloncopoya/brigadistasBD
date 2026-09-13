@@ -55,4 +55,529 @@ label{display:block;font-size:12px;color:var(--fg-dim);margin-bottom:4px;font-we
 .list .item span{flex:1}
 .list .item button{color:var(--red);font-size:14px}
 .progress{height:6px;background:var(--bg3);border-radius:6px;overflow:hidden;margin-top:6px}
-.progress>div{height:100%;background:var(--cyan);width:0%;transition
+.progress>div{height:100%;background:var(--cyan);width:0%;transition:width .3s}
+.hint{font-size:11.5px;color:var(--fg-dim);margin-top:4px}
+</style>
+</head>
+<body>
+<header>
+  <h1>⚙️ Panel Admin · Brigadistas BD</h1>
+  <a href="/">← Volver al sitio</a>
+</header>
+
+<main>
+  <!-- LOGIN -->
+  <div class="card" id="loginCard">
+    <h3>Autenticación</h3>
+    <div class="row"><label>Contraseña de administrador</label><input type="password" id="pwd" placeholder="••••••••"/></div>
+    <button class="btn" id="loginBtn">Entrar</button>
+    <p class="hint">La contraseña se valida contra la variable <code>ADMIN_PASSWORD</code> de Cloudflare.</p>
+  </div>
+
+  <div id="adminContent" style="display:none">
+    <div class="tabs">
+      <button class="active" data-tab="post">📝 Publicación</button>
+      <button data-tab="route">🚌 Ruta</button>
+      <button data-tab="market">🛒 Marketplace</button>
+    </div>
+
+    <!-- ═══ PANEL POST ═══ -->
+    <div class="panel active" id="panel-post">
+      <div class="card">
+        <h3>Crear / editar publicación</h3>
+        <div class="row"><label>Título</label><input id="postTitle" placeholder="Ej. Nueva ruta al centro"/></div>
+        <div class="row"><label>Descripción corta (SEO)</label><input id="postDesc" placeholder="Máx 155 caracteres"/></div>
+        <div class="row"><label>Contenido</label><textarea id="postContent" placeholder="Escribe el contenido completo..."></textarea></div>
+        <div class="row"><label>Imagen o video (Cloudinary)</label>
+          <input type="file" id="postFile" accept="image/*,video/*"/>
+          <p class="hint" id="postUploadStatus"></p>
+          <input id="postImageUrl" placeholder="URL resultante (auto-rellenado)" readonly/>
+        </div>
+        <button class="btn" id="postSaveBtn">💾 Publicar</button>
+      </div>
+      <div class="card">
+        <h3>Publicaciones existentes</h3>
+        <div id="postList" class="list"></div>
+      </div>
+    </div>
+
+    <!-- ═══ PANEL RUTA ═══ -->
+    <div class="panel" id="panel-route">
+      <div class="steps">
+        <div class="active" data-step="1">1 · Datos</div>
+        <div data-step="2">2 · Puntos</div>
+        <div data-step="3">3 · Calles</div>
+      </div>
+
+      <!-- PASO 1 -->
+      <div class="card step-1">
+        <h3>Información básica</h3>
+        <div class="grid2">
+          <div class="row"><label>Nombre de la ruta</label><input id="rName" placeholder="Ej. Ruta 5 - Centro"/></div>
+          <div class="row"><label>Categoría</label>
+            <select id="rCat"><option value="URBANA">Urbana</option><option value="FORANEA">Foránea</option></select>
+          </div>
+        </div>
+        <div class="row"><label>Color de línea (ida)</label>
+          <div class="color-dots" id="colorIda"></div>
+        </div>
+        <div class="row"><label>Color de línea (regreso)</label>
+          <div class="color-dots" id="colorVuelta"></div>
+        </div>
+        <h3 style="margin-top:14px">Detalles operativos</h3>
+        <div class="grid3">
+          <div class="row"><label>Tarifa</label><input id="rFare" placeholder="$10"/></div>
+          <div class="row"><label>Frecuencia</label><input id="rFreq" placeholder="Cada 15 min"/></div>
+          <div class="row"><label>Horario</label><input id="rHours" placeholder="6:00 - 22:00"/></div>
+        </div>
+        <div class="grid2">
+          <div class="row"><label>Días</label>
+            <select id="rDays">
+              <option>Todos los días</option><option>Lunes a Viernes</option>
+              <option>Lunes a Sábado</option><option>Solo fines de semana</option>
+            </select>
+          </div>
+          <div class="row"><label>Accesibilidad</label>
+            <select id="rAcc"><option>No accesible</option><option>Accesible</option><option>Parcialmente</option></select>
+          </div>
+        </div>
+        <div class="row"><label>Notas</label><textarea id="rNotes" placeholder="Observaciones..."></textarea></div>
+      </div>
+
+      <!-- PASO 2 -->
+      <div class="card step-2" style="display:none">
+        <h3>Puntos de la ruta</h3>
+        <div class="map" id="editMap"></div>
+        <div class="toolbar">
+          <button id="toolDraw" class="active">✏️ Dibujar</button>
+          <button id="toolGPS">📡 GPS</button>
+          <button id="toolPOI">📍 Punto</button>
+          <button id="toolUndo">↶ Deshacer</button>
+          <button id="toolClear">🗑️ Limpiar</button>
+          <button id="toolDetect">🔍 Detectar</button>
+          <button id="toolFull">⛶</button>
+        </div>
+        <p class="hint">Toca el mapa para trazar. Los trazos se ajustan a las calles automáticamente (snap). Puntos: <b id="ptsCount">0</b> · Calles: <b id="stCount">0</b> · POIs: <b id="poiCount">0</b></p>
+        <div class="progress"><div id="detectProgress"></div></div>
+        <div class="row"><label>Paradas (separadas por coma o salto de línea)</label><textarea id="rStops"></textarea></div>
+        <div class="row"><label>Retornos</label><textarea id="rReturns"></textarea></div>
+        <div class="row"><label>POIs ida</label><textarea id="rPois"></textarea></div>
+        <div class="row"><label>POIs regreso</label><textarea id="rPoisBack"></textarea></div>
+      </div>
+
+      <!-- PASO 3 -->
+      <div class="card step-3" style="display:none">
+        <h3>Calles por las que pasa</h3>
+        <div class="row"><label>Calles (una por línea)</label><textarea id="rStreets" style="min-height:180px"></textarea></div>
+        <div class="row"><label>Imagen de referencia</label>
+          <input type="file" id="rFile" accept="image/*"/>
+          <input id="rImageUrl" placeholder="URL Cloudinary" readonly style="margin-top:6px"/>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px">
+        <button class="btn sec" id="prevStep">← Anterior</button>
+        <button class="btn" id="nextStep">Siguiente →</button>
+        <button class="btn" id="saveRouteBtn" style="display:none">💾 Guardar Ruta</button>
+      </div>
+    </div>
+
+    <!-- ═══ PANEL MARKET ═══ -->
+    <div class="panel" id="panel-market">
+      <div class="card">
+        <h3>Crear anuncio</h3>
+        <div class="grid2">
+          <div class="row"><label>Título</label><input id="mTitle"/></div>
+          <div class="row"><label>Categoría</label>
+            <select id="mCat">
+              <option value="auto">Auto/Camioneta</option><option value="terreno">Terreno/Lote</option>
+              <option value="casa">Casa/Renta</option><option value="servicio">Servicio</option><option value="otro">Otro</option>
+            </select>
+          </div>
+        </div>
+        <div class="row"><label>Precio</label><input id="mPrice" placeholder="$15,000"/></div>
+        <div class="row"><label>Descripción</label><textarea id="mDesc"></textarea></div>
+        <div class="grid2">
+          <div class="row"><label>WhatsApp del vendedor</label><input id="mPhone" placeholder="+52 961..."/></div>
+          <div class="row"><label>Imagen</label><input type="file" id="mFile" accept="image/*"/>
+            <input id="mImageUrl" placeholder="URL Cloudinary" readonly style="margin-top:6px"/>
+          </div>
+        </div>
+        <button class="btn" id="marketSaveBtn">💾 Publicar anuncio</button>
+      </div>
+      <div class="card">
+        <h3>Anuncios existentes</h3>
+        <div id="marketList" class="list"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script type="module">
+import * as DB from '/js/db.js';
+import { uploadToCloudinary, publishResource, unpublishResource } from '/js/publisher.js';
+import { state } from '/js/app.js';
+
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+let PWD = '';
+let wizardStep = 1;
+let currentRoute = null;
+let map, drawnLayer, gpsWatch = null, tool = 'draw', drawnPoints = [], poiPoints = [], detectedStreets = [];
+let currentEditId = new URLSearchParams(location.search).get('edit');
+
+// ─── Login ───
+$('#loginBtn').addEventListener('click', () => {
+  PWD = $('#pwd').value;
+  if (!PWD) return Swal.fire('Error', 'Ingresa la contraseña', 'error');
+  sessionStorage.setItem('admin_pwd', PWD);
+  showAdmin();
+});
+if (sessionStorage.getItem('admin_pwd')) { PWD = sessionStorage.getItem('admin_pwd'); showAdmin(); }
+
+function showAdmin() {
+  $('#loginCard').style.display = 'none';
+  $('#adminContent').style.display = 'block';
+  loadLists();
+  if (currentEditId) preloadRouteForEdit(currentEditId);
+}
+
+// ─── Tabs ───
+$$('.tabs button').forEach(b => b.addEventListener('click', () => {
+  $$('.tabs button').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  $$('.panel').forEach(p => p.classList.remove('active'));
+  $('#panel-' + b.dataset.tab).classList.add('active');
+}));
+
+// ─── Colores ───
+const COLORS = ['#00e5ff','#22c55e','#ef4444','#facc15','#a855f7','#f97316','#ec4899','#14b8a6'];
+let colorIdaVal = COLORS[0], colorVueltaVal = COLORS[4];
+function buildColorDots() {
+  ['colorIda','colorVuelta'].forEach(id => {
+    const box = $('#' + id); box.innerHTML = '';
+    COLORS.forEach((c, i) => {
+      const b = document.createElement('button');
+      b.style.background = c;
+      b.dataset.color = c;
+      if ((id === 'colorIda' && c === colorIdaVal) || (id === 'colorVuelta' && c === colorVueltaVal)) b.classList.add('active');
+      b.addEventListener('click', () => {
+        [...box.children].forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        if (id === 'colorIda') { colorIdaVal = c; if (drawnLayer) drawnLayer.setStyle({ color: c }); }
+        else { colorVueltaVal = c; }
+      });
+      box.appendChild(b);
+    });
+  });
+}
+buildColorDots();
+
+// ─── Wizard ───
+$('#nextStep').addEventListener('click', () => { if (wizardStep < 3) { wizardStep++; updateWizard(); } });
+$('#prevStep').addEventListener('click', () => { if (wizardStep > 1) { wizardStep--; updateWizard(); } });
+function updateWizard() {
+  $$('.steps div').forEach(d => {
+    d.classList.toggle('active', +d.dataset.step === wizardStep);
+    d.classList.toggle('done', +d.dataset.step < wizardStep);
+  });
+  $$('.card.step-1, .card.step-2, .card.step-3').forEach(c => c.style.display = 'none');
+  $('.card.step-' + wizardStep).style.display = 'block';
+  $('#saveRouteBtn').style.display = wizardStep === 3 ? 'inline-block' : 'none';
+  $('#nextStep').style.display = wizardStep === 3 ? 'none' : 'inline-block';
+  if (wizardStep === 2) setTimeout(initEditMap, 100);
+}
+
+// ─── MAPA EDITOR con snap a calles ───
+function initEditMap() {
+  if (map) { setTimeout(() => map.invalidateSize(), 200); return; }
+  map = L.map('editMap').setView([16.7528, -93.1150], 14);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OSM' }).addTo(map);
+  drawnLayer = L.polyline([], { color: colorIdaVal, weight: 5 }).addTo(map);
+
+  map.on('click', async (e) => {
+    if (tool === 'draw') {
+      // Snap a la calle más cercana usando OSRM / Nominatim
+      const snapped = await snapToRoad(e.latlng.lat, e.latlng.lng);
+      drawnPoints.push(snapped);
+      L.circleMarker([snapped.lat, snapped.lng], { radius: 4, color: '#ef4444', fillColor: '#ef4444', fillOpacity: 1 }).addTo(map);
+      redrawPolyline();
+      $('#ptsCount').textContent = drawnPoints.length;
+    } else if (tool === 'poi') {
+      poiPoints.push({ lat: e.latlng.lat, lng: e.latlng.lng, nombre: prompt('Nombre del POI:') || 'POI' });
+      L.marker([e.latlng.lat, e.latlng.lng]).addTo(map).bindPopup(poiPoints.at(-1).nombre);
+      $('#poiCount').textContent = poiPoints.length;
+    }
+  });
+}
+async function snapToRoad(lat, lng) {
+  try {
+    // Usar OSRM nearest
+    const res = await fetch(`https://router.project-osrm.org/nearest/v1/driving/${lng},${lat}?number=1`);
+    if (!res.ok) return { lat, lng };
+    const j = await res.json();
+    if (j.waypoints && j.waypoints[0] && j.waypoints[0].location) {
+      return { lat: j.waypoints[0].location[1], lng: j.waypoints[0].location[0] };
+    }
+  } catch(_) {}
+  return { lat, lng };
+}
+function redrawPolyline() {
+  if (!drawnLayer) return;
+  drawnLayer.setLatLngs(drawnPoints.map(p => [p.lat, p.lng]));
+}
+
+// ─── Toolbar ───
+$('#toolDraw').addEventListener('click', () => setTool('draw'));
+$('#toolPOI').addEventListener('click', () => setTool('poi'));
+function setTool(t) {
+  tool = t;
+  $$('.toolbar button').forEach(b => b.classList.remove('active'));
+  $(t === 'draw' ? '#toolDraw' : '#toolPOI').classList.add('active');
+}
+$('#toolUndo').addEventListener('click', () => {
+  drawnPoints.pop(); redrawPolyline();
+  $('#ptsCount').textContent = drawnPoints.length;
+});
+$('#toolClear').addEventListener('click', () => {
+  Swal.fire({ title: '¿Borrar todo?', icon: 'warning', showCancelButton: true }).then(r => {
+    if (r.isConfirmed) {
+      drawnPoints = []; poiPoints = []; detectedStreets = [];
+      if (drawnLayer) drawnLayer.setLatLngs([]);
+      map.eachLayer(l => { if (l instanceof L.CircleMarker || l instanceof L.Marker) map.removeLayer(l); });
+      $('#ptsCount').textContent = '0'; $('#poiCount').textContent = '0'; $('#stCount').textContent = '0';
+    }
+  });
+});
+$('#toolGPS').addEventListener('click', () => {
+  if (gpsWatch) { navigator.geolocation.clearWatch(gpsWatch); gpsWatch = null; $('#toolGPS').classList.remove('active'); return; }
+  if (!navigator.geolocation) return Swal.fire('Error', 'GPS no disponible', 'error');
+  $('#toolGPS').classList.add('active');
+  gpsWatch = navigator.geolocation.watchPosition(async (pos) => {
+    const snapped = await snapToRoad(pos.coords.latitude, pos.coords.longitude);
+    drawnPoints.push(snapped);
+    redrawPolyline();
+    $('#ptsCount').textContent = drawnPoints.length;
+    map.setView([pos.coords.latitude, pos.coords.longitude], 16);
+  }, null, { enableHighAccuracy: true, maximumAge: 2000 });
+});
+$('#toolDetect').addEventListener('click', detectStreets);
+$('#toolFull').addEventListener('click', () => {
+  const el = $('#editMap');
+  if (document.fullscreenElement) document.exitFullscreen();
+  else el.requestFullscreen?.();
+});
+
+// ─── Detección de calles (Nominatim) ───
+async function detectStreets() {
+  if (drawnPoints.length < 2) return Swal.fire('Info', 'Traza primero algunos puntos', 'info');
+  const samples = Math.min(14, Math.max(6, drawnPoints.length));
+  const step = Math.max(1, Math.floor(drawnPoints.length / samples));
+  const streets = new Set();
+  const prog = $('#detectProgress');
+  prog.style.width = '0%';
+  let i = 0;
+  for (let idx = 0; idx < drawnPoints.length; idx += step, i++) {
+    const p = drawnPoints[idx];
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${p.lat}&lon=${p.lng}&zoom=18&addressdetails=1`, {
+        headers: { 'Accept-Language': 'es' }
+      });
+      const j = await res.json();
+      const road = j.address?.road || j.address?.pedestrian || j.address?.footway;
+      if (road) streets.add(road);
+    } catch(_) {}
+    prog.style.width = ((i+1)/samples*100) + '%';
+    await new Promise(r => setTimeout(r, 1100));
+  }
+  detectedStreets = [...streets];
+  $('#stCount').textContent = detectedStreets.length;
+  $('#rStreets').value = detectedStreets.join('\n');
+  $('#rStops').value = detectedStreets.slice(0, 8).join('\n');
+  Swal.fire('Detectado', `${detectedStreets.length} calles encontradas`, 'success');
+}
+
+// ─── Subida Cloudinary ───
+async function handleUpload(fileInput, urlInput, statusEl) {
+  const f = fileInput.files?.[0];
+  if (!f) return;
+  if (statusEl) statusEl.textContent = 'Subiendo...';
+  try {
+    const url = await uploadToCloudinary(f, (p) => { if (statusEl) statusEl.textContent = `Subiendo... ${p}%`; });
+    urlInput.value = url;
+    if (statusEl) statusEl.textContent = '✅ Subido';
+  } catch (e) {
+    if (statusEl) statusEl.textContent = '❌ ' + e.message;
+    // Fallback base64
+    const reader = new FileReader();
+    reader.onload = () => { urlInput.value = reader.result; if (statusEl) statusEl.textContent = '⚠️ Guardado como base64'; };
+    reader.readAsDataURL(f);
+  }
+}
+$('#postFile').addEventListener('change', () => handleUpload($('#postFile'), $('#postImageUrl'), $('#postUploadStatus')));
+$('#mFile').addEventListener('change', () => handleUpload($('#mFile'), $('#mImageUrl'), null));
+$('#rFile').addEventListener('change', () => handleUpload($('#rFile'), $('#rImageUrl'), null));
+
+// ─── Guardar POST ───
+$('#postSaveBtn').addEventListener('click', async () => {
+  const title = $('#postTitle').value.trim();
+  const content = $('#postContent').value.trim();
+  if (!title) return Swal.fire('Error', 'Falta el título', 'error');
+  const post = {
+    id: DB.genId(title),
+    title,
+    description: $('#postDesc').value.trim(),
+    content,
+    image: $('#postImageUrl').value,
+    ts: Date.now(),
+    likedBy: [],
+    comments: []
+  };
+  await DB.savePost(post);
+  try {
+    const res = await publishResource('p', post, PWD);
+    Swal.fire('Publicado', `URL: ${res.url}`, 'success');
+  } catch (e) {
+    Swal.fire('Guardado local', 'No se pudo publicar en GitHub: ' + e.message, 'warning');
+  }
+  $('#postTitle').value = ''; $('#postContent').value = ''; $('#postDesc').value = '';
+  $('#postImageUrl').value = ''; $('#postFile').value = '';
+  loadLists();
+});
+
+// ─── Guardar RUTA ───
+$('#saveRouteBtn').addEventListener('click', async () => {
+  const nombre = $('#rName').value.trim();
+  if (!nombre) return Swal.fire('Error', 'Falta el nombre', 'error');
+  const route = {
+    id: currentRoute?.id || DB.genId(nombre),
+    nombre,
+    categoria: $('#rCat').value,
+    colorIda: colorIdaVal,
+    colorVuelta: colorVueltaVal,
+    tarifa: $('#rFare').value,
+    frecuencia: $('#rFreq').value,
+    horario: $('#rHours').value,
+    dias: $('#rDays').value,
+    accesibilidad: $('#rAcc').value,
+    notas: $('#rNotes').value,
+    paradas: $('#rStops').value.split(/[,\n]/).map(s => s.trim()).filter(Boolean),
+    retornos: $('#rReturns').value.split(/[,\n]/).map(s => s.trim()).filter(Boolean),
+    pois: [
+      ...$('#rPois').value.split(/[,\n]/).map(s => s.trim()).filter(Boolean).map(n => ({ nombre: n, tipo: 'ida' })),
+      ...$('#rPoisBack').value.split(/[,\n]/).map(s => s.trim()).filter(Boolean).map(n => ({ nombre: n, tipo: 'regreso' })),
+      ...poiPoints
+    ],
+    calles: $('#rStreets').value.split('\n').map(s => s.trim()).filter(Boolean),
+    trazadoIda: drawnPoints,
+    trazadoVuelta: [],
+    image: $('#rImageUrl').value || '',
+    ts: Date.now()
+  };
+  await DB.saveRoute(route);
+  try {
+    const res = await publishResource('r', { id: route.id, title: route.nombre, description: `Ruta ${route.categoria}`, content: route.calles.join(', '), image: route.image, extra: { tarifa: route.tarifa, frecuencia: route.frecuencia } }, PWD);
+    Swal.fire('Publicado', `URL: ${res.url}`, 'success');
+  } catch (e) {
+    Swal.fire('Guardado local', 'GitHub: ' + e.message, 'warning');
+  }
+  resetWizard();
+  loadLists();
+});
+
+function resetWizard() {
+  currentRoute = null;
+  wizardStep = 1; updateWizard();
+  $('#rName').value = ''; $('#rStops').value = ''; $('#rReturns').value = '';
+  $('#rPois').value = ''; $('#rPoisBack').value = ''; $('#rStreets').value = '';
+  drawnPoints = []; poiPoints = []; detectedStreets = [];
+  if (drawnLayer) drawnLayer.setLatLngs([]);
+  map?.eachLayer(l => { if (l instanceof L.CircleMarker || l instanceof L.Marker) map.removeLayer(l); });
+  $('#ptsCount').textContent = '0'; $('#poiCount').textContent = '0'; $('#stCount').textContent = '0';
+}
+
+// ─── Guardar MARKET ───
+$('#marketSaveBtn').addEventListener('click', async () => {
+  const title = $('#mTitle').value.trim();
+  if (!title) return Swal.fire('Error', 'Falta el título', 'error');
+  const item = {
+    id: DB.genId(title),
+    title,
+    categoria: $('#mCat').value,
+    price: $('#mPrice').value,
+    desc: $('#mDesc').value,
+    phone: $('#mPhone').value,
+    image: $('#mImageUrl').value,
+    ts: Date.now()
+  };
+  await DB.saveMarket(item);
+  try {
+    const res = await publishResource('m', { id: item.id, title, description: item.desc, content: item.price, image: item.image, extra: { categoria: item.categoria } }, PWD);
+    Swal.fire('Publicado', `URL: ${res.url}`, 'success');
+  } catch (e) {
+    Swal.fire('Guardado local', 'GitHub: ' + e.message, 'warning');
+  }
+  $('#mTitle').value = ''; $('#mDesc').value = ''; $('#mPrice').value = ''; $('#mPhone').value = '';
+  $('#mImageUrl').value = ''; $('#mFile').value = '';
+  loadLists();
+});
+
+// ─── Listas ───
+async function loadLists() {
+  const posts = await DB.getPosts();
+  $('#postList').innerHTML = posts.map(p => `
+    <div class="item"><span>${esc(p.title)}</span>
+      <button data-del-post="${p.id}">🗑️</button>
+    </div>`).join('') || '<p class="hint">Sin publicaciones</p>';
+  $$('[data-del-post]').forEach(b => b.addEventListener('click', async () => {
+    if (!confirm('¿Eliminar?')) return;
+    await DB.deletePost(b.dataset.delPost);
+    try { await unpublishResource('p', b.dataset.delPost, PWD); } catch(_){}
+    loadLists();
+  }));
+
+  const routes = await DB.getRoutes();
+  $('#routeList') && (0);
+  const market = await DB.getMarket();
+  $('#marketList').innerHTML = market.map(m => `
+    <div class="item"><span>${esc(m.title)}</span>
+      <button data-del-market="${m.id}">🗑️</button>
+    </div>`).join('') || '<p class="hint">Sin anuncios</p>';
+  $$('[data-del-market]').forEach(b => b.addEventListener('click', async () => {
+    if (!confirm('¿Eliminar?')) return;
+    await DB.deleteMarket(b.dataset.delMarket);
+    try { await unpublishResource('m', b.dataset.delMarket, PWD); } catch(_){}
+    loadLists();
+  }));
+}
+
+// ─── Preload edición de ruta ───
+async function preloadRouteForEdit(id) {
+  const r = await DB.getRoute(id);
+  if (!r) return;
+  currentRoute = r;
+  $('#rName').value = r.nombre || '';
+  $('#rCat').value = r.categoria || 'URBANA';
+  $('#rFare').value = r.tarifa || '';
+  $('#rFreq').value = r.frecuencia || '';
+  $('#rHours').value = r.horario || '';
+  $('#rDays').value = r.dias || 'Todos los días';
+  $('#rAcc').value = r.accesibilidad || 'No accesible';
+  $('#rNotes').value = r.notas || '';
+  $('#rStops').value = (r.paradas || []).join('\n');
+  $('#rReturns').value = (r.retornos || []).join('\n');
+  $('#rPois').value = (r.pois || []).filter(p => p.tipo !== 'regreso').map(p => p.nombre).join('\n');
+  $('#rPoisBack').value = (r.pois || []).filter(p => p.tipo === 'regreso').map(p => p.nombre).join('\n');
+  $('#rStreets').value = (r.calles || []).join('\n');
+  drawnPoints = r.trazadoIda || [];
+  poiPoints = (r.pois || []).filter(p => p.lat);
+  wizardStep = 1; updateWizard();
+}
+
+// ─── Arranque ───
+updateWizard();
+</script>
+</body>
+</html>
