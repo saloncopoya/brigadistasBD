@@ -1,9 +1,12 @@
-// js/app.js
-// App principal - Rutas Tuxtla Gutiérrez
-// Conserva TODAS las funciones originales + modo simple/avanzado + publicación
+/* ============================================================
+   RUTAS TUXTLA GUTIÉRREZ - APP.JS
+   Versión corregida con modo simple/avanzado funcional
+   ============================================================ */
 
 (function () {
   'use strict';
+
+  console.log('🚀 Rutas Tuxtla App iniciando...');
 
   // ==================== CONFIG ====================
   const FIREBASE_DB_URL = 'https://galloslivebadge-default-rtdb.firebaseio.com';
@@ -16,7 +19,6 @@
   const state = {
     map: null,
     routes: [],
-    pois: [],
     currentRoute: null,
     editingRouteId: null,
     isEditing: false,
@@ -49,13 +51,14 @@
   const $ = (s) => document.querySelector(s);
   const $$ = (s) => document.querySelectorAll(s);
 
-  function showToast(msg, dur = 2500) {
+  function showToast(msg, dur) {
+    dur = dur || 2500;
     const t = $('#toast');
     if (!t) return;
     t.textContent = msg;
     t.classList.add('show');
     clearTimeout(t._timer);
-    t._timer = setTimeout(() => t.classList.remove('show'), dur);
+    t._timer = setTimeout(function () { t.classList.remove('show'); }, dur);
   }
 
   function generateId() {
@@ -64,7 +67,7 @@
 
   function escapeHtml(text) {
     if (text == null) return '';
-    const div = document.createElement('div');
+    var div = document.createElement('div');
     div.textContent = String(text);
     return div.innerHTML;
   }
@@ -80,32 +83,33 @@
   }
 
   function calculateDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371000;
-    const dLat = ((lat2 - lat1) * Math.PI) / 180;
-    const dLon = ((lon2 - lon1) * Math.PI) / 180;
-    const a =
-      Math.sin(dLat / 2) ** 2 +
+    var R = 6371000;
+    var dLat = ((lat2 - lat1) * Math.PI) / 180;
+    var dLon = ((lon2 - lon1) * Math.PI) / 180;
+    var a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos((lat1 * Math.PI) / 180) *
         Math.cos((lat2 * Math.PI) / 180) *
-        Math.sin(dLon / 2) ** 2;
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
 
   function pointToSegmentDistance(p, a, b) {
-    const atob = { lat: b.lat - a.lat, lng: b.lng - a.lng };
-    const atop = { lat: p.lat - a.lat, lng: p.lng - a.lng };
-    const len = atob.lat ** 2 + atob.lng ** 2;
-    let t = len === 0 ? 0 : (atop.lat * atob.lat + atop.lng * atob.lng) / len;
+    var atob = { lat: b.lat - a.lat, lng: b.lng - a.lng };
+    var atop = { lat: p.lat - a.lat, lng: p.lng - a.lng };
+    var len = atob.lat * atob.lat + atob.lng * atob.lng;
+    var t = len === 0 ? 0 : (atop.lat * atob.lat + atop.lng * atob.lng) / len;
     t = Math.max(0, Math.min(1, t));
-    const closest = { lat: a.lat + t * atob.lat, lng: a.lng + t * atob.lng };
+    var closest = { lat: a.lat + t * atob.lat, lng: a.lng + t * atob.lng };
     return calculateDistance(p.lat, p.lng, closest.lat, closest.lng);
   }
 
   function pointToLineDistance(point, line) {
     if (!line || line.length < 2) return Infinity;
-    let minDist = Infinity;
-    for (let i = 0; i < line.length - 1; i++) {
-      const d = pointToSegmentDistance(point, line[i], line[i + 1]);
+    var minDist = Infinity;
+    for (var i = 0; i < line.length - 1; i++) {
+      var d = pointToSegmentDistance(point, line[i], line[i + 1]);
       if (d < minDist) minDist = d;
     }
     return minDist;
@@ -113,26 +117,26 @@
 
   function updateConnectionStatus() {
     state.isOnline = navigator.onLine;
-    const dot = $('#conn-dot');
-    const txt = $('#conn-text');
+    var dot = $('#conn-dot');
+    var txt = $('#conn-text');
     if (dot) dot.classList.toggle('offline', !state.isOnline);
     if (txt) txt.textContent = state.isOnline ? 'Online' : 'Offline';
   }
 
   // ==================== NOMINATIM ====================
-  const geocodeCache = new Map();
+  var geocodeCache = new Map();
 
   async function reverseGeocode(lat, lng) {
-    const key = `${lat.toFixed(5)},${lng.toFixed(5)}`;
+    var key = lat.toFixed(5) + ',' + lng.toFixed(5);
     if (geocodeCache.has(key)) return geocodeCache.get(key);
     try {
-      const res = await fetch(
-        `${NOMINATIM_URL}/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1&accept-language=es`,
+      var res = await fetch(
+        NOMINATIM_URL + '/reverse?lat=' + lat + '&lon=' + lng + '&format=json&addressdetails=1&accept-language=es',
         { headers: { 'User-Agent': 'RutasTuxtlaApp/1.0' } }
       );
       if (!res.ok) throw new Error('geocode');
-      const data = await res.json();
-      const result = {
+      var data = await res.json();
+      var result = {
         displayName: data.display_name || '',
         address: data.address || {},
         type: data.type || '',
@@ -147,10 +151,8 @@
 
   async function searchPlaces(query) {
     try {
-      const res = await fetch(
-        `${NOMINATIM_URL}/search?q=${encodeURIComponent(
-          query
-        )}&format=json&addressdetails=1&limit=8&accept-language=es&countrycodes=mx`,
+      var res = await fetch(
+        NOMINATIM_URL + '/search?q=' + encodeURIComponent(query) + '&format=json&addressdetails=1&limit=8&accept-language=es&countrycodes=mx',
         { headers: { 'User-Agent': 'RutasTuxtlaApp/1.0' } }
       );
       if (!res.ok) throw new Error('search');
@@ -163,22 +165,22 @@
   // ==================== DETECCIÓN ====================
   async function detectStreetsAlongRoute(points, onProgress) {
     if (!points || points.length < 2) return [];
-    const sampleCount = Math.min(12, points.length);
-    const step = Math.max(1, Math.floor(points.length / sampleCount));
-    const samples = [];
-    for (let i = 0; i < points.length; i += step) samples.push(points[i]);
+    var sampleCount = Math.min(12, points.length);
+    var step = Math.max(1, Math.floor(points.length / sampleCount));
+    var samples = [];
+    for (var i = 0; i < points.length; i += step) samples.push(points[i]);
     if (samples[samples.length - 1] !== points[points.length - 1])
       samples.push(points[points.length - 1]);
 
-    const streets = [];
-    const seen = new Set();
-    for (let i = 0; i < samples.length; i++) {
-      if (onProgress) onProgress(i + 1, samples.length);
-      const p = samples[i];
+    var streets = [];
+    var seen = new Set();
+    for (var j = 0; j < samples.length; j++) {
+      if (onProgress) onProgress(j + 1, samples.length);
+      var p = samples[j];
       try {
-        const r = await reverseGeocode(p.lat, p.lng);
+        var r = await reverseGeocode(p.lat, p.lng);
         if (r && r.address) {
-          const road =
+          var road =
             r.address.road ||
             r.address.pedestrian ||
             r.address.footway ||
@@ -201,22 +203,22 @@
           }
         }
       } catch (e) {}
-      await new Promise((r) => setTimeout(r, 1100));
+      await new Promise(function (r) { setTimeout(r, 1100); });
     }
     return streets;
   }
 
-  async function detectBusinessesAlongRoute(points, onProgress) {
-    const businesses = [];
-    const sampleCount = Math.min(8, points.length);
-    const step = Math.max(1, Math.floor(points.length / sampleCount));
-    for (let i = 0; i < points.length; i += step) {
-      const p = points[i];
+  async function detectBusinessesAlongRoute(points) {
+    var businesses = [];
+    var sampleCount = Math.min(8, points.length);
+    var step = Math.max(1, Math.floor(points.length / sampleCount));
+    for (var i = 0; i < points.length; i += step) {
+      var p = points[i];
       try {
-        const r = await reverseGeocode(p.lat, p.lng);
+        var r = await reverseGeocode(p.lat, p.lng);
         if (r && r.address) {
-          const a = r.address;
-          const amenity = a.amenity || a.shop || a.tourism || a.leisure;
+          var a = r.address;
+          var amenity = a.amenity || a.shop || a.tourism || a.leisure;
           if (amenity) {
             businesses.push({
               id: generateId(),
@@ -230,76 +232,81 @@
           }
         }
       } catch (e) {}
-      await new Promise((r) => setTimeout(r, 1100));
+      await new Promise(function (r) { setTimeout(r, 1100); });
     }
     return businesses;
   }
 
   // ==================== INDEXEDDB ====================
   async function initDB() {
+    if (typeof idb === 'undefined') {
+      console.warn('idb no cargado');
+      return;
+    }
     state.db = await idb.openDB('rutas-tuxtla-db', 2, {
-      upgrade(db) {
-        if (!db.objectStoreNames.contains('rutas'))
-          db.createObjectStore('rutas', { keyPath: 'id' });
-        if (!db.objectStoreNames.contains('pois'))
-          db.createObjectStore('pois', { keyPath: 'id' });
-        if (!db.objectStoreNames.contains('sync-queue'))
-          db.createObjectStore('sync-queue', { keyPath: 'id', autoIncrement: true });
+      upgrade: function (db) {
+        if (!db.objectStoreNames.contains('rutas')) db.createObjectStore('rutas', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains('pois')) db.createObjectStore('pois', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains('sync-queue')) db.createObjectStore('sync-queue', { keyPath: 'id', autoIncrement: true });
       },
     });
   }
 
-  const localDB = {
-    async saveRoute(route) {
+  var localDB = {
+    saveRoute: async function (route) {
       if (!state.db) await initDB();
-      await state.db.put('rutas', route);
+      if (state.db) await state.db.put('rutas', route);
     },
-    async getRoutes() {
+    getRoutes: async function () {
       if (!state.db) await initDB();
+      if (!state.db) return [];
       return await state.db.getAll('rutas');
     },
-    async deleteRoute(id) {
+    deleteRoute: async function (id) {
       if (!state.db) await initDB();
-      await state.db.delete('rutas', id);
+      if (state.db) await state.db.delete('rutas', id);
     },
-    async queueSync(op) {
+    queueSync: async function (op) {
       if (!state.db) await initDB();
-      await state.db.add('sync-queue', { ...op, ts: Date.now() });
+      if (state.db) await state.db.add('sync-queue', Object.assign({}, op, { ts: Date.now() }));
     },
-    async getQueue() {
+    getQueue: async function () {
       if (!state.db) await initDB();
+      if (!state.db) return [];
       return await state.db.getAll('sync-queue');
     },
-    async clearQueue() {
+    clearQueue: async function () {
       if (!state.db) await initDB();
-      await state.db.clear('sync-queue');
+      if (state.db) await state.db.clear('sync-queue');
     },
   };
 
   // ==================== FIREBASE ====================
   async function syncRouteToFirebase(route) {
-    const url = `${FIREBASE_DB_URL}/rutas/${route.id}.json`;
-    const res = await fetch(url, {
+    var url = FIREBASE_DB_URL + '/rutas/' + route.id + '.json';
+    var res = await fetch(url, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...route, updatedAt: Date.now() }),
+      body: JSON.stringify(Object.assign({}, route, { updatedAt: Date.now() })),
     });
     if (!res.ok) throw new Error('sync');
     return res.json();
   }
 
   async function deleteRouteFromFirebase(id) {
-    const res = await fetch(`${FIREBASE_DB_URL}/rutas/${id}.json`, { method: 'DELETE' });
+    var res = await fetch(FIREBASE_DB_URL + '/rutas/' + id + '.json', { method: 'DELETE' });
     if (!res.ok) throw new Error('delete');
   }
 
   async function loadRoutesFromFirebase() {
     try {
-      const res = await fetch(`${FIREBASE_DB_URL}/rutas.json`);
+      var res = await fetch(FIREBASE_DB_URL + '/rutas.json');
       if (!res.ok) throw new Error('load');
-      const data = await res.json();
+      var data = await res.json();
       if (!data) return [];
-      return Object.entries(data).map(([id, r]) => ({ ...r, id }));
+      return Object.entries(data).map(function (entry) {
+        return Object.assign({}, entry[1], { id: entry[0] });
+      });
     } catch (e) {
       return [];
     }
@@ -307,9 +314,10 @@
 
   async function processSyncQueue() {
     if (!state.isOnline) return;
-    const queue = await localDB.getQueue();
+    var queue = await localDB.getQueue();
     if (!queue.length) return;
-    for (const op of queue) {
+    for (var i = 0; i < queue.length; i++) {
+      var op = queue[i];
       try {
         if (op.type === 'save') await syncRouteToFirebase(op.route);
         else if (op.type === 'delete') await deleteRouteFromFirebase(op.id);
@@ -318,25 +326,29 @@
       }
     }
     await localDB.clearQueue();
-    showToast('Sincronización pendiente completada');
+    showToast('Sincronización completada');
   }
 
   // ==================== CLOUDINARY ====================
   async function uploadImage(file) {
-    const fd = new FormData();
+    var fd = new FormData();
     fd.append('file', file);
     fd.append('upload_preset', CLOUDINARY_CONFIG.upload_preset);
-    const res = await fetch(
-      `https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloud_name}/image/upload`,
+    var res = await fetch(
+      'https://api.cloudinary.com/v1_1/' + CLOUDINARY_CONFIG.cloud_name + '/image/upload',
       { method: 'POST', body: fd }
     );
     if (!res.ok) throw new Error('upload');
-    const data = await res.json();
+    var data = await res.json();
     return data.secure_url;
   }
 
   // ==================== MAPA ====================
   function initMap() {
+    if (typeof L === 'undefined') {
+      console.error('Leaflet no cargado');
+      return;
+    }
     state.map = L.map('map', {
       center: TUXTLA_CENTER,
       zoom: DEFAULT_ZOOM,
@@ -345,25 +357,26 @@
       preferCanvas: true,
     });
     L.control.zoom({ position: 'bottomright' }).addTo(state.map);
-    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '© OpenStreetMap',
     }).addTo(state.map);
-    const hot = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+    var hot = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '© OSM HOT',
     });
-    L.control.layers({ Estándar: osm, 'Alto contraste': hot }, null, {
+    L.control.layers({ 'Estándar': osm, 'Alto contraste': hot }, null, {
       position: 'bottomright',
     }).addTo(state.map);
     state.map.on('click', handleMapClick);
-    setTimeout(() => state.map.invalidateSize(), 300);
+    setTimeout(function () { state.map.invalidateSize(); }, 300);
   }
 
   function handleMapClick(e) {
-    const { lat, lng } = e.latlng;
+    var lat = e.latlng.lat;
+    var lng = e.latlng.lng;
     if (state.isEditing) {
-      if (state.activeTool === 'draw') addTrackedPoint({ lat, lng, tipo: 'manual' });
+      if (state.activeTool === 'draw') addTrackedPoint({ lat: lat, lng: lng, tipo: 'manual' });
       else if (state.activeTool === 'poi') addPoiAtLocation(lat, lng);
       return;
     }
@@ -375,7 +388,7 @@
   function createLetterIcon(letter, color) {
     return L.divIcon({
       className: 'search-marker',
-      html: `<div style="background:${color};color:#fff;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;border:3px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,.3)">${letter}</div>`,
+      html: '<div style="background:' + color + ';color:#fff;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;border:3px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,.3)">' + letter + '</div>',
       iconSize: [34, 34],
       iconAnchor: [17, 17],
     });
@@ -383,84 +396,72 @@
 
   // ==================== RENDER RUTAS ====================
   function renderRoutesList() {
-    const container = $('#routes-list-container');
+    var container = $('#routes-list-container');
     if (!container) return;
-    const filtered = state.routes.filter((r) => {
+    var filtered = state.routes.filter(function (r) {
       if (!state.filterText) return true;
-      const s = state.filterText.toLowerCase();
+      var s = state.filterText.toLowerCase();
       return (
-        r.nombre?.toLowerCase().includes(s) ||
-        r.descripcion?.toLowerCase().includes(s) ||
-        r.empresa?.toLowerCase().includes(s) ||
-        r.streets?.some((st) => st.nombre?.toLowerCase().includes(s))
+        (r.nombre && r.nombre.toLowerCase().indexOf(s) >= 0) ||
+        (r.descripcion && r.descripcion.toLowerCase().indexOf(s) >= 0) ||
+        (r.empresa && r.empresa.toLowerCase().indexOf(s) >= 0)
       );
     });
 
     if (filtered.length === 0) {
-      container.innerHTML = `
-        <div class="empty-state">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
-          <p>${state.filterText ? 'No se encontraron rutas' : 'No hay rutas registradas'}</p>
-          <p class="small">Toca "+ Nueva Ruta" para agregar una</p>
-        </div>`;
+      container.innerHTML =
+        '<div class="empty-state">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>' +
+        '<p>' + (state.filterText ? 'No se encontraron rutas' : 'No hay rutas registradas') + '</p>' +
+        '<p class="small">Toca "+ Nueva Ruta" para agregar una</p>' +
+        '</div>';
       return;
     }
 
-    container.innerHTML = filtered
-      .map((route) => {
-        const color = route.color || '#1e40af';
-        return `
-      <div class="route-card ${
-        state.selectedRouteId === route.id ? 'selected' : ''
-      }" data-id="${route.id}" style="--rc:${color}">
-        <div class="route-card-head">
-          <h3>${escapeHtml(route.nombre || 'Sin nombre')}</h3>
-          <span class="badge badge-${route.tipo || 'ida'}">${route.tipo || 'ida'}</span>
-        </div>
-        ${
-          route.descripcion
-            ? `<p class="route-desc">${escapeHtml(route.descripcion)}</p>`
-            : ''
-        }
-        <div class="route-meta">
-          <span>📍 ${route.puntos?.length || 0} pts</span>
-          ${
-            route.streets?.length
-              ? `<span>🛣️ ${route.streets.length} calles</span>`
-              : ''
-          }
-          ${route.pois?.length ? `<span>🏪 ${route.pois.length}</span>` : ''}
-          ${route.tarifa ? `<span>💰 ${escapeHtml(route.tarifa)}</span>` : ''}
-        </div>
-        <div class="route-actions">
-          <button class="btn btn-sm btn-primary" data-action="view" data-id="${
-            route.id
-          }">👁️ Ver</button>
-          <button class="btn btn-sm btn-secondary" data-action="edit" data-id="${
-            route.id
-          }">✏️ Editar</button>
-          <button class="btn btn-sm btn-success" data-action="publish" data-id="${
-            route.id
-          }">📤 Publicar</button>
-          <button class="btn btn-sm btn-danger" data-action="delete" data-id="${
-            route.id
-          }">🗑️</button>
-        </div>
-      </div>`;
-      })
-      .join('');
+    var html = '';
+    filtered.forEach(function (route) {
+      var color = route.color || '#1e40af';
+      var isSelected = state.selectedRouteId === route.id;
+      var pts = (route.puntos && route.puntos.length) || 0;
+      var streets = (route.streets && route.streets.length) || 0;
+      var pois = (route.pois && route.pois.length) || 0;
 
-    container.querySelectorAll('.route-card').forEach((card) => {
-      card.addEventListener('click', (e) => {
+      html += '<div class="route-card ' + (isSelected ? 'selected' : '') + '" data-id="' + route.id + '" style="--rc:' + color + '">';
+      html += '<div class="route-card-head">';
+      html += '<h3>' + escapeHtml(route.nombre || 'Sin nombre') + '</h3>';
+      html += '<span class="badge badge-' + (route.tipo || 'ida') + '">' + (route.tipo || 'ida') + '</span>';
+      html += '</div>';
+      if (route.descripcion) {
+        html += '<p class="route-desc">' + escapeHtml(route.descripcion) + '</p>';
+      }
+      html += '<div class="route-meta">';
+      html += '<span>📍 ' + pts + ' pts</span>';
+      if (streets) html += '<span>🛣️ ' + streets + ' calles</span>';
+      if (pois) html += '<span>🏪 ' + pois + '</span>';
+      if (route.tarifa) html += '<span>💰 ' + escapeHtml(route.tarifa) + '</span>';
+      html += '</div>';
+      html += '<div class="route-actions">';
+      html += '<button class="btn btn-sm btn-primary" data-action="view" data-id="' + route.id + '">👁️ Ver</button>';
+      html += '<button class="btn btn-sm btn-secondary" data-action="edit" data-id="' + route.id + '">✏️ Editar</button>';
+      html += '<button class="btn btn-sm btn-success" data-action="publish" data-id="' + route.id + '">📤 Publicar</button>';
+      html += '<button class="btn btn-sm btn-danger" data-action="delete" data-id="' + route.id + '">🗑️</button>';
+      html += '</div>';
+      html += '</div>';
+    });
+
+    container.innerHTML = html;
+
+    container.querySelectorAll('.route-card').forEach(function (card) {
+      card.addEventListener('click', function (e) {
         if (e.target.closest('button')) return;
         selectRoute(card.dataset.id);
       });
     });
-    container.querySelectorAll('button[data-action]').forEach((btn) => {
-      btn.addEventListener('click', (e) => {
+    container.querySelectorAll('button[data-action]').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
         e.stopPropagation();
-        const id = btn.dataset.id;
-        const action = btn.dataset.action;
+        var id = btn.dataset.id;
+        var action = btn.dataset.action;
         if (action === 'view') selectRoute(id);
         else if (action === 'edit') openEditor(id);
         else if (action === 'delete') deleteRoute(id);
@@ -470,116 +471,81 @@
   }
 
   function renderRoutesOnMap() {
-    Object.values(state.routeLayers).forEach((layer) => {
+    if (!state.map) return;
+    Object.values(state.routeLayers).forEach(function (layer) {
       if (layer.polyline) state.map.removeLayer(layer.polyline);
-      if (layer.markers) layer.markers.forEach((m) => state.map.removeLayer(m));
+      if (layer.markers) layer.markers.forEach(function (m) { state.map.removeLayer(m); });
     });
     state.routeLayers = {};
 
     if (state.routesVisibility === 'none') return;
 
-    state.routes.forEach((route) => {
+    state.routes.forEach(function (route) {
       if (!route.puntos || route.puntos.length < 2) return;
-      if (state.routesVisibility === 'selected' && state.selectedRouteId !== route.id)
-        return;
+      if (state.routesVisibility === 'selected' && state.selectedRouteId !== route.id) return;
 
-      const coords = route.puntos.map((p) => [p.lat, p.lng]);
-      const color = route.color || '#1e40af';
+      var coords = route.puntos.map(function (p) { return [p.lat, p.lng]; });
+      var color = route.color || '#1e40af';
 
-      const polyline = L.polyline(coords, {
-        color,
+      var polyline = L.polyline(coords, {
+        color: color,
         weight: 4,
         opacity: 0.8,
         lineJoin: 'round',
       }).addTo(state.map);
 
-      const markers = [];
-      const startIcon = L.divIcon({
+      var markers = [];
+      var startIcon = L.divIcon({
         className: 'route-marker',
-        html: `<div style="background:${color};width:14px;height:14px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35)"></div>`,
+        html: '<div style="background:' + color + ';width:14px;height:14px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35)"></div>',
         iconSize: [14, 14],
         iconAnchor: [7, 7],
       });
-      markers.push(
-        L.marker(coords[0], { icon: startIcon })
-          .bindPopup(`<b>${escapeHtml(route.nombre)}</b><br>Inicio`)
-          .addTo(state.map)
-      );
-      markers.push(
-        L.marker(coords[coords.length - 1], { icon: startIcon })
-          .bindPopup(`<b>${escapeHtml(route.nombre)}</b><br>Fin`)
-          .addTo(state.map)
-      );
+      markers.push(L.marker(coords[0], { icon: startIcon }).bindPopup('<b>' + escapeHtml(route.nombre) + '</b><br>Inicio').addTo(state.map));
+      markers.push(L.marker(coords[coords.length - 1], { icon: startIcon }).bindPopup('<b>' + escapeHtml(route.nombre) + '</b><br>Fin').addTo(state.map));
 
-      if (route.pois?.length) {
-        route.pois.forEach((poi) => {
-          const m = L.marker([poi.lat, poi.lng], {
-            icon: L.divIcon({
-              className: 'poi-marker',
-              html: `<div style="background:#fff;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;box-shadow:0 2px 4px rgba(0,0,0,.25);border:2px solid ${color}">${
-                poi.icono || '📍'
-              }</div>`,
-              iconSize: [22, 22],
-              iconAnchor: [11, 11],
-            }),
-          })
-            .bindPopup(
-              `<b>${escapeHtml(poi.nombre)}</b><br>${escapeHtml(
-                poi.descripcion || ''
-              )}`
-            )
-            .addTo(state.map);
-          markers.push(m);
-        });
-      }
-      state.routeLayers[route.id] = { polyline, markers, color };
+      state.routeLayers[route.id] = { polyline: polyline, markers: markers, color: color };
     });
   }
 
   function selectRoute(id) {
-    const route = state.routes.find((r) => r.id === id);
+    var route = state.routes.find(function (r) { return r.id === id; });
     if (!route) return;
     state.currentRoute = route;
     state.selectedRouteId = id;
     if (state.routesVisibility === 'selected' || state.routesVisibility === 'all')
       renderRoutesOnMap();
     renderRoutesList();
-    Object.entries(state.routeLayers).forEach(([rid, layer]) => {
-      if (layer.polyline) {
-        layer.polyline.setStyle({
-          weight: rid === id ? 6 : 4,
-          opacity: rid === id ? 1 : 0.6,
-        });
-      }
-    });
-    if (state.routeLayers[id]) {
-      state.map.fitBounds(state.routeLayers[id].polyline.getBounds(), {
-        padding: [50, 50],
-      });
+    if (state.routeLayers[id] && state.map) {
+      state.map.fitBounds(state.routeLayers[id].polyline.getBounds(), { padding: [50, 50] });
       if (state.mapMode === 'hidden') setMapMode('half');
     }
     navigateTo('map');
-    showToast(`Ruta: ${route.nombre}`);
+    showToast('Ruta: ' + route.nombre);
   }
 
   // ==================== NAVEGACIÓN ====================
   function navigateTo(page) {
     state.currentPage = page;
-    $$('.nav-item').forEach((n) => n.classList.toggle('active', n.dataset.page === page));
-    $$('.panel-page').forEach((p) =>
-      p.classList.toggle('active', p.id === `page-${page}`)
-    );
+    $$('.nav-item').forEach(function (n) {
+      n.classList.toggle('active', n.dataset.page === page);
+    });
+    $$('.panel-page').forEach(function (p) {
+      p.classList.toggle('active', p.id === 'page-' + page);
+    });
 
-    const tools = $('#map-tools');
-    if (page === 'editor') {
-      tools.classList.add('visible');
-      if (!state.isEditing) startEditing(state.editingRouteId);
-    } else {
-      tools.classList.remove('visible');
+    var tools = $('#map-tools');
+    if (tools) {
+      if (page === 'editor') {
+        tools.classList.add('visible');
+        if (!state.isEditing) state.isEditing = true;
+      } else {
+        tools.classList.remove('visible');
+      }
     }
 
-    const panel = $('#app-panel');
-    panel.classList.remove('hidden');
+    var panel = $('#app-panel');
+    if (panel) panel.classList.remove('hidden');
 
     if (state.mapMode === 'hidden' && (page === 'map' || page === 'editor' || page === 'trip')) {
       setMapMode('half');
@@ -587,73 +553,74 @@
 
     if (page === 'routes') renderRoutesList();
     else if (page === 'trip') renderTripSearch();
-    else if (page === 'pois') renderPoisList();
     else if (page === 'settings') renderSettings();
+    else if (page === 'blog') loadBlogPosts();
 
-    setTimeout(() => state.map.invalidateSize(), 350);
+    if (state.map) setTimeout(function () { state.map.invalidateSize(); }, 350);
   }
 
   function setMapMode(mode) {
     state.mapMode = mode;
-    const wrap = $('#map-wrap');
+    var wrap = $('#map-wrap');
+    if (!wrap) return;
     wrap.classList.remove('mode-full', 'mode-half', 'mode-hidden');
-    wrap.classList.add(`mode-${mode}`);
-    $$('.map-size-btn').forEach((b) =>
-      b.classList.toggle('active', b.dataset.size === mode)
-    );
-    setTimeout(() => state.map.invalidateSize(), 400);
+    wrap.classList.add('mode-' + mode);
+    $$('.map-size-btn').forEach(function (b) {
+      b.classList.toggle('active', b.dataset.size === mode);
+    });
+    if (state.map) setTimeout(function () { state.map.invalidateSize(); }, 400);
   }
 
   // ==================== EDITOR ====================
-  function openEditor(routeId = null) {
-    state.editingRouteId = routeId;
+  function openEditor(routeId) {
+    state.editingRouteId = routeId || null;
     state.isEditing = true;
     state.trackedPoints = [];
     state.detectedStreets = [];
     state.detectedPois = [];
 
-    $('#route-form').reset();
-    $('#route-id').value = '';
-    $('#image-preview').style.display = 'none';
-    $('#image-preview').src = '';
-    $('#route-color').value = '#1e40af';
-    $$('.color-chip').forEach((c) =>
-      c.classList.toggle('active', c.dataset.color === '#1e40af')
-    );
+    var form = $('#route-form');
+    if (form) form.reset();
+    var idEl = $('#route-id');
+    if (idEl) idEl.value = '';
+    var prev = $('#image-preview');
+    if (prev) {
+      prev.style.display = 'none';
+      prev.src = '';
+    }
+    var colorEl = $('#route-color');
+    if (colorEl) colorEl.value = '#1e40af';
+    $$('.color-chip').forEach(function (c) {
+      c.classList.toggle('active', c.dataset.color === '#1e40af');
+    });
 
     if (routeId) {
-      $('#editor-title').textContent = '✏️ Editar Ruta';
-      const r = state.routes.find((x) => x.id === routeId);
+      var titleEl = $('#editor-title');
+      if (titleEl) titleEl.textContent = '✏️ Editar Ruta';
+      var r = state.routes.find(function (x) { return x.id === routeId; });
       if (r) {
-        $('#route-id').value = r.id;
-        $('#route-name').value = r.nombre || '';
-        $('#route-desc').value = r.descripcion || '';
-        $('#route-type').value = r.tipo || 'ida';
-        $('#route-company').value = r.empresa || '';
-        $('#route-color').value = r.color || '#1e40af';
-        $('#route-fare').value = r.tarifa || '';
-        $('#route-frequency').value = r.frecuencia || '';
-        if (r.horario) {
-          const parts = r.horario.split(' - ');
-          if (parts[0]) $('#route-schedule').value = parts[0];
-          if (parts[1]) $('#route-schedule-end').value = parts[1];
+        setVal('#route-id', r.id);
+        setVal('#route-name', r.nombre || '');
+        setVal('#route-desc', r.descripcion || '');
+        setVal('#route-type', r.tipo || 'ida');
+        setVal('#route-company', r.empresa || '');
+        setVal('#route-color', r.color || '#1e40af');
+        setVal('#route-fare', r.tarifa || '');
+        setVal('#route-frequency', r.frecuencia || '');
+        setVal('#route-days', r.dias || 'todos');
+        setVal('#route-accessible', r.accesible || 'no');
+        setVal('#route-notes', r.notas || '');
+        if (r.imagen && prev) {
+          prev.src = r.imagen;
+          prev.style.display = 'block';
         }
-        $('#route-days').value = r.dias || 'todos';
-        $('#route-accessible').value = r.accesible || 'no';
-        $('#route-notes').value = r.notas || '';
-        if (r.imagen) {
-          $('#image-preview').src = r.imagen;
-          $('#image-preview').style.display = 'block';
-        }
-        state.trackedPoints = [...(r.puntos || [])];
-        state.detectedStreets = [...(r.streets || [])];
-        state.detectedPois = [...(r.pois || [])];
-        $$('.color-chip').forEach((c) =>
-          c.classList.toggle('active', c.dataset.color === (r.color || '#1e40af'))
-        );
+        state.trackedPoints = (r.puntos || []).slice();
+        state.detectedStreets = (r.streets || []).slice();
+        state.detectedPois = (r.pois || []).slice();
       }
     } else {
-      $('#editor-title').textContent = '➕ Registrar Ruta';
+      var titleEl2 = $('#editor-title');
+      if (titleEl2) titleEl2.textContent = '➕ Registrar Ruta';
     }
 
     renderEditingTrack();
@@ -661,7 +628,12 @@
     renderStreetsList();
     renderPoisEditList();
     navigateTo('editor');
-    setMapMode(state.mapMode === 'hidden' ? 'half' : state.mapMode);
+    if (state.mapMode === 'hidden') setMapMode('half');
+  }
+
+  function setVal(sel, val) {
+    var el = $(sel);
+    if (el) el.value = val;
   }
 
   function closeEditor() {
@@ -670,21 +642,22 @@
     state.trackedPoints = [];
     state.detectedStreets = [];
     state.detectedPois = [];
-    if (state.editingLayer) {
+    if (state.editingLayer && state.map) {
       state.map.removeLayer(state.editingLayer);
       state.editingLayer = null;
     }
-    state.editingMarkers.forEach((m) => state.map.removeLayer(m));
+    state.editingMarkers.forEach(function (m) {
+      if (state.map) state.map.removeLayer(m);
+    });
     state.editingMarkers = [];
-    state.poiLayers.forEach((m) => state.map.removeLayer(m));
+    state.poiLayers.forEach(function (m) {
+      if (state.map) state.map.removeLayer(m);
+    });
     state.poiLayers = [];
     if (state.isTracking) stopTracking();
-    $('#map-tools').classList.remove('visible');
+    var tools = $('#map-tools');
+    if (tools) tools.classList.remove('visible');
     navigateTo('routes');
-  }
-
-  function startEditing() {
-    state.isEditing = true;
   }
 
   function addTrackedPoint(point) {
@@ -694,143 +667,121 @@
   }
 
   function renderEditingTrack() {
+    if (!state.map) return;
     if (state.editingLayer) {
       state.map.removeLayer(state.editingLayer);
       state.editingLayer = null;
     }
-    state.editingMarkers.forEach((m) => state.map.removeLayer(m));
+    state.editingMarkers.forEach(function (m) { state.map.removeLayer(m); });
     state.editingMarkers = [];
     if (state.trackedPoints.length < 2) return;
 
-    const coords = state.trackedPoints.map((p) => [p.lat, p.lng]);
+    var coords = state.trackedPoints.map(function (p) { return [p.lat, p.lng]; });
+    var colorEl = $('#route-color');
     state.editingLayer = L.polyline(coords, {
-      color: $('#route-color').value || '#1e40af',
+      color: colorEl ? colorEl.value : '#1e40af',
       weight: 5,
       opacity: 0.9,
       dashArray: state.isTracking ? '8, 8' : null,
     }).addTo(state.map);
 
-    state.trackedPoints.forEach((p, i) => {
+    state.trackedPoints.forEach(function (p, i) {
       if (p.tipo === 'manual') {
-        const marker = L.circleMarker([p.lat, p.lng], {
+        var marker = L.circleMarker([p.lat, p.lng], {
           radius: 7,
           fillColor: '#dc2626',
           color: '#fff',
           weight: 2,
           fillOpacity: 1,
         }).addTo(state.map);
-        marker.bindPopup(`Punto ${i + 1}${p.nombre ? ': ' + p.nombre : ''}`);
+        marker.bindPopup('Punto ' + (i + 1));
         state.editingMarkers.push(marker);
       }
     });
   }
 
   function updatePointsUI() {
-    const c = state.trackedPoints.length;
-    const el = $('#points-count');
+    var c = state.trackedPoints.length;
+    var el = $('#points-count');
     if (el) el.textContent = c;
-    const rt = $('#recording-text');
-    if (rt) rt.textContent = `Grabando... ${c} pts`;
-    const preview = $('#points-list-preview');
+    var rt = $('#recording-text');
+    if (rt) rt.textContent = 'Grabando... ' + c + ' pts';
+    var preview = $('#points-list-preview');
     if (preview) {
       if (c === 0) preview.textContent = 'Aún no hay puntos trazados.';
-      else preview.textContent = `✅ ${c} puntos trazados listos para guardar.`;
+      else preview.textContent = '✅ ' + c + ' puntos trazados listos para guardar.';
     }
   }
 
   function renderStreetsList() {
-    const container = $('#streets-list');
+    var container = $('#streets-list');
     if (!container) return;
-    const count = $('#streets-count');
+    var count = $('#streets-count');
     if (count) count.textContent = state.detectedStreets.length;
 
     if (state.detectedStreets.length === 0) {
-      container.innerHTML =
-        '<p style="font-size:12px;color:var(--text-muted);text-align:center;padding:16px">Traza la ruta primero y toca "Detectar ahora".</p>';
+      container.innerHTML = '<p style="font-size:12px;color:var(--text-muted);text-align:center;padding:16px">Traza la ruta primero y toca "Detectar ahora".</p>';
       return;
     }
-    container.innerHTML = state.detectedStreets
-      .map(
-        (s, i) => `
-      <div class="list-item">
-        <div class="list-num">${i + 1}</div>
-        <div class="list-body">
-          <h4>${escapeHtml(s.nombre)}</h4>
-          ${s.colonia ? `<p>Col. ${escapeHtml(s.colonia)}</p>` : ''}
-        </div>
-        <div class="list-actions">
-          <button class="icon-mini" data-action="edit-street" data-id="${
-            s.id
-          }">✏️</button>
-          <button class="icon-mini danger" data-action="rm-street" data-id="${
-            s.id
-          }">✕</button>
-        </div>
-      </div>`
-      )
-      .join('');
-
-    container.querySelectorAll('[data-action="edit-street"]').forEach((b) => {
-      b.addEventListener('click', () => {
-        const s = state.detectedStreets.find((x) => x.id === b.dataset.id);
-        if (!s) return;
-        const nn = prompt('Nombre de la calle:', s.nombre);
-        if (nn !== null) {
-          s.nombre = nn;
-          renderStreetsList();
-        }
-      });
+    var html = '';
+    state.detectedStreets.forEach(function (s, i) {
+      html += '<div class="list-item">';
+      html += '<div class="list-num">' + (i + 1) + '</div>';
+      html += '<div class="list-body">';
+      html += '<h4>' + escapeHtml(s.nombre) + '</h4>';
+      if (s.colonia) html += '<p>Col. ' + escapeHtml(s.colonia) + '</p>';
+      html += '</div>';
+      html += '<div class="list-actions">';
+      html += '<button class="icon-mini danger" data-action="rm-street" data-id="' + s.id + '">✕</button>';
+      html += '</div>';
+      html += '</div>';
     });
-    container.querySelectorAll('[data-action="rm-street"]').forEach((b) => {
-      b.addEventListener('click', () => {
-        state.detectedStreets = state.detectedStreets.filter(
-          (x) => x.id !== b.dataset.id
-        );
+    container.innerHTML = html;
+
+    container.querySelectorAll('[data-action="rm-street"]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        state.detectedStreets = state.detectedStreets.filter(function (x) { return x.id !== b.dataset.id; });
         renderStreetsList();
       });
     });
   }
 
   function renderPoisEditList() {
-    const container = $('#pois-list-edit');
+    var container = $('#pois-list-edit');
     if (!container) return;
-    const count = $('#pois-count');
+    var count = $('#pois-count');
     if (count) count.textContent = state.detectedPois.length;
 
     if (state.detectedPois.length === 0) {
-      container.innerHTML =
-        '<p style="font-size:12px;color:var(--text-muted);text-align:center;padding:12px">No hay puntos de interés.</p>';
+      container.innerHTML = '<p style="font-size:12px;color:var(--text-muted);text-align:center;padding:12px">No hay puntos de interés.</p>';
       return;
     }
-    container.innerHTML = state.detectedPois
-      .map(
-        (p) => `
-      <div class="list-item">
-        <div class="list-icon">${p.icono || '📍'}</div>
-        <div class="list-body">
-          <h4>${escapeHtml(p.nombre)}</h4>
-          <p>${escapeHtml(p.descripcion || '')}</p>
-        </div>
-        <button class="icon-mini danger" data-action="rm-poi" data-id="${
-          p.id
-        }">✕</button>
-      </div>`
-      )
-      .join('');
+    var html = '';
+    state.detectedPois.forEach(function (p) {
+      html += '<div class="list-item">';
+      html += '<div class="list-icon">' + (p.icono || '📍') + '</div>';
+      html += '<div class="list-body">';
+      html += '<h4>' + escapeHtml(p.nombre) + '</h4>';
+      html += '<p>' + escapeHtml(p.descripcion || '') + '</p>';
+      html += '</div>';
+      html += '<button class="icon-mini danger" data-action="rm-poi" data-id="' + p.id + '">✕</button>';
+      html += '</div>';
+    });
+    container.innerHTML = html;
 
-    container.querySelectorAll('[data-action="rm-poi"]').forEach((b) => {
-      b.addEventListener('click', () => {
-        state.detectedPois = state.detectedPois.filter((x) => x.id !== b.dataset.id);
+    container.querySelectorAll('[data-action="rm-poi"]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        state.detectedPois = state.detectedPois.filter(function (x) { return x.id !== b.dataset.id; });
         renderPoisEditList();
       });
     });
   }
 
   function addPoiAtLocation(lat, lng) {
-    const poi = {
+    var poi = {
       id: generateId(),
-      lat,
-      lng,
+      lat: lat,
+      lng: lng,
       nombre: 'Nuevo punto',
       descripcion: '',
       tipo: 'custom',
@@ -839,49 +790,23 @@
     state.detectedPois.push(poi);
     renderPoisEditList();
     renderPoiMarker(poi);
-    reverseGeocode(lat, lng).then((r) => {
-      if (r && r.displayName) {
-        poi.descripcion = r.displayName;
-        if (r.address) {
-          const a = r.address;
-          if (a.amenity || a.shop) {
-            poi.nombre = a.amenity || a.shop;
-            poi.tipo = 'business';
-            poi.icono = '🏪';
-          } else if (a.road) {
-            poi.nombre = a.road;
-            poi.tipo = 'street';
-            poi.icono = '🛣️';
-          }
-        }
-        renderPoisEditList();
-      }
-    });
   }
 
   function renderPoiMarker(poi) {
-    const marker = L.marker([poi.lat, poi.lng], {
+    if (!state.map) return;
+    var marker = L.marker([poi.lat, poi.lng], {
       icon: L.divIcon({
         className: 'editing-poi',
-        html: `<div style="background:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.3);border:2px solid #1e40af">${
-          poi.icono || '📍'
-        }</div>`,
+        html: '<div style="background:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.3);border:2px solid #1e40af">' + (poi.icono || '📍') + '</div>',
         iconSize: [28, 28],
         iconAnchor: [14, 14],
       }),
       draggable: true,
     }).addTo(state.map);
-    marker.on('dragend', (e) => {
-      const pos = e.target.getLatLng();
+    marker.on('dragend', function (e) {
+      var pos = e.target.getLatLng();
       poi.lat = pos.lat;
       poi.lng = pos.lng;
-    });
-    marker.on('click', () => {
-      const nn = prompt('Nombre del punto:', poi.nombre);
-      if (nn !== null) {
-        poi.nombre = nn;
-        renderPoisEditList();
-      }
     });
     state.poiLayers.push(marker);
   }
@@ -893,20 +818,22 @@
       return;
     }
     state.isTracking = true;
-    $('#recording-bar').classList.add('active');
+    var bar = $('#recording-bar');
+    if (bar) bar.classList.add('active');
     state.watchId = navigator.geolocation.watchPosition(
-      (pos) => {
-        const { latitude, longitude, accuracy } = pos.coords;
+      function (pos) {
+        var latitude = pos.coords.latitude;
+        var longitude = pos.coords.longitude;
         addTrackedPoint({
           lat: latitude,
           lng: longitude,
-          accuracy,
+          accuracy: pos.coords.accuracy,
           tipo: 'gps',
           timestamp: pos.timestamp,
         });
-        state.map.setView([latitude, longitude], 16);
+        if (state.map) state.map.setView([latitude, longitude], 16);
       },
-      (err) => {
+      function (err) {
         showToast('Error GPS: ' + err.message);
         stopTracking();
       },
@@ -921,18 +848,18 @@
       navigator.geolocation.clearWatch(state.watchId);
       state.watchId = null;
     }
-    $('#recording-bar').classList.remove('active');
-    showToast(`Detenido: ${state.trackedPoints.length} puntos`);
+    var bar = $('#recording-bar');
+    if (bar) bar.classList.remove('active');
+    showToast('Detenido: ' + state.trackedPoints.length + ' puntos');
   }
 
   // ==================== BUSCAR VIAJE ====================
   function renderTripSearch() {
-    const spList = $('#search-points-list');
-    if (spList) renderSearchPointsList();
-    const r = $('#search-radius');
+    renderSearchPointsList();
+    var r = $('#search-radius');
     if (r) r.value = state.searchRadius;
-    const rv = $('#radius-value');
-    if (rv) rv.textContent = `${state.searchRadius}m`;
+    var rv = $('#radius-value');
+    if (rv) rv.textContent = state.searchRadius + 'm';
   }
 
   function addSearchPoint(lat, lng) {
@@ -940,92 +867,80 @@
       showToast('Máximo 3 puntos (A, B, C)');
       return;
     }
-    const letter = String.fromCharCode(65 + state.searchPoints.length);
-    const colors = { A: '#16a34a', B: '#dc2626', C: '#f59e0b' };
-    const color = colors[letter] || '#1e40af';
-    const point = { lat, lng, letter, color };
+    var letter = String.fromCharCode(65 + state.searchPoints.length);
+    var colors = { A: '#16a34a', B: '#dc2626', C: '#f59e0b' };
+    var color = colors[letter] || '#1e40af';
+    var point = { lat: lat, lng: lng, letter: letter, color: color };
     state.searchPoints.push(point);
 
-    const marker = L.marker([lat, lng], { icon: createLetterIcon(letter, color) }).addTo(
-      state.map
-    );
-    const circle = L.circle([lat, lng], {
-      radius: state.searchRadius,
-      color,
-      fillColor: color,
-      fillOpacity: 0.1,
-      weight: 2,
-      dashArray: '5, 5',
-    }).addTo(state.map);
-    marker._circle = circle;
-    state.searchMarkers.push(marker);
+    if (state.map) {
+      var marker = L.marker([lat, lng], { icon: createLetterIcon(letter, color) }).addTo(state.map);
+      var circle = L.circle([lat, lng], {
+        radius: state.searchRadius,
+        color: color,
+        fillColor: color,
+        fillOpacity: 0.1,
+        weight: 2,
+        dashArray: '5, 5',
+      }).addTo(state.map);
+      marker._circle = circle;
+      state.searchMarkers.push(marker);
+    }
 
     renderSearchPointsList();
     if (state.mapMode === 'hidden') setMapMode('half');
-    showToast(`Punto ${letter} marcado`);
+    showToast('Punto ' + letter + ' marcado');
   }
 
   function renderSearchPointsList() {
-    const container = $('#search-points-list');
+    var container = $('#search-points-list');
     if (!container) return;
     if (state.searchPoints.length === 0) {
-      container.innerHTML =
-        '<p style="font-size:12px;color:var(--text-muted);text-align:center;padding:12px;background:var(--bg);border-radius:10px;margin-bottom:10px">Sin puntos marcados. Toca el mapa.</p>';
+      container.innerHTML = '<p style="font-size:12px;color:var(--text-muted);text-align:center;padding:12px;background:var(--bg);border-radius:10px;margin-bottom:10px">Sin puntos marcados. Toca el mapa.</p>';
       return;
     }
-    container.innerHTML = state.searchPoints
-      .map(
-        (p, i) => `
-      <div class="search-point">
-        <div class="search-letter ${p.letter}">${p.letter}</div>
-        <div class="search-info">
-          <h4>Punto ${p.letter}</h4>
-          <p>${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}</p>
-        </div>
-        <button class="icon-mini danger" data-idx="${i}">✕</button>
-      </div>`
-      )
-      .join('');
+    var html = '';
+    state.searchPoints.forEach(function (p, i) {
+      html += '<div class="search-point">';
+      html += '<div class="search-letter ' + p.letter + '">' + p.letter + '</div>';
+      html += '<div class="search-info">';
+      html += '<h4>Punto ' + p.letter + '</h4>';
+      html += '<p>' + p.lat.toFixed(5) + ', ' + p.lng.toFixed(5) + '</p>';
+      html += '</div>';
+      html += '<button class="icon-mini danger" data-idx="' + i + '">✕</button>';
+      html += '</div>';
+    });
+    container.innerHTML = html;
 
-    container.querySelectorAll('[data-idx]').forEach((b) => {
-      b.addEventListener('click', () => removeSearchPoint(parseInt(b.dataset.idx)));
+    container.querySelectorAll('[data-idx]').forEach(function (b) {
+      b.addEventListener('click', function () { removeSearchPoint(parseInt(b.dataset.idx)); });
     });
   }
 
   function removeSearchPoint(index) {
-    const marker = state.searchMarkers[index];
-    if (marker) {
+    var marker = state.searchMarkers[index];
+    if (marker && state.map) {
       if (marker._circle) state.map.removeLayer(marker._circle);
       state.map.removeLayer(marker);
     }
     state.searchPoints.splice(index, 1);
     state.searchMarkers.splice(index, 1);
-    state.searchMarkers.forEach((m, i) => {
-      const letter = String.fromCharCode(65 + i);
-      const colors = { A: '#16a34a', B: '#dc2626', C: '#f59e0b' };
-      const color = colors[letter] || '#1e40af';
-      m.setIcon(createLetterIcon(letter, color));
-      if (m._circle) m._circle.setStyle({ color, fillColor: color });
-    });
-    state.searchPoints.forEach((p, i) => {
-      p.letter = String.fromCharCode(65 + i);
-      const colors = { A: '#16a34a', B: '#dc2626', C: '#f59e0b' };
-      p.color = colors[p.letter] || '#1e40af';
-    });
     renderSearchPointsList();
   }
 
   function clearSearchPoints() {
     state.searchPoints = [];
-    state.searchMarkers.forEach((m) => {
-      if (m._circle) state.map.removeLayer(m._circle);
-      state.map.removeLayer(m);
+    state.searchMarkers.forEach(function (m) {
+      if (m._circle && state.map) state.map.removeLayer(m._circle);
+      if (state.map) state.map.removeLayer(m);
     });
     state.searchMarkers = [];
-    state.searchRouteLayers.forEach((l) => state.map.removeLayer(l));
+    state.searchRouteLayers.forEach(function (l) {
+      if (state.map) state.map.removeLayer(l);
+    });
     state.searchRouteLayers = [];
     renderSearchPointsList();
-    const results = $('#search-results');
+    var results = $('#search-results');
     if (results) results.innerHTML = '';
   }
 
@@ -1034,96 +949,99 @@
       showToast('Marca al menos 2 puntos');
       return;
     }
-    state.searchRouteLayers.forEach((l) => state.map.removeLayer(l));
+    state.searchRouteLayers.forEach(function (l) {
+      if (state.map) state.map.removeLayer(l);
+    });
     state.searchRouteLayers = [];
 
-    const radius = state.searchRadius;
-    const resultsEl = $('#search-results');
-    resultsEl.innerHTML =
-      '<div class="loading"><div class="spinner"></div><span>Buscando rutas...</span></div>';
+    var radius = state.searchRadius;
+    var resultsEl = $('#search-results');
+    if (!resultsEl) return;
+    resultsEl.innerHTML = '<div class="loading"><div class="spinner"></div><span>Buscando rutas...</span></div>';
 
-    const routesPerPoint = state.searchPoints.map((p) => ({
-      point: p,
-      routes: findRoutesNearPoint(p, radius),
-    }));
-
-    const routesThroughAll = state.routes.filter((route) => {
-      if (!route.puntos || route.puntos.length < 2) return false;
-      return routesPerPoint.every((rp) => rp.routes.some((r) => r.id === route.id));
+    var routesPerPoint = state.searchPoints.map(function (p) {
+      return { point: p, routes: findRoutesNearPoint(p, radius) };
     });
 
-    const routesThrough2 = state.routes.filter((route) => {
+    var routesThroughAll = state.routes.filter(function (route) {
       if (!route.puntos || route.puntos.length < 2) return false;
-      const count = routesPerPoint.filter((rp) =>
-        rp.routes.some((r) => r.id === route.id)
-      ).length;
+      return routesPerPoint.every(function (rp) {
+        return rp.routes.some(function (r) { return r.id === route.id; });
+      });
+    });
+
+    var routesThrough2 = state.routes.filter(function (route) {
+      if (!route.puntos || route.puntos.length < 2) return false;
+      var count = routesPerPoint.filter(function (rp) {
+        return rp.routes.some(function (r) { return r.id === route.id; });
+      }).length;
       return count >= 2;
     });
 
-    const singleRoutes = routesPerPoint.map((rp) => ({
-      point: rp.point,
-      routes: rp.routes.filter((r) => !routesThrough2.includes(r)),
-    }));
-
-    let html = '';
+    var html = '';
     if (routesThroughAll.length > 0) {
-      html +=
-        '<h3 style="font-size:13px;margin-bottom:10px;color:var(--success)">✅ Rutas que pasan por todos los puntos</h3>';
-      routesThroughAll.forEach((route) => {
+      html += '<h3 style="font-size:14px;margin-bottom:10px;color:var(--success);font-weight:800">✅ Rutas que pasan por todos los puntos</h3>';
+      routesThroughAll.forEach(function (route) {
         html += renderRouteResultCard(route, 'success');
         drawSearchRoute(route, '#16a34a');
       });
     }
     if (routesThrough2.length > 0) {
-      html +=
-        '<h3 style="font-size:13px;margin:14px 0 10px;color:var(--warning)">🔄 Rutas que conectan varios puntos</h3>';
+      html += '<h3 style="font-size:14px;margin:14px 0 10px;color:var(--warning);font-weight:800">🔄 Rutas que conectan varios puntos</h3>';
       routesThrough2
-        .filter((r) => !routesThroughAll.includes(r))
-        .forEach((route) => {
+        .filter(function (r) { return routesThroughAll.indexOf(r) === -1; })
+        .forEach(function (route) {
           html += renderRouteResultCard(route, 'warning');
           drawSearchRoute(route, '#f59e0b');
         });
     }
-    const hasSingles = singleRoutes.some((s) => s.routes.length > 0);
+
+    var singleRoutes = routesPerPoint.map(function (rp) {
+      return {
+        point: rp.point,
+        routes: rp.routes.filter(function (r) { return routesThrough2.indexOf(r) === -1; }),
+      };
+    });
+
+    var hasSingles = singleRoutes.some(function (s) { return s.routes.length > 0; });
     if (hasSingles) {
-      html +=
-        '<h3 style="font-size:13px;margin:14px 0 10px;color:var(--primary)">📍 Rutas cercanas a cada punto</h3>';
-      singleRoutes.forEach((sr) => {
+      html += '<h3 style="font-size:14px;margin:14px 0 10px;color:var(--primary);font-weight:800">📍 Rutas cercanas a cada punto</h3>';
+      singleRoutes.forEach(function (sr) {
         if (sr.routes.length === 0) return;
-        html += `<p style="font-size:12px;font-weight:600;margin:8px 0 6px">Punto ${sr.point.letter}:</p>`;
-        sr.routes.forEach((route) => {
+        html += '<p style="font-size:13px;font-weight:700;margin:8px 0 6px">Punto ' + sr.point.letter + ':</p>';
+        sr.routes.forEach(function (route) {
           html += renderRouteResultCard(route, 'primary');
           drawSearchRoute(route, '#1e40af');
         });
       });
     }
     if (!html) {
-      html =
-        '<div class="empty-state"><p>No se encontraron rutas cerca</p><p class="small">Intenta aumentar el radio</p></div>';
+      html = '<div class="empty-state"><p>No se encontraron rutas cerca</p><p class="small">Intenta aumentar el radio</p></div>';
     }
     resultsEl.innerHTML = html;
   }
 
   function renderRouteResultCard(route, type) {
-    const color = route.color || '#1e40af';
-    return `
-    <div class="result-card ${type}" data-id="${route.id}" style="border-left-color:${color}">
-      <div class="route-card-head">
-        <h3>${escapeHtml(route.nombre)}</h3>
-        <span class="badge badge-${route.tipo || 'ida'}">${route.tipo || 'ida'}</span>
-      </div>
-      <div class="route-meta" style="margin:6px 0 0">
-        <span>🛣️ ${route.streets?.length || 0} calles</span>
-        ${route.tarifa ? `<span>💰 ${escapeHtml(route.tarifa)}</span>` : ''}
-      </div>
-    </div>`;
+    var color = route.color || '#1e40af';
+    var streets = (route.streets && route.streets.length) || 0;
+    var html = '<div class="result-card ' + type + '" data-id="' + route.id + '" style="border-left-color:' + color + ';background:#fff;border:2px solid #e2e8f0;border-left-width:6px;border-radius:12px;padding:14px;margin-bottom:10px;cursor:pointer">';
+    html += '<div class="route-card-head">';
+    html += '<h3 style="font-size:16px;font-weight:800;color:#0f172a">' + escapeHtml(route.nombre) + '</h3>';
+    html += '<span class="badge badge-' + (route.tipo || 'ida') + '">' + (route.tipo || 'ida') + '</span>';
+    html += '</div>';
+    html += '<div class="route-meta" style="margin-top:8px">';
+    html += '<span>🛣️ ' + streets + ' calles</span>';
+    if (route.tarifa) html += '<span>💰 ' + escapeHtml(route.tarifa) + '</span>';
+    html += '</div>';
+    html += '</div>';
+    return html;
   }
 
   function drawSearchRoute(route, color) {
-    if (!route.puntos || route.puntos.length < 2) return;
-    const coords = route.puntos.map((p) => [p.lat, p.lng]);
-    const line = L.polyline(coords, {
-      color,
+    if (!route.puntos || route.puntos.length < 2 || !state.map) return;
+    var coords = route.puntos.map(function (p) { return [p.lat, p.lng]; });
+    var line = L.polyline(coords, {
+      color: color,
       weight: 5,
       opacity: 0.75,
       dashArray: '10, 6',
@@ -1132,7 +1050,7 @@
   }
 
   function findRoutesNearPoint(point, radius) {
-    return state.routes.filter((route) => {
+    return state.routes.filter(function (route) {
       if (!route.puntos || route.puntos.length < 2) return false;
       return pointToLineDistance(point, route.puntos) <= radius;
     });
@@ -1140,7 +1058,8 @@
 
   // ==================== GUARDAR ====================
   async function saveRoute() {
-    const name = $('#route-name').value.trim();
+    var nameEl = $('#route-name');
+    var name = nameEl ? nameEl.value.trim() : '';
     if (!name) {
       showToast('Ingresa un nombre');
       return;
@@ -1150,15 +1069,16 @@
       return;
     }
 
-    const btn = $('#btn-save');
-    btn.disabled = true;
-    const old = btn.textContent;
-    btn.textContent = 'Guardando...';
+    var btn = $('#btn-save');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Guardando...';
+    }
 
     try {
-      const routeId = $('#route-id').value || generateId();
-      const imgFile = $('#route-image').files[0];
-      let imageUrl = null;
+      var routeId = ($('#route-id') && $('#route-id').value) || generateId();
+      var imgFile = $('#route-image') && $('#route-image').files[0];
+      var imageUrl = null;
 
       if (imgFile) {
         if (state.isOnline) {
@@ -1169,36 +1089,36 @@
           }
         }
         if (!imageUrl) {
-          imageUrl = await new Promise((res) => {
-            const r = new FileReader();
-            r.onload = (ev) => res(ev.target.result);
+          imageUrl = await new Promise(function (res) {
+            var r = new FileReader();
+            r.onload = function (ev) { res(ev.target.result); };
             r.readAsDataURL(imgFile);
           });
         }
-      } else if ($('#image-preview').src && $('#image-preview').style.display !== 'none') {
+      } else if ($('#image-preview') && $('#image-preview').src && $('#image-preview').style.display !== 'none') {
         imageUrl = $('#image-preview').src;
       }
 
-      const existing = state.routes.find((r) => r.id === routeId);
+      var existing = state.routes.find(function (r) { return r.id === routeId; });
 
-      const route = {
+      var route = {
         id: routeId,
         nombre: name,
-        descripcion: $('#route-desc').value.trim(),
-        tipo: $('#route-type').value,
-        empresa: $('#route-company').value.trim(),
-        color: $('#route-color').value,
-        tarifa: $('#route-fare').value.trim(),
-        frecuencia: $('#route-frequency').value.trim(),
-        horario: `${$('#route-schedule').value} - ${$('#route-schedule-end').value}`,
-        dias: $('#route-days').value,
-        accesible: $('#route-accessible').value,
-        notas: $('#route-notes').value.trim(),
+        descripcion: getVal('#route-desc'),
+        tipo: getVal('#route-type') || 'ida',
+        empresa: getVal('#route-company'),
+        color: getVal('#route-color') || '#1e40af',
+        tarifa: getVal('#route-fare'),
+        frecuencia: getVal('#route-frequency'),
+        horario: getVal('#route-schedule') + ' - ' + getVal('#route-schedule-end'),
+        dias: getVal('#route-days') || 'todos',
+        accesible: getVal('#route-accessible') || 'no',
+        notas: getVal('#route-notes'),
         imagen: imageUrl,
-        puntos: [...state.trackedPoints],
-        streets: [...state.detectedStreets],
-        pois: [...state.detectedPois],
-        createdAt: existing?.createdAt || Date.now(),
+        puntos: state.trackedPoints.slice(),
+        streets: state.detectedStreets.slice(),
+        pois: state.detectedPois.slice(),
+        createdAt: (existing && existing.createdAt) || Date.now(),
         updatedAt: Date.now(),
       };
 
@@ -1207,64 +1127,73 @@
       if (state.isOnline) {
         try {
           await syncRouteToFirebase(route);
-          showToast('Ruta guardada y sincronizada');
+          showToast('✅ Ruta guardada y sincronizada');
         } catch (e) {
-          await localDB.queueSync({ type: 'save', route });
-          showToast('Guardado local (pendiente sync)');
+          await localDB.queueSync({ type: 'save', route: route });
+          showToast('💾 Guardado local (pendiente sync)');
         }
       } else {
-        await localDB.queueSync({ type: 'save', route });
-        showToast('Ruta guardada offline');
+        await localDB.queueSync({ type: 'save', route: route });
+        showToast('💾 Ruta guardada offline');
       }
 
-      const idx = state.routes.findIndex((r) => r.id === routeId);
+      var idx = state.routes.findIndex(function (r) { return r.id === routeId; });
       if (idx >= 0) state.routes[idx] = route;
       else state.routes.push(route);
 
       state.selectedRouteId = routeId;
       state.routesVisibility = 'all';
-      $$('#visibility-chips .chip').forEach((c) =>
-        c.classList.toggle('active', c.dataset.visibility === 'all')
-      );
+      $$('#visibility-chips .chip').forEach(function (c) {
+        c.classList.toggle('active', c.dataset.visibility === 'all');
+      });
 
       renderRoutesList();
       renderRoutesOnMap();
 
-      // Preguntar si publicar como post
-      if (confirm('¿Publicar esta ruta como post en el blog para Google?')) {
-        openPublishDialog(routeId);
-      } else {
-        closeEditor();
-      }
+      closeEditor();
+
+      setTimeout(function () {
+        if (confirm('¿Publicar esta ruta como post en el blog para Google?')) {
+          openPublishDialog(routeId);
+        }
+      }, 500);
     } catch (e) {
       console.error(e);
-      showToast('Error al guardar');
+      showToast('Error al guardar: ' + e.message);
     } finally {
-      btn.disabled = false;
-      btn.textContent = old;
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = '💾 Guardar Ruta';
+      }
     }
   }
 
+  function getVal(sel) {
+    var el = $(sel);
+    return el ? el.value.trim() : '';
+  }
+
   async function deleteRoute(id) {
-    const route = state.routes.find((r) => r.id === id);
+    var route = state.routes.find(function (r) { return r.id === id; });
     if (!route) return;
-    if (!confirm(`¿Eliminar "${route.nombre}"?`)) return;
+    if (!confirm('¿Eliminar "' + route.nombre + '"?')) return;
     try {
       await localDB.deleteRoute(id);
       if (state.isOnline) {
         try {
           await deleteRouteFromFirebase(id);
         } catch (e) {
-          await localDB.queueSync({ type: 'delete', id });
+          await localDB.queueSync({ type: 'delete', id: id });
         }
       } else {
-        await localDB.queueSync({ type: 'delete', id });
+        await localDB.queueSync({ type: 'delete', id: id });
       }
-      state.routes = state.routes.filter((r) => r.id !== id);
-      if (state.routeLayers[id]) {
-        if (state.routeLayers[id].polyline)
-          state.map.removeLayer(state.routeLayers[id].polyline);
-        state.routeLayers[id].markers?.forEach((m) => state.map.removeLayer(m));
+      state.routes = state.routes.filter(function (r) { return r.id !== id; });
+      if (state.routeLayers[id] && state.map) {
+        if (state.routeLayers[id].polyline) state.map.removeLayer(state.routeLayers[id].polyline);
+        if (state.routeLayers[id].markers) {
+          state.routeLayers[id].markers.forEach(function (m) { state.map.removeLayer(m); });
+        }
         delete state.routeLayers[id];
       }
       if (state.selectedRouteId === id) state.selectedRouteId = null;
@@ -1278,63 +1207,62 @@
 
   // ==================== PUBLICAR ====================
   function openPublishDialog(routeId) {
-    const route = state.routes.find((r) => r.id === routeId);
+    var route = state.routes.find(function (r) { return r.id === routeId; });
     if (!route) return;
-
     state.pendingPublishRoute = route;
 
-    const slug = slugify(route.nombre);
-    const dialog = $('#publish-dialog');
-    if (!dialog) return;
-
-    $('#publish-slug').value = slug;
-    $('#publish-title').value = route.nombre;
-    $('#publish-description').value =
-      route.descripcion || `Ruta de transporte en Tuxtla Gutiérrez: ${route.nombre}`;
-    $('#publish-content').value =
-      route.descripcion ||
-      `Recorrido de la ruta ${route.nombre}. Consulta paradas, calles y puntos de interés.`;
-    $('#publish-password').value = '';
-
-    // Preview de imagen
-    const prev = $('#publish-preview');
-    if (route.imagen) {
-      prev.src = route.imagen;
-      prev.style.display = 'block';
-    } else {
-      prev.style.display = 'none';
+    var dialog = $('#publish-dialog');
+    if (!dialog) {
+      showToast('No hay diálogo de publicación');
+      return;
     }
 
-    dialog.classList.add('active');
+    setVal('#publish-slug', slugify(route.nombre));
+    setVal('#publish-title', route.nombre);
+    setVal('#publish-description', route.descripcion || 'Ruta de transporte en Tuxtla Gutiérrez: ' + route.nombre);
+    setVal('#publish-content', route.descripcion || 'Recorrido de la ruta ' + route.nombre);
+    setVal('#publish-password', '');
+
+    var prev = $('#publish-preview');
+    if (prev) {
+      if (route.imagen) {
+        prev.src = route.imagen;
+        prev.style.display = 'block';
+      } else {
+        prev.style.display = 'none';
+      }
+    }
+
     dialog.style.display = 'flex';
   }
 
   async function publishRoute() {
-    const route = state.pendingPublishRoute;
+    var route = state.pendingPublishRoute;
     if (!route) return;
 
-    const password = $('#publish-password').value;
+    var password = getVal('#publish-password');
     if (!password) {
       showToast('Ingresa la contraseña');
       return;
     }
 
-    const btn = $('#btn-do-publish');
-    btn.disabled = true;
-    const old = btn.textContent;
-    btn.textContent = '⏳ Publicando...';
+    var btn = $('#btn-do-publish');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = '⏳ Publicando...';
+    }
 
     try {
-      const payload = {
-        password,
-        slug: $('#publish-slug').value,
-        title: $('#publish-title').value,
-        description: $('#publish-description').value,
-        content: $('#publish-content').value,
+      var payload = {
+        password: password,
+        slug: getVal('#publish-slug'),
+        title: getVal('#publish-title'),
+        description: getVal('#publish-description'),
+        content: getVal('#publish-content'),
         image: route.imagen || '',
         routeData: route,
         mapPoints: route.puntos || [],
-        streets: (route.streets || []).map((s) => s.nombre),
+        streets: (route.streets || []).map(function (s) { return s.nombre; }),
         pois: route.pois || [],
         metadata: {
           tipo: route.tipo,
@@ -1350,72 +1278,96 @@
         },
       };
 
-      const res = await fetch('/api/publish', {
+      var res = await fetch('/api/publish', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
+      var data = await res.json();
 
       if (!res.ok || !data.ok) {
-        throw new Error(data.error || `Error ${res.status}`);
+        throw new Error(data.error || 'Error ' + res.status);
       }
 
-      showToast('✅ Post publicado. Google lo indexará pronto.');
-      $('#publish-dialog').style.display = 'none';
-      $('#publish-dialog').classList.remove('active');
-      closeEditor();
+      showToast('✅ Post publicado');
+      var dialog = $('#publish-dialog');
+      if (dialog) dialog.style.display = 'none';
 
-      if (confirm('¿Ver el post publicado ahora?')) {
+      if (confirm('¿Ver el post publicado?')) {
         window.open(data.url, '_blank');
       }
     } catch (e) {
       console.error(e);
       showToast('Error: ' + e.message);
     } finally {
-      btn.disabled = false;
-      btn.textContent = old;
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = '🚀 Publicar';
+      }
     }
   }
 
-  // ==================== POIS GLOBALES ====================
-  function renderPoisList() {
-    const container = $('#pois-list');
-    if (!container) return;
-    const all = [];
-    state.routes.forEach((r) => {
-      (r.pois || []).forEach((p) => all.push({ ...p, rutaNombre: r.nombre, rutaId: r.id }));
-    });
-    if (all.length === 0) {
-      container.innerHTML =
-        '<div class="empty-state"><p>No hay puntos de interés registrados</p></div>';
-      return;
+  // ==================== BLOG ====================
+  async function loadBlogPosts() {
+    var grid = $('#blog-grid');
+    if (!grid) return;
+    grid.innerHTML = '<div class="loading"><div class="spinner"></div><span>Cargando posts...</span></div>';
+
+    try {
+      var posts = [];
+      try {
+        var res = await fetch('/api/posts');
+        if (res.ok) {
+          var data = await res.json();
+          posts = data.posts || [];
+        }
+      } catch (e) {}
+
+      if (!posts.length) {
+        try {
+          var res2 = await fetch('/paginas/posts-index.json');
+          if (res2.ok) {
+            var data2 = await res2.json();
+            posts = data2.posts || [];
+          }
+        } catch (e) {}
+      }
+
+      if (!posts.length) {
+        grid.innerHTML = '<div class="empty-state"><p>No hay posts publicados</p></div>';
+        return;
+      }
+
+      var html = '';
+      posts.forEach(function (post) {
+        var img = post.image ? '<img src="' + escapeHtml(post.image) + '" alt="' + escapeHtml(post.title) + '" loading="lazy">' : '🚌';
+        html += '<a class="blog-card" href="/' + escapeHtml(post.url) + '">';
+        html += '<div class="blog-card-img">' + img + '</div>';
+        html += '<div class="blog-card-body">';
+        html += '<h2>' + escapeHtml(post.title) + '</h2>';
+        html += '<p>' + escapeHtml(post.description || 'Ruta de transporte') + '</p>';
+        html += '<div class="blog-card-meta">';
+        html += '<span>🚌 ' + escapeHtml(post.tipo || 'ida') + '</span>';
+        html += '<span>📍 ' + (post.calles || 0) + ' calles</span>';
+        html += '</div>';
+        html += '</div>';
+        html += '</a>';
+      });
+      grid.innerHTML = html;
+    } catch (e) {
+      console.error(e);
+      grid.innerHTML = '<div class="empty-state"><p>Error cargando posts</p></div>';
     }
-    container.innerHTML = all
-      .map(
-        (p) => `
-      <div class="list-item" data-route="${p.rutaId}">
-        <div class="list-icon">${p.icono || '📍'}</div>
-        <div class="list-body">
-          <h4>${escapeHtml(p.nombre)}</h4>
-          <p>${escapeHtml(p.rutaNombre)}</p>
-        </div>
-      </div>`
-      )
-      .join('');
-    container.querySelectorAll('.list-item').forEach((it) => {
-      it.addEventListener('click', () => selectRoute(it.dataset.route));
-    });
   }
 
   // ==================== AJUSTES ====================
   function renderSettings() {
-    const totalStreets = state.routes.reduce((s, r) => s + (r.streets?.length || 0), 0);
-    const totalPois = state.routes.reduce((s, r) => s + (r.pois?.length || 0), 0);
-    const totalPoints = state.routes.reduce((s, r) => s + (r.puntos?.length || 0), 0);
-    const set = (id, v) => {
-      const el = $(id);
+    var totalStreets = state.routes.reduce(function (s, r) { return s + ((r.streets && r.streets.length) || 0); }, 0);
+    var totalPois = state.routes.reduce(function (s, r) { return s + ((r.pois && r.pois.length) || 0); }, 0);
+    var totalPoints = state.routes.reduce(function (s, r) { return s + ((r.puntos && r.puntos.length) || 0); }, 0);
+    var set = function (id, v) {
+      var el = $(id);
       if (el) el.textContent = v;
     };
     set('#settings-stat-routes', state.routes.length);
@@ -1430,16 +1382,18 @@
 
   // ==================== BÚSQUEDA ====================
   async function handleSearch() {
-    const q = $('#search-input').value.trim();
+    var input = $('#search-input');
+    if (!input) return;
+    var q = input.value.trim();
     state.filterText = q;
     renderRoutesList();
     navigateTo('routes');
     if (!q || q.length < 3) return;
-    const results = await searchPlaces(q);
-    if (results.length) {
-      const r = results[0];
-      const lat = parseFloat(r.lat),
-        lng = parseFloat(r.lon);
+    var results = await searchPlaces(q);
+    if (results.length && state.map) {
+      var r = results[0];
+      var lat = parseFloat(r.lat);
+      var lng = parseFloat(r.lon);
       if (!isNaN(lat) && !isNaN(lng)) {
         state.map.setView([lat, lng], 15);
         L.marker([lat, lng]).addTo(state.map).bindPopup(escapeHtml(r.display_name)).openPopup();
@@ -1453,84 +1407,79 @@
     state.uiMode = mode;
     localStorage.setItem('ui-mode', mode);
     document.body.classList.remove('mode-simple', 'mode-advanced');
-    document.body.classList.add(`mode-${mode}`);
-    $$('.mode-toggle').forEach((b) =>
-      b.classList.toggle('active', b.dataset.mode === mode)
-    );
+    document.body.classList.add('mode-' + mode);
+    $$('.mode-toggle').forEach(function (b) {
+      b.classList.toggle('active', b.dataset.mode === mode);
+    });
   }
 
   // ==================== EVENTOS ====================
   function setupEventListeners() {
-    // Toggle modo simple/avanzado
-    $$('.mode-toggle').forEach((b) => {
-      b.addEventListener('click', () => applyUiMode(b.dataset.mode));
+    // Modo
+    $$('.mode-toggle').forEach(function (b) {
+      b.addEventListener('click', function () { applyUiMode(b.dataset.mode); });
     });
 
     // Búsqueda
-    $('#search-input')?.addEventListener('input', (e) => {
-      state.filterText = e.target.value.trim();
-      if (state.currentPage !== 'routes' && state.filterText) navigateTo('routes');
-      renderRoutesList();
-    });
-    $('#search-btn')?.addEventListener('click', handleSearch);
-    $('#search-input')?.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        handleSearch();
-      }
-    });
+    var si = $('#search-input');
+    if (si) {
+      si.addEventListener('input', function (e) {
+        state.filterText = e.target.value.trim();
+        if (state.currentPage !== 'routes' && state.filterText) navigateTo('routes');
+        renderRoutesList();
+      });
+      si.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          handleSearch();
+        }
+      });
+    }
+    var sb = $('#search-btn');
+    if (sb) sb.addEventListener('click', handleSearch);
 
     // Nav
-    $$('.nav-item').forEach((n) => {
-      n.addEventListener('click', () => navigateTo(n.dataset.page));
+    $$('.nav-item').forEach(function (n) {
+      n.addEventListener('click', function () { navigateTo(n.dataset.page); });
     });
 
-    // Botones mapa
-    $('#btn-map-toggle')?.addEventListener('click', () => {
+    // Mapa controles
+    var bt = $('#btn-map-toggle');
+    if (bt) bt.addEventListener('click', function () {
       setMapMode(state.mapMode === 'hidden' ? 'half' : 'hidden');
     });
-    $('#btn-map-fullscreen')?.addEventListener('click', () => {
+    var bf = $('#btn-map-fullscreen');
+    if (bf) bf.addEventListener('click', function () {
       setMapMode(state.mapMode === 'full' ? 'half' : 'full');
     });
-    $$('.map-size-btn').forEach((b) => {
-      b.addEventListener('click', () => setMapMode(b.dataset.size));
+    $$('.map-size-btn').forEach(function (b) {
+      b.addEventListener('click', function () { setMapMode(b.dataset.size); });
     });
-    $$('[data-mapsize]').forEach((b) => {
-      b.addEventListener('click', () => setMapMode(b.dataset.mapsize));
+    $$('[data-mapsize]').forEach(function (b) {
+      b.addEventListener('click', function () { setMapMode(b.dataset.mapsize); });
     });
 
-    // Chips visibilidad
-    $$('#visibility-chips .chip').forEach((c) => {
-      c.addEventListener('click', () => {
+    // Chips
+    $$('#visibility-chips .chip').forEach(function (c) {
+      c.addEventListener('click', function () {
         state.routesVisibility = c.dataset.visibility;
-        $$('#visibility-chips .chip').forEach((x) =>
-          x.classList.toggle('active', x === c)
-        );
+        $$('#visibility-chips .chip').forEach(function (x) {
+          x.classList.toggle('active', x === c);
+        });
         renderRoutesOnMap();
       });
     });
 
-    // Botones rutas
-    $('#btn-new-route-list')?.addEventListener('click', () => openEditor(null));
-    $('#quick-add-route')?.addEventListener('click', () => openEditor(null));
-    $('#btn-refresh-routes')?.addEventListener('click', async () => {
-      if (!state.isOnline) {
-        showToast('Sin conexión');
-        return;
-      }
-      const fb = await loadRoutesFromFirebase();
-      state.routes = fb;
-      for (const r of fb) await localDB.saveRoute(r);
-      renderRoutesList();
-      renderRoutesOnMap();
-      renderSettings();
-      showToast('Sincronizado');
-    });
+    // Nueva ruta
+    var nr = $('#btn-new-route-list');
+    if (nr) nr.addEventListener('click', function () { openEditor(null); });
+    var qa = $('#quick-add-route');
+    if (qa) qa.addEventListener('click', function () { openEditor(null); });
 
-    // Herramientas mapa
-    $$('.tool-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const tool = btn.dataset.tool;
+    // Herramientas
+    $$('.tool-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var tool = btn.dataset.tool;
         if (tool === 'undo') {
           if (state.trackedPoints.length > 0) {
             state.trackedPoints.pop();
@@ -1560,26 +1509,30 @@
           detectAllNow();
           return;
         }
-        $$('.tool-btn').forEach((b) => b.classList.remove('active'));
+        $$('.tool-btn').forEach(function (b) { b.classList.remove('active'); });
         btn.classList.add('active');
         state.activeTool = tool;
       });
     });
 
     // GPS editor
-    $('#btn-start-tracking')?.addEventListener('click', () => {
+    var st = $('#btn-start-tracking');
+    if (st) st.addEventListener('click', function () {
       if (state.isTracking) stopTracking();
       else startTracking();
     });
-    $('#quick-gps')?.addEventListener('click', () => {
+    var qg = $('#quick-gps');
+    if (qg) qg.addEventListener('click', function () {
       if (!state.isEditing) openEditor(null);
-      setTimeout(() => {
+      setTimeout(function () {
         if (!state.isTracking) startTracking();
       }, 300);
     });
-    $('#btn-stop-recording')?.addEventListener('click', stopTracking);
+    var sr = $('#btn-stop-recording');
+    if (sr) sr.addEventListener('click', stopTracking);
 
-    $('#btn-clear-points')?.addEventListener('click', () => {
+    var cp = $('#btn-clear-points');
+    if (cp) cp.addEventListener('click', function () {
       if (confirm('¿Limpiar todos los puntos?')) {
         state.trackedPoints = [];
         state.detectedStreets = [];
@@ -1592,93 +1545,110 @@
     });
 
     // Detectar calles
-    $('#btn-detect-streets')?.addEventListener('click', async () => {
+    var ds = $('#btn-detect-streets');
+    if (ds) ds.addEventListener('click', async function () {
       if (state.trackedPoints.length < 2) {
         showToast('Traza la ruta primero');
         return;
       }
-      const bar = $('#detecting-bar');
-      bar.classList.add('active');
+      var bar = $('#detecting-bar');
+      if (bar) bar.classList.add('active');
       try {
-        const streets = await detectStreetsAlongRoute(state.trackedPoints, (i, t) => {
-          $('#detecting-text').textContent = `Detectando calles... ${i}/${t}`;
+        var streets = await detectStreetsAlongRoute(state.trackedPoints, function (i, t) {
+          var dt = $('#detecting-text');
+          if (dt) dt.textContent = 'Detectando calles... ' + i + '/' + t;
         });
         state.detectedStreets = streets;
         renderStreetsList();
-        showToast(`${streets.length} calles detectadas`);
+        showToast(streets.length + ' calles detectadas');
       } catch (e) {
         showToast('Error en detección');
       } finally {
-        bar.classList.remove('active');
+        if (bar) bar.classList.remove('active');
       }
     });
 
-    $('#btn-reverse-order')?.addEventListener('click', () => {
+    var ro = $('#btn-reverse-order');
+    if (ro) ro.addEventListener('click', function () {
       state.detectedStreets.reverse();
       renderStreetsList();
       showToast('Orden invertido');
     });
 
-    $('#btn-detect-businesses')?.addEventListener('click', async () => {
+    var db = $('#btn-detect-businesses');
+    if (db) db.addEventListener('click', async function () {
       if (state.trackedPoints.length < 2) {
         showToast('Traza la ruta primero');
         return;
       }
-      const bar = $('#detecting-bar');
-      bar.classList.add('active');
+      var bar = $('#detecting-bar');
+      if (bar) bar.classList.add('active');
       try {
-        const pois = await detectBusinessesAlongRoute(state.trackedPoints);
-        state.detectedPois = [...state.detectedPois, ...pois];
+        var pois = await detectBusinessesAlongRoute(state.trackedPoints);
+        state.detectedPois = state.detectedPois.concat(pois);
         renderPoisEditList();
-        pois.forEach((p) => renderPoiMarker(p));
-        showToast(`${pois.length} negocios detectados`);
+        pois.forEach(function (p) { renderPoiMarker(p); });
+        showToast(pois.length + ' negocios detectados');
       } catch (e) {
         showToast('Error en detección');
       } finally {
-        bar.classList.remove('active');
+        if (bar) bar.classList.remove('active');
       }
     });
 
-    $('#btn-add-custom-poi')?.addEventListener('click', () => {
+    var acp = $('#btn-add-custom-poi');
+    if (acp) acp.addEventListener('click', function () {
       state.activeTool = 'poi';
-      $$('.tool-btn').forEach((b) =>
-        b.classList.toggle('active', b.dataset.tool === 'poi')
-      );
+      $$('.tool-btn').forEach(function (b) {
+        b.classList.toggle('active', b.dataset.tool === 'poi');
+      });
       showToast('Toca el mapa para agregar un punto');
     });
 
     // Imagen
-    $('#image-upload-area')?.addEventListener('click', () => $('#route-image').click());
-    $('#route-image')?.addEventListener('change', (e) => {
-      const f = e.target.files[0];
+    var iu = $('#image-upload-area');
+    if (iu) iu.addEventListener('click', function () {
+      var ri = $('#route-image');
+      if (ri) ri.click();
+    });
+    var ri = $('#route-image');
+    if (ri) ri.addEventListener('change', function (e) {
+      var f = e.target.files[0];
       if (f) {
-        const r = new FileReader();
-        r.onload = (ev) => {
-          $('#image-preview').src = ev.target.result;
-          $('#image-preview').style.display = 'block';
+        var r = new FileReader();
+        r.onload = function (ev) {
+          var p = $('#image-preview');
+          if (p) {
+            p.src = ev.target.result;
+            p.style.display = 'block';
+          }
         };
         r.readAsDataURL(f);
       }
     });
 
     // Guardar / cancelar
-    $('#btn-save')?.addEventListener('click', saveRoute);
-    $('#btn-cancel-edit')?.addEventListener('click', () => {
+    var bs = $('#btn-save');
+    if (bs) bs.addEventListener('click', saveRoute);
+    var bc = $('#btn-cancel-edit');
+    if (bc) bc.addEventListener('click', function () {
       if (confirm('¿Descartar cambios?')) closeEditor();
     });
 
     // Color
-    $$('.color-chip').forEach((chip) => {
-      chip.addEventListener('click', () => {
-        $$('.color-chip').forEach((c) => c.classList.remove('active'));
+    $$('.color-chip').forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        $$('.color-chip').forEach(function (c) { c.classList.remove('active'); });
         chip.classList.add('active');
-        $('#route-color').value = chip.dataset.color;
+        var rc = $('#route-color');
+        if (rc) rc.value = chip.dataset.color;
         if (state.editingLayer) state.editingLayer.setStyle({ color: chip.dataset.color });
       });
     });
 
     // Buscar viaje
-    $('#btn-add-search-point')?.addEventListener('click', () => {
+    var asp = $('#btn-add-search-point');
+    if (asp) asp.addEventListener('click', function () {
       if (state.searchPoints.length >= 3) {
         showToast('Máximo 3 puntos');
         return;
@@ -1688,87 +1658,102 @@
         return;
       }
       navigator.geolocation.getCurrentPosition(
-        (pos) => addSearchPoint(pos.coords.latitude, pos.coords.longitude),
-        () => showToast('No se pudo obtener ubicación')
+        function (pos) { addSearchPoint(pos.coords.latitude, pos.coords.longitude); },
+        function () { showToast('No se pudo obtener ubicación'); }
       );
     });
-    $('#btn-clear-search-points')?.addEventListener('click', clearSearchPoints);
-    $('#btn-search-trip')?.addEventListener('click', performTripSearch);
-    $('#search-radius')?.addEventListener('input', (e) => {
+    var csp = $('#btn-clear-search-points');
+    if (csp) csp.addEventListener('click', clearSearchPoints);
+    var bst = $('#btn-search-trip');
+    if (bst) bst.addEventListener('click', performTripSearch);
+    var srad = $('#search-radius');
+    if (srad) srad.addEventListener('input', function (e) {
       state.searchRadius = parseInt(e.target.value);
-      $('#radius-value').textContent = `${state.searchRadius}m`;
-      state.searchMarkers.forEach((m) => {
+      var rv = $('#radius-value');
+      if (rv) rv.textContent = state.searchRadius + 'm';
+      state.searchMarkers.forEach(function (m) {
         if (m._circle) m._circle.setRadius(state.searchRadius);
       });
     });
 
-    document.addEventListener('click', (e) => {
-      const card = e.target.closest('.result-card');
-      if (card) selectRoute(card.dataset.id);
+    document.addEventListener('click', function (e) {
+      var card = e.target.closest('.result-card');
+      if (card && card.dataset.id) selectRoute(card.dataset.id);
     });
 
-    // Exportar / importar / sync
-    $('#btn-export')?.addEventListener('click', () => {
-      const data = JSON.stringify(state.routes, null, 2);
-      const blob = new Blob([data], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
+    // Export
+    var be = $('#btn-export');
+    if (be) be.addEventListener('click', function () {
+      var data = JSON.stringify(state.routes, null, 2);
+      var blob = new Blob([data], { type: 'application/json' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
       a.href = url;
-      a.download = `rutas-tuxtla-${Date.now()}.json`;
+      a.download = 'rutas-tuxtla-' + Date.now() + '.json';
       a.click();
       URL.revokeObjectURL(url);
     });
 
-    $('#btn-import')?.addEventListener('click', () => $('#import-file').click());
-    $('#import-file')?.addEventListener('change', async (e) => {
-      const f = e.target.files[0];
+    var bi = $('#btn-import');
+    if (bi) bi.addEventListener('click', function () {
+      var fi = $('#import-file');
+      if (fi) fi.click();
+    });
+    var fi = $('#import-file');
+    if (fi) fi.addEventListener('change', async function (e) {
+      var f = e.target.files[0];
       if (!f) return;
       try {
-        const text = await f.text();
-        const data = JSON.parse(text);
+        var text = await f.text();
+        var data = JSON.parse(text);
         if (!Array.isArray(data)) throw new Error('formato');
-        for (const r of data) {
-          if (r.id) await localDB.saveRoute(r);
+        for (var i = 0; i < data.length; i++) {
+          if (data[i].id) await localDB.saveRoute(data[i]);
         }
-        const all = await localDB.getRoutes();
+        var all = await localDB.getRoutes();
         state.routes = all;
         renderRoutesList();
         renderRoutesOnMap();
         renderSettings();
-        showToast(`${data.length} rutas importadas`);
+        showToast(data.length + ' rutas importadas');
       } catch (err) {
         showToast('Error al importar');
       }
     });
 
-    $('#btn-sync')?.addEventListener('click', async () => {
+    var bsy = $('#btn-sync');
+    if (bsy) bsy.addEventListener('click', async function () {
       if (!state.isOnline) {
         showToast('Sin conexión');
         return;
       }
       await processSyncQueue();
-      const fb = await loadRoutesFromFirebase();
+      var fb = await loadRoutesFromFirebase();
       state.routes = fb;
-      for (const r of fb) await localDB.saveRoute(r);
+      for (var i = 0; i < fb.length; i++) {
+        await localDB.saveRoute(fb[i]);
+      }
       renderRoutesList();
       renderRoutesOnMap();
       renderSettings();
       showToast('Sincronizado');
     });
 
-    $('#btn-clear-all')?.addEventListener('click', async () => {
-      if (!confirm('¿Borrar TODAS las rutas? Esta acción no se puede deshacer.')) return;
-      for (const r of state.routes) {
-        await localDB.deleteRoute(r.id);
-        if (state.isOnline)
+    var bca = $('#btn-clear-all');
+    if (bca) bca.addEventListener('click', async function () {
+      if (!confirm('¿Borrar TODAS las rutas?')) return;
+      for (var i = 0; i < state.routes.length; i++) {
+        await localDB.deleteRoute(state.routes[i].id);
+        if (state.isOnline) {
           try {
-            await deleteRouteFromFirebase(r.id);
+            await deleteRouteFromFirebase(state.routes[i].id);
           } catch (e) {}
+        }
       }
       state.routes = [];
-      Object.values(state.routeLayers).forEach((l) => {
-        if (l.polyline) state.map.removeLayer(l.polyline);
-        l.markers?.forEach((m) => state.map.removeLayer(m));
+      Object.values(state.routeLayers).forEach(function (l) {
+        if (l.polyline && state.map) state.map.removeLayer(l.polyline);
+        if (l.markers) l.markers.forEach(function (m) { if (state.map) state.map.removeLayer(m); });
       });
       state.routeLayers = {};
       state.selectedRouteId = null;
@@ -1779,112 +1764,155 @@
     });
 
     // Quick buttons
-    $('#quick-center')?.addEventListener('click', () =>
-      state.map.setView(TUXTLA_CENTER, DEFAULT_ZOOM)
-    );
-    $('#quick-locate')?.addEventListener('click', () => {
+    var qc = $('#quick-center');
+    if (qc) qc.addEventListener('click', function () {
+      if (state.map) state.map.setView(TUXTLA_CENTER, DEFAULT_ZOOM);
+    });
+    var ql = $('#quick-locate');
+    if (ql) ql.addEventListener('click', function () {
       if (!navigator.geolocation) {
         showToast('GPS no disponible');
         return;
       }
       navigator.geolocation.getCurrentPosition(
-        (pos) => state.map.setView([pos.coords.latitude, pos.coords.longitude], 16),
-        () => showToast('No se pudo obtener ubicación')
+        function (pos) {
+          if (state.map) state.map.setView([pos.coords.latitude, pos.coords.longitude], 16);
+        },
+        function () { showToast('No se pudo obtener ubicación'); }
       );
     });
 
-    // Publicar dialog
-    $('#btn-do-publish')?.addEventListener('click', publishRoute);
-    $('#btn-cancel-publish')?.addEventListener('click', () => {
-      $('#publish-dialog').style.display = 'none';
-      $('#publish-dialog').classList.remove('active');
+    // Publicar
+    var bdp = $('#btn-do-publish');
+    if (bdp) bdp.addEventListener('click', publishRoute);
+    var bcp = $('#btn-cancel-publish');
+    if (bcp) bcp.addEventListener('click', function () {
+      var d = $('#publish-dialog');
+      if (d) d.style.display = 'none';
     });
 
-    // Online/offline
-    window.addEventListener('online', () => {
+    // Online/Offline
+    window.addEventListener('online', function () {
       updateConnectionStatus();
       showToast('Conexión restaurada');
       processSyncQueue();
     });
-    window.addEventListener('offline', () => {
+    window.addEventListener('offline', function () {
       updateConnectionStatus();
       showToast('Modo offline');
     });
   }
 
-  // ==================== DETECT ALL ====================
   async function detectAllNow() {
     if (state.trackedPoints.length < 2) {
       showToast('Traza la ruta primero');
       return;
     }
-    $('#detecting-bar').classList.add('active');
+    var bar = $('#detecting-bar');
+    if (bar) bar.classList.add('active');
     try {
-      $('#detecting-text').textContent = 'Detectando calles...';
-      const streets = await detectStreetsAlongRoute(state.trackedPoints, (i, t) => {
-        $('#detecting-text').textContent = `Detectando calles... ${i}/${t}`;
+      var dt = $('#detecting-text');
+      if (dt) dt.textContent = 'Detectando calles...';
+      var streets = await detectStreetsAlongRoute(state.trackedPoints, function (i, t) {
+        if (dt) dt.textContent = 'Detectando calles... ' + i + '/' + t;
       });
       state.detectedStreets = streets;
       renderStreetsList();
 
-      $('#detecting-text').textContent = 'Detectando negocios...';
-      const pois = await detectBusinessesAlongRoute(state.trackedPoints);
-      state.detectedPois = [...state.detectedPois, ...pois];
+      if (dt) dt.textContent = 'Detectando negocios...';
+      var pois = await detectBusinessesAlongRoute(state.trackedPoints);
+      state.detectedPois = state.detectedPois.concat(pois);
       renderPoisEditList();
-      pois.forEach((p) => renderPoiMarker(p));
+      pois.forEach(function (p) { renderPoiMarker(p); });
 
-      showToast(`Detectados: ${streets.length} calles, ${pois.length} negocios`);
+      showToast('Detectados: ' + streets.length + ' calles, ' + pois.length + ' negocios');
     } catch (e) {
       console.error(e);
       showToast('Error detectando');
     } finally {
-      $('#detecting-bar').classList.remove('active');
+      if (bar) bar.classList.remove('active');
     }
   }
 
   // ==================== INIT ====================
   async function init() {
-    // Aplicar modo UI
+    console.log('✅ Iniciando init...');
     applyUiMode(state.uiMode);
+    console.log('✅ Modo UI aplicado:', state.uiMode);
 
-    await initDB();
+    try {
+      await initDB();
+      console.log('✅ DB lista');
+    } catch (e) {
+      console.warn('⚠️ DB error:', e);
+    }
+
     initMap();
+    console.log('✅ Mapa listo');
+
     setupEventListeners();
+    console.log('✅ Eventos configurados');
+
     updateConnectionStatus();
 
-    const localRoutes = await localDB.getRoutes();
-    if (localRoutes.length > 0) {
-      state.routes = localRoutes;
-      renderRoutesList();
-      renderRoutesOnMap();
-      renderSettings();
+    try {
+      var localRoutes = await localDB.getRoutes();
+      if (localRoutes.length > 0) {
+        state.routes = localRoutes;
+        renderRoutesList();
+        renderRoutesOnMap();
+        renderSettings();
+      }
+    } catch (e) {
+      console.warn('Error cargando rutas locales:', e);
     }
 
     if (state.isOnline) {
-      const fbRoutes = await loadRoutesFromFirebase();
-      const merged = [...fbRoutes];
-      localRoutes.forEach((l) => {
-        if (!fbRoutes.find((f) => f.id === l.id)) merged.push(l);
-      });
-      state.routes = merged;
-      for (const r of merged) await localDB.saveRoute(r);
-      renderRoutesList();
-      renderRoutesOnMap();
-      renderSettings();
-      processSyncQueue();
+      try {
+        var fbRoutes = await loadRoutesFromFirebase();
+        var merged = fbRoutes.slice();
+        state.routes.forEach(function (l) {
+          if (!fbRoutes.find(function (f) { return f.id === l.id; })) merged.push(l);
+        });
+        state.routes = merged;
+        for (var i = 0; i < merged.length; i++) {
+          await localDB.saveRoute(merged[i]);
+        }
+        renderRoutesList();
+        renderRoutesOnMap();
+        renderSettings();
+        processSyncQueue();
+      } catch (e) {
+        console.warn('Error cargando Firebase:', e);
+      }
     }
 
     navigateTo('routes');
     setMapMode('half');
 
-    window.addEventListener('resize', () =>
-      setTimeout(() => state.map.invalidateSize(), 200)
-    );
-    setTimeout(() => state.map.invalidateSize(), 500);
+    window.addEventListener('resize', function () {
+      if (state.map) setTimeout(function () { state.map.invalidateSize(); }, 200);
+    });
+
+    setTimeout(function () {
+      if (state.map) state.map.invalidateSize();
+    }, 500);
+
+    console.log('🎉 App lista');
   }
 
-  // Exponer para HTML
-  window.RutasApp = { state, showToast, openEditor, openPublishDialog };
+  // Exponer
+  window.RutasApp = {
+    state: state,
+    showToast: showToast,
+    openEditor: openEditor,
+    openPublishDialog: openPublishDialog,
+  };
 
-  init().catch(console.error);
+  // Arrancar cuando DOM esté listo
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 })();
