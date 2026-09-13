@@ -56,8 +56,8 @@ export async function onRequest(context) {
     else if (tipo === 'market') folder = 'share/m';
 
     const safeSlug = slug.replace(/[^a-z0-9\-_]/gi, '-').toLowerCase().replace(/-+/g, '-').replace(/^-|-$/g, '');
-     const htmlPath = `${folder}/${safeSlug}.html`;
-    const cleanPath = `${folder}/${safeSlug}`;
+   const htmlPath = `${folder}/${safeSlug}.html`;
+const cleanPath = `${folder}/${safeSlug}.html`;
     const pageUrl = `${baseUrl}/${cleanPath}`;
     // ---------- Generar HTML con SEO completo ----------
     const html = generateHTML({
@@ -124,7 +124,7 @@ export async function onRequest(context) {
       title,
       description: (content || '').slice(0, 160),
       image: image || '',
-      url: `/${cleanPath}`,
+       url: `/${cleanPath}`,
        tipo: tipo || 'post',
       timestamp: Date.now(),
       updatedAt: new Date().toISOString()
