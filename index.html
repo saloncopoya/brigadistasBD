@@ -330,11 +330,11 @@ img{max-width:100%;display:block}
 .suggestion:hover,.suggestion.hl{background:var(--surface-2);color:var(--cyan)}
 .suggestion svg{width:16px;height:16px;color:var(--cyan);flex-shrink:0}
 
-.routes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
-.route-card{
+.routes-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .route-card{
   background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
-  padding:16px 14px;position:relative;transition:var(--transition);overflow:hidden;
-  display:flex;flex-direction:column;gap:10px;min-height:120px;
+  padding:12px 10px;position:relative;transition:var(--transition);overflow:hidden;
+  display:flex;flex-direction:column;gap:8px;min-height:110px;
 }
 .route-card:hover{border-color:var(--cyan);transform:translateY(-2px);box-shadow:var(--shadow-sm)}
 .route-card .route-icon{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,var(--cyan),var(--cyan-d));display:grid;place-items:center;color:#00121a}
@@ -459,7 +459,7 @@ img{max-width:100%;display:block}
   .form-grid{grid-template-columns:1fr 1fr;gap:0 14px}
   .form-grid .field.full{grid-column:1/-1}
   .routes-grid{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
-  .feed{max-width:680px}
+   .feed{max-width:680px}
 }
 @media(min-width:1000px){
   .app{max-width:1200px;margin:0 auto}
@@ -467,8 +467,14 @@ img{max-width:100%;display:block}
   #map{height:70vh}
 }
 @media(max-width:380px){
-  .routes-grid{grid-template-columns:repeat(2,1fr)}
+  .routes-grid{grid-template-columns:repeat(3,1fr)}
   .header-brand .brand-txt{font-size:14px}
+  .route-card{padding:10px 8px;min-height:100px}
+  .route-card .route-icon{width:34px;height:34px}
+  .route-card .route-icon svg{width:18px;height:18px}
+  .route-card .route-name{font-size:11px}
+  .route-card .route-actions .icon-btn{width:26px;height:26px}
+  .route-card .edit-del .icon-btn{width:24px;height:24px}
 }
    /* Leyenda del mapa */
 .map-legend {
@@ -508,8 +514,8 @@ img{max-width:100%;display:block}
 <main class="app" id="app">
 
   <!-- ===================== PÁGINA: INICIO (FEED) ===================== -->
-  <section class="page active" id="page-home">
-    <div class="container">
+  <section class="page" id="page-home">
+     <div class="container">
       <div class="section-title">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         Publicaciones recientes
@@ -525,7 +531,7 @@ img{max-width:100%;display:block}
   </section>
 
   <!-- ===================== PÁGINA: RUTAS ===================== -->
-  <section class="page" id="page-routes">
+  <section class="page active" id="page-routes">
     <div class="container">
       <!-- Buscador dual -->
       <div class="search-bar">
@@ -675,11 +681,11 @@ img{max-width:100%;display:block}
 
 <!-- ============================ NAV INFERIOR ============================ -->
 <nav class="bottom-nav">
-  <button class="nav-item active" data-page="home">
+  <button class="nav-item" data-page="home">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     <span>Inicio</span>
   </button>
-  <button class="nav-item" data-page="routes">
+  <button class="nav-item active" data-page="routes">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M6 16V9a4 4 0 0 1 4-4h4"/><path d="M18 8v7a4 4 0 0 1-4 4H9"/></svg>
     <span>Rutas</span>
   </button>
