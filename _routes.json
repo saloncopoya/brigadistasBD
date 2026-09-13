@@ -1,21 +1,5 @@
 {
   "version": 1,
-  "include": ["/*"],
-  "exclude": [
-    "/assets/*",
-    "/js/*",
-    "/share/*",
-    "/functions/*",
-    "/api/*",
-    "/manifest.json",
-    "/robots.txt",
-    "/sitemap.xml",
-    "/sw.js",
-    "/offline.html",
-    "/img.png",
-    "/*.png",
-    "/*.svg",
-    "/*.ico",
-    "/*.webmanifest"
-  ]
+  "include": ["/api/*"],
+  "exclude": ["/assets/*", "/js/*", "/css/*", "/share/*"]
 }
