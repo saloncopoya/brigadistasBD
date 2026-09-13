@@ -17,14 +17,13 @@
     const base = String(text || '')
       .toLowerCase()
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/[^a-z0-9]/g, '')
       .trim()
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
+      .replace(/\s+/g, '')
       .slice(0, 60);
-    if (dia != null && mes != null) return `${base}+${dia}+${mes}`;
+    if (dia != null && mes != null) return `${base}${dia}${mes}`;
     const d = new Date();
-    return `${base}+${d.getDate()}+${d.getMonth() + 1}`;
+    return `${base}${d.getDate()}${d.getMonth() + 1}`;
   }
 
   // ---------- Subida a Cloudinary ----------
