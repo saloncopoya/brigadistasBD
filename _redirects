@@ -1,11 +1,1 @@
-/share/post/*    /share/post/:splat.html    200
-/share/ruta/*    /share/ruta/:splat.html    200
-/share/m/*       /share/m/:splat.html       200
-
-# Si la URL ya trae .html, no la toques
-/share/post/:file.html    /share/post/:file.html    200
-/share/ruta/:file.html    /share/ruta/:file.html    200
-/share/m/:file.html       /share/m/:file.html       200
-
-# Fallback SPA
 /*    /index.html    200
