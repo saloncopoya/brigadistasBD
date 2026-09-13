@@ -636,7 +636,7 @@ button{cursor:pointer;border:none;background:none}
 
   function initEditorMap(){
     if(state.map) return;
-    state.map = L.map('editorMap',{zoomControl:true}).setView([19.4326,-99.1332],13);
+state.map = L.map('editorMap',{zoomControl:true}).setView([16.7530,-93.1150],13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
       maxZoom:19, attribution:'© OpenStreetMap'
     }).addTo(state.map);
