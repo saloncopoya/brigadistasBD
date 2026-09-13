@@ -1,60 +1,50 @@
-// functions/api/posts.js
-// Devuelve el índice de posts (lectura pública)
+/* ==========================================================================
+   POSTS.JS — API de lectura del índice de posts (con CORS)
+   ========================================================================== */
 
-export async function onRequestGet(context) {
+export async function onRequest(context) {
   const { env } = context;
-
-  const corsHeaders = {
+  const headers = {
+    'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
-    'Cache-Control': 'public, max-age=60',
+    'Cache-Control': 'public, max-age=300, s-maxage=600'
   };
 
+  if (context.request.method === 'OPTIONS') {
+    return new Response(null, { headers });
+  }
+
+  const {
+    GITHUB_TOKEN, REPO_OWNER, REPO_NAME
+  } = env;
+
+  if (!GITHUB_TOKEN || !REPO_OWNER || !REPO_NAME) {
+    return new Response(JSON.stringify({ posts: [], total: 0, error: 'Sin config' }), { headers });
+  }
+
   try {
-    const owner = env.REPO_OWNER;
-    const repo = env.REPO_NAME;
-    const token = env.GITHUB_TOKEN;
-
-    // Si hay token, leemos desde GitHub (datos frescos)
-    if (owner && repo && token) {
-      const res = await fetch(
-        `https://api.github.com/repos/${owner}/${repo}/contents/paginas/posts-index.json`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: 'application/vnd.github+json',
-            'User-Agent': 'RutasTuxtlaBot',
-          },
-        }
-      );
-
-      if (res.ok) {
-        const data = await res.json();
-        const decoded = atob(data.content.replace(/\n/g, ''));
-        return new Response(decoded, {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+    const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/share/posts-index.json?ref=main`;
+    const res = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github+json',
+        'User-Agent': 'brigadistasbd-posts',
+        'X-GitHub-Api-Version': '2022-11-28'
       }
+    });
+
+    if (!res.ok) {
+      return new Response(JSON.stringify({ posts: [], total: 0 }), { headers });
     }
 
-    // Fallback: devolver vacío
-    return new Response(JSON.stringify({ posts: [], total: 0 }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  } catch (e) {
-    return new Response(JSON.stringify({ posts: [], total: 0, error: e.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
-}
+    const json = await res.json();
+    const decoded = decodeURIComponent(escape(atob(json.content.replace(/\n/g, ''))));
+    const data = JSON.parse(decoded);
 
-export async function onRequestOptions() {
-  return new Response(null, {
-    status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
-    },
-  });
+    return new Response(JSON.stringify(data), { headers });
+
+  } catch (err) {
+    return new Response(JSON.stringify({ posts: [], total: 0, error: err.message }), { headers });
+  }
 }
