@@ -1,57 +1,113 @@
-document.addEventListener("DOMContentLoaded", async () => {
-  const container = document.getElementById("postsList");
-  const banner = document.getElementById("offlineBanner");
+// js/main.js
+// Lee el índice de posts y muestra la portada del blog
 
-  const updateOnline = () => {
-    banner.hidden = navigator.onLine;
-  };
-  window.addEventListener("online", updateOnline);
-  window.addEventListener("offline", updateOnline);
-  updateOnline();
+(function () {
+  'use strict';
 
-  async function render(posts) {
-    if (!posts.length) {
-      container.innerHTML =
-        '<p class="muted">Aún no hay publicaciones. Crea la primera desde el <a href="admin.html">panel admin</a>.</p>';
-      return;
-    }
-    container.innerHTML = posts
-      .map(
-        (post) => `
-      <article class="card">
-        ${post.image ? `<img src="${post.image}" alt="${post.title}" loading="lazy">` : ""}
-        <div class="card-content">
-          <h3><a href="/${post.url}">${post.title}</a></h3>
-          <small class="muted">${post.date || ""}</small>
-          <p>${post.description || ""}</p>
-          <a href="/${post.url}" class="read-more">Leer artículo →</a>
-        </div>
-      </article>`
-      )
-      .join("");
+  const $ = (s) => document.querySelector(s);
+
+  function escapeHtml(text) {
+    if (text == null) return '';
+    const div = document.createElement('div');
+    div.textContent = String(text);
+    return div.innerHTML;
   }
 
-  // 1) Render desde IndexedDB al instante (offline-first)
-  try {
-    const local = await BlogCache.getLocalPosts();
-    if (local.length) await render(local);
-  } catch {}
+  function formatDate(iso) {
+    try {
+      return new Date(iso).toLocaleDateString('es-MX', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      });
+    } catch {
+      return '';
+    }
+  }
 
-  // 2) Intenta actualizar desde la red
-  try {
-    const res = await fetch("paginas/posts-index.json?t=" + Date.now(), {
-      cache: "no-store",
+  async function loadPosts() {
+    const grid = $('#blog-grid');
+    if (!grid) return;
+
+    grid.innerHTML =
+      '<div class="loading"><div class="spinner"></div><span>Cargando rutas...</span></div>';
+
+    try {
+      // Intentar API primero, luego JSON estático
+      let posts = [];
+      try {
+        const res = await fetch('/api/posts');
+        if (res.ok) {
+          const data = await res.json();
+          posts = data.posts || [];
+        }
+      } catch (e) {}
+
+      if (!posts.length) {
+        try {
+          const res = await fetch('/paginas/posts-index.json');
+          if (res.ok) {
+            const data = await res.json();
+            posts = data.posts || [];
+          }
+        } catch (e) {}
+      }
+
+      if (!posts.length) {
+        grid.innerHTML = `
+          <div class="empty-state" style="grid-column:1/-1">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+            </svg>
+            <p>Aún no hay rutas publicadas</p>
+            <p style="font-size:13px;margin-top:8px">Agrega rutas desde la app y publícalas</p>
+          </div>`;
+        return;
+      }
+
+      grid.innerHTML = posts
+        .map((post) => {
+          const img = post.image
+            ? `<img src="${escapeHtml(post.image)}" alt="${escapeHtml(post.title)}" loading="lazy">`
+            : '🚌';
+
+          return `
+          <a class="blog-card" href="/${escapeHtml(post.url)}">
+            <div class="blog-card-img">${img}</div>
+            <div class="blog-card-body">
+              <h2>${escapeHtml(post.title)}</h2>
+              <p>${escapeHtml(post.description || 'Ruta de transporte en Tuxtla Gutiérrez')}</p>
+              <div class="blog-card-meta">
+                <span>🚌 ${escapeHtml(post.tipo || 'ida')}</span>
+                <span>📍 ${post.calles || 0} calles</span>
+                ${post.tarifa ? `<span>💰 ${escapeHtml(post.tarifa)}</span>` : ''}
+              </div>
+            </div>
+          </a>`;
+        })
+        .join('');
+    } catch (e) {
+      console.error(e);
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><p>Error cargando rutas</p></div>`;
+    }
+  }
+
+  // Filtro de búsqueda en portada
+  function setupFilter() {
+    const input = $('#blog-filter');
+    if (!input) return;
+
+    input.addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase().trim();
+      document.querySelectorAll('.blog-card').forEach((card) => {
+        const text = card.textContent.toLowerCase();
+        card.style.display = !q || text.includes(q) ? '' : 'none';
+      });
     });
-    if (res.ok) {
-      const posts = await res.json();
-      await BlogCache.cachePostsIndex(posts);
-      await render(posts);
-      // Precarga en background
-      BlogCache.precacheAllPosts(posts);
-    }
-  } catch (e) {
-    // Offline: ya mostramos lo local arriba
-    const local = await BlogCache.getLocalPosts();
-    await render(local);
   }
-});
+
+  document.addEventListener('DOMContentLoaded', () => {
+    loadPosts();
+    setupFilter();
+  });
+})();
