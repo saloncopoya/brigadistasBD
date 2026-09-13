@@ -1,27 +1,14 @@
-/* ==========================================================================
-   SW.JS — v7 · NO intercepta tiles, NO intercepta APIs externas.
-   Los recursos externos van DIRECTO a la red sin tocar el SW.
-   ========================================================================== */
-
-const VERSION = 'bgd-v7';
+/* SW.JS — v8 · NO intercepta tiles ni APIs externas */
+const VERSION = 'bgd-v8';
 const STATIC_CACHE = `${VERSION}-static`;
 const HTML_CACHE = `${VERSION}-html`;
 
 const PRECACHE = [
-  '/',
-  '/index.html',
-  '/admin.html',
-  '/offline.html',
-  '/manifest.json',
-  '/robots.txt',
-  '/sitemap.xml',
-  '/assets/icon.svg',
-  '/js/db.js',
-  '/js/publisher.js',
-  '/js/app.js'
+  '/', '/index.html', '/admin.html', '/offline.html',
+  '/manifest.json', '/robots.txt', '/sitemap.xml',
+  '/assets/icon.svg', '/js/db.js', '/js/publisher.js', '/js/app.js'
 ];
 
-// ================= INSTALL =================
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
     const cache = await caches.open(STATIC_CACHE);
@@ -29,68 +16,49 @@ self.addEventListener('install', event => {
       try {
         const res = await fetch(url, { cache: 'reload' });
         if (res.ok) await cache.put(url, res);
-      } catch (e) {
-        console.warn('[SW precache fail]', url);
-      }
+      } catch (e) {}
     }));
     await self.skipWaiting();
   })());
 });
 
-// ================= ACTIVATE =================
 self.addEventListener('activate', event => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
-    await Promise.all(
-      keys.filter(k => !k.startsWith(VERSION)).map(k => caches.delete(k))
-    );
+    await Promise.all(keys.filter(k => !k.startsWith(VERSION)).map(k => caches.delete(k)));
     await self.clients.claim();
   })());
 });
 
-// ================= FETCH =================
 self.addEventListener('fetch', event => {
   const req = event.request;
   if (req.method !== 'GET') return;
-
   const url = new URL(req.url);
 
-  // ⚠️ CRÍTICO: NO interceptar NINGÚN recurso externo.
-  // Dejar que el navegador los maneje directamente SIN credentials.
-  if (url.origin !== self.location.origin) {
-    return;
-  }
+  // ⚠️ NO interceptar recursos externos (tiles, firebase, etc.)
+  if (url.origin !== self.location.origin) return;
 
-  // Mismo origen: HTML → network-first, resto → cache-first
   if (req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html')) {
     event.respondWith(htmlStrategy(req));
     return;
   }
-
   event.respondWith(cacheFirst(req, STATIC_CACHE));
 });
 
-// HTML: red primero, fallback a cache, luego offline.html
 async function htmlStrategy(req) {
   const cache = await caches.open(HTML_CACHE);
   try {
     const fresh = await fetch(req);
-    if (fresh && fresh.ok) {
-      cache.put(req, fresh.clone());
-      return fresh;
-    }
-    throw new Error('bad status');
-  } catch (err) {
+    if (fresh && fresh.ok) { cache.put(req, fresh.clone()); return fresh; }
+    throw new Error('bad');
+  } catch (e) {
     const cached = await cache.match(req);
     if (cached) return cached;
     const offline = await caches.match('/offline.html');
-    return offline || new Response('<h1>Sin conexión</h1>', {
-      status: 503, headers: { 'Content-Type': 'text/html' }
-    });
+    return offline || new Response('<h1>Sin conexión</h1>', { status: 503, headers: { 'Content-Type': 'text/html' } });
   }
 }
 
-// Estáticos propios: cache primero
 async function cacheFirst(req, cacheName) {
   const cache = await caches.open(cacheName);
   const cached = await cache.match(req);
@@ -99,17 +67,12 @@ async function cacheFirst(req, cacheName) {
     const fresh = await fetch(req);
     if (fresh && fresh.ok) cache.put(req, fresh.clone());
     return fresh;
-  } catch (e) {
-    return cached || Response.error();
-  }
+  } catch (e) { return cached || Response.error(); }
 }
 
-// ================= MENSAJES =================
 self.addEventListener('message', event => {
   if (event.data === 'SKIP_WAITING') self.skipWaiting();
   if (event.data === 'CLEAR_CACHE') {
-    event.waitUntil(
-      caches.keys().then(ks => Promise.all(ks.map(k => caches.delete(k))))
-    );
+    event.waitUntil(caches.keys().then(ks => Promise.all(ks.map(k => caches.delete(k)))));
   }
 });
