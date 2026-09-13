@@ -15,11 +15,11 @@
       "horario": "05:00 - 22:00",
       "dias": "todos",
       "accesible": "no",
-      "puntos": 37,
+      "puntos": 49,
       "calles": 17,
-      "pois": 1,
-      "createdAt": "2026-09-13T03:19:04.132Z",
-      "updatedAt": "2026-09-13T03:19:04.132Z"
+      "pois": 2,
+      "createdAt": "2026-09-13T05:19:32.657Z",
+      "updatedAt": "2026-09-13T05:19:32.657Z"
     },
     {
       "slug": "aa",
@@ -43,6 +43,6 @@
       "updatedAt": "2026-09-13T03:18:32.901Z"
     }
   ],
-  "updatedAt": "2026-09-13T03:19:04.132Z",
+  "updatedAt": "2026-09-13T05:19:32.657Z",
   "total": 2
 }
