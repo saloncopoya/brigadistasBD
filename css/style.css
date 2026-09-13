@@ -1117,3 +1117,71 @@ body.mode-simple .simple-card p{
   overflow:hidden;
   margin:24px 0;
   box-shadow:var(--shadow);
+}
+
+.post-cta{
+  background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  color:#fff;
+  padding:30px;
+  border-radius:18px;
+  text-align:center;
+  margin:40px 0;
+}
+
+.post-cta h3{font-size:22px;margin-bottom:10px}
+.post-cta p{opacity:.9;margin-bottom:20px;font-size:15px}
+
+.post-cta .btn{
+  background:#fff;
+  color:var(--primary);
+  font-weight:800;
+  padding:16px 32px;
+  font-size:16px;
+}
+
+.post-footer{
+  background:#0f172a;
+  color:#94a3b8;
+  padding:40px 20px;
+  text-align:center;
+  font-size:14px;
+}
+
+.post-footer a{color:#60a5fa;text-decoration:none}
+
+/* Admin */
+.admin-page{
+  background:var(--bg);
+  min-height:100vh;
+  padding:20px;
+}
+
+.admin-container{
+  max-width:900px;
+  margin:0 auto;
+  background:#fff;
+  border-radius:18px;
+  padding:30px;
+  box-shadow:var(--shadow);
+}
+
+.admin-header{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  margin-bottom:24px;
+  padding-bottom:20px;
+  border-bottom:2px solid var(--border);
+}
+
+.admin-header h1{font-size:24px;font-weight:800}
+
+@media (max-width:600px){
+  .blog-header{padding:30px 16px}
+  .blog-container{padding:20px 14px 60px}
+  .blog-grid{grid-template-columns:1fr}
+  .post-hero{padding:40px 16px 30px}
+  .post-content{padding:30px 16px 60px}
+  .post-map{height:300px}
+  .admin-container{padding:20px}
+}
