@@ -1157,11 +1157,11 @@ body.fs-active{overflow:hidden !important}
     const clearBtn = $('#routeCustomImgClear');
     const hint = $('#routeImgHint');
     
-    // Validar tamaño máximo (5MB)
-    if (f.size > 5 * 1024 * 1024) {
-      toast('La imagen es muy grande (máx. 5MB)', 'err');
-      return;
-    }
+    // Validar tamaño máximo (ahora 20MB, se comprimirá automáticamente)
+if (f.size > 20 * 1024 * 1024) {
+  toast('La imagen es muy grande (máx. 20MB)', 'err');
+  return;
+}
     
     prog.classList.remove('hidden');
     prog.querySelector('div').style.width = '30%';
