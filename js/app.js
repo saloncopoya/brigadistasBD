@@ -874,7 +874,7 @@ const url = location.origin + '/share/post/' + post.id;
     }
 
     // --- Leyenda flotante (opcional pero recomendado) ---
-    const legend = L.control({ position: 'bottomright' });
+    const legend = L.control({ position: 'bottomleft' });
     legend.onAdd = function () {
       const div = L.DomUtil.create('div', 'map-legend');
       div.innerHTML = `
