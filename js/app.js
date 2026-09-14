@@ -1849,13 +1849,7 @@ const url = location.origin + '/share/m/' + id;
       };
     });
 
-    // Si hay directas, auto-zoom al primer resultado
-    if (results.direct.length) {
-      const coords = getRouteCoords(results.direct[0].route);
-      if (coords.length) {
-        try { state.tripMap.fitBounds(L.latLngBounds(coords).pad(0.15)); } catch(e){}
-      }
-    }
+ 
   }
 
   $('#tripRadius').oninput = e => {
