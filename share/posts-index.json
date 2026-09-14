@@ -1,16 +1,6 @@
 {
   "posts": [
     {
-      "slug": "ruta1139",
-      "title": "Ruta 1",
-      "description": "Ruta Ruta 1",
-      "image": "",
-      "url": "/share/ruta/ruta1139",
-      "tipo": "ruta",
-      "timestamp": 1789357138011,
-      "updatedAt": "2026-09-14T03:38:58.011Z"
-    },
-    {
       "slug": "mirutafavorita139",
       "title": "MI RUTA FAVORITA",
       "description": "Ruta MI RUTA FAVORITA",
@@ -201,8 +191,8 @@
       "updatedAt": "2026-09-13T08:52:43.612Z"
     }
   ],
-  "total": 20,
-  "updatedAt": "2026-09-14T12:04:36.363Z",
+  "total": 19,
+  "updatedAt": "2026-09-14T12:04:44.723Z",
   "version": 1,
   "__sha": "9d28e8cec6971a9011f87cc1c0104c14505db3cd"
 }
