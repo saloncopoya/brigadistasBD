@@ -1996,24 +1996,24 @@ const url = location.origin + '/share/m/' + id;
             Abrir ${li + 1}ª ruta
           </button>`).join('');
 
-        return `
+              return `
         <div class="result-card transbordo" data-result-idx="${idx}" data-result-type="transfer">
           <div class="rc-head">
             <div class="rc-icon" style="background:${color}20;color:${color}">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/></svg>
             </div>
             <div style="flex:1">
+              <div class="trip-chain">${chipsHtml}</div>
               <div class="rc-sub">${t.transfers} transbordo(s) · ~${Math.round(t.totalDist)}m totales</div>
             </div>
             <span class="badge badge-amber">${t.transfers}T</span>
           </div>
-          <div class="trip-chain">${chipsHtml}</div>
           <div class="trip-result-actions">
+            ${buttonsHtml}
             <button class="btn btn-primary btn-sm" data-trip-show="${idx}">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="14" height="14"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/></svg>
               Ver trazos en mapa
             </button>
-            ${buttonsHtml}
           </div>
         </div>`;
       }).join('');
