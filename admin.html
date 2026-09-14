@@ -34,7 +34,7 @@ button{cursor:pointer;border:none;background:none}
 
 .header{position:sticky;top:0;height:var(--header-h);background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 14px;z-index:1000}
 .header-brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:16px}
-.header-brand .logo{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--red),#b91c1c);display:grid;place-items:center;color:#fff;font-size:16px;box-shadow:0 0 18px rgba(239,68,68,.4)}
+.header-brand .logo{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--red),#b91c1c);display:grid;place-items:center;color:#fff;box-shadow:0 0 18px rgba(239,68,68,.4)}
 .header-actions{display:flex;gap:6px}
 .icon-btn{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;color:var(--text-2);transition:var(--transition)}
 .icon-btn:hover{background:var(--surface-2);color:var(--cyan)}
@@ -162,13 +162,57 @@ body.fs-active{overflow:hidden !important}
 .chip{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:99px;background:var(--surface-2);border:1px solid var(--border);font-size:11.5px;font-weight:600}
 .chip button{color:var(--text-3);font-weight:800;font-size:14px;line-height:1}
 .chip button:hover{color:var(--red)}
+
+  /* Grid de 3 columnas para el editor de rutas */
+.admin-cols-3{
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:12px;
+  margin-top:8px;
+}
+.admin-col{
+  background:var(--surface-2);
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  padding:12px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.admin-col-title{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:11.5px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+  color:var(--cyan);
+  padding-bottom:8px;
+  margin-bottom:4px;
+  border-bottom:1px solid var(--border);
+}
+.admin-col .field{margin-bottom:0}
+.admin-col .field label{font-size:11px}
+.admin-col .input,
+.admin-col .select{padding:8px 10px;font-size:12.5px}
+.admin-col .select{padding-right:28px;background-size:14px}
+
+/* Responsive: en móvil se apilan */
+@media(max-width:720px){
+  .admin-cols-3{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
 
 <header class="header">
   <div class="header-brand">
-    <div class="logo">⚙</div>
+    
+        <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="18" height="18" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </div>
+    
     <span>Admin Panel</span>
   </div>
   <div class="header-actions">
@@ -258,19 +302,15 @@ body.fs-active{overflow:hidden !important}
       </div>
 
       <!-- Paso 1 -->
+
       <div class="route-step" data-step="1">
-        <div class="form-grid">
-          <div class="field full">
-            <label>Nombre de la ruta *</label>
-            <input class="input" id="routeName" placeholder="Ej: Ruta Centro - Universidad">
-          </div>
-          <div class="field">
-            <label>Categoría *</label>
-            <select class="select" id="routeCat">
-              <option value="urbana">Urbana</option>
-              <option value="foranea">Foránea</option>
-            </select>
-          </div>
+        <div class="field full">
+          <label>Nombre de la ruta *</label>
+          <input class="input" id="routeName" placeholder="Ej: Ruta Centro - Universidad">
+        </div>
+
+        <!-- 🎨 Colores en su propia fila -->
+        <div class="form-grid" style="margin-bottom:12px">
           <div class="field">
             <label>Color de ida</label>
             <div class="color-swatches" id="colorIda"></div>
@@ -279,46 +319,82 @@ body.fs-active{overflow:hidden !important}
             <label>Color de regreso</label>
             <div class="color-swatches" id="colorVuelta"></div>
           </div>
-          <div class="field">
-            <label>Tarifa</label>
-            <input class="input" id="routeTarifa" placeholder="$10">
+        </div>
+
+        <!-- 📋 3 columnas de información -->
+        <div class="admin-cols-3">
+
+          <!-- Columna 1: Info general -->
+          <div class="admin-col">
+            <div class="admin-col-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              Información
+            </div>
+            <div class="field">
+              <label>Categoría *</label>
+              <select class="select" id="routeCat">
+                <option value="urbana">Urbana</option>
+                <option value="foranea">Foránea</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Tarifa</label>
+              <input class="input" id="routeTarifa" placeholder="$10">
+            </div>
+            <div class="field">
+              <label>Frecuencia</label>
+              <input class="input" id="routeFrec" placeholder="Cada 15 min">
+            </div>
           </div>
-          <div class="field">
-            <label>Frecuencia</label>
-            <input class="input" id="routeFrec" placeholder="Cada 15 min">
+
+          <!-- Columna 2: Horarios -->
+          <div class="admin-col">
+            <div class="admin-col-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Horario
+            </div>
+            <div class="field">
+              <label>Hora de inicio</label>
+              <input class="input" id="routeHoraIni" placeholder="05:00">
+            </div>
+            <div class="field">
+              <label>Hora de fin</label>
+              <input class="input" id="routeHoraFin" placeholder="22:00">
+            </div>
+            <div class="field">
+              <label>Días de operación</label>
+              <select class="select" id="routeDias">
+                <option value="todos">Todos los días</option>
+                <option value="l-v">Lunes a Viernes</option>
+                <option value="l-s">Lunes a Sábado</option>
+                <option value="finde">Solo fines de semana</option>
+              </select>
+            </div>
           </div>
-          <div class="field">
-            <label>Horario inicio</label>
-            <input class="input" id="routeHoraIni" placeholder="05:00">
-          </div>
-          <div class="field">
-            <label>Horario fin</label>
-            <input class="input" id="routeHoraFin" placeholder="22:00">
-          </div>
-          <div class="field">
-            <label>Días de operación</label>
-            <select class="select" id="routeDias">
-              <option value="todos">Todos los días</option>
-              <option value="l-v">Lunes a Viernes</option>
-              <option value="l-s">Lunes a Sábado</option>
-              <option value="finde">Solo fines de semana</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Accesibilidad</label>
-            <select class="select" id="routeAcces">
-              <option value="no">No accesible</option>
-              <option value="si">Accesible</option>
-              <option value="parcial">Parcialmente</option>
-            </select>
-          </div>
-          <div class="field full">
-            <label>Notas adicionales</label>
-            <textarea class="textarea" id="routeNotas" placeholder="Notas sobre la ruta..."></textarea>
+
+          <!-- Columna 3: Accesibilidad -->
+          <div class="admin-col">
+            <div class="admin-col-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg>
+              Detalles
+            </div>
+            <div class="field">
+              <label>Accesibilidad</label>
+              <select class="select" id="routeAcces">
+                <option value="no">No accesible</option>
+                <option value="si">Accesible</option>
+                <option value="parcial">Parcialmente</option>
+              </select>
+            </div>
           </div>
         </div>
-      </div>
 
+        <!-- 📝 Notas: ocupa 2 columnas (todo el ancho disponible) -->
+        <div class="field full" style="margin-top:12px">
+          <label>Notas adicionales</label>
+          <textarea class="textarea" id="routeNotas" placeholder="Notas sobre la ruta..."></textarea>
+        </div>
+      </div>
       <!-- Paso 2 -->
       <div class="route-step hidden" data-step="2">
         <div class="field full">
@@ -402,7 +478,7 @@ body.fs-active{overflow:hidden !important}
       </div>
     </div>
 
-    <div class="card">
+    <div class="card" id="routesListCard">
       <div class="card-title">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/></svg>
         Rutas registradas
@@ -1096,34 +1172,128 @@ body.fs-active{overflow:hidden !important}
     },err=>{ toast('GPS: '+err.message,'err'); },{enableHighAccuracy:true,maximumAge:0,timeout:15000});
   }
 
-  async function detectStreets(){
+    async function detectStreets(){
     const ptsIda = state.routeDraft.puntos;
     const ptsVuelta = state.routeDraft.puntosVuelta;
     const pts = ptsIda.length >= 2 ? ptsIda : ptsVuelta;
     if(pts.length<2){ toast('Traza al menos 2 puntos (ida o regreso)','err'); return; }
+
     const prog = $('#detectProg'); prog.classList.remove('hidden');
-    const samples = samplePoints(pts, 12);
-    const streets = new Set(state.routeDraft.calles);
+    const progressBar = prog.querySelector('div');
+
+    // 📌 Respetar las calles ya existentes en el textarea (NO borrarlas)
+    const existingText = $('#routeCalles').value || '';
+    const existingStreets = splitList(existingText);
+    const existingNorm = new Set(existingStreets.map(s => s.toLowerCase().trim()));
+
+    // Muestrear más puntos para mejor detección (20 puntos en lugar de 12)
+    const samples = samplePoints(pts, 20);
+
+    // 🏘️ Estructura: mapa de "calle principal" → Set de "calles transversales"
+    const streetMap = new Map();
+    const seenNames = new Set();
+
     for(let i=0;i<samples.length;i++){
       const [lat,lng] = samples[i];
       try{
-        const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=17&addressdetails=1`,{
-          headers:{'Accept':'application/json'}
-        });
+        // 🔍 Consulta 1: reverse geocoding con zoom 18 (máximo detalle)
+        const r = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=18&addressdetails=1&extratags=1`,
+          { headers:{'Accept':'application/json'} }
+        );
         const j = await r.json();
-        const a = j.address||{};
-        const name = a.road || a.pedestrian || a.footway || a.path;
-        if(name) streets.add(name);
-      }catch(e){ /* continuar */ }
-      prog.querySelector('div').style.width = Math.round(((i+1)/samples.length)*100)+'%';
+        const a = j.address || {};
+        const road = a.road || a.pedestrian || a.footway || a.path || a.street;
+
+        if(!road) continue;
+
+        // Si ya vimos esta calle en este muestreo, saltar
+        if(seenNames.has(road)) continue;
+        seenNames.add(road);
+
+        // 🔍 Consulta 2: buscar la calle anterior y siguiente para saber "entre qué calles" está
+        let betweenText = '';
+        if (i > 0 && i < samples.length - 1) {
+          // Buscar la calle anterior (perpendicular)
+          const prevP = samples[i - 1];
+          const nextP = samples[i + 1];
+          try {
+            await new Promise(r => setTimeout(r, 350));
+            const rPrev = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?lat=${prevP[0]}&lon=${prevP[1]}&format=json&zoom=18&addressdetails=1`,
+              { headers:{'Accept':'application/json'} }
+            );
+            const jPrev = await rPrev.json();
+            const roadPrev = jPrev.address?.road || jPrev.address?.pedestrian || jPrev.address?.footway;
+
+            await new Promise(r => setTimeout(r, 350));
+            const rNext = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?lat=${nextP[0]}&lon=${nextP[1]}&format=json&zoom=18&addressdetails=1`,
+              { headers:{'Accept':'application/json'} }
+            );
+            const jNext = await rNext.json();
+            const roadNext = jNext.address?.road || jNext.address?.pedestrian || jNext.address?.footway;
+
+            // Si las calles vecinas son diferentes a la actual, las usamos como límites
+            const neighbors = [roadPrev, roadNext].filter(n => n && n !== road);
+            if (neighbors.length >= 2) {
+              betweenText = ` entre ${neighbors[0]} y ${neighbors[1]}`;
+            } else if (neighbors.length === 1) {
+              betweenText = ` cerca de ${neighbors[0]}`;
+            }
+          } catch(e) { /* ignorar */ }
+        }
+
+        // 📝 Formatear el nombre: "9 sur entre 1 y 6 oriente"
+        const fullName = betweenText ? `${road}${betweenText}` : road;
+
+        // 🎯 Agrupar por calle principal
+        const mainKey = road.toLowerCase().trim();
+        if (!streetMap.has(mainKey)) {
+          streetMap.set(mainKey, {
+            main: road,
+            variations: new Set()
+          });
+        }
+        streetMap.get(mainKey).variations.add(fullName);
+
+      }catch(e){ /* continuar con el siguiente */ }
+
+      // Actualizar barra de progreso
+      if (progressBar) {
+        progressBar.style.width = Math.round(((i+1)/samples.length)*100)+'%';
+      }
+      // Pausa entre peticiones (Nominatim requiere ~1s entre requests)
       await new Promise(r=>setTimeout(r,1100));
     }
-    state.routeDraft.calles = Array.from(streets);
-    $('#routeCalles').value = state.routeDraft.calles.join(', ');
+
+    // 🧩 Combinar los resultados con los existentes
+    const finalStreets = [...existingStreets]; // Empezar con lo que ya había
+    const added = [];
+
+    for (const [key, data] of streetMap.entries()) {
+      // Si el usuario ya tenía la calle principal escrita, respetarla
+      if (existingNorm.has(key)) continue;
+
+      // Tomar la variación más larga (la que tiene "entre X y Y")
+      const variations = Array.from(data.variations);
+      const best = variations.sort((a, b) => b.length - a.length)[0] || data.main;
+
+      if (!finalStreets.includes(best)) {
+        finalStreets.push(best);
+        added.push(best);
+      }
+    }
+
+    state.routeDraft.calles = finalStreets;
+    $('#routeCalles').value = finalStreets.join(', ');
     updateEditorStatus();
-    prog.classList.add('hidden'); prog.querySelector('div').style.width='0%';
-    toast(`Detectadas ${state.routeDraft.calles.length} calles ✓`);
+    prog.classList.add('hidden');
+    if (progressBar) progressBar.style.width='0%';
+
+    toast(`✅ ${added.length} calles nuevas detectadas (${finalStreets.length} en total)`);
   }
+
   function samplePoints(pts, n){
     if(pts.length<=n) return pts;
     const out=[]; const step=(pts.length-1)/(n-1);
@@ -1205,6 +1375,11 @@ body.fs-active{overflow:hidden !important}
 
   function resetRouteForm(){
     state.editingRoute = null;
+
+        // Mostrar de nuevo la lista de rutas registradas
+    const listCard = document.getElementById('routesListCard');
+    if (listCard) listCard.classList.remove('hidden');
+    
     state.routeDraft = {
       puntos:[], puntosVuelta:[],
       calles:[], callesVuelta:[],
@@ -1243,6 +1418,11 @@ body.fs-active{overflow:hidden !important}
     list.sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
     const el = $('#routesList');
     if(!list.length){ el.innerHTML='<div class="empty"><p>Sin rutas registradas</p></div>'; return; }
+
+        // Mostrar de nuevo la lista de rutas registradas
+    const listCard = document.getElementById('routesListCard');
+    if (listCard) listCard.classList.remove('hidden');
+    
     el.innerHTML = list.map(r=>`
       <div class="list-item" data-id="${esc(r.id)}">
         <div class="li-info">
@@ -1262,6 +1442,11 @@ body.fs-active{overflow:hidden !important}
           row.querySelector('[data-act="edit"]').onclick=async()=>{
         const r = await DB.get('routes',id); if(!r) return;
         state.editingRoute = r;
+
+                    // Ocultar la lista de rutas mientras se edita
+        const listCard = document.getElementById('routesListCard');
+        if (listCard) listCard.classList.add('hidden');
+            
         state.routeDraft = {
           puntos: r.puntos||[],
           puntosVuelta: r.puntosVuelta||[],
