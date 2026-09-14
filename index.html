@@ -386,6 +386,39 @@ img{max-width:100%;display:block}
 .map-full-btn{position:absolute;top:12px;right:12px;z-index:600;background:color-mix(in srgb,var(--surface) 96%,transparent);border:1px solid var(--border-2);border-radius:12px;width:42px;height:42px;display:grid;place-items:center;color:var(--text);box-shadow:var(--shadow);backdrop-filter:blur(10px)}
 .map-full-btn svg{width:20px;height:20px}
 
+/* 🖥️ Botón de pantalla completa dentro del mapa (esquina inferior derecha) */
+.map-fs-btn{
+  position:absolute;bottom:12px;right:12px;z-index:600;
+  background:color-mix(in srgb,var(--surface) 96%,transparent);
+  border:1px solid var(--border-2);border-radius:12px;
+  width:42px;height:42px;display:grid;place-items:center;
+  color:var(--text);box-shadow:var(--shadow);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  transition:var(--transition);cursor:pointer;
+}
+.map-fs-btn:hover{background:var(--surface-3);border-color:var(--cyan);color:var(--cyan)}
+.map-fs-btn:active{transform:scale(.94)}
+.map-fs-btn svg{width:20px;height:20px}
+.map-fs-btn.is-fullscreen svg{transform:rotate(180deg)}
+
+/* Estado de pantalla completa: el wrapper ocupa toda la pantalla */
+.map-wrap.is-fullscreen,
+#routeMapWrap.is-fullscreen,
+#tripMapWrap.is-fullscreen{
+  position:fixed !important;
+  inset:0 !important;
+  z-index:9500 !important;
+  margin:0 !important;
+  border-radius:0 !important;
+  border:none !important;
+}
+.map-wrap.is-fullscreen > div[id$="Map"],
+.map-wrap.is-fullscreen > div[id="map"]{
+  height:100vh !important;
+  width:100vw !important;
+}
+body.fs-active{overflow:hidden !important}
+
 .leaflet-container{background:var(--bg-2)!important;font-family:var(--font)!important}
 .leaflet-control-zoom a{background:var(--surface)!important;color:var(--text)!important;border-color:var(--border)!important}
 .leaflet-control-attribution{background:color-mix(in srgb,var(--surface) 88%,transparent)!important;color:var(--text-2)!important;font-size:10px!important}
@@ -754,9 +787,17 @@ img{max-width:100%;display:block}
   <!-- ===================== PÁGINA: RUTA INDIVIDUAL ===================== -->
   <section class="page" id="page-route">
     <div class="route-hero" id="routeHero"></div>
-    <div class="map-wrap" style="margin:0 14px">
-     
+    <div class="map-wrap" id="routeMapWrap" style="margin:0 14px">
       <div id="map"></div>
+      <!-- 🖥️ Botón de pantalla completa (esquina inferior derecha) -->
+      <button class="map-fs-btn" id="routeMapFsBtn" title="Pantalla completa">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+          <path d="M8 3H5a2 2 0 0 0-2 2v3"/>
+          <path d="M21 8V5a2 2 0 0 0-2-2h-3"/>
+          <path d="M3 16v3a2 2 0 0 0 2 2h3"/>
+          <path d="M16 21h3a2 2 0 0 0 2-2v-3"/>
+        </svg>
+      </button>
     </div>
     <div class="container">
       <div class="route-panel" id="routePanel"></div>
