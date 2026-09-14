@@ -1705,43 +1705,69 @@ if (f.size > 20 * 1024 * 1024) {
   }
 
    
-    // ================================================================
-  //  🗺️ EXPORTAR KML PARA GOOGLE MY MAPS (con líneas/trazos)
-  //  ✅ Versión mejorada: asegura que OSRM haya generado la geometría
+     // ================================================================
+  //  🗺️ EXPORTAR KML COMPLETO PARA GOOGLE MY MAPS
+  //  ✅ Incluye: trazos, calles, paradas, retornos, POIs,
+  //  ✅ iconos inicio/fin ida y regreso, URL de la ruta, imagen real
   // ================================================================
   async function exportToKML() {
-    const nombre = ($('#routeName').value || 'RUTA').trim().toUpperCase();
+    const TITULO_PREFIJO = 'Tuxtla Gutiérrez Chiapas - Rutas de Colectivo';
+    const SITE_URL = 'https://brigadistasbd.pages.dev';
+    
+    const nombreBase = ($('#routeName').value || 'RUTA').trim().toUpperCase();
+    const nombre = `${TITULO_PREFIJO} - ${nombreBase}`;
+    
     const ida = state.routeDraft.puntos || [];
     const vuelta = state.routeDraft.puntosVuelta || [];
     const calles = splitList($('#routeCalles').value);
     const paradas = splitList($('#routeParadas').value);
+    const retornos = splitList($('#routeRetornos').value);
+    const poisIda = splitList($('#routePoisIda').value);
+    const poisVuelta = splitList($('#routePoisVuelta').value);
+    const tarifa = $('#routeTarifa').value.trim();
+    const frecuencia = $('#routeFrec').value.trim();
+    const horarioIni = $('#routeHoraIni').value.trim();
+    const horarioFin = $('#routeHoraFin').value.trim();
+    const dias = $('#routeDias').value;
+    const categoria = $('#routeCat').value;
+    const accesibilidad = $('#routeAcces').value;
+    const notas = $('#routeNotas').value.trim();
+    
+    // 🖼️ Imagen real de la ruta (la que se subió o se generó)
+    const mapImage = state.editingRoute?.mapImage 
+                  || state.routeDraft.customImage 
+                  || '';
+    
+    // 🔗 URL real de la ruta registrada
+    const routeId = state.editingRoute?.id || '';
+    const routeUrl = routeId 
+      ? `${SITE_URL}/share/ruta/${routeId}` 
+      : SITE_URL;
     
     if (!ida.length && !vuelta.length) {
       toast('No hay coordenadas para exportar', 'err');
       return;
     }
     
-    // 🔄 PASO 1: Asegurar que OSRM haya generado la geometría
-    // Si tenemos puntos crudos pero no geometría, la generamos AHORA
+    // 🔄 Asegurar que OSRM haya generado la geometría
     const btn = document.getElementById('btnExportKML');
     const originalHTML = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '⏳ Generando trazo real...';
     
     try {
-      // Si hay puntos de IDA pero no geometría → generar con OSRM
+      // Generar geometría de IDA si no existe
       if (ida.length >= 2 && (!state.routeDraft.geometriaIda || state.routeDraft.geometriaIda.length < 2)) {
         console.log('[KML] Generando geometría de IDA con OSRM...');
         state.routeDraft.geometriaIda = await getRouteGeometry(ida);
       }
       
-      // Si hay puntos de VUELTA pero no geometría → generar con OSRM
+      // Generar geometría de VUELTA si no existe
       if (vuelta.length >= 2 && (!state.routeDraft.geometriaVuelta || state.routeDraft.geometriaVuelta.length < 2)) {
         console.log('[KML] Generando geometría de REGRESO con OSRM...');
         state.routeDraft.geometriaVuelta = await getRouteGeometry(vuelta);
       }
       
-      // Ahora sí, usar la geometría (ya generada)
       const geomIda = (state.routeDraft.geometriaIda && state.routeDraft.geometriaIda.length >= 2)
         ? state.routeDraft.geometriaIda
         : ida;
@@ -1749,11 +1775,10 @@ if (f.size > 20 * 1024 * 1024) {
         ? state.routeDraft.geometriaVuelta
         : vuelta;
       
-      // Verificar resultado
       console.log('[KML] Puntos IDA:', geomIda.length);
       console.log('[KML] Puntos REGRESO:', geomVuelta.length);
       
-      // 🎨 Colores
+      // 🎨 Colores KML (formato AABBGGRR)
       const colorIdaHex = (state.routeDraft.colorIda || '#00e5ff').replace('#', '');
       const colorVueltaHex = (state.routeDraft.colorVuelta || '#a855f7').replace('#', '');
       
@@ -1773,12 +1798,36 @@ if (f.size > 20 * 1024 * 1024) {
         return `${lng.toFixed(6)},${lat.toFixed(6)},0`;
       };
       
-      // 🧩 Construir KML
+      // 📊 Info general de la ruta
+      const infoGeneral = [
+        `<b>🚌 Ruta:</b> ${escapeXML(nombreBase)}`,
+        `<b>📍 Ubicación:</b> Tuxtla Gutiérrez, Chiapas, México`,
+        `<b>🏷️ Categoría:</b> ${escapeXML(categoria)}`,
+        tarifa ? `<b>💰 Tarifa:</b> ${escapeXML(tarifa)}` : '',
+        frecuencia ? `<b>⏱️ Frecuencia:</b> ${escapeXML(frecuencia)}` : '',
+        horarioIni ? `<b>🕐 Horario:</b> ${escapeXML(horarioIni)} - ${escapeXML(horarioFin)}` : '',
+        dias ? `<b>📅 Días:</b> ${escapeXML(dias)}` : '',
+        accesibilidad ? `<b>♿ Accesibilidad:</b> ${escapeXML(accesibilidad)}` : '',
+        notas ? `<b>📝 Notas:</b> ${escapeXML(notas)}` : ''
+      ].filter(Boolean).join('<br>');
+      
+      // 🧩 Construir KML COMPLETO
       let kml = `<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2">
   <Document>
     <name>${escapeXML(nombre)}</name>
-    <description>Ruta exportada desde Rutas BGD - ${new Date().toLocaleDateString('es-MX')}</description>
+    <description><![CDATA[
+      ${infoGeneral}
+      <br><br>
+      <a href="${routeUrl}" target="_blank" style="color:#00e5ff">🌐 Ver ruta en el sitio web</a>
+      <br>
+      <a href="${SITE_URL}" target="_blank" style="color:#00e5ff">🏠 Ir al sitio principal</a>
+      <br><br>
+      ${mapImage ? `<img src="${mapImage}" style="max-width:400px;border-radius:8px" /><br>` : ''}
+      <small>Exportado el ${new Date().toLocaleDateString('es-MX')}</small>
+    ]]></description>
+    
+    <!-- 🎨 ESTILOS DE LÍNEAS -->
     <Style id="styleIda">
       <LineStyle>
         <color>${kmlColorIda}</color>
@@ -1791,90 +1840,394 @@ if (f.size > 20 * 1024 * 1024) {
         <width>5</width>
       </LineStyle>
     </Style>
-    <Style id="stylePunto">
+    
+    <!-- 🎨 ESTILOS DE ICONOS -->
+    <Style id="styleInicioIda">
       <IconStyle>
-        <color>ffffffff</color>
-        <scale>0.6</scale>
+        <color>ff00ff00</color>
+        <scale>1.3</scale>
         <Icon>
-          <href>http://maps.google.com/mapfiles/kml/shapes/placemark_circle.png</href>
+          <href>http://maps.google.com/mapfiles/kml/paddle/go.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="styleFinIda">
+      <IconStyle>
+        <color>ff0000ff</color>
+        <scale>1.3</scale>
+        <Icon>
+          <href>http://maps.google.com/mapfiles/kml/paddle/red-stars.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="styleInicioVuelta">
+      <IconStyle>
+        <color>ffff00ff</color>
+        <scale>1.3</scale>
+        <Icon>
+          <href>http://maps.google.com/mapfiles/kml/paddle/wht-blank.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="styleFinVuelta">
+      <IconStyle>
+        <color>ff00a5ff</color>
+        <scale>1.3</scale>
+        <Icon>
+          <href>http://maps.google.com/mapfiles/kml/paddle/orange-stars.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="styleParada">
+      <IconStyle>
+        <color>ff00ff00</color>
+        <scale>1.0</scale>
+        <Icon>
+          <href>http://maps.google.com/mapfiles/kml/shapes/bus.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="stylePoiIda">
+      <IconStyle>
+        <color>ff00aaff</color>
+        <scale>0.9</scale>
+        <Icon>
+          <href>http://maps.google.com/mapfiles/kml/shapes/info-i_maps.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="stylePoiVuelta">
+      <IconStyle>
+        <color>ffff00aa</color>
+        <scale>0.9</scale>
+        <Icon>
+          <href>http://maps.google.com/mapfiles/kml/shapes/info-i_maps.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="styleRetorno">
+      <IconStyle>
+        <color>ff00a5ff</color>
+        <scale>0.9</scale>
+        <Icon>
+          <href>http://maps.google.com/mapfiles/kml/shapes/target.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="styleCalle">
+      <IconStyle>
+        <color>ffff00ff</color>
+        <scale>0.7</scale>
+        <Icon>
+          <href>http://maps.google.com/mapfiles/kml/shapes/road_shield.png</href>
         </Icon>
       </IconStyle>
     </Style>`;
-
-      // ---- IDA (con geometría real) ----
+      
+      // ============================================================
+      // 📁 CARPETA 1: TRAZOS + INICIO/FIN
+      // ============================================================
+      kml += `
+    <Folder>
+      <name>🛣️ Trazos de la ruta</name>
+      <open>1</open>`;
+      
+      // ---- IDA ----
       if (geomIda && geomIda.length >= 2) {
         const coordsIda = geomIda.map(formatCoord).join(' ');
+        const inicioIda = geomIda[0];
+        const finIda = geomIda[geomIda.length - 1];
+        
         kml += `
-    <Placemark>
-      <name>${escapeXML(nombre)} - IDA</name>
-      <description><![CDATA[
-        <b>Ruta:</b> ${escapeXML(nombre)}<br>
-        <b>Sentido:</b> Ida<br>
-        <b>Puntos:</b> ${geomIda.length}<br>
-        <b>Color:</b> ${state.routeDraft.colorIda || '#00e5ff'}
-      ]]></description>
-      <styleUrl>#styleIda</styleUrl>
-      <LineString>
-        <extrude>0</extrude>
-        <tessellate>1</tessellate>
-        <altitudeMode>clampToGround</altitudeMode>
-        <coordinates>${coordsIda}</coordinates>
-      </LineString>
-    </Placemark>`;
+      <Placemark>
+        <name>🟢 IDA - ${escapeXML(nombreBase)}</name>
+        <description><![CDATA[
+          <b>🚌 Ruta:</b> ${escapeXML(nombreBase)}<br>
+          <b>📍 Ciudad:</b> Tuxtla Gutiérrez, Chiapas<br>
+          <b>➡️ Sentido:</b> Ida<br>
+          <b>📊 Puntos:</b> ${geomIda.length}<br>
+          <b>🎨 Color:</b> ${state.routeDraft.colorIda || '#00e5ff'}
+          <br><br>
+          <a href="${routeUrl}" target="_blank" style="color:#00e5ff">🌐 Ver ruta completa</a>
+        ]]></description>
+        <styleUrl>#styleIda</styleUrl>
+        <LineString>
+          <extrude>0</extrude>
+          <tessellate>1</tessellate>
+          <altitudeMode>clampToGround</altitudeMode>
+          <coordinates>${coordsIda}</coordinates>
+        </LineString>
+      </Placemark>
+      
+      <Placemark>
+        <name>🟢 INICIO IDA</name>
+        <description><![CDATA[
+          <b>🚌 Ruta:</b> ${escapeXML(nombreBase)}<br>
+          <b>➡️ Sentido:</b> Ida<br>
+          <b>🎯 Tipo:</b> Punto de inicio
+          <br><br>
+          <a href="${routeUrl}" target="_blank" style="color:#00e5ff">🌐 Ver ruta</a>
+        ]]></description>
+        <styleUrl>#styleInicioIda</styleUrl>
+        <Point><coordinates>${formatCoord(inicioIda)}</coordinates></Point>
+      </Placemark>
+      
+      <Placemark>
+        <name>🔴 FIN IDA</name>
+        <description><![CDATA[
+          <b>🚌 Ruta:</b> ${escapeXML(nombreBase)}<br>
+          <b>➡️ Sentido:</b> Ida<br>
+          <b>🎯 Tipo:</b> Punto final
+          <br><br>
+          <a href="${routeUrl}" target="_blank" style="color:#00e5ff">🌐 Ver ruta</a>
+        ]]></description>
+        <styleUrl>#styleFinIda</styleUrl>
+        <Point><coordinates>${formatCoord(finIda)}</coordinates></Point>
+      </Placemark>`;
       }
-
-      // ---- VUELTA (con geometría real) ----
+      
+      // ---- VUELTA ----
       if (geomVuelta && geomVuelta.length >= 2) {
         const coordsVuelta = geomVuelta.map(formatCoord).join(' ');
+        const inicioVuelta = geomVuelta[0];
+        const finVuelta = geomVuelta[geomVuelta.length - 1];
+        
         kml += `
-    <Placemark>
-      <name>${escapeXML(nombre)} - REGRESO</name>
-      <description><![CDATA[
-        <b>Ruta:</b> ${escapeXML(nombre)}<br>
-        <b>Sentido:</b> Regreso<br>
-        <b>Puntos:</b> ${geomVuelta.length}<br>
-        <b>Color:</b> ${state.routeDraft.colorVuelta || '#a855f7'}
-      ]]></description>
-      <styleUrl>#styleVuelta</styleUrl>
-      <LineString>
-        <extrude>0</extrude>
-        <tessellate>1</tessellate>
-        <altitudeMode>clampToGround</altitudeMode>
-        <coordinates>${coordsVuelta}</coordinates>
-      </LineString>
-    </Placemark>`;
+      <Placemark>
+        <name>🟣 REGRESO - ${escapeXML(nombreBase)}</name>
+        <description><![CDATA[
+          <b>🚌 Ruta:</b> ${escapeXML(nombreBase)}<br>
+          <b>📍 Ciudad:</b> Tuxtla Gutiérrez, Chiapas<br>
+          <b>⬅️ Sentido:</b> Regreso<br>
+          <b>📊 Puntos:</b> ${geomVuelta.length}<br>
+          <b>🎨 Color:</b> ${state.routeDraft.colorVuelta || '#a855f7'}
+          <br><br>
+          <a href="${routeUrl}" target="_blank" style="color:#00e5ff">🌐 Ver ruta completa</a>
+        ]]></description>
+        <styleUrl>#styleVuelta</styleUrl>
+        <LineString>
+          <extrude>0</extrude>
+          <tessellate>1</tessellate>
+          <altitudeMode>clampToGround</altitudeMode>
+          <coordinates>${coordsVuelta}</coordinates>
+        </LineString>
+      </Placemark>
+      
+      <Placemark>
+        <name>🟡 INICIO REGRESO</name>
+        <description><![CDATA[
+          <b>🚌 Ruta:</b> ${escapeXML(nombreBase)}<br>
+          <b>⬅️ Sentido:</b> Regreso<br>
+          <b>🎯 Tipo:</b> Punto de inicio
+          <br><br>
+          <a href="${routeUrl}" target="_blank" style="color:#00e5ff">🌐 Ver ruta</a>
+        ]]></description>
+        <styleUrl>#styleInicioVuelta</styleUrl>
+        <Point><coordinates>${formatCoord(inicioVuelta)}</coordinates></Point>
+      </Placemark>
+      
+      <Placemark>
+        <name>🟠 FIN REGRESO</name>
+        <description><![CDATA[
+          <b>🚌 Ruta:</b> ${escapeXML(nombreBase)}<br>
+          <b>⬅️ Sentido:</b> Regreso<br>
+          <b>🎯 Tipo:</b> Punto final
+          <br><br>
+          <a href="${routeUrl}" target="_blank" style="color:#00e5ff">🌐 Ver ruta</a>
+        ]]></description>
+        <styleUrl>#styleFinVuelta</styleUrl>
+        <Point><coordinates>${formatCoord(finVuelta)}</coordinates></Point>
+      </Placemark>`;
       }
-
-      // ---- PARADAS ----
-      paradas.forEach((p) => {
+      
+      kml += `
+    </Folder>`;
+      
+      // ============================================================
+      // 📁 CARPETA 2: PARADAS
+      // ============================================================
+      if (paradas.length) {
         kml += `
-    <Placemark>
-      <name>${escapeXML(p)}</name>
-      <description><![CDATA[
-        <b>Ruta:</b> ${escapeXML(nombre)}<br>
-        <b>Tipo:</b> Parada
-      ]]></description>
-      <styleUrl>#stylePunto</styleUrl>
-    </Placemark>`;
-      });
-
-      // ---- CALLES ----
+    <Folder>
+      <name>🚏 Paradas (${paradas.length})</name>
+      <open>1</open>`;
+        
+        paradas.forEach((p, i) => {
+          let coord = '';
+          if (geomIda && geomIda.length > i) {
+            const idx = Math.floor((i / paradas.length) * geomIda.length);
+            coord = formatCoord(geomIda[Math.min(idx, geomIda.length - 1)]);
+          }
+          
+          kml += `
+      <Placemark>
+        <name>🚏 Parada ${i + 1}: ${escapeXML(p)}</name>
+        <description><![CDATA[
+          <b>🚌 Ruta:</b> ${escapeXML(nombreBase)}<br>
+          <b>📍 Ciudad:</b> Tuxtla Gutiérrez, Chiapas<br>
+          <b>🚏 Tipo:</b> Parada<br>
+          <b>📊 Orden:</b> ${i + 1} de ${paradas.length}
+          <br><br>
+          <a href="${routeUrl}" target="_blank" style="color:#00e5ff">🌐 Ver ruta completa</a>
+        ]]></description>
+        <styleUrl>#styleParada</styleUrl>
+        ${coord ? `<Point><coordinates>${coord}</coordinates></Point>` : ''}
+      </Placemark>`;
+        });
+        
+        kml += `
+    </Folder>`;
+      }
+      
+      // ============================================================
+      // 📁 CARPETA 3: POIs DE IDA
+      // ============================================================
+      if (poisIda.length) {
+        kml += `
+    <Folder>
+      <name>📍 POIs de Ida (${poisIda.length})</name>
+      <open>1</open>`;
+        
+        poisIda.forEach((p, i) => {
+          kml += `
+      <Placemark>
+        <name>📍 ${escapeXML(p)}</name>
+        <description><![CDATA[
+          <b>🚌 Ruta:</b> ${escapeXML(nombreBase)}<br>
+          <b>📍 Ciudad:</b> Tuxtla Gutiérrez, Chiapas<br>
+          <b>➡️ Tipo:</b> POI de Ida<br>
+          <b>📊 Orden:</b> ${i + 1} de ${poisIda.length}
+          <br><br>
+          <a href="${routeUrl}" target="_blank" style="color:#00e5ff">🌐 Ver ruta completa</a>
+        ]]></description>
+        <styleUrl>#stylePoiIda</styleUrl>
+      </Placemark>`;
+        });
+        
+        kml += `
+    </Folder>`;
+      }
+      
+      // ============================================================
+      // 📁 CARPETA 4: POIs DE REGRESO
+      // ============================================================
+      if (poisVuelta.length) {
+        kml += `
+    <Folder>
+      <name>📍 POIs de Regreso (${poisVuelta.length})</name>
+      <open>1</open>`;
+        
+        poisVuelta.forEach((p, i) => {
+          kml += `
+      <Placemark>
+        <name>📍 ${escapeXML(p)}</name>
+        <description><![CDATA[
+          <b>🚌 Ruta:</b> ${escapeXML(nombreBase)}<br>
+          <b>📍 Ciudad:</b> Tuxtla Gutiérrez, Chiapas<br>
+          <b>⬅️ Tipo:</b> POI de Regreso<br>
+          <b>📊 Orden:</b> ${i + 1} de ${poisVuelta.length}
+          <br><br>
+          <a href="${routeUrl}" target="_blank" style="color:#00e5ff">🌐 Ver ruta completa</a>
+        ]]></description>
+        <styleUrl>#stylePoiVuelta</styleUrl>
+      </Placemark>`;
+        });
+        
+        kml += `
+    </Folder>`;
+      }
+      
+      // ============================================================
+      // 📁 CARPETA 5: RETORNOS
+      // ============================================================
+      if (retornos.length) {
+        kml += `
+    <Folder>
+      <name>↩️ Retornos (${retornos.length})</name>
+      <open>0</open>`;
+        
+        retornos.forEach((r, i) => {
+          kml += `
+      <Placemark>
+        <name>↩️ ${escapeXML(r)}</name>
+        <description><![CDATA[
+          <b>🚌 Ruta:</b> ${escapeXML(nombreBase)}<br>
+          <b>📍 Ciudad:</b> Tuxtla Gutiérrez, Chiapas<br>
+          <b>↩️ Tipo:</b> Retorno<br>
+          <b>📊 Orden:</b> ${i + 1} de ${retornos.length}
+          <br><br>
+          <a href="${routeUrl}" target="_blank" style="color:#00e5ff">🌐 Ver ruta completa</a>
+        ]]></description>
+        <styleUrl>#styleRetorno</styleUrl>
+      </Placemark>`;
+        });
+        
+        kml += `
+    </Folder>`;
+      }
+      
+      // ============================================================
+      // 📁 CARPETA 6: CALLES
+      // ============================================================
       if (calles.length) {
-        const callesTexto = calles.map((c, i) => `${i + 1}. ${c}`).join('<br>');
+        const callesTexto = calles.map((c, i) => 
+          `<tr>
+            <td style="padding:4px 8px;border-bottom:1px solid #ddd">${i + 1}</td>
+            <td style="padding:4px 8px;border-bottom:1px solid #ddd">${escapeXML(c)}</td>
+          </tr>`
+        ).join('');
+        
         kml += `
-    <Placemark>
-      <name>${escapeXML(nombre)} - Calles</name>
-      <description><![CDATA[
-        <b>Calles del recorrido:</b><br>
-        ${callesTexto}
-      ]]></description>
-    </Placemark>`;
+    <Folder>
+      <name>🛣️ Calles por donde pasa (${calles.length})</name>
+      <open>0</open>
+      <Placemark>
+        <name>📋 Listado de calles (${calles.length})</name>
+        <description><![CDATA[
+          <b>🚌 Ruta:</b> ${escapeXML(nombreBase)}<br>
+          <b>📍 Ciudad:</b> Tuxtla Gutiérrez, Chiapas<br>
+          <b>🛣️ Total de calles:</b> ${calles.length}
+          <br><br>
+          <table style="border-collapse:collapse;width:100%">
+            <tr style="background:#f0f0f0">
+              <th style="padding:4px 8px;text-align:left">#</th>
+              <th style="padding:4px 8px;text-align:left">Calle</th>
+            </tr>
+            ${callesTexto}
+          </table>
+          <br>
+          <a href="${routeUrl}" target="_blank" style="color:#00e5ff">🌐 Ver ruta completa</a>
+        ]]></description>
+        <styleUrl>#styleCalle</styleUrl>
+      </Placemark>
+    </Folder>`;
       }
-
+      
+      // ============================================================
+      // 📁 CARPETA 7: INFORMACIÓN GENERAL
+      // ============================================================
+      kml += `
+    <Folder>
+      <name>ℹ️ Información de la ruta</name>
+      <open>1</open>
+      <Placemark>
+        <name>ℹ️ ${escapeXML(nombreBase)} - Info</name>
+        <description><![CDATA[
+          ${infoGeneral}
+          <br><br>
+          ${mapImage ? `<img src="${mapImage}" style="max-width:400px;border-radius:8px" /><br><br>` : ''}
+          <a href="${routeUrl}" target="_blank" style="color:#00e5ff">🌐 Ver ruta en el sitio web</a>
+          <br>
+          <a href="${SITE_URL}" target="_blank" style="color:#00e5ff">🏠 Ir al sitio principal</a>
+        ]]></description>
+        <styleUrl>#styleParada</styleUrl>
+      </Placemark>
+    </Folder>`;
+      
       kml += `
   </Document>
 </kml>`;
-
+      
       // 📥 Descargar
       const blob = new Blob([kml], { type: 'application/vnd.google-earth.kml+xml;charset=utf-8' });
       const url = URL.createObjectURL(blob);
@@ -1884,7 +2237,7 @@ if (f.size > 20 * 1024 * 1024) {
       a.click();
       URL.revokeObjectURL(url);
       
-      toast(`✅ KML exportado (${geomIda.length} pts IDA, ${geomVuelta.length} pts REGRESO)`);
+      toast(`✅ KML exportado (${geomIda.length} pts IDA, ${geomVuelta.length} pts REGRESO, ${calles.length} calles, ${paradas.length} paradas)`);
       
     } catch (err) {
       console.error('[KML] Error:', err);
