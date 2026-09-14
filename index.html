@@ -462,6 +462,26 @@ img{max-width:100%;display:block}
   background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
   padding:10px;margin-bottom:10px;display:flex;flex-direction:column;gap:8px;
 }
+
+/* Toolbar DEBAJO del mapa (no flotante) */
+.map-toolbar-below{
+  display:flex;gap:6px;flex-wrap:wrap;
+  margin-top:8px;margin-bottom:12px;
+  padding:8px;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+}
+.map-toolbar-below .tb{
+  flex:1;min-width:70px;justify-content:center;
+  background:var(--surface-2);border:1px solid var(--border);
+  border-radius:10px;padding:8px 10px;
+  font-size:11.5px;font-weight:700;color:var(--text);
+  display:flex;align-items:center;gap:5px;
+  transition:var(--transition);
+}
+.map-toolbar-below .tb svg{width:14px;height:14px}
+.map-toolbar-below .tb:hover{border-color:var(--cyan);color:var(--cyan)}
+.map-toolbar-below .tb.active{background:var(--cyan);color:#00121a;border-color:transparent}
+   
 .trip-controls-row{
   display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;
 }
@@ -720,8 +740,8 @@ img{max-width:100%;display:block}
           <div class="trip-transfers-box">
             <label>Máx. transbordos:</label>
             <select class="select" id="tripMaxTransfers">
-              <option value="1">1 transbordo</option>
-              <option value="2" selected>2 transbordos</option>
+              <option value="1" selected>1 transbordo</option>
+              <option value="2">2 transbordos</option>
               <option value="3">3 transbordos</option>
               <option value="4">4 transbordos</option>
             </select>
@@ -735,25 +755,29 @@ img{max-width:100%;display:block}
         <div id="tripPointsList" class="trip-points-grid"></div>
       </div>
 
-      <!-- Mapa -->
-      <div class="map-wrap">
-        <div id="tripMap" style="width:100%;height:48vh;min-height:300px;z-index:1"></div>
-        <div class="map-toolbar" id="tripToolbar">
-          <button class="tb active" data-tool="addpoint">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Agregar
-          </button>
-          <button class="tb" data-tool="locate">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
-            GPS
-          </button>
-          <button class="tb" data-tool="clear">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            Limpiar
-          </button>
-        </div>
-      </div>
 
+      <!-- Mapa + toolbar DEBAJO del mapa -->
+      <div class="map-wrap">
+        <div id="tripMap" style="width:100%;height:40vh;min-height:260px;z-index:1"></div>
+      </div>
+      <div class="map-toolbar-below" id="tripToolbar">
+        <button class="tb active" data-tool="addpoint">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Agregar
+        </button>
+        <button class="tb" data-tool="locate">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+          GPS
+        </button>
+        <button class="tb" data-tool="undo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 3-7.7L3 8"/></svg>
+          Deshacer
+        </button>
+        <button class="tb" data-tool="clear">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Limpiar
+        </button>
+      </div>
       <!-- Resultados con botones "ver en mapa" -->
       <div id="tripResults" style="margin-top:14px"></div>
     </div>
