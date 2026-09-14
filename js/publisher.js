@@ -27,8 +27,19 @@
   }
 
   // ---------- Subida a Cloudinary ----------
-  async function uploadToCloudinary(file, onProgress) {
-    if (!file) throw new Error('No hay archivo');
+ async function uploadToCloudinary(file, onProgress) {
+  if (!file) throw new Error('No hay archivo');
+  
+  // 🖼️ Comprimir imágenes grandes antes de subir
+  if (file.type.startsWith('image/') && file.size > 2 * 1024 * 1024) {
+    try {
+      file = await compressImage(file, 1600, 0.85);
+    } catch (e) {
+      console.warn('No se pudo comprimir, subiendo original:', e);
+    }
+  }
+
+    
     if (!navigator.onLine) throw new Error('Sin conexión. Guardado como base64.');
 
     const isVideo = file.type.startsWith('video/');
@@ -40,24 +51,7 @@
     form.append('upload_preset', CLOUDINARY.uploadPreset);
     form.append('api_key', CLOUDINARY.apiKey);
 
-    // 🖼️ Transformaciones para IMÁGENES (como WhatsApp)
-    if (!isVideo) {
-      // Redimensionar a máx. 1600px de ancho/alto, sin agrandar si es más pequeña
-      form.append('transformation', 'c_limit,w_1600,h_1600');
-      // Comprimir con calidad automática (Cloudinary elige la mejor)
-      form.append('quality', 'auto:good');
-      // Convertir al formato moderno (WebP/AVIF) que pesa 30-50% menos
-      form.append('fetch_format', 'auto');
-    }
-
-    // 🎥 Transformaciones para VIDEOS (opcional)
-    if (isVideo) {
-      // Limitar a 1280x720 para que no pese demasiado
-      form.append('transformation', 'c_limit,w_1280,h_720');
-      // Comprimir con calidad automática
-      form.append('quality', 'auto:good');
-    }
-
+    
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.open('POST', endpoint, true);
@@ -198,10 +192,51 @@
     window.open(u, '_blank', 'noopener');
   }
 
+   // ---------- Comprimir imagen en el navegador antes de subir ----------
+async function compressImage(file, maxWidth = 1600, quality = 0.85) {
+  if (!file.type.startsWith('image/')) return file;
+  
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let { width, height } = img;
+        
+        // Redimensionar solo si excede el máximo
+        if (width > maxWidth) {
+          height = (maxWidth / width) * height;
+          width = maxWidth;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        canvas.toBlob((blob) => {
+          if (!blob) return reject(new Error('Error al comprimir'));
+          const compressed = new File([blob], file.name, {
+            type: 'image/jpeg',
+            lastModified: Date.now()
+          });
+          resolve(compressed);
+        }, 'image/jpeg', quality);
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+   
   // ---------- API pública ----------
   global.Publisher = {
     slugify,
     uploadToCloudinary,
+      compressImage,
     fileToBase64,
     publish,
     deleteFromGitHub,     // ← añadido
