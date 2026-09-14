@@ -521,6 +521,11 @@ body.fs-active{overflow:hidden !important}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         📊 Exportar para My Maps (CSV)
       </button>
+      <button class="btn btn-ghost btn-sm" id="btnExportKML" style="flex:1;min-width:140px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border-color:transparent">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/></svg>
+  🗺️ Exportar KML 
+</button>
+      
       <button class="btn btn-ghost btn-sm" id="btnExportJSON" style="flex:1;min-width:140px">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         💾 Exportar JSON (backup)
@@ -1699,6 +1704,207 @@ if (f.size > 20 * 1024 * 1024) {
     toast(`✅ CSV exportado (${ida.length + vuelta.length} puntos)`);
   }
 
+   
+    // ================================================================
+  //  🗺️ EXPORTAR KML PARA GOOGLE MY MAPS (con líneas/trazos)
+  //  ✅ Versión mejorada: asegura que OSRM haya generado la geometría
+  // ================================================================
+  async function exportToKML() {
+    const nombre = ($('#routeName').value || 'RUTA').trim().toUpperCase();
+    const ida = state.routeDraft.puntos || [];
+    const vuelta = state.routeDraft.puntosVuelta || [];
+    const calles = splitList($('#routeCalles').value);
+    const paradas = splitList($('#routeParadas').value);
+    
+    if (!ida.length && !vuelta.length) {
+      toast('No hay coordenadas para exportar', 'err');
+      return;
+    }
+    
+    // 🔄 PASO 1: Asegurar que OSRM haya generado la geometría
+    // Si tenemos puntos crudos pero no geometría, la generamos AHORA
+    const btn = document.getElementById('btnExportKML');
+    const originalHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Generando trazo real...';
+    
+    try {
+      // Si hay puntos de IDA pero no geometría → generar con OSRM
+      if (ida.length >= 2 && (!state.routeDraft.geometriaIda || state.routeDraft.geometriaIda.length < 2)) {
+        console.log('[KML] Generando geometría de IDA con OSRM...');
+        state.routeDraft.geometriaIda = await getRouteGeometry(ida);
+      }
+      
+      // Si hay puntos de VUELTA pero no geometría → generar con OSRM
+      if (vuelta.length >= 2 && (!state.routeDraft.geometriaVuelta || state.routeDraft.geometriaVuelta.length < 2)) {
+        console.log('[KML] Generando geometría de REGRESO con OSRM...');
+        state.routeDraft.geometriaVuelta = await getRouteGeometry(vuelta);
+      }
+      
+      // Ahora sí, usar la geometría (ya generada)
+      const geomIda = (state.routeDraft.geometriaIda && state.routeDraft.geometriaIda.length >= 2)
+        ? state.routeDraft.geometriaIda
+        : ida;
+      const geomVuelta = (state.routeDraft.geometriaVuelta && state.routeDraft.geometriaVuelta.length >= 2)
+        ? state.routeDraft.geometriaVuelta
+        : vuelta;
+      
+      // Verificar resultado
+      console.log('[KML] Puntos IDA:', geomIda.length);
+      console.log('[KML] Puntos REGRESO:', geomVuelta.length);
+      
+      // 🎨 Colores
+      const colorIdaHex = (state.routeDraft.colorIda || '#00e5ff').replace('#', '');
+      const colorVueltaHex = (state.routeDraft.colorVuelta || '#a855f7').replace('#', '');
+      
+      function hexToKmlColor(hex) {
+        const r = hex.substring(0, 2);
+        const g = hex.substring(2, 4);
+        const b = hex.substring(4, 6);
+        return `ff${b}${g}${r}`;
+      }
+      
+      const kmlColorIda = hexToKmlColor(colorIdaHex);
+      const kmlColorVuelta = hexToKmlColor(colorVueltaHex);
+      
+      const formatCoord = (p) => {
+        const lat = Array.isArray(p) ? p[0] : p.lat;
+        const lng = Array.isArray(p) ? p[1] : p.lng;
+        return `${lng.toFixed(6)},${lat.toFixed(6)},0`;
+      };
+      
+      // 🧩 Construir KML
+      let kml = `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2">
+  <Document>
+    <name>${escapeXML(nombre)}</name>
+    <description>Ruta exportada desde Rutas BGD - ${new Date().toLocaleDateString('es-MX')}</description>
+    <Style id="styleIda">
+      <LineStyle>
+        <color>${kmlColorIda}</color>
+        <width>5</width>
+      </LineStyle>
+    </Style>
+    <Style id="styleVuelta">
+      <LineStyle>
+        <color>${kmlColorVuelta}</color>
+        <width>5</width>
+      </LineStyle>
+    </Style>
+    <Style id="stylePunto">
+      <IconStyle>
+        <color>ffffffff</color>
+        <scale>0.6</scale>
+        <Icon>
+          <href>http://maps.google.com/mapfiles/kml/shapes/placemark_circle.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>`;
+
+      // ---- IDA (con geometría real) ----
+      if (geomIda && geomIda.length >= 2) {
+        const coordsIda = geomIda.map(formatCoord).join(' ');
+        kml += `
+    <Placemark>
+      <name>${escapeXML(nombre)} - IDA</name>
+      <description><![CDATA[
+        <b>Ruta:</b> ${escapeXML(nombre)}<br>
+        <b>Sentido:</b> Ida<br>
+        <b>Puntos:</b> ${geomIda.length}<br>
+        <b>Color:</b> ${state.routeDraft.colorIda || '#00e5ff'}
+      ]]></description>
+      <styleUrl>#styleIda</styleUrl>
+      <LineString>
+        <extrude>0</extrude>
+        <tessellate>1</tessellate>
+        <altitudeMode>clampToGround</altitudeMode>
+        <coordinates>${coordsIda}</coordinates>
+      </LineString>
+    </Placemark>`;
+      }
+
+      // ---- VUELTA (con geometría real) ----
+      if (geomVuelta && geomVuelta.length >= 2) {
+        const coordsVuelta = geomVuelta.map(formatCoord).join(' ');
+        kml += `
+    <Placemark>
+      <name>${escapeXML(nombre)} - REGRESO</name>
+      <description><![CDATA[
+        <b>Ruta:</b> ${escapeXML(nombre)}<br>
+        <b>Sentido:</b> Regreso<br>
+        <b>Puntos:</b> ${geomVuelta.length}<br>
+        <b>Color:</b> ${state.routeDraft.colorVuelta || '#a855f7'}
+      ]]></description>
+      <styleUrl>#styleVuelta</styleUrl>
+      <LineString>
+        <extrude>0</extrude>
+        <tessellate>1</tessellate>
+        <altitudeMode>clampToGround</altitudeMode>
+        <coordinates>${coordsVuelta}</coordinates>
+      </LineString>
+    </Placemark>`;
+      }
+
+      // ---- PARADAS ----
+      paradas.forEach((p) => {
+        kml += `
+    <Placemark>
+      <name>${escapeXML(p)}</name>
+      <description><![CDATA[
+        <b>Ruta:</b> ${escapeXML(nombre)}<br>
+        <b>Tipo:</b> Parada
+      ]]></description>
+      <styleUrl>#stylePunto</styleUrl>
+    </Placemark>`;
+      });
+
+      // ---- CALLES ----
+      if (calles.length) {
+        const callesTexto = calles.map((c, i) => `${i + 1}. ${c}`).join('<br>');
+        kml += `
+    <Placemark>
+      <name>${escapeXML(nombre)} - Calles</name>
+      <description><![CDATA[
+        <b>Calles del recorrido:</b><br>
+        ${callesTexto}
+      ]]></description>
+    </Placemark>`;
+      }
+
+      kml += `
+  </Document>
+</kml>`;
+
+      // 📥 Descargar
+      const blob = new Blob([kml], { type: 'application/vnd.google-earth.kml+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${nombre.replace(/[^a-z0-9]/gi, '_')}_mymaps.kml`;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      toast(`✅ KML exportado (${geomIda.length} pts IDA, ${geomVuelta.length} pts REGRESO)`);
+      
+    } catch (err) {
+      console.error('[KML] Error:', err);
+      toast('Error al exportar KML: ' + err.message, 'err');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = originalHTML;
+    }
+  }
+
+  function escapeXML(s) {
+    return String(s || '').replace(/[<>&'"]/g, c => ({
+      '<': '&lt;',
+      '>': '&gt;',
+      '&': '&amp;',
+      "'": '&apos;',
+      '"': '&quot;'
+    }[c]));
+  }
+  
   // ---------- Exportar JSON completo ----------
   function exportToJSON() {
     const nombre = ($('#routeName').value || 'RUTA').trim().toUpperCase();
@@ -1836,6 +2042,7 @@ if (f.size > 20 * 1024 * 1024) {
 
   // Exportar
   document.getElementById('btnExportMyMaps').onclick = exportToMyMaps;
+  document.getElementById('btnExportKML').onclick = exportToKML;
   document.getElementById('btnExportJSON').onclick = exportToJSON;
 
   // Importar
