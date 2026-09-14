@@ -2034,6 +2034,16 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
             </div>
             <span class="badge badge-green">Directa</span>
           </div>
+          <div class="trip-result-actions">
+            <button class="btn btn-primary btn-sm" data-trip-show-direct="${idx}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="14" height="14"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/></svg>
+              Ver trazos en mapa
+            </button>
+            <button class="btn btn-ghost btn-sm" data-trip-open-direct="${r.route.id}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="14" height="14"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+              Abrir ruta
+            </button>
+          </div>
         </div>`).join('');
     }
 
@@ -2094,7 +2104,46 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
 
     el.innerHTML = html;
 
-    // Eventos de resultados
+    // ✅ NUEVO: Eventos para botones de RUTAS DIRECTAS
+    el.querySelectorAll('[data-trip-show-direct]').forEach(b => {
+      b.onclick = (e) => {
+        e.stopPropagation();
+        const idx = +b.dataset.tripShowDirect;
+        const r = results.direct[idx];
+        if (!r) return;
+        
+        // Dibujar SOLO el trazo de esta ruta directa
+        drawTripRoutesOnMap([{
+          route: r.route,
+          label: r.route.nombre,
+          type: 'direct'
+        }]);
+        
+        // Ajustar el zoom del mapa a esta ruta
+        const allCoords = [...getRouteCoords(r.route), ...getRouteCoordsVuelta(r.route)];
+        if (allCoords.length) {
+          try { state.tripMap.fitBounds(L.latLngBounds(allCoords).pad(0.15)); } catch(e){}
+        }
+        
+        // 📜 Scroll automático al mapa
+        const mapEl = document.getElementById('tripMap');
+        if (mapEl) {
+          mapEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        toast('Mostrando trazo de: ' + r.route.nombre);
+      };
+    });
+
+    // ✅ NUEVO: Botón "Abrir ruta" en tarjetas directas
+    el.querySelectorAll('[data-trip-open-direct]').forEach(b => {
+      b.onclick = (e) => {
+        e.stopPropagation();
+        const r = state.routes.find(x => x.id === b.dataset.tripOpenDirect);
+        if (r) openRouteDetail(r);
+      };
+    });
+
+    // Eventos de resultados (transbordos)
     el.querySelectorAll('[data-trip-show]').forEach(b => {
       b.onclick = (e) => {
         e.stopPropagation();
@@ -2135,14 +2184,7 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
       };
     });
 
-    // Click en tarjeta de resultado directo → abrir ruta
-    el.querySelectorAll('.result-card.directa').forEach(c => {
-      c.onclick = () => {
-        const idx = +c.dataset.resultIdx;
-        const r = results.direct[idx];
-        if (r) openRouteDetail(r.route);
-      };
-    });
+
 
  
   }
