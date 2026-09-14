@@ -4,11 +4,11 @@
       "slug": "1149",
       "title": "1",
       "description": "Ruta 1",
-      "image": "https://res.cloudinary.com/davovja1g/image/upload/v1789408178/mzu6h8vcwdxzucx72vba.jpg",
+      "image": "https://res.cloudinary.com/davovja1g/image/upload/v1789408268/qr1og1oozv7u1mb4udsg.jpg",
       "url": "/share/ruta/1149",
       "tipo": "ruta",
-      "timestamp": 1789408185006,
-      "updatedAt": "2026-09-14T17:49:45.006Z"
+      "timestamp": 1789408275464,
+      "updatedAt": "2026-09-14T17:51:15.464Z"
     },
     {
       "slug": "ruta1149",
@@ -222,7 +222,7 @@
     }
   ],
   "total": 22,
-  "updatedAt": "2026-09-14T17:49:45.006Z",
+  "updatedAt": "2026-09-14T17:51:15.464Z",
   "version": 1,
-  "__sha": "afd63033e48b89a70949421f203c0000cc0e61b5"
+  "__sha": "c6bd59f2e22d2f6f2c4d60fb1e089188dd8905f0"
 }
