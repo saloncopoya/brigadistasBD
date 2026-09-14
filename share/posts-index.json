@@ -1,6 +1,16 @@
 {
   "posts": [
     {
+      "slug": "ruta3copoya139",
+      "title": "RUTA 3 COPOYA",
+      "description": "Ruta RUTA 3 COPOYA",
+      "image": "",
+      "url": "/share/ruta/ruta3copoya139",
+      "tipo": "ruta",
+      "timestamp": 1789349620736,
+      "updatedAt": "2026-09-14T01:33:40.736Z"
+    },
+    {
       "slug": "escobar139",
       "title": "ESCOBAR",
       "description": "Ruta ESCOBAR",
@@ -19,16 +29,6 @@
       "tipo": "ruta",
       "timestamp": 1789347346015,
       "updatedAt": "2026-09-14T00:55:46.015Z"
-    },
-    {
-      "slug": "ruta3copoya139",
-      "title": "Ruta 3 copoya",
-      "description": "Ruta Ruta 3 copoya",
-      "image": "",
-      "url": "/share/ruta/ruta3copoya139",
-      "tipo": "ruta",
-      "timestamp": 1789347302760,
-      "updatedAt": "2026-09-14T00:55:02.760Z"
     },
     {
       "slug": "ruta2sur139",
@@ -202,7 +202,7 @@
     }
   ],
   "total": 20,
-  "updatedAt": "2026-09-14T01:26:08.453Z",
+  "updatedAt": "2026-09-14T01:33:40.736Z",
   "version": 1,
-  "__sha": "a6d3e821ee02da868270236a6cda640f35af5947"
+  "__sha": "1e32a8de782be3a1ee6841e4b7a8b2951350b327"
 }
