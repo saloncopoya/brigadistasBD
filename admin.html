@@ -453,6 +453,92 @@ body.fs-active{overflow:hidden !important}
           <label>Calles por donde pasa la ruta</label>
           <textarea class="textarea" id="routeCalles" placeholder="Calle 1, Calle 2&#10;Avenida 3"></textarea>
         </div>
+
+        <!-- ============================================================ -->
+<!-- 📋 PANEL DE COORDENADAS — Pegar/exportar/editar coordenadas  -->
+<!-- ============================================================ -->
+<details class="coord-panel" id="coordPanel" style="margin-top:16px">
+  <summary style="padding:12px 14px;cursor:pointer;font-weight:800;font-size:13px;color:var(--cyan);background:var(--surface-2);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;gap:8px">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="16" height="16">
+      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+      <circle cx="12" cy="10" r="3"/>
+    </svg>
+    📋 Coordenadas (pegar / exportar / editar)
+  </summary>
+  <div style="padding:14px;background:var(--surface-2);border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px">
+
+    <!-- Tabs IDA / REGRESO -->
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <button class="btn btn-primary btn-sm coord-tab active" data-coord-tab="ida" style="flex:1">
+        🟢 IDA
+      </button>
+      <button class="btn btn-ghost btn-sm coord-tab" data-coord-tab="vuelta" style="flex:1">
+        🟣 REGRESO
+      </button>
+    </div>
+
+    <!-- Textarea de IDA -->
+    <div class="coord-tab-content" data-coord-tab="ida">
+      <label style="font-size:12px;color:var(--text-2);display:block;margin-bottom:6px">
+        Pega las coordenadas de IDA (una por línea: <code>lat, lng</code>)
+      </label>
+      <textarea
+        id="coordIdaInput"
+        class="textarea"
+        placeholder="16.7524, -93.1150&#10;16.7524, -93.1149&#10;16.7523, -93.1149&#10;..."
+        style="min-height:140px;font-family:monospace;font-size:12px;line-height:1.5"></textarea>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <button class="btn btn-primary btn-sm" id="btnApplyCoordIda" style="flex:1">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>
+          Dibujar IDA en el mapa
+        </button>
+        <button class="btn btn-ghost btn-sm" id="btnLoadCoordIda">⬇ Cargar del mapa</button>
+      </div>
+    </div>
+
+    <!-- Textarea de REGRESO -->
+    <div class="coord-tab-content hidden" data-coord-tab="vuelta">
+      <label style="font-size:12px;color:var(--text-2);display:block;margin-bottom:6px">
+        Pega las coordenadas de REGRESO (una por línea: <code>lat, lng</code>)
+      </label>
+      <textarea
+        id="coordVueltaInput"
+        class="textarea"
+        placeholder="16.7525, -93.1136&#10;16.7524, -93.1136&#10;16.7523, -93.1133&#10;..."
+        style="min-height:140px;font-family:monospace;font-size:12px;line-height:1.5"></textarea>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <button class="btn btn-primary btn-sm" id="btnApplyCoordVuelta" style="flex:1">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>
+          Dibujar REGRESO en el mapa
+        </button>
+        <button class="btn btn-ghost btn-sm" id="btnLoadCoordVuelta">⬇ Cargar del mapa</button>
+      </div>
+    </div>
+
+    <!-- Acciones globales -->
+    <div style="display:flex;gap:6px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" id="btnExportMyMaps" style="flex:1;min-width:140px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        📊 Exportar para My Maps (CSV)
+      </button>
+      <button class="btn btn-ghost btn-sm" id="btnExportJSON" style="flex:1;min-width:140px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        💾 Exportar JSON (backup)
+      </button>
+      <button class="btn btn-ghost btn-sm" id="btnImportJSON" style="flex:1;min-width:140px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        📥 Importar JSON
+      </button>
+      <input type="file" id="importJSONFile" accept=".json,application/json" class="hidden">
+    </div>
+
+    <div class="tiny" style="margin-top:8px;text-align:center">
+      💡 Formato aceptado: <code>lat, lng</code> · uno por línea · también acepta <code>[[lat,lng],...]</code> o <code>lat lng</code>
+    </div>
+  </div>
+</details>
+        
+        
         <div class="card-title" style="margin-top:16px">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/></svg>
           Mapa de la ruta
@@ -1386,6 +1472,382 @@ if (f.size > 20 * 1024 * 1024) {
     return out;
   }
 
+    // ================================================================
+  //  📋 SECCIÓN DE COORDENADAS — Pegar/Exportar/Editar
+  // ================================================================
+
+  // ---------- Parser flexible de coordenadas ----------
+  function parseCoordsText(text) {
+    if (!text || !text.trim()) return [];
+    
+    const pts = [];
+    const seen = new Set();
+    
+    // Estrategia 1: JSON [[lat,lng],[lat,lng],...]
+    const jsonMatch = text.match(/\[\s*\[\s*[-+]?\d/);
+    if (jsonMatch) {
+      try {
+        const arr = JSON.parse(text);
+        if (Array.isArray(arr)) {
+          arr.forEach(p => {
+            if (Array.isArray(p) && p.length >= 2) {
+              const lat = parseFloat(p[0]);
+              const lng = parseFloat(p[1]);
+              if (!isNaN(lat) && !isNaN(lng)) {
+                const key = lat.toFixed(6) + ',' + lng.toFixed(6);
+                if (!seen.has(key)) { seen.add(key); pts.push([lat, lng]); }
+              }
+            }
+          });
+          if (pts.length) return pts;
+        }
+      } catch (e) { /* no es JSON, seguir */ }
+    }
+    
+    // Estrategia 2: Líneas con "lat, lng" o "lat lng" o "lat,lng"
+    const lines = text.split(/\r?\n/);
+    lines.forEach(line => {
+      line = line.trim();
+      if (!line || line.startsWith('#')) return;
+      // Buscar todos los pares de números
+      const matches = line.match(/[-+]?\d+\.?\d*/g);
+      if (matches && matches.length >= 2) {
+        for (let i = 0; i < matches.length - 1; i += 2) {
+          const lat = parseFloat(matches[i]);
+          const lng = parseFloat(matches[i + 1]);
+          if (!isNaN(lat) && !isNaN(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180) {
+            const key = lat.toFixed(6) + ',' + lng.toFixed(6);
+            if (!seen.has(key)) { seen.add(key); pts.push([lat, lng]); }
+          }
+        }
+      }
+    });
+    
+    return pts;
+  }
+
+  // ---------- Formatear coordenadas para textarea ----------
+  function formatCoordsForText(points) {
+    if (!points || !points.length) return '';
+    return points.map(p => {
+      const lat = Array.isArray(p) ? p[0] : p.lat;
+      const lng = Array.isArray(p) ? p[1] : p.lng;
+      return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+    }).join('\n');
+  }
+
+  // ---------- Aplicar coordenadas al mapa ----------
+  function applyCoordsToMap(tipo) {
+    // tipo: 'ida' o 'vuelta'
+    const isIda = tipo === 'ida';
+    const inputEl = isIda ? document.getElementById('coordIdaInput') : document.getElementById('coordVueltaInput');
+    const text = inputEl.value.trim();
+    
+    if (!text) { toast('Pega las coordenadas primero', 'err'); return; }
+    
+    const coords = parseCoordsText(text);
+    if (coords.length < 2) {
+      toast('Se necesitan al menos 2 coordenadas válidas', 'err');
+      return;
+    }
+    
+    // Asegurar que el mapa existe
+    if (!state.map) {
+      toast('El mapa no está inicializado. Ve al paso 3 primero.', 'err');
+      return;
+    }
+    
+    // Limpiar puntos anteriores del tipo correspondiente
+    if (isIda) {
+      state.routeDraft.puntos = coords;
+      // Eliminar markers de ida existentes
+      const newMarkers = [];
+      const newMeta = [];
+      state.layers.markers.forEach((m, i) => {
+        const meta = state.markerMeta[i];
+        if (meta && meta.tipo === 'ida') {
+          state.map.removeLayer(m);
+        } else {
+          newMarkers.push(m);
+          newMeta.push(meta);
+        }
+      });
+      state.layers.markers = newMarkers;
+      state.markerMeta = newMeta;
+      // Agregar nuevos markers
+      coords.forEach(p => addMarker(p[0], p[1], state.routeDraft.colorIda || '#00e5ff', 'ida'));
+    } else {
+      state.routeDraft.puntosVuelta = coords;
+      const newMarkers = [];
+      const newMeta = [];
+      state.layers.markers.forEach((m, i) => {
+        const meta = state.markerMeta[i];
+        if (meta && meta.tipo === 'vuelta') {
+          state.map.removeLayer(m);
+        } else {
+          newMarkers.push(m);
+          newMeta.push(meta);
+        }
+      });
+      state.layers.markers = newMarkers;
+      state.markerMeta = newMeta;
+      coords.forEach(p => addMarker(p[0], p[1], state.routeDraft.colorVuelta || '#a855f7', 'vuelta'));
+    }
+    
+    // Redibujar líneas (con OSRM)
+    scheduleRedraw();
+    updateEditorStatus();
+    
+    // Ajustar zoom
+    const allCoords = [...state.routeDraft.puntos, ...state.routeDraft.puntosVuelta];
+    if (allCoords.length > 1) {
+      try { state.map.fitBounds(L.latLngBounds(allCoords).pad(0.15)); } catch(e){}
+    }
+    
+    toast(`✅ ${coords.length} puntos de ${isIda ? 'IDA' : 'REGRESO'} dibujados`);
+  }
+
+  // ---------- Cargar coordenadas del mapa al textarea ----------
+  function loadCoordsFromMap(tipo) {
+    const isIda = tipo === 'ida';
+    const coords = isIda ? state.routeDraft.puntos : state.routeDraft.puntosVuelta;
+    const text = formatCoordsForText(coords);
+    const inputEl = isIda ? document.getElementById('coordIdaInput') : document.getElementById('coordVueltaInput');
+    inputEl.value = text;
+    toast(`${coords.length} puntos de ${isIda ? 'IDA' : 'REGRESO'} cargados`);
+  }
+
+  // ---------- Exportar para My Maps (CSV) ----------
+  function exportToMyMaps() {
+    const nombre = ($('#routeName').value || 'RUTA').trim().toUpperCase();
+    const ida = state.routeDraft.puntos || [];
+    const vuelta = state.routeDraft.puntosVuelta || [];
+    const calles = splitList($('#routeCalles').value);
+    const paradas = splitList($('#routeParadas').value);
+    
+    if (!ida.length && !vuelta.length) {
+      toast('No hay coordenadas para exportar', 'err');
+      return;
+    }
+    
+    // CSV con formato My Maps: Latitude, Longitude, Name, Description
+    const rows = [];
+    rows.push(['Latitude', 'Longitude', 'Name', 'Description']);
+    
+    // IDA
+    ida.forEach((p, i) => {
+      rows.push([
+        p[0].toFixed(6),
+        p[1].toFixed(6),
+        `${nombre} - IDA ${i + 1}`,
+        `Punto ${i + 1} de la ruta ${nombre} (ida)`
+      ]);
+    });
+    
+    // VUELTA
+    vuelta.forEach((p, i) => {
+      rows.push([
+        p[0].toFixed(6),
+        p[1].toFixed(6),
+        `${nombre} - REGRESO ${i + 1}`,
+        `Punto ${i + 1} de la ruta ${nombre} (regreso)`
+      ]);
+    });
+    
+    // Paradas (si existen)
+    paradas.forEach((p, i) => {
+      // Intentar encontrar la coordenada de la parada por nombre
+      rows.push([
+        '',
+        '',
+        `${nombre} - PARADA: ${p}`,
+        `Parada de la ruta ${nombre}`
+      ]);
+    });
+    
+    // Calles
+    calles.forEach((c, i) => {
+      rows.push([
+        '',
+        '',
+        `${nombre} - CALLE: ${c}`,
+        `Calle de la ruta ${nombre}`
+      ]);
+    });
+    
+    // Generar CSV
+    const csv = rows.map(r => 
+      r.map(cell => {
+        const s = String(cell || '');
+        // Escapar comillas y envolver en comillas si contiene coma
+        if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+          return '"' + s.replace(/"/g, '""') + '"';
+        }
+        return s;
+      }).join(',')
+    ).join('\n');
+    
+    // Descargar
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${nombre.replace(/[^a-z0-9]/gi, '_')}_mymaps.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    toast(`✅ CSV exportado (${ida.length + vuelta.length} puntos)`);
+  }
+
+  // ---------- Exportar JSON completo ----------
+  function exportToJSON() {
+    const nombre = ($('#routeName').value || 'RUTA').trim().toUpperCase();
+    const data = {
+      version: 1,
+      exportado: new Date().toISOString(),
+      ruta: {
+        nombre: nombre,
+        categoria: $('#routeCat').value,
+        tarifa: $('#routeTarifa').value,
+        frecuencia: $('#routeFrec').value,
+        horarioIni: $('#routeHoraIni').value,
+        horarioFin: $('#routeHoraFin').value,
+        dias: $('#routeDias').value,
+        accesibilidad: $('#routeAcces').value,
+        notas: $('#routeNotas').value,
+        paradas: splitList($('#routeParadas').value),
+        retornos: splitList($('#routeRetornos').value),
+        pois: splitList($('#routePoisIda').value),
+        poisVuelta: splitList($('#routePoisVuelta').value),
+        calles: splitList($('#routeCalles').value),
+        colorIda: state.routeDraft.colorIda,
+        colorVuelta: state.routeDraft.colorVuelta,
+        puntos: state.routeDraft.puntos || [],
+        puntosVuelta: state.routeDraft.puntosVuelta || [],
+        geometriaIda: state.routeDraft.geometriaIda || [],
+        geometriaVuelta: state.routeDraft.geometriaVuelta || []
+      }
+    };
+    
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${nombre.replace(/[^a-z0-9]/gi, '_')}_backup.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    toast(`✅ JSON exportado`);
+  }
+
+  // ---------- Importar JSON ----------
+  function importFromJSON(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target.result);
+        const r = data.ruta || data;
+        
+        // Cargar campos
+        if (r.nombre) $('#routeName').value = r.nombre;
+        if (r.categoria) $('#routeCat').value = r.categoria;
+        if (r.tarifa) $('#routeTarifa').value = r.tarifa;
+        if (r.frecuencia) $('#routeFrec').value = r.frecuencia;
+        if (r.horarioIni) $('#routeHoraIni').value = r.horarioIni;
+        if (r.horarioFin) $('#routeHoraFin').value = r.horarioFin;
+        if (r.dias) $('#routeDias').value = r.dias;
+        if (r.accesibilidad) $('#routeAcces').value = r.accesibilidad;
+        if (r.notas) $('#routeNotas').value = r.notas;
+        if (r.paradas) $('#routeParadas').value = r.paradas.join(', ');
+        if (r.retornos) $('#routeRetornos').value = r.retornos.join(', ');
+        if (r.pois) $('#routePoisIda').value = r.pois.join(', ');
+        if (r.poisVuelta) $('#routePoisVuelta').value = r.poisVuelta.join(', ');
+        if (r.calles) $('#routeCalles').value = r.calles.join(', ');
+        
+        // Cargar puntos
+        if (r.puntos) {
+          state.routeDraft.puntos = r.puntos;
+          $('#coordIdaInput').value = formatCoordsForText(r.puntos);
+        }
+        if (r.puntosVuelta) {
+          state.routeDraft.puntosVuelta = r.puntosVuelta;
+          $('#coordVueltaInput').value = formatCoordsForText(r.puntosVuelta);
+        }
+        if (r.geometriaIda) state.routeDraft.geometriaIda = r.geometriaIda;
+        if (r.geometriaVuelta) state.routeDraft.geometriaVuelta = r.geometriaVuelta;
+        if (r.colorIda) state.routeDraft.colorIda = r.colorIda;
+        if (r.colorVuelta) state.routeDraft.colorVuelta = r.colorVuelta;
+        
+        // Redibujar
+        initColorSwatches();
+        if (state.map) {
+          // Limpiar markers
+          state.layers.markers.forEach(m => state.map.removeLayer(m));
+          state.layers.markers = [];
+          state.markerMeta = [];
+          
+          // Dibujar puntos
+          (state.routeDraft.puntos || []).forEach(p => addMarker(p[0], p[1], state.routeDraft.colorIda, 'ida'));
+          (state.routeDraft.puntosVuelta || []).forEach(p => addMarker(p[0], p[1], state.routeDraft.colorVuelta, 'vuelta'));
+          
+          scheduleRedraw();
+          updateEditorStatus();
+          
+          const allCoords = [...(state.routeDraft.puntos || []), ...(state.routeDraft.puntosVuelta || [])];
+          if (allCoords.length > 1) {
+            try { state.map.fitBounds(L.latLngBounds(allCoords).pad(0.15)); } catch(e){}
+          }
+        }
+        
+        toast(`✅ Ruta importada: ${r.nombre || 'Sin nombre'}`);
+      } catch (err) {
+        toast('Error al importar JSON: ' + err.message, 'err');
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // ---------- Conectar eventos ----------
+  // Tabs IDA / REGRESO
+  $$('.coord-tab').forEach(tab => {
+    tab.onclick = () => {
+      $$('.coord-tab').forEach(t => {
+        t.classList.remove('active', 'btn-primary');
+        t.classList.add('btn-ghost');
+      });
+      tab.classList.remove('btn-ghost');
+      tab.classList.add('active', 'btn-primary');
+      
+      const target = tab.dataset.coordTab;
+      $$('.coord-tab-content').forEach(c => {
+        c.classList.toggle('hidden', c.dataset.coordTab !== target);
+      });
+    };
+  });
+
+  // Botones de aplicar
+  document.getElementById('btnApplyCoordIda').onclick = () => applyCoordsToMap('ida');
+  document.getElementById('btnApplyCoordVuelta').onclick = () => applyCoordsToMap('vuelta');
+
+  // Botones de cargar del mapa
+  document.getElementById('btnLoadCoordIda').onclick = () => loadCoordsFromMap('ida');
+  document.getElementById('btnLoadCoordVuelta').onclick = () => loadCoordsFromMap('vuelta');
+
+  // Exportar
+  document.getElementById('btnExportMyMaps').onclick = exportToMyMaps;
+  document.getElementById('btnExportJSON').onclick = exportToJSON;
+
+  // Importar
+  document.getElementById('btnImportJSON').onclick = () => {
+    document.getElementById('importJSONFile').click();
+  };
+  document.getElementById('importJSONFile').onchange = (e) => {
+    const f = e.target.files[0];
+    if (f) importFromJSON(f);
+    e.target.value = '';
+  };
+  
   $('#routeSave').onclick = async ()=>{
     const name = $('#routeName').value.trim();
     if(!name){ toast('El nombre es obligatorio','err'); goStep(1); return; }
@@ -1490,7 +1952,8 @@ if (f.size > 20 * 1024 * 1024) {
     state.drawing = false;
 
          ['routeName','routeTarifa','routeFrec','routeHoraIni','routeHoraFin','routeNotas',
-       'routeParadas','routeRetornos','routePoisIda','routePoisVuelta','routeCalles']
+       'routeParadas','routeRetornos','routePoisIda','routePoisVuelta','routeCalles',
+       'coordIdaInput','coordVueltaInput']
         .forEach(i=>{ const el=$('#'+i); if(el) el.value=''; });
 
       // 🖼️ Reset de la imagen personalizada
@@ -1611,7 +2074,14 @@ if (f.size > 20 * 1024 * 1024) {
           if (hint) hint.textContent = 'Si no subes una imagen, se generará automáticamente desde el mapa.';
         }
         
-        initColorSwatches(); goStep(1);
+     initColorSwatches(); goStep(1);
+        
+        // 📋 Cargar coordenadas en los textareas
+        const idaInput = document.getElementById('coordIdaInput');
+        const vueltaInput = document.getElementById('coordVueltaInput');
+        if (idaInput) idaInput.value = formatCoordsForText(r.puntos || []);
+        if (vueltaInput) vueltaInput.value = formatCoordsForText(r.puntosVuelta || []);
+        
         // Centrar el mapa en la ruta cargada
         if(state.map && (r.puntos?.length || r.puntosVuelta?.length)){
           setTimeout(()=>{
