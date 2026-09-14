@@ -1389,8 +1389,7 @@ const url = location.origin + '/share/m/' + id;
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19, attribution: '© OpenStreetMap'
     }).addTo(state.tripMap);
-        state.tripMap.on('click', e => {
-      // Solo agregar si el modo activo e    state.tripMap.on('click', e => {
+    state.tripMap.on('click', e => {
       // Solo agregar si el modo activo es "addpoint"
       const activeBtn = document.querySelector('#tripToolbar .tb.active');
       const mode = activeBtn ? activeBtn.dataset.tool : 'addpoint';
