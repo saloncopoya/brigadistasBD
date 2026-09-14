@@ -1410,6 +1410,22 @@ const url = location.origin + '/share/m/' + id;
     const circle = L.circle([lat, lng], { radius: state.tripRadius, color, fillColor: color, fillOpacity: 0.1, weight: 1.5 }).addTo(state.tripMap);
     state.tripMarkers.push(marker);
     state.tripCircles.push(circle);
+
+    // 📜 Scroll automático SOLO al colocar el PRIMER punto
+    // Se hace scroll hasta que el mapa quede pegado arriba (debajo del header)
+    if (state.tripPoints.length === 1) {
+      const mapWrap = document.querySelector('#page-trip .map-wrap');
+      if (mapWrap) {
+        // Esperamos un tick para que el DOM se asiente
+        setTimeout(() => {
+          const headerH = 58; // altura del header (--header-h)
+          const rect = mapWrap.getBoundingClientRect();
+          const targetY = window.scrollY + rect.top - headerH - 8;
+          window.scrollTo({ top: targetY, behavior: 'smooth' });
+        }, 100);
+      }
+    }
+
     renderTripPointsList();
     performTripSearch();
   }
