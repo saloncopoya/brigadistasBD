@@ -214,7 +214,10 @@ img{max-width:100%;display:block}
   flex-shrink:0;padding:8px 14px;border-radius:99px;font-size:12.5px;font-weight:700;
   background:var(--surface-2);color:var(--text-2);border:1px solid var(--border);
   transition:var(--transition);white-space:nowrap;
+  display:inline-flex;align-items:center;gap:6px;
 }
+.chip svg{flex-shrink:0;transition:var(--transition);}
+.chip.active svg{color:#00121a;}
 .chip:hover{border-color:var(--border-2);color:var(--text)}
 .chip.active{background:linear-gradient(135deg,var(--cyan),var(--cyan-d));color:#00121a;border-color:transparent;box-shadow:0 4px 14px -4px var(--cyan-glow)}
 .chip.mini{padding:4px 10px;font-size:11px;font-weight:600}
@@ -335,12 +338,14 @@ img{max-width:100%;display:block}
   background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
   padding:12px 10px;position:relative;transition:var(--transition);overflow:hidden;
   display:flex;flex-direction:column;gap:8px;min-height:110px;
+  align-items:center;text-align:center;
 }
 .route-card:hover{border-color:var(--cyan);transform:translateY(-2px);box-shadow:var(--shadow-sm)}
 .route-card .route-icon{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,var(--cyan),var(--cyan-d));display:grid;place-items:center;color:#00121a}
 .route-card .route-icon svg{width:24px;height:24px}
-.route-card .route-name{font-weight:800;font-size:14px;letter-spacing:.3px;text-transform:uppercase;line-height:1.25;word-break:break-word}
-.route-card .route-actions{display:flex;gap:6px;margin-top:auto}
+.route-card .route-name{font-weight:800;font-size:14px;letter-spacing:.3px;text-transform:uppercase;line-height:1.25;word-break:break-word;text-align:center;width:100%}
+   
+   .route-card .route-actions{display:flex;gap:6px;margin-top:auto}
 .route-card .route-actions .icon-btn{width:32px;height:32px;background:var(--surface-2);border-radius:8px}
 .route-card .route-actions .icon-btn svg{width:15px;height:15px}
 .route-card .edit-del{position:absolute;top:8px;right:8px;display:flex;gap:4px;opacity:0;transition:var(--transition)}
@@ -781,12 +786,30 @@ body.fs-active{overflow:hidden !important}
       </div>
       <input class="input" id="marketSearch" placeholder="Buscar productos o servicios..." style="margin-bottom:12px">
       <div class="chips" id="marketCats">
-        <button class="chip active" data-cat="all">Todos</button>
-        <button class="chip" data-cat="Auto o Camioneta">🚗 Auto</button>
-        <button class="chip" data-cat="Terreno o Lote">🌍 Terreno</button>
-        <button class="chip" data-cat="Casa o Renta">🏠 Casa</button>
-        <button class="chip" data-cat="Servicio">🔧 Servicio</button>
-        <button class="chip" data-cat="Otro">📦 Otro</button>
+        <button class="chip active" data-cat="all">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          Todos
+        </button>
+        <button class="chip" data-cat="Auto o Camioneta">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M5 17h14M5 17a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM23 17a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/><path d="M3 17V9l2-5h14l2 5v8"/></svg>
+          Auto
+        </button>
+        <button class="chip" data-cat="Terreno o Lote">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M3 20h18"/><path d="M5 20V10l7-6 7 6v10"/><path d="M9 20v-6h6v6"/></svg>
+          Terreno
+        </button>
+        <button class="chip" data-cat="Casa o Renta">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Casa
+        </button>
+        <button class="chip" data-cat="Servicio">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+          Servicio
+        </button>
+        <button class="chip" data-cat="Otro">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+          Otro
+        </button>
       </div>
       <div class="market-grid" id="marketGrid" style="margin-top:14px"></div>
       <div id="marketAdminBar" class="hidden" style="margin-top:14px">
