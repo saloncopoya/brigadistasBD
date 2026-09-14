@@ -735,11 +735,26 @@ body.fs-active{overflow:hidden !important}
 
       <!-- Modos de vista -->
       <div class="chips" id="routeModes">
-        <button class="chip active" data-mode="rutas">🚌 Rutas</button>
-        <button class="chip" data-mode="paradas">📍 Paradas</button>
-        <button class="chip" data-mode="pois">🏥 POIs</button>
-        <button class="chip" data-mode="calles">🛣️ Calles</button>
-        <button class="chip" data-mode="retornos">↩️ Retornos</button>
+        <button class="chip active" data-mode="rutas">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M3 11h18"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/></svg>
+          Rutas
+        </button>
+        <button class="chip" data-mode="paradas">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          Paradas
+        </button>
+        <button class="chip" data-mode="pois">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+          POIs
+        </button>
+        <button class="chip" data-mode="calles">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M4 20h16"/><path d="M4 4h16"/><path d="M12 4v4"/><path d="M12 12v4"/><path d="M12 20v-4"/></svg>
+          Calles
+        </button>
+        <button class="chip" data-mode="retornos">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+          Retornos
+        </button>
       </div>
 
       <!-- Resultados búsqueda -->
