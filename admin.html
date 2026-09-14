@@ -101,7 +101,37 @@ button{cursor:pointer;border:none;background:none}
 .map-wrap{position:relative;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);background:var(--surface-2);margin-bottom:14px}
 #editorMap{width:100%;height:44vh;min-height:300px;z-index:1}
 .map-toolbar{position:absolute;top:10px;left:10px;right:10px;z-index:500;display:flex;gap:6px;flex-wrap:wrap}
-.tb{background:color-mix(in srgb,var(--surface) 94%,transparent);backdrop-filter:blur(10px);border:1px solid var(--border-2);border-radius:10px;padding:8px 11px;font-size:12px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:5px;box-shadow:var(--shadow-sm);transition:var(--transition)}
+
+/* 🖥️ Botón de pantalla completa dentro del mapa */
+.map-fs-btn{
+  position:absolute;bottom:12px;right:12px;z-index:600;
+  background:color-mix(in srgb,var(--surface) 96%,transparent);
+  border:1px solid var(--border-2);border-radius:12px;
+  width:42px;height:42px;display:grid;place-items:center;
+  color:var(--text);box-shadow:var(--shadow);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  transition:var(--transition);cursor:pointer;
+}
+.map-fs-btn:hover{background:var(--surface-3);border-color:var(--cyan);color:var(--cyan)}
+.map-fs-btn:active{transform:scale(.94)}
+.map-fs-btn svg{width:20px;height:20px}
+.map-fs-btn.is-fullscreen svg{transform:rotate(180deg)}
+
+/* Estado de pantalla completa */
+.map-wrap.is-fullscreen{
+  position:fixed !important;
+  inset:0 !important;
+  z-index:9500 !important;
+  margin:0 !important;
+  border-radius:0 !important;
+  border:none !important;
+}
+.map-wrap.is-fullscreen #editorMap{
+  height:100vh !important;
+  width:100vw !important;
+}
+body.fs-active{overflow:hidden !important}
+  .tb{background:color-mix(in srgb,var(--surface) 94%,transparent);backdrop-filter:blur(10px);border:1px solid var(--border-2);border-radius:10px;padding:8px 11px;font-size:12px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:5px;box-shadow:var(--shadow-sm);transition:var(--transition)}
 .tb svg{width:15px;height:15px}
 .tb:hover{border-color:var(--cyan);color:var(--cyan)}
 .tb.active{background:var(--cyan);color:#00121a;border-color:transparent}
@@ -322,6 +352,15 @@ button{cursor:pointer;border:none;background:none}
         </div>
         <div class="map-wrap" id="editorMapWrap" style="margin:0">
           <div id="editorMap"></div>
+          <!-- 🖥️ Botón de pantalla completa (esquina inferior derecha) -->
+          <button class="map-fs-btn" id="editorMapFsBtn" title="Pantalla completa">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3"/>
+              <path d="M21 8V5a2 2 0 0 0-2-2h-3"/>
+              <path d="M3 16v3a2 2 0 0 0 2 2h3"/>
+              <path d="M16 21h3a2 2 0 0 0 2-2v-3"/>
+            </svg>
+          </button>
           <div class="map-toolbar">
 <button class="tb" data-tool="draw-ida">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
@@ -652,6 +691,21 @@ button{cursor:pointer;border:none;background:none}
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
       maxZoom:19, attribution:'© OpenStreetMap'
     }).addTo(state.map);
+
+    // 🖥️ Conectar botón de pantalla completa
+    setTimeout(() => {
+      const btn = document.getElementById('editorMapFsBtn');
+      const wrap = document.getElementById('editorMapWrap');
+      if (btn && wrap) {
+        btn.onclick = () => {
+          const isFs = wrap.classList.toggle('is-fullscreen');
+          btn.classList.toggle('is-fullscreen', isFs);
+          document.body.classList.toggle('fs-active', isFs);
+          btn.title = isFs ? 'Salir de pantalla completa' : 'Pantalla completa';
+          setTimeout(() => state.map && state.map.invalidateSize(), 250);
+        };
+      }
+    }, 50);
      state.map.on('click', async e=>{
   if(!state.drawing) return;
   const snapped = await snapToRoad(e.latlng.lat, e.latlng.lng);
