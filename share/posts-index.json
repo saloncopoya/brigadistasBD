@@ -4,11 +4,11 @@
       "slug": "ruta3149",
       "title": "RUTA 3",
       "description": "Ruta RUTA 3",
-      "image": "",
+      "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789423739/m9jtfyi830xuzbbsxoya.jpg",
       "url": "/share/ruta/ruta3149",
       "tipo": "ruta",
-      "timestamp": 1789419330352,
-      "updatedAt": "2026-09-14T20:55:30.352Z"
+      "timestamp": 1789423748383,
+      "updatedAt": "2026-09-14T22:09:08.383Z"
     },
     {
       "slug": "ruta1149",
@@ -222,7 +222,7 @@
     }
   ],
   "total": 22,
-  "updatedAt": "2026-09-14T20:55:30.352Z",
+  "updatedAt": "2026-09-14T22:09:08.383Z",
   "version": 1,
-  "__sha": "faf3bfb2940d8b49ba72d045aded26d3b0eaaddb"
+  "__sha": "16b199725f058257d2e36ef996d8870918044767"
 }
