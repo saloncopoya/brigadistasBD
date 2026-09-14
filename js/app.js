@@ -1357,12 +1357,29 @@ const url = location.origin + '/share/m/' + id;
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19, attribution: '© OpenStreetMap'
     }).addTo(state.tripMap);
-    state.tripMap.on('click', e => {
+        state.tripMap.on('click', e => {
       // Solo agregar si el modo activo es "addpoint"
       const activeBtn = document.querySelector('#tripToolbar .tb.active');
       const mode = activeBtn ? activeBtn.dataset.tool : 'addpoint';
       if (mode !== 'addpoint') return;
-      if (state.tripPoints.length >= 5) { toast('Máximo 5 puntos', 'err'); return; }
+
+      // Límite duro de 5 puntos
+      if (state.tripPoints.length >= 5) {
+        toast('Máximo 5 puntos', 'err');
+        return;
+      }
+
+      // 🔒 Si ya hay 2 o más puntos, se auto-desactiva el modo "Agregar"
+      // (el usuario debe pulsar +Agregar de nuevo para añadir el 3º, 4º, 5º)
+      if (state.tripPoints.length >= 2) {
+        // Desactivar el botón de agregar
+        const addBtn = document.querySelector('#tripToolbar .tb[data-tool="addpoint"]');
+        if (addBtn) addBtn.classList.remove('active');
+        // El modo activo ahora será "ninguno" → el siguiente click no agregará
+        toast('Máx. 2 puntos. Pulsa +Agregar para añadir más.');
+        return;
+      }
+
       addTripPoint(e.latlng.lat, e.latlng.lng);
     });
   }
@@ -1453,6 +1470,16 @@ const url = location.origin + '/share/m/' + id;
         });
         renderTripPointsList();
         performTripSearch();
+
+        // 🔓 Reactivar automáticamente el botón "+Agregar" si quedan 0 o 1 puntos
+        if (state.tripPoints.length <= 1) {
+          const addBtn = document.querySelector('#tripToolbar .tb[data-tool="addpoint"]');
+          if (addBtn && !addBtn.classList.contains('active')) {
+            // Quitar "active" de todos y activar solo addpoint
+            $$('#tripToolbar .tb').forEach(x => x.classList.remove('active'));
+            addBtn.classList.add('active');
+          }
+        }
       };
     });
   }
@@ -1615,11 +1642,11 @@ const url = location.origin + '/share/m/' + id;
         }
         const lineIda = L.polyline(idaDraw, {
           color,
-          weight: isHl ? 5 : 3,
+          weight: item.type === 'transfer' ? (isHl ? 5 : 3) : (isHl ? 6 : 4),
           opacity: isHl ? 0.95 : 0.5,
           lineJoin: 'round',
           lineCap: 'round',
-          dashArray: item.type === 'transfer' ? '8,6' : null
+          dashArray: null
         }).addTo(state.tripMap);
         lineIda.bindTooltip(
           (item.label || route.nombre || 'Ruta') + ' · IDA' +
@@ -2070,8 +2097,17 @@ const url = location.origin + '/share/m/' + id;
           });
           m.setIcon(icon);
         });
-        renderTripPointsList();
+              renderTripPointsList();
         performTripSearch();
+
+        // 🔓 Reactivar "+Agregar" si quedan 0 o 1 puntos
+        if (state.tripPoints.length <= 1) {
+          const addBtn = document.querySelector('#tripToolbar .tb[data-tool="addpoint"]');
+          if (addBtn) {
+            $$('#tripToolbar .tb').forEach(x => x.classList.remove('active'));
+            addBtn.classList.add('active');
+          }
+        }
         toast('Punto eliminado');
         return;
       }
@@ -2081,6 +2117,13 @@ const url = location.origin + '/share/m/' + id;
         state.tripMarkers = []; state.tripCircles = []; state.tripPoints = [];
         clearTripRouteLayers();
         renderTripPointsList(); performTripSearch();
+
+        // 🔓 Reactivar "+Agregar" tras limpiar todo
+        const addBtn = document.querySelector('#tripToolbar .tb[data-tool="addpoint"]');
+        if (addBtn) {
+          $$('#tripToolbar .tb').forEach(x => x.classList.remove('active'));
+          addBtn.classList.add('active');
+        }
         toast('Puntos limpiados');
         return;
       }
