@@ -320,7 +320,7 @@ button{cursor:pointer;border:none;background:none}
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/></svg>
           Mapa de la ruta
         </div>
-        <div class="map-wrap" style="margin:0">
+        <div class="map-wrap" id="editorMapWrap" style="margin:0">
           <div id="editorMap"></div>
           <div class="map-toolbar">
 <button class="tb" data-tool="draw-ida">
@@ -818,8 +818,45 @@ button{cursor:pointer;border:none;background:none}
             });
           }
 
-          // Redibujar las líneas (ida + vuelta con offset)
-          redrawLines();
+          // 🔥 Si la ruta que estamos editando ya tiene geometría guardada,
+          // dibujamos las líneas directamente SIN tener que volver a trazarlas.
+          if (state.editingRoute) {
+            const r = state.editingRoute;
+            // IDA
+            if (r.geometriaIda && r.geometriaIda.length > 1) {
+              state.routeDraft.geometriaIda = r.geometriaIda;
+              const colorIda = state.routeDraft.colorIda || '#00e5ff';
+              const offsetGeom = offsetPolyline(r.geometriaIda, 4);
+              state.layers.ida = L.polyline(offsetGeom, {
+                color: colorIda, weight: 4, opacity: .95
+              }).addTo(state.map);
+            } else if (state.routeDraft.puntos.length > 1) {
+              // Fallback: si no hay geometría, unir los puntos con una línea recta
+              const colorIda = state.routeDraft.colorIda || '#00e5ff';
+              state.layers.ida = L.polyline(state.routeDraft.puntos, {
+                color: colorIda, weight: 4, opacity: .95,
+                dashArray: '6,6'
+              }).addTo(state.map);
+            }
+            // VUELTA
+            if (r.geometriaVuelta && r.geometriaVuelta.length > 1) {
+              state.routeDraft.geometriaVuelta = r.geometriaVuelta;
+              const colorVuelta = state.routeDraft.colorVuelta || '#a855f7';
+              const offsetGeomV = offsetPolyline(r.geometriaVuelta, -4);
+              state.layers.vuelta = L.polyline(offsetGeomV, {
+                color: colorVuelta, weight: 4, opacity: .95
+              }).addTo(state.map);
+            } else if (state.routeDraft.puntosVuelta.length > 1) {
+              const colorVuelta = state.routeDraft.colorVuelta || '#a855f7';
+              state.layers.vuelta = L.polyline(state.routeDraft.puntosVuelta, {
+                color: colorVuelta, weight: 4, opacity: .95,
+                dashArray: '6,6'
+              }).addTo(state.map);
+            }
+          } else {
+            // Ruta nueva → comportamiento normal
+            redrawLines();
+          }
           updateEditorStatus();
         }
       },200);
