@@ -32,12 +32,31 @@
     if (!navigator.onLine) throw new Error('Sin conexión. Guardado como base64.');
 
     const isVideo = file.type.startsWith('video/');
-    const endpoint = `https://api.cloudinary.com/v1_1/${CLOUDINARY.cloudName}/${isVideo ? 'video' : 'image'}/upload`;
+    const resourceType = isVideo ? 'video' : 'image';
+    const endpoint = `https://api.cloudinary.com/v1_1/${CLOUDINARY.cloudName}/${resourceType}/upload`;
 
     const form = new FormData();
     form.append('file', file);
     form.append('upload_preset', CLOUDINARY.uploadPreset);
     form.append('api_key', CLOUDINARY.apiKey);
+
+    // 🖼️ Transformaciones para IMÁGENES (como WhatsApp)
+    if (!isVideo) {
+      // Redimensionar a máx. 1600px de ancho/alto, sin agrandar si es más pequeña
+      form.append('transformation', 'c_limit,w_1600,h_1600');
+      // Comprimir con calidad automática (Cloudinary elige la mejor)
+      form.append('quality', 'auto:good');
+      // Convertir al formato moderno (WebP/AVIF) que pesa 30-50% menos
+      form.append('fetch_format', 'auto');
+    }
+
+    // 🎥 Transformaciones para VIDEOS (opcional)
+    if (isVideo) {
+      // Limitar a 1280x720 para que no pese demasiado
+      form.append('transformation', 'c_limit,w_1280,h_720');
+      // Comprimir con calidad automática
+      form.append('quality', 'auto:good');
+    }
 
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
@@ -51,7 +70,21 @@
         try {
           const res = JSON.parse(xhr.responseText);
           if (xhr.status >= 200 && xhr.status < 300 && res.secure_url) {
-            resolve(res.secure_url);
+            // ⚠️ Cloudinary devuelve la URL SIN las transformaciones.
+            // Si quieres que la URL incluya las transformaciones permanentes
+            // (para que también funcione desde la URL directa), añádelas aquí.
+            let finalUrl = res.secure_url;
+            
+            // Insertar transformaciones fijas en la URL para que siempre
+            // sirva la versión optimizada
+            if (!isVideo) {
+              finalUrl = finalUrl.replace(
+                '/upload/',
+                '/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/'
+              );
+            }
+            
+            resolve(finalUrl);
           } else {
             reject(new Error(res.error?.message || 'Error de Cloudinary'));
           }
