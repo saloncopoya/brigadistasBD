@@ -97,6 +97,7 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
     tripMarkers: [],
     tripCircles: [],
     tripRadius: 300,
+    userReactivated: false,   // ← NUEVA bandera: el usuario reactivó "+Agregar" manualmente
     // Firebase
     fbDB: null,
     // Comentarios
@@ -1358,6 +1359,7 @@ const url = location.origin + '/share/m/' + id;
       maxZoom: 19, attribution: '© OpenStreetMap'
     }).addTo(state.tripMap);
         state.tripMap.on('click', e => {
+      // Solo agregar si el modo activo e    state.tripMap.on('click', e => {
       // Solo agregar si el modo activo es "addpoint"
       const activeBtn = document.querySelector('#tripToolbar .tb.active');
       const mode = activeBtn ? activeBtn.dataset.tool : 'addpoint';
@@ -1369,18 +1371,24 @@ const url = location.origin + '/share/m/' + id;
         return;
       }
 
-      // 🔒 Si ya hay 2 o más puntos, se auto-desactiva el modo "Agregar"
-      // (el usuario debe pulsar +Agregar de nuevo para añadir el 3º, 4º, 5º)
-      if (state.tripPoints.length >= 2) {
-        // Desactivar el botón de agregar
+      // 🔒 Auto-bloqueo: SOLO si hay 2+ puntos Y el usuario NO reactivó manualmente.
+      if (state.tripPoints.length >= 2 && !state.userReactivated) {
         const addBtn = document.querySelector('#tripToolbar .tb[data-tool="addpoint"]');
         if (addBtn) addBtn.classList.remove('active');
-        // El modo activo ahora será "ninguno" → el siguiente click no agregará
         toast('Máx. 2 puntos. Pulsa +Agregar para añadir más.');
         return;
       }
 
+      // ✅ Agregamos el punto
       addTripPoint(e.latlng.lat, e.latlng.lng);
+
+      // Después de agregar con reactivación manual, volvemos a bloquear el botón
+      // hasta que el usuario lo pulse otra vez (si ya llegó a 2+).
+      if (state.tripPoints.length >= 2) {
+        state.userReactivated = false;
+        const addBtn = document.querySelector('#tripToolbar .tb[data-tool="addpoint"]');
+        if (addBtn) addBtn.classList.remove('active');
+      }
     });
   }
 
@@ -1488,6 +1496,8 @@ const url = location.origin + '/share/m/' + id;
         performTripSearch();
 
         // 🔓 Reactivar automáticamente el botón "+Agregar" si quedan 0 o 1 puntos
+        // y resetear la bandera de reactivación
+        state.userReactivated = false;
         if (state.tripPoints.length <= 1) {
           const addBtn = document.querySelector('#tripToolbar .tb[data-tool="addpoint"]');
           if (addBtn && !addBtn.classList.contains('active')) {
@@ -2117,6 +2127,8 @@ const url = location.origin + '/share/m/' + id;
         performTripSearch();
 
         // 🔓 Reactivar "+Agregar" si quedan 0 o 1 puntos
+        // y resetear la bandera de reactivación
+        state.userReactivated = false;
         if (state.tripPoints.length <= 1) {
           const addBtn = document.querySelector('#tripToolbar .tb[data-tool="addpoint"]');
           if (addBtn) {
@@ -2135,6 +2147,7 @@ const url = location.origin + '/share/m/' + id;
         renderTripPointsList(); performTripSearch();
 
         // 🔓 Reactivar "+Agregar" tras limpiar todo
+        state.userReactivated = false;   // ← resetear bandera
         const addBtn = document.querySelector('#tripToolbar .tb[data-tool="addpoint"]');
         if (addBtn) {
           $$('#tripToolbar .tb').forEach(x => x.classList.remove('active'));
@@ -2154,6 +2167,14 @@ const url = location.origin + '/share/m/' + id;
       }
       $$('#tripToolbar .tb').forEach(x => x.classList.remove('active'));
       b.classList.add('active');
+
+      // 🎯 Si el usuario pulsa "+Agregar" manualmente, activamos la bandera
+      // para permitir añadir el 3º, 4º o 5º punto aunque ya haya 2.
+      if (tool === 'addpoint') {
+        state.userReactivated = true;
+      } else {
+        state.userReactivated = false;
+      }
     };
   });
 
