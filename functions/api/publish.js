@@ -288,7 +288,34 @@ function escapeHTML(s) {
 // ==========================================================================
 function generateHTML({ tipo, title, content, image, slug, pageUrl, baseUrl, extra }) {
   const safeTitle = escapeHTML(title);
-  const safeDesc = escapeHTML((content || '').slice(0, 160));
+ // Construir descripción enriquecida según el tipo
+let enrichedContent = content || '';
+if (tipo === 'ruta' && extra?.route) {
+  const r = extra.route;
+  const parts = [];
+  
+  if (r.paradas?.length) {
+    parts.push(`📍 Paradas: ${r.paradas.slice(0, 5).join(', ')}${r.paradas.length > 5 ? '...' : ''}`);
+  }
+  if (r.pois?.length) {
+    parts.push(`🏥 POIs: ${r.pois.slice(0, 5).join(', ')}${r.pois.length > 5 ? '...' : ''}`);
+  }
+  if (r.calles?.length) {
+    parts.push(`🛣️ Calles: ${r.calles.slice(0, 4).join(', ')}${r.calles.length > 4 ? '...' : ''}`);
+  }
+  if (r.tarifa) {
+    parts.push(`💰 Tarifa: ${r.tarifa}`);
+  }
+  if (r.frecuencia) {
+    parts.push(`⏱️ ${r.frecuencia}`);
+  }
+  
+  if (parts.length) {
+    enrichedContent = parts.join(' · ');
+  }
+}
+
+const safeDesc = escapeHTML(enrichedContent.slice(0, 160));
   const safeImage = image ? escapeHTML(image) : `${baseUrl}/img.png`;
 
   const typeLabel = tipo === 'ruta' ? 'Ruta' : tipo === 'market' ? 'Anuncio' : 'Publicación';
@@ -300,7 +327,7 @@ function generateHTML({ tipo, title, content, image, slug, pageUrl, baseUrl, ext
       '@context': 'https://schema.org',
       '@type': 'BusTrip',
       name: title,
-      description: safeDesc,
+     description: enrichedContent.slice(0, 160),
       url: pageUrl,
       image: safeImage,
       provider: { '@type': 'Organization', name: 'Rutas BGD', url: baseUrl }
