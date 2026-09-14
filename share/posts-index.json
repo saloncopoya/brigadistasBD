@@ -1,6 +1,16 @@
 {
   "posts": [
     {
+      "slug": "escobar139",
+      "title": "Escobar",
+      "description": "Ruta Escobar",
+      "image": "",
+      "url": "/share/ruta/escobar139",
+      "tipo": "ruta",
+      "timestamp": 1789348657393,
+      "updatedAt": "2026-09-14T01:17:37.393Z"
+    },
+    {
       "slug": "rutacentrosurnorte139",
       "title": "Ruta centro sur norte",
       "description": "Ruta Ruta centro sur norte",
@@ -191,8 +201,8 @@
       "updatedAt": "2026-09-13T08:52:43.612Z"
     }
   ],
-  "total": 19,
-  "updatedAt": "2026-09-14T00:55:46.015Z",
+  "total": 20,
+  "updatedAt": "2026-09-14T01:17:37.393Z",
   "version": 1,
-  "__sha": "e8f38ff2cab555423bcdf882e3e393d2d55af543"
+  "__sha": "f130c514c2f0d51110093337e3b24b273afd1379"
 }
