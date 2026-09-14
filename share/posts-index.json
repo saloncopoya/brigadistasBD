@@ -7,8 +7,8 @@
       "image": "",
       "url": "/share/ruta/ruta3149",
       "tipo": "ruta",
-      "timestamp": 1789418219671,
-      "updatedAt": "2026-09-14T20:36:59.671Z"
+      "timestamp": 1789419330352,
+      "updatedAt": "2026-09-14T20:55:30.352Z"
     },
     {
       "slug": "ruta1149",
@@ -222,7 +222,7 @@
     }
   ],
   "total": 22,
-  "updatedAt": "2026-09-14T20:36:59.671Z",
+  "updatedAt": "2026-09-14T20:55:30.352Z",
   "version": 1,
-  "__sha": "6a6b80bab5c6641fe58a97facceb447fdb27b940"
+  "__sha": "faf3bfb2940d8b49ba72d045aded26d3b0eaaddb"
 }
