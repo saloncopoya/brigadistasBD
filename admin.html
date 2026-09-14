@@ -883,54 +883,71 @@ body.fs-active{overflow:hidden !important}
             });
           }
 
-                   // Dibujar POIs
+          // Dibujar POIs
           if(state.routeDraft.pois && state.routeDraft.pois.length){
             state.routeDraft.pois.forEach(p=>{
               const poiMarker = L.circleMarker([p[0], p[1]],{radius:7,color:'#a855f7',fillColor:'#a855f7',fillOpacity:1,weight:2}).addTo(state.map);
               state.layers.markers.push(poiMarker);
-              state.markerMeta.push({ tipo: 'poi' });   // ← añadir esta línea
+              state.markerMeta.push({ tipo: 'poi' });
             });
           }
 
-          // 🔥 Si la ruta que estamos editando ya tiene geometría guardada,
-          // dibujamos las líneas directamente SIN tener que volver a trazarlas.
-          if (state.editingRoute) {
-            const r = state.editingRoute;
-            // IDA
-            if (r.geometriaIda && r.geometriaIda.length > 1) {
-              state.routeDraft.geometriaIda = r.geometriaIda;
-              const colorIda = state.routeDraft.colorIda || '#00e5ff';
-              const offsetGeom = offsetPolyline(r.geometriaIda, 4);
-              state.layers.ida = L.polyline(offsetGeom, {
-                color: colorIda, weight: 4, opacity: .95
-              }).addTo(state.map);
-            } else if (state.routeDraft.puntos.length > 1) {
-              // Fallback: si no hay geometría, unir los puntos con una línea recta
-              const colorIda = state.routeDraft.colorIda || '#00e5ff';
-              state.layers.ida = L.polyline(state.routeDraft.puntos, {
-                color: colorIda, weight: 4, opacity: .95,
-                dashArray: '6,6'
-              }).addTo(state.map);
-            }
-            // VUELTA
-            if (r.geometriaVuelta && r.geometriaVuelta.length > 1) {
-              state.routeDraft.geometriaVuelta = r.geometriaVuelta;
-              const colorVuelta = state.routeDraft.colorVuelta || '#a855f7';
-              const offsetGeomV = offsetPolyline(r.geometriaVuelta, -4);
-              state.layers.vuelta = L.polyline(offsetGeomV, {
-                color: colorVuelta, weight: 4, opacity: .95
-              }).addTo(state.map);
-            } else if (state.routeDraft.puntosVuelta.length > 1) {
-              const colorVuelta = state.routeDraft.colorVuelta || '#a855f7';
-              state.layers.vuelta = L.polyline(state.routeDraft.puntosVuelta, {
-                color: colorVuelta, weight: 4, opacity: .95,
-                dashArray: '6,6'
-              }).addTo(state.map);
-            }
-          } else {
-            // Ruta nueva → comportamiento normal
-            redrawLines();
+          // 🔥 DIBUJAR LA GEOMETRÍA GUARDADA (ida + vuelta)
+          // Se ejecuta tanto si editamos como si es nueva ruta.
+          // Primero intentamos con geometría real (OSRM), y si no existe,
+          // unimos los puntos crudos con una línea recta punteada.
+          const isEdit = !!state.editingRoute;
+          const r = state.editingRoute || {};
+          const colorIda = state.routeDraft.colorIda || '#00e5ff';
+          const colorVuelta = state.routeDraft.colorVuelta || '#a855f7';
+
+          // ---- IDA ----
+          if (r.geometriaIda && r.geometriaIda.length > 1) {
+            state.routeDraft.geometriaIda = r.geometriaIda;
+            const offsetGeom = offsetPolyline(r.geometriaIda, 4);
+            state.layers.ida = L.polyline(offsetGeom, {
+              color: colorIda, weight: 4, opacity: .95
+            }).addTo(state.map);
+          } else if (state.routeDraft.puntos.length > 1) {
+            state.layers.ida = L.polyline(state.routeDraft.puntos, {
+              color: colorIda, weight: 4, opacity: .95,
+              dashArray: '6,6'
+            }).addTo(state.map);
           }
+
+          // ---- VUELTA ----
+          if (r.geometriaVuelta && r.geometriaVuelta.length > 1) {
+            state.routeDraft.geometriaVuelta = r.geometriaVuelta;
+            const offsetGeomV = offsetPolyline(r.geometriaVuelta, -4);
+            state.layers.vuelta = L.polyline(offsetGeomV, {
+              color: colorVuelta, weight: 4, opacity: .95
+            }).addTo(state.map);
+          } else if (state.routeDraft.puntosVuelta.length > 1) {
+            state.layers.vuelta = L.polyline(state.routeDraft.puntosVuelta, {
+              color: colorVuelta, weight: 4, opacity: .95,
+              dashArray: '6,6'
+            }).addTo(state.map);
+          }
+
+          // 🔍 FORZAR el zoom para que se vea toda la ruta (geometría + puntos)
+          // Esto soluciona el problema de "no veo el trazado" porque
+          // fitBounds se hace sobre TODA la geometría, no solo los puntos crudos.
+          setTimeout(() => {
+            const allCoords = [];
+            if (state.routeDraft.puntos) allCoords.push(...state.routeDraft.puntos);
+            if (state.routeDraft.puntosVuelta) allCoords.push(...state.routeDraft.puntosVuelta);
+            if (state.routeDraft.geometriaIda) allCoords.push(...state.routeDraft.geometriaIda);
+            if (state.routeDraft.geometriaVuelta) allCoords.push(...state.routeDraft.geometriaVuelta);
+            if (allCoords.length > 1) {
+              try {
+                state.map.fitBounds(L.latLngBounds(allCoords).pad(0.15));
+              } catch(e) { /* ignorar */ }
+            }
+          }, 300);
+
+          // Si NO es edición, refrescamos por si acaso
+          if (!isEdit) redrawLines();
+
           updateEditorStatus();
         }
       },200);
