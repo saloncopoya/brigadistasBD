@@ -600,9 +600,13 @@ const url = location.origin + '/share/post/' + post.id;
     return `<div class="list-group">` + Array.from(map.entries()).map(([parada, rutas]) => `
       <div class="list-item">
         <div class="li-head">
-          <div class="li-title">📍 ${esc(parada)}</div>
-          <button class="btn btn-ghost btn-sm" data-set-origin="${esc(parada)}">Usar como origen</button>
-        </div>
+          <div class="li-title" style="display:flex;align-items:center;gap:8px;">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="16" height="16" style="color:var(--cyan);flex-shrink:0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+  <span>${esc(parada)}</span>
+</div>
+
+<button class="btn btn-ghost btn-sm" data-set-place="${esc(parada)}">Seleccionar</button>
+</div>
         <div class="li-chips">${Array.from(rutas).map(n => `<span class="chip mini">${esc(n)}</span>`).join('')}</div>
       </div>`).join('') + `</div>`;
   }
@@ -618,9 +622,12 @@ const url = location.origin + '/share/post/' + post.id;
       return `<div class="section-title">${title}</div><div class="list-group">` + Array.from(m.entries()).map(([poi, rutas]) => `
         <div class="list-item">
           <div class="li-head">
-            <div class="li-title">🏥 ${esc(poi)}</div>
-            <button class="btn btn-ghost btn-sm" data-set-origin="${esc(poi)}">Origen</button>
-          </div>
+            <div class="li-title" style="display:flex;align-items:center;gap:8px;">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="16" height="16" style="color:var(--cyan);flex-shrink:0;"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+  <span>${esc(poi)}</span>
+</div>
+<button class="btn btn-ghost btn-sm" data-set-place="${esc(poi)}">Seleccionar</button>
+</div>
           <div class="li-chips">${Array.from(rutas).map(n => `<span class="chip mini">${esc(n)}</span>`).join('')}</div>
         </div>`).join('') + `</div>`;
     };
@@ -639,9 +646,12 @@ const url = location.origin + '/share/post/' + post.id;
     return `<div class="list-group">` + Array.from(map.entries()).map(([calle, rutas]) => `
       <div class="list-item">
         <div class="li-head">
-          <div class="li-title">🛣️ ${esc(calle)}</div>
-          <button class="btn btn-ghost btn-sm" data-set-origin="${esc(calle)}">Buscar aquí</button>
-        </div>
+          <div class="li-title" style="display:flex;align-items:center;gap:8px;">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="16" height="16" style="color:var(--cyan);flex-shrink:0;"><path d="M4 20h16"/><path d="M4 4h16"/><path d="M12 4v4"/><path d="M12 12v4"/><path d="M12 20v-4"/></svg>
+  <span>${esc(calle)}</span>
+</div>
+<button class="btn btn-ghost btn-sm" data-set-place="${esc(calle)}">Seleccionar</button>
+</div>
         <div class="li-chips">${Array.from(rutas).map(n => `<span class="chip mini">${esc(n)}</span>`).join('')}</div>
       </div>`).join('') + `</div>`;
   }
@@ -657,9 +667,12 @@ const url = location.origin + '/share/post/' + post.id;
     return `<div class="list-group">` + Array.from(map.entries()).map(([ret, rutas]) => `
       <div class="list-item">
         <div class="li-head">
-          <div class="li-title">↩️ ${esc(ret)}</div>
-          <button class="btn btn-ghost btn-sm" data-set-origin="${esc(ret)}">Usar como origen</button>
-        </div>
+        <div class="li-title" style="display:flex;align-items:center;gap:8px;">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="16" height="16" style="color:var(--cyan);flex-shrink:0;"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+  <span>${esc(ret)}</span>
+</div>
+<button class="btn btn-ghost btn-sm" data-set-place="${esc(ret)}">Seleccionar</button>
+</div>
         <div class="li-chips">${Array.from(rutas).map(n => `<span class="chip mini">${esc(n)}</span>`).join('')}</div>
       </div>`).join('') + `</div>`;
   }
@@ -692,12 +705,43 @@ const url = location.origin + '/share/post/' + post.id;
       };
     });
 
-    // Botones "usar como origen"
-    root.querySelectorAll('[data-set-origin]').forEach(btn => {
+    // 🎯 NUEVA LÓGICA CÍCLICA: Botones "Seleccionar" con auto-búsqueda
+    root.querySelectorAll('[data-set-place]').forEach(btn => {
       btn.onclick = (e) => {
         e.stopPropagation();
-        $('#originInput').value = btn.dataset.setOrigin;
-        toast('Origen establecido: ' + btn.dataset.setOrigin);
+        const valor = btn.dataset.setPlace;
+        const originInput = $('#originInput');
+        const destInput = $('#destInput');
+
+        // 1. Ir a la pestaña de Rutas
+        if (state.currentPage !== 'routes') {
+          navigateTo('routes');
+        }
+
+        // 2. Lógica cíclica de 3 estados
+        if (!originInput.value.trim()) {
+          // Estado 1: "Estoy en" vacío → lo llenamos
+          originInput.value = valor;
+          toast('Origen: ' + valor);
+        } else if (!destInput.value.trim()) {
+          // Estado 2: "Estoy en" lleno, "A dónde vamos" vacío → lo llenamos
+          destInput.value = valor;
+          toast('Destino: ' + valor);
+        } else {
+          // Estado 3: Ambos llenos → limpiamos todo, avisamos y empezamos de nuevo
+          originInput.value = '';
+          destInput.value = '';
+          toast('Campos reiniciados. Nuevo origen: ' + valor, 'ok');
+          originInput.value = valor;
+        }
+
+        // 3. Auto-buscar si ambos campos tienen valor
+        if (originInput.value.trim() && destInput.value.trim()) {
+          setTimeout(() => {
+            const btnSearch = $('#btnSearch');
+            if (btnSearch) btnSearch.click();
+          }, 200);
+        }
       };
     });
   }
@@ -986,10 +1030,59 @@ const url = location.origin + '/share/ruta/' + route.id;
   $('#btnSearch').onclick = async () => {
     const o = $('#originInput').value.trim();
     const d = $('#destInput').value.trim();
-    if (!o || !d) { toast('Ingresa origen y destino', 'err'); return; }
-    const res = findRoutes(o, d);
     const el = $('#searchResults');
     el.classList.remove('hidden');
+
+    // 🎯 CASO 1: Solo hay origen → filtramos rutas que pasan por ahí
+    if (o && !d) {
+      const rutasFiltradas = state.routes.filter(r => {
+        const all = [].concat(r.paradas || [], r.pois || [], r.poisVuelta || [], r.calles || [], r.retornos || []);
+        return all.some(x => norm(x).includes(norm(o)) || norm(o).includes(norm(x)));
+      });
+
+      if (!rutasFiltradas.length) {
+        el.innerHTML = `<div class="card" style="text-align:center;padding:24px">
+          <div class="empty" style="padding:0">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <h3>Sin resultados</h3>
+            <p>No se encontraron rutas que pasen por "${esc(o)}".</p>
+          </div>
+        </div>`;
+        return;
+      }
+
+      let html = `<div class="section-title">Rutas que pasan por "${esc(o)}" (${rutasFiltradas.length})</div>`;
+      html += rutasFiltradas.map(r => `
+        <div class="result-card directa" data-route-id="${esc(r.id)}" style="cursor:pointer">
+          <div class="rc-head">
+            <div class="rc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="M3 11h18"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg></div>
+            <div style="flex:1">
+              <div class="rc-route">${esc(r.nombre)}</div>
+              <div class="rc-sub">${esc(r.categoria || 'urbana')}</div>
+            </div>
+            <span class="badge badge-green">Pasa por aquí</span>
+          </div>
+        </div>`).join('');
+      el.innerHTML = html;
+
+      el.querySelectorAll('.result-card').forEach(c => {
+        c.onclick = () => {
+          const r = state.routes.find(x => x.id === c.dataset.routeId);
+          if (r) openRouteDetail(r);
+        };
+      });
+      return;
+    }
+
+    // 🎯 CASO 2: No hay nada → avisar
+    if (!o && !d) {
+      toast('Ingresa al menos un origen', 'err');
+      el.classList.add('hidden');
+      return;
+    }
+
+    // 🎯 CASO 3: Hay origen y destino → búsqueda completa (directas + transbordos)
+    const res = findRoutes(o, d);
 
     if (!res.direct.length && !res.transfer.length) {
       el.innerHTML = `<div class="card" style="text-align:center;padding:24px">
