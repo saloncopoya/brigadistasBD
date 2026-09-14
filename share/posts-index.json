@@ -1,16 +1,6 @@
 {
   "posts": [
     {
-      "slug": "ruta10149",
-      "title": "Ruta 10",
-      "description": "Ruta Ruta 10",
-      "image": "",
-      "url": "/share/ruta/ruta10149",
-      "tipo": "ruta",
-      "timestamp": 1789368665142,
-      "updatedAt": "2026-09-14T06:51:05.142Z"
-    },
-    {
       "slug": "ruta7149",
       "title": "Ruta 7",
       "description": "Ruta Ruta 7",
@@ -231,8 +221,8 @@
       "updatedAt": "2026-09-13T08:52:43.612Z"
     }
   ],
-  "total": 23,
-  "updatedAt": "2026-09-14T12:03:57.512Z",
+  "total": 22,
+  "updatedAt": "2026-09-14T12:04:15.657Z",
   "version": 1,
   "__sha": "9d28e8cec6971a9011f87cc1c0104c14505db3cd"
 }
