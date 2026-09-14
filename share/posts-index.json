@@ -141,16 +141,6 @@
       "updatedAt": "2026-09-14T00:53:03.762Z"
     },
     {
-      "slug": "titulo1139",
-      "title": "Título 1",
-      "description": "Jejw",
-      "image": "https://res.cloudinary.com/davovja1g/image/upload/v1789342595/lxs0yjiob0kxvitonp3v.jpg",
-      "url": "/share/post/titulo1139",
-      "tipo": "post",
-      "timestamp": 1789342602436,
-      "updatedAt": "2026-09-13T23:36:42.436Z"
-    },
-    {
       "slug": "publicaciondeprueba139",
       "title": "Publicación de prueba",
       "description": "Descripción prive a",
@@ -251,8 +241,8 @@
       "updatedAt": "2026-09-13T08:52:43.612Z"
     }
   ],
-  "total": 25,
-  "updatedAt": "2026-09-14T12:03:23.989Z",
+  "total": 24,
+  "updatedAt": "2026-09-14T12:03:44.519Z",
   "version": 1,
   "__sha": "9d28e8cec6971a9011f87cc1c0104c14505db3cd"
 }
