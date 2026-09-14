@@ -1,16 +1,6 @@
 {
   "posts": [
     {
-      "slug": "ruta2139",
-      "title": "RUTA 2",
-      "description": "Ruta RUTA 2",
-      "image": "",
-      "url": "/share/ruta/ruta2139",
-      "tipo": "ruta",
-      "timestamp": 1789374045875,
-      "updatedAt": "2026-09-14T08:20:45.875Z"
-    },
-    {
       "slug": "ruta10149",
       "title": "Ruta 10",
       "description": "Ruta Ruta 10",
@@ -241,8 +231,8 @@
       "updatedAt": "2026-09-13T08:52:43.612Z"
     }
   ],
-  "total": 24,
-  "updatedAt": "2026-09-14T12:03:44.519Z",
+  "total": 23,
+  "updatedAt": "2026-09-14T12:03:57.512Z",
   "version": 1,
   "__sha": "9d28e8cec6971a9011f87cc1c0104c14505db3cd"
 }
