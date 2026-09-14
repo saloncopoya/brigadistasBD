@@ -7,14 +7,14 @@
 
   // ==================== CONFIGURACIÓN ====================
   const FIREBASE_CONFIG = {
- apiKey: "AIzaSyASox7mRak5V0py29htEVWCVeipGpA0yfs",
-  authDomain: "galloslivebadge.firebaseapp.com",
-  databaseURL: "https://galloslivebadge-default-rtdb.firebaseio.com",
-  projectId: "galloslivebadge",
-  storageBucket: "galloslivebadge.firebasestorage.app",
-  messagingSenderId: "979482928760",
-  appId: "1:979482928760:web:3ea879dc4ee1e020df6f8d",
-  measurementId: "G-8L3Z484S3D"
+apiKey: "AIzaSyAiojpfnGUPhaoQkpAh1Yey3fp6uWU-iFQ",
+  authDomain: "aplicacion-2c1c8.firebaseapp.com",
+  databaseURL: "https://aplicacion-2c1c8.firebaseio.com",
+  projectId: "aplicacion-2c1c8",
+  storageBucket: "aplicacion-2c1c8.firebasestorage.app",
+  messagingSenderId: "837629411067",
+  appId: "1:837629411067:web:6c96cfcd7490b049787a5e",
+  measurementId: "G-SFP1SEY20W"
   };
 
 const DEFAULT_CENTER = [16.7530, -93.1150];
