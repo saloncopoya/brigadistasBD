@@ -11,16 +11,6 @@
       "updatedAt": "2026-09-14T18:41:48.396Z"
     },
     {
-      "slug": "1149",
-      "title": "1",
-      "description": "Ruta 1",
-      "image": "https://res.cloudinary.com/davovja1g/image/upload/v1789408320/kixskruzeihwjsb24pcp.jpg",
-      "url": "/share/ruta/1149",
-      "tipo": "ruta",
-      "timestamp": 1789408327949,
-      "updatedAt": "2026-09-14T17:52:07.949Z"
-    },
-    {
       "slug": "ruta1149",
       "title": "RUTA 1",
       "description": "Ruta RUTA 1",
@@ -231,8 +221,8 @@
       "updatedAt": "2026-09-13T08:52:43.612Z"
     }
   ],
-  "total": 23,
-  "updatedAt": "2026-09-14T18:41:48.396Z",
+  "total": 22,
+  "updatedAt": "2026-09-14T20:09:36.532Z",
   "version": 1,
   "__sha": "e5b5f85b06955b872cccad4b3a94699813d73802"
 }
