@@ -1,6 +1,16 @@
 {
   "posts": [
     {
+      "slug": "ruta2sur139",
+      "title": "Ruta 2 sur",
+      "description": "Ruta Ruta 2 sur",
+      "image": "",
+      "url": "/share/ruta/ruta2sur139",
+      "tipo": "ruta",
+      "timestamp": 1789347240928,
+      "updatedAt": "2026-09-14T00:54:00.928Z"
+    },
+    {
       "slug": "ruta1norte139",
       "title": "RUTA 1 NORTE",
       "description": "Ruta RUTA 1 NORTE",
@@ -161,8 +171,8 @@
       "updatedAt": "2026-09-13T08:52:43.612Z"
     }
   ],
-  "total": 16,
-  "updatedAt": "2026-09-14T00:53:03.762Z",
+  "total": 17,
+  "updatedAt": "2026-09-14T00:54:00.928Z",
   "version": 1,
-  "__sha": "89272562ca59f2d0a36f4dd6849a0c08736cc8cc"
+  "__sha": "29fa64bcf6e704d767a9c13c5d5782bc9074e27b"
 }
