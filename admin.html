@@ -198,10 +198,42 @@ body.fs-active{overflow:hidden !important}
 .admin-col .select{padding:8px 10px;font-size:12.5px}
 .admin-col .select{padding-right:28px;background-size:14px}
 
-/* Responsive: en móvil se apilan */
+/* En móvil también se ven 3 columnas (más compactas) */
 @media(max-width:720px){
-  .admin-cols-3{grid-template-columns:1fr}
+  .admin-cols-3{
+    grid-template-columns:repeat(3, 1fr);
+    gap:6px;
+  }
+  .admin-col{
+    padding:8px 6px;
+  }
+  .admin-col-title{
+    font-size:9.5px;
+    letter-spacing:.2px;
+    gap:4px;
+    padding-bottom:6px;
+    margin-bottom:2px;
+  }
+  .admin-col-title svg{
+    width:12px;
+    height:12px;
+  }
+  .admin-col .field label{
+    font-size:9.5px;
+  }
+  .admin-col .input,
+  .admin-col .select{
+    padding:6px 8px;
+    font-size:11px;
+    border-radius:8px;
+  }
+  .admin-col .select{
+    padding-right:22px;
+    background-size:12px;
+    background-position:right 6px center;
+  }
 }
+  
 </style>
 </head>
 <body>
@@ -467,8 +499,32 @@ body.fs-active{overflow:hidden !important}
             </button>
           </div>
         </div>
-        <div class="muted tiny" id="editorStatus" style="margin-top:6px">Puntos: 0 · Calles: 0 · POIs: 0</div>
+               <div class="muted tiny" id="editorStatus" style="margin-top:6px">Puntos: 0 · Calles: 0 · POIs: 0</div>
         <div class="progress hidden" id="detectProg"><div style="width:0%"></div></div>
+
+        <!-- 🖼️ Imagen personalizada para la ruta -->
+        <div class="field full" style="margin-top:14px">
+          <label style="display:flex;align-items:center;gap:6px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14" style="color:var(--cyan)"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+            Imagen personalizada de la ruta (opcional)
+          </label>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <label class="upload-btn" for="routeCustomImg" style="flex:1;min-width:180px;margin:0">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="17" height="17"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Subir imagen desde mi dispositivo
+            </label>
+            <input type="file" id="routeCustomImg" accept="image/*" class="hidden">
+            <button type="button" class="btn btn-ghost btn-sm hidden" id="routeCustomImgClear" title="Quitar imagen">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              Quitar
+            </button>
+          </div>
+          <div class="progress hidden" id="routeImgProg" style="margin-top:6px"><div style="width:0%"></div></div>
+          <img class="thumb-preview hidden" id="routeImgPreview" alt="" style="margin-top:8px">
+          <div class="muted tiny" style="margin-top:6px" id="routeImgHint">
+            Si no subes una imagen, se generará automáticamente desde el mapa.
+          </div>
+        </div>
       </div>
 
       <div style="display:flex;gap:8px;margin-top:16px">
@@ -1091,6 +1147,57 @@ body.fs-active{overflow:hidden !important}
   $('#routePrev').onclick = ()=>goStep(Math.max(1,state.routeStep-1));
   $('#routeNext').onclick = ()=>goStep(Math.min(3,state.routeStep+1));
 
+    // 🖼️ Listener para subir imagen personalizada de la ruta
+  $('#routeCustomImg').onchange = async (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    
+    const prog = $('#routeImgProg');
+    const prev = $('#routeImgPreview');
+    const clearBtn = $('#routeCustomImgClear');
+    const hint = $('#routeImgHint');
+    
+    // Validar tamaño máximo (5MB)
+    if (f.size > 5 * 1024 * 1024) {
+      toast('La imagen es muy grande (máx. 5MB)', 'err');
+      return;
+    }
+    
+    prog.classList.remove('hidden');
+    prog.querySelector('div').style.width = '30%';
+    
+    try {
+      const url = await Publisher.uploadToCloudinary(f, pct => {
+        prog.querySelector('div').style.width = pct + '%';
+      });
+      
+      state.routeDraft.customImage = url;
+      prev.src = url;
+      prev.classList.remove('hidden');
+      clearBtn.classList.remove('hidden');
+      hint.textContent = '✅ Imagen personalizada cargada. Se usará esta en lugar de la generada automáticamente.';
+      toast('Imagen subida ✓');
+    } catch (err) {
+      toast('Error al subir: ' + err.message, 'err');
+    } finally {
+      setTimeout(() => {
+        prog.classList.add('hidden');
+        prog.querySelector('div').style.width = '0%';
+      }, 500);
+    }
+  };
+
+  // 🗑️ Botón para quitar la imagen personalizada
+  $('#routeCustomImgClear').onclick = () => {
+    state.routeDraft.customImage = '';
+    $('#routeCustomImg').value = '';
+    $('#routeImgPreview').classList.add('hidden');
+    $('#routeImgPreview').src = '';
+    $('#routeCustomImgClear').classList.add('hidden');
+    $('#routeImgHint').textContent = 'Si no subes una imagen, se generará automáticamente desde el mapa.';
+    toast('Imagen quitada');
+  };
+
    // Toolbar del mapa
   $$('.tb').forEach(b=>b.onclick=()=>{
     const tool = b.dataset.tool;
@@ -1285,18 +1392,32 @@ body.fs-active{overflow:hidden !important}
 
     const btn = $('#routeSave');
     btn.disabled = true;
-    const originalHTML = btn.innerHTML;
-    btn.innerHTML = '⏳ Generando imagen del mapa...';
+        const originalHTML = btn.innerHTML;
+    
+    // 🖼️ Determinar qué hacer ANTES de cambiar el texto del botón
+    const usingCustomImage = !!state.routeDraft.customImage;
+    btn.innerHTML = usingCustomImage ? '⏳ Guardando ruta...' : '⏳ Generando imagen del mapa...';
 
     try {
-      // 🗺️ Capturar el mapa y subirlo a Cloudinary
-      let mapImage = state.editingRoute?.mapImage || '';
-      try {
-        mapImage = await captureAndUploadMap();
-        toast('Imagen del mapa subida ✓');
-      } catch(e) {
-        console.warn('No se pudo capturar el mapa:', e);
-        toast('No se pudo generar imagen del mapa', 'err');
+      // 🖼️ Si hay imagen personalizada, úsala. Si no, genera la del mapa.
+      let mapImage = '';
+      
+      if (state.routeDraft.customImage) {
+        // ✅ Usuario subió una imagen propia
+        mapImage = state.routeDraft.customImage;
+        console.log('[Ruta] Usando imagen personalizada:', mapImage);
+      } else {
+        // 🗺️ Generar imagen automática desde el mapa
+        try {
+          
+          mapImage = await captureAndUploadMap();
+          toast('Imagen del mapa subida ✓');
+        } catch(e) {
+          console.warn('No se pudo capturar el mapa:', e);
+          toast('No se pudo generar imagen del mapa', 'err');
+          // Fallback: usar la imagen anterior si estamos editando
+          mapImage = state.editingRoute?.mapImage || '';
+        }
       }
 
       const {dia,mes} = nowDM();
@@ -1368,9 +1489,21 @@ body.fs-active{overflow:hidden !important}
     state.drawMode = null;
     state.drawing = false;
 
-    ['routeName','routeTarifa','routeFrec','routeHoraIni','routeHoraFin','routeNotas',
-     'routeParadas','routeRetornos','routePoisIda','routePoisVuelta','routeCalles']
-      .forEach(i=>{ const el=$('#'+i); if(el) el.value=''; });
+         ['routeName','routeTarifa','routeFrec','routeHoraIni','routeHoraFin','routeNotas',
+       'routeParadas','routeRetornos','routePoisIda','routePoisVuelta','routeCalles']
+        .forEach(i=>{ const el=$('#'+i); if(el) el.value=''; });
+
+      // 🖼️ Reset de la imagen personalizada
+      state.routeDraft.customImage = '';
+      const imgPrev = $('#routeImgPreview');
+      const imgInput = $('#routeCustomImg');
+      const imgClear = $('#routeCustomImgClear');
+      const imgHint = $('#routeImgHint');
+      if (imgPrev) { imgPrev.classList.add('hidden'); imgPrev.src = ''; }
+      if (imgInput) imgInput.value = '';
+      if (imgClear) imgClear.classList.add('hidden');
+      if (imgHint) imgHint.textContent = 'Si no subes una imagen, se generará automáticamente desde el mapa.';
+    
 
     if(state.map){
       // Quitar TODOS los markers
@@ -1451,8 +1584,34 @@ body.fs-active{overflow:hidden !important}
         $('#routeRetornos').value=(r.retornos||[]).join(', ');
         $('#routePoisIda').value=(r.pois||[]).join(', ');
         $('#routePoisVuelta').value=(r.poisVuelta||[]).join(', ');
-        $('#routeCalles').value=(r.calles||[]).join(', ');
-             initColorSwatches(); goStep(1);
+                                $('#routeCalles').value=(r.calles||[]).join(', ');
+        
+        // 🖼️ Restaurar vista previa de la imagen existente (pero sin marcarla como "personalizada")
+        // Solo se marcará como personalizada si el usuario sube una NUEVA imagen
+        state.routeDraft.customImage = '';
+        
+        const imgPrev = $('#routeImgPreview');
+        const clearBtn = $('#routeCustomImgClear');
+        const hint = $('#routeImgHint');
+        
+        if (r.mapImage) {
+          // Mostrar la imagen existente como referencia visual
+          if (imgPrev) {
+            imgPrev.src = r.mapImage;
+            imgPrev.classList.remove('hidden');
+          }
+          if (clearBtn) clearBtn.classList.add('hidden'); // No permitir quitarla todavía
+          if (hint) hint.textContent = '📷 Imagen actual de la ruta. Si subes una nueva, reemplazará esta. Si no, se mantendrá.';
+        } else {
+          if (imgPrev) {
+            imgPrev.classList.add('hidden');
+            imgPrev.src = '';
+          }
+          if (clearBtn) clearBtn.classList.add('hidden');
+          if (hint) hint.textContent = 'Si no subes una imagen, se generará automáticamente desde el mapa.';
+        }
+        
+        initColorSwatches(); goStep(1);
         // Centrar el mapa en la ruta cargada
         if(state.map && (r.puntos?.length || r.puntosVuelta?.length)){
           setTimeout(()=>{
