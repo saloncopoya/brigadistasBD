@@ -585,9 +585,25 @@ body.fs-active{overflow:hidden !important}
       row.querySelector('[data-act="edit"]').onclick = ()=>editPost(id);
       row.querySelector('[data-act="del"]').onclick = async ()=>{
         if(!confirm('¿Eliminar esta publicación?')) return;
+        const pass = prompt('Contraseña admin para eliminar en GitHub:') || '';
         await DB.delete('posts', id);
         if(fbDB) fbDB.ref('publicaciones/'+id).remove().catch(()=>{});
-        toast('Publicación eliminada'); loadPosts();
+
+        // 🗑️ Eliminar también el HTML del repositorio GitHub
+        if (pass) {
+          try {
+            const res = await Publisher.deleteFromGitHub({
+              tipo: 'post', slug: id, password: pass
+            });
+            if (res.ok) toast('Publicación eliminada (GitHub ✓)');
+            else toast('Eliminado local. GitHub: ' + (res.error || 'sin borrar'), 'err');
+          } catch (e) {
+            toast('Eliminado local (sin conexión a GitHub)', 'err');
+          }
+        } else {
+          toast('Eliminado local (sin GitHub)');
+        }
+        loadPosts();
       };
     });
   }
@@ -1218,9 +1234,25 @@ body.fs-active{overflow:hidden !important}
       };
       row.querySelector('[data-act="del"]').onclick=async()=>{
         if(!confirm('¿Eliminar esta ruta?')) return;
+        const pass = prompt('Contraseña admin para eliminar en GitHub:') || '';
         await DB.delete('routes',id);
         if(fbDB) fbDB.ref('rutas_colectivos_tgz/'+id).remove().catch(()=>{});
-        toast('Ruta eliminada'); loadRoutes();
+
+        // 🗑️ Eliminar también el HTML del repositorio GitHub
+        if (pass) {
+          try {
+            const res = await Publisher.deleteFromGitHub({
+              tipo: 'ruta', slug: id, password: pass
+            });
+            if (res.ok) toast('Ruta eliminada (GitHub ✓)');
+            else toast('Eliminado local. GitHub: ' + (res.error || 'sin borrar'), 'err');
+          } catch (e) {
+            toast('Eliminado local (sin conexión a GitHub)', 'err');
+          }
+        } else {
+          toast('Eliminado local (sin GitHub)');
+        }
+        loadRoutes();
       };
     });
   }
@@ -1258,9 +1290,25 @@ body.fs-active{overflow:hidden !important}
       };
       row.querySelector('[data-act="del"]').onclick=async()=>{
         if(!confirm('¿Eliminar este anuncio?')) return;
+        const pass = prompt('Contraseña admin para eliminar en GitHub:') || '';
         await DB.delete('market',id);
         if(fbDB) fbDB.ref('marketplace/'+id).remove().catch(()=>{});
-        toast('Anuncio eliminado'); loadMarket();
+
+        // 🗑️ Eliminar también el HTML del repositorio GitHub
+        if (pass) {
+          try {
+            const res = await Publisher.deleteFromGitHub({
+              tipo: 'market', slug: id, password: pass
+            });
+            if (res.ok) toast('Anuncio eliminado (GitHub ✓)');
+            else toast('Eliminado local. GitHub: ' + (res.error || 'sin borrar'), 'err');
+          } catch (e) {
+            toast('Eliminado local (sin conexión a GitHub)', 'err');
+          }
+        } else {
+          toast('Eliminado local (sin GitHub)');
+        }
+        loadMarket();
       };
     });
   }
