@@ -7,7 +7,7 @@
 
   // ==================== CONFIGURACIÓN ====================
   const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyBMON_hBlUJfE-_L6qrt8MEP6JZrculRcs",
+apiKey: "AIzaSyBMON_hBlUJfE-_L6qrt8MEP6JZrculRcs",
   authDomain: "premiumcotejosgallistico-59e76.firebaseapp.com",
   databaseURL: "https://premiumcotejosgallistico-59e76-default-rtdb.firebaseio.com",
   projectId: "premiumcotejosgallistico-59e76",
