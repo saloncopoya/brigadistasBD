@@ -95,6 +95,25 @@
     }
   }
 
+  // ---------- 🗑️ Eliminar de GitHub vía API ----------
+  // payload: { tipo: 'post'|'ruta'|'market', slug: string, password: string }
+  async function deleteFromGitHub(payload) {
+    try {
+      const res = await fetch(`${API_BASE}/publish`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...payload, __delete: true })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        return { ok: false, error: data.error || `HTTP ${res.status}` };
+      }
+      return { ok: true, ...data };
+    } catch (err) {
+      return { ok: false, error: err.message || 'Error de red' };
+    }
+  }
+
   // ---------- Leer índice de posts ----------
   async function fetchIndex() {
     try {
@@ -152,6 +171,7 @@
     uploadToCloudinary,
     fileToBase64,
     publish,
+    deleteFromGitHub,     // ← añadido
     fetchIndex,
     share,
     shareWhatsApp,
