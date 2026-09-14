@@ -353,10 +353,21 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
             sharePost(post);
           } else if (act === 'del-post') {
             if (!confirm('¿Eliminar esta publicación?')) return;
+            const pass = prompt('Contraseña admin para eliminar en GitHub:') || '';
             await DB.delete('posts', id);
             if (fbDB) fbDB.ref('publicaciones/' + id).remove().catch(() => {});
+            if (pass && typeof Publisher.deleteFromGitHub === 'function') {
+              try {
+                const res = await Publisher.deleteFromGitHub({ tipo: 'post', slug: id, password: pass });
+                if (res.ok) toast('Publicación eliminada (GitHub ✓)');
+                else toast('Eliminado local. GitHub: ' + (res.error || 'sin borrar'), 'err');
+              } catch (e) {
+                toast('Eliminado local (sin conexión)', 'err');
+              }
+            } else {
+              toast('Publicación eliminada (solo local)');
+            }
             await loadPosts(); renderFeed();
-            toast('Publicación eliminada');
           }
         };
       });
