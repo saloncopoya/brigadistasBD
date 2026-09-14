@@ -7,13 +7,14 @@
 
   // ==================== CONFIGURACIÓN ====================
   const FIREBASE_CONFIG = {
-apiKey: "AIzaSyBMON_hBlUJfE-_L6qrt8MEP6JZrculRcs",
-  authDomain: "premiumcotejosgallistico-59e76.firebaseapp.com",
-  databaseURL: "https://premiumcotejosgallistico-59e76-default-rtdb.firebaseio.com",
-  projectId: "premiumcotejosgallistico-59e76",
-  storageBucket: "premiumcotejosgallistico-59e76.firebasestorage.app",
-  messagingSenderId: "785051078042",
-  appId: "1:785051078042:web:8e749ba849c5e7e5407e23"
+ apiKey: "AIzaSyASox7mRak5V0py29htEVWCVeipGpA0yfs",
+  authDomain: "galloslivebadge.firebaseapp.com",
+  databaseURL: "https://galloslivebadge-default-rtdb.firebaseio.com",
+  projectId: "galloslivebadge",
+  storageBucket: "galloslivebadge.firebasestorage.app",
+  messagingSenderId: "979482928760",
+  appId: "1:979482928760:web:3ea879dc4ee1e020df6f8d",
+  measurementId: "G-8L3Z484S3D"
   };
 
 const DEFAULT_CENTER = [16.7530, -93.1150];
