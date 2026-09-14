@@ -167,8 +167,16 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
     if (page === 'home') renderFeed();
     if (page === 'route' && opts.route) renderRouteDetail(opts.route);
     if (page === 'post' && opts.postObj) renderSinglePost(opts.postObj);
-    if (page === 'trip') setTimeout(initTripMap, 200);
-
+    if (page === 'trip') {
+      setTimeout(() => {
+        initTripMap();
+        // Forzar invalidateSize después de que el DOM esté listo
+        if (state.tripMap) {
+          setTimeout(() => state.tripMap.invalidateSize(), 300);
+        }
+      }, 200);
+    }
+     
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -1349,6 +1357,10 @@ const url = location.origin + '/share/m/' + id;
       maxZoom: 19, attribution: '© OpenStreetMap'
     }).addTo(state.tripMap);
     state.tripMap.on('click', e => {
+      // Solo agregar si el modo activo es "addpoint"
+      const activeBtn = document.querySelector('#tripToolbar .tb.active');
+      const mode = activeBtn ? activeBtn.dataset.tool : 'addpoint';
+      if (mode !== 'addpoint') return;
       if (state.tripPoints.length >= 5) { toast('Máximo 5 puntos', 'err'); return; }
       addTripPoint(e.latlng.lat, e.latlng.lng);
     });
@@ -1725,15 +1737,15 @@ const url = location.origin + '/share/m/' + id;
         state.routes.forEach(r2 => {
           if (r2.id === r1.id) return;
           const i12 = routesMinDistance(r1, r2);
-          if (i12.dist > 300) return;
+          if (i12.dist > 400) return;
           state.routes.forEach(r3 => {
             if (r3.id === r2.id || r3.id === r1.id) return;
             const i23 = routesMinDistance(r2, r3);
-            if (i23.dist > 300) return;
+            if (i23.dist > 400) return;
             endRoutes.forEach(r4 => {
               if (r4.id === r3.id || r4.id === r2.id || r4.id === r1.id) return;
               const i34 = routesMinDistance(r3, r4);
-          if (i23.dist > 400) return;
+              if (i34.dist > 400) return;
               chains.push({
                 type: 'transfer',
                 legs: [r1, r2, r3, r4],
@@ -1753,11 +1765,11 @@ const url = location.origin + '/share/m/' + id;
         state.routes.forEach(r2 => {
           if (r2.id === r1.id) return;
           const i12 = routesMinDistance(r1, r2);
-          if (i12.dist > 300) return;
+          if (i12.dist > 400) return;
           state.routes.forEach(r3 => {
             if (r3.id === r2.id || r3.id === r1.id) return;
             const i23 = routesMinDistance(r2, r3);
-            if (i23.dist > 300) return;
+            if (i23.dist > 400) return;
             state.routes.forEach(r4 => {
               if (r4.id === r3.id || r4.id === r2.id || r4.id === r1.id) return;
               const i34 = routesMinDistance(r3, r4);
@@ -1821,9 +1833,7 @@ const url = location.origin + '/share/m/' + id;
 
             // Si no hay directa, o si el usuario quiere ver también transbordos,
       // calculamos cadenas de transbordos. SIEMPRE intentamos al menos 1.
-      if (!results.direct.length || maxTransfers >= 1) {
-        const minTransfers = results.direct.length ? maxTransfers : Math.max(1, maxTransfers);
-         
+      if (!results.direct.length || maxTransfers >= 1) {         
         // Para 2 puntos
         if (state.tripPoints.length === 2) {
           const chains = findTransferChains(start, end, maxTransfers);
@@ -1959,7 +1969,8 @@ const url = location.origin + '/share/m/' + id;
         drawTripRoutesOnMap(t.legs.map((l, li) => ({
           route: l,
           label: l.nombre,
-          transferPoint: li === 0 ? t.transferPoints[0] : null
+          type: 'transfer',                        // ← añadido
+          transferPoint: li === 0 ? t.transferPoints[0] : (t.transferPoints[li - 1] || null)
         })));
         // Recolectar todas las coordenadas (ida + vuelta + transbordos)
         const allCoords = [];
