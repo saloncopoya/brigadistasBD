@@ -22,7 +22,16 @@ export async function onRequest(context) {
 
   try {
     const body = await request.json();
-    const { password, tipo, slug, title, content, image, extra } = body;
+    let { password, tipo, slug, title, content, image, extra } = body;
+
+    // 🖼️ Para rutas: usar mapImage si existe (imagen del mapa con trazado)
+    if (tipo === 'ruta' && extra && extra.route && extra.route.mapImage) {
+      image = extra.route.mapImage;
+    }
+    // 🖼️ Para market: usar extra.market.image si no se mandó image
+    if (tipo === 'market' && !image && extra && extra.market && extra.market.image) {
+      image = extra.market.image;
+    }
 
     // Verificar contraseña
     if (!env.ADMIN_PASSWORD || password !== env.ADMIN_PASSWORD) {
@@ -280,7 +289,7 @@ function escapeHTML(s) {
 function generateHTML({ tipo, title, content, image, slug, pageUrl, baseUrl, extra }) {
   const safeTitle = escapeHTML(title);
   const safeDesc = escapeHTML((content || '').slice(0, 160));
-  const safeImage = image ? escapeHTML(image) : `${baseUrl}/assets/icon.svg`;
+  const safeImage = image ? escapeHTML(image) : `${baseUrl}/img.png`;
 
   const typeLabel = tipo === 'ruta' ? 'Ruta' : tipo === 'market' ? 'Anuncio' : 'Publicación';
 
@@ -329,11 +338,15 @@ function generateHTML({ tipo, title, content, image, slug, pageUrl, baseUrl, ext
     };
   }
 
-  const bodyContent = tipo === 'ruta' && extra?.route
-    ? renderRouteBody(extra.route)
-    : tipo === 'market' && extra?.market
-      ? renderMarketBody(extra.market)
-      : `<div class="post-content">${escapeHTML(content).replace(/\n/g, '<br>')}</div>`;
+  let bodyContent;
+  if (tipo === 'ruta' && extra?.route) {
+    // 🗺️ Para rutas: primero el mapa interactivo, luego los datos
+    bodyContent = renderRouteMapBlock(extra.route) + renderRouteBody(extra.route);
+  } else if (tipo === 'market' && extra?.market) {
+    bodyContent = renderMarketBody(extra.market);
+  } else {
+    bodyContent = `<div class="post-content">${escapeHTML(content).replace(/\n/g, '<br>')}</div>`;
+  }
 
   return `<!DOCTYPE html>
 <html lang="es" data-theme="dark">
@@ -389,6 +402,57 @@ h1{font-size:26px;font-weight:900;letter-spacing:-.4px;margin-bottom:8px;line-he
 .block ul{list-style:none;padding:0}
 .block li{padding:7px 0;border-bottom:1px solid var(--border);font-size:14px}
 .block li:last-child{border-bottom:none}
+/* 🗺️ Bloque de mapa interactivo */
+.route-map-card{
+  background:var(--surface,#141c30);
+  border:1px solid var(--border,#26314f);
+  border-radius:14px;
+  padding:14px;
+  margin-bottom:16px;
+}
+.route-map-head{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-bottom:10px;
+}
+.route-map-head h3{
+  font-size:14px;
+  font-weight:800;
+  margin:0;
+  color:var(--cyan,#00e5ff);
+}
+.route-map-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font-size:11.5px;
+  font-weight:700;
+  color:var(--text-2,#a9b4cc);
+  background:var(--surface-2,#1c2540);
+  padding:4px 10px;
+  border-radius:99px;
+}
+#shareMap{
+  border-radius:12px;
+  background:#0f1526;
+}
+.leaflet-container{
+  background:#0f1526 !important;
+  font-family:inherit !important;
+}
+.leaflet-control-attribution{
+  background:rgba(20,28,48,.88) !important;
+  color:#a9b4cc !important;
+  font-size:10px !important;
+}
+.leaflet-control-attribution a{color:#00e5ff !important}
+.leaflet-control-zoom a{
+  background:#141c30 !important;
+  color:#e8edf7 !important;
+  border-color:#26314f !important;
+}
 .cta{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:11px 18px;border-radius:10px;font-weight:700;font-size:13.5px;text-decoration:none;border:none;cursor:pointer;font-family:inherit}
 .btn-primary{background:linear-gradient(135deg,var(--cyan),#00b8cc);color:#00121a}
@@ -417,6 +481,93 @@ footer{margin-top:30px;padding-top:20px;border-top:1px solid var(--border);color
 
 function cleanDomain(baseUrl) {
   return baseUrl.replace(/^https?:\/\//, '');
+}
+
+// ============================================================
+//  🗺️  BLOQUE DE MAPA INTERACTIVO PARA RUTAS COMPARTIDAS
+// ============================================================
+function renderRouteMapBlock(route) {
+  if (!route) return '';
+  const puntos       = route.puntos || [];
+  const puntosVuelta = route.puntosVuelta || [];
+  const geomIda      = route.geometriaIda || [];
+  const geomVuelta   = route.geometriaVuelta || [];
+
+  // Si no hay NADA de geometría ni puntos, no mostramos el bloque
+  if (!puntos.length && !puntosVuelta.length && !geomIda.length && !geomVuelta.length) {
+    return '';
+  }
+
+  const colorIda    = route.colorIda    || '#00e5ff';
+  const colorVuelta = route.colorVuelta || '#a855f7';
+  const nombre      = escapeHTML(route.nombre || 'Ruta');
+
+  // Serializar los datos con JSON.stringify y escapar `</script>`
+  const dataJSON = JSON.stringify({
+    puntos, puntosVuelta, geomIda, geomVuelta, colorIda, colorVuelta, nombre
+  }).replace(/<\/script/gi, '<\\/script');
+
+  return `
+    <div class="route-map-card">
+      <div class="route-map-head">
+        <h3>🗺️ Trazado de la ruta</h3>
+        <span class="route-map-badge">Ida <span style="display:inline-block;width:12px;height:3px;background:${colorIda};vertical-align:middle;border-radius:2px"></span></span>
+        <span class="route-map-badge">Regreso <span style="display:inline-block;width:12px;height:3px;background:${colorVuelta};vertical-align:middle;border-radius:2px"></span></span>
+      </div>
+      <div id="shareMap" style="width:100%;height:420px;border-radius:12px;overflow:hidden"></div>
+    </div>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin><\/script>
+    <script>
+    (function(){
+      var DATA = ${dataJSON};
+      if (typeof L === 'undefined') return;
+      var map = L.map('shareMap', { zoomControl: true, scrollWheelZoom: false });
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap'
+      }).addTo(map);
+
+      var allCoords = [];
+      function drawLine(coords, color, dashed){
+        if (!coords || coords.length < 2) return;
+        var line = L.polyline(coords, {
+          color: color,
+          weight: 5,
+          opacity: 0.95,
+          dashArray: dashed ? '10,6' : null,
+          lineJoin: 'round',
+          lineCap: 'round'
+        }).addTo(map);
+        allCoords = allCoords.concat(coords);
+      }
+
+      var idaCoords = (DATA.geomIda && DATA.geomIda.length > 1) ? DATA.geomIda : DATA.puntos;
+      var vueltaCoords = (DATA.geomVuelta && DATA.geomVuelta.length > 1) ? DATA.geomVuelta : DATA.puntosVuelta;
+      drawLine(idaCoords, DATA.colorIda, false);
+      drawLine(vueltaCoords, DATA.colorVuelta, true);
+
+      if (DATA.puntos && DATA.puntos.length) {
+        DATA.puntos.forEach(function(p){
+          L.circleMarker(p, { radius: 6, color: DATA.colorIda, fillColor: '#fff', fillOpacity: 1, weight: 3 }).addTo(map);
+        });
+      }
+      if (DATA.puntosVuelta && DATA.puntosVuelta.length) {
+        DATA.puntosVuelta.forEach(function(p){
+          L.circleMarker(p, { radius: 6, color: DATA.colorVuelta, fillColor: '#fff', fillOpacity: 1, weight: 3 }).addTo(map);
+        });
+      }
+
+      if (allCoords.length > 1) {
+        try { map.fitBounds(L.latLngBounds(allCoords).pad(0.15)); } catch(e) {}
+      } else if (allCoords.length === 1) {
+        map.setView(allCoords[0], 15);
+      } else {
+        map.setView([16.7530, -93.1150], 13);
+      }
+    })();
+    <\/script>
+  `;
 }
 
 function renderRouteBody(route) {
