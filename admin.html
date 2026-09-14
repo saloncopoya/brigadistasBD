@@ -472,7 +472,7 @@ body.fs-active{overflow:hidden !important}
 <div class="toast-wrap" id="toastWrap"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://unpkg.com/leaflet-image@0.4.0/leaflet-image.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/idb@8/build/umd.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
@@ -705,9 +705,7 @@ body.fs-active{overflow:hidden !important}
     if(state.map) return;
     state.map = L.map('editorMap',{zoomControl:true}).setView([16.7530,-93.1150],13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-      maxZoom:19,
-      attribution:'© OpenStreetMap',
-      crossOrigin: 'anonymous'      // ← necesario para html2canvas
+      maxZoom:19, attribution:'© OpenStreetMap'
     }).addTo(state.map);
 
     // 🖥️ Conectar botón de pantalla completa
@@ -863,122 +861,46 @@ body.fs-active{overflow:hidden !important}
     el.textContent = `Ida: ${state.routeDraft.puntos.length} · Regreso: ${state.routeDraft.puntosVuelta.length} · Calles: ${state.routeDraft.calles.length} · POIs: ${state.routeDraft.pois.length}`;
   }
 
-   // ================================================================
+  // ================================================================
   //  🗺️  CAPTURAR EL MAPA COMO IMAGEN Y SUBIRLA A CLOUDINARY
-  //  Usa html2canvas para capturar TODO el DOM del mapa: tiles + trazos SVG + markers
   // ================================================================
   async function captureAndUploadMap(){
     if(!state.map) throw new Error('Mapa no inicializado');
-    if(!state.routeDraft.puntos.length && !state.routeDraft.puntosVuelta.length &&
-       (!state.routeDraft.geometriaIda || !state.routeDraft.geometriaIda.length) &&
-       (!state.routeDraft.geometriaVuelta || !state.routeDraft.geometriaVuelta.length)){
+    if(!state.routeDraft.puntos.length && !state.routeDraft.puntosVuelta.length){
       throw new Error('No hay trazado para capturar');
     }
 
-    const mapContainer = state.map.getContainer();
-
-    // 1️⃣ Guardar el tamaño actual
-    const originalWidth  = mapContainer.style.width  || '';
-    const originalHeight = mapContainer.style.height || '';
-    const originalParent = mapContainer.parentElement;
-
-    // 2️⃣ Expandir temporalmente el mapa a 1200x630 (ratio OG) para captura en alta calidad
-    mapContainer.style.width  = '1200px';
-    mapContainer.style.height = '630px';
-    mapContainer.style.position = 'fixed';
-    mapContainer.style.top = '-9999px';
-    mapContainer.style.left = '-9999px';
-    mapContainer.style.zIndex = '99999';
-
-    state.map.invalidateSize();
-
-    try {
-      // 3️⃣ Encuadrar la ruta completa con padding generoso
-      const allCoords = [];
-      if(state.routeDraft.puntos) allCoords.push(...state.routeDraft.puntos);
-      if(state.routeDraft.puntosVuelta) allCoords.push(...state.routeDraft.puntosVuelta);
-      if(state.routeDraft.geometriaIda && state.routeDraft.geometriaIda.length > 1) {
-        allCoords.push(...state.routeDraft.geometriaIda);
-      }
-      if(state.routeDraft.geometriaVuelta && state.routeDraft.geometriaVuelta.length > 1) {
-        allCoords.push(...state.routeDraft.geometriaVuelta);
-      }
-
-      if(allCoords.length > 1){
-        try {
-          state.map.fitBounds(L.latLngBounds(allCoords).pad(0.2));
-        } catch(e) { console.warn('fitBounds:', e); }
-      } else if (allCoords.length === 1) {
-        state.map.setView(allCoords[0], 15);
-      }
-
-      // 4️⃣ Redibujar los trazos por si acaso no están en el mapa
-      //    (borramos y volvemos a crear las capas ida/vuelta para asegurarnos)
-      try {
-        if(state.layers.ida)    { state.map.removeLayer(state.layers.ida);    state.layers.ida    = null; }
-        if(state.layers.vuelta) { state.map.removeLayer(state.layers.vuelta); state.layers.vuelta = null; }
-
-        const colorIda    = state.routeDraft.colorIda    || '#00e5ff';
-        const colorVuelta = state.routeDraft.colorVuelta || '#a855f7';
-
-        const geomIda = (state.routeDraft.geometriaIda && state.routeDraft.geometriaIda.length > 1)
-          ? state.routeDraft.geometriaIda
-          : state.routeDraft.puntos;
-        const geomVuelta = (state.routeDraft.geometriaVuelta && state.routeDraft.geometriaVuelta.length > 1)
-          ? state.routeDraft.geometriaVuelta
-          : state.routeDraft.puntosVuelta;
-
-        if (geomIda && geomIda.length > 1) {
-          const offsetIda = offsetPolyline(geomIda, 4);
-          state.layers.ida = L.polyline(offsetIda, {
-            color: colorIda, weight: 6, opacity: 1,
-            lineJoin: 'round', lineCap: 'round'
-          }).addTo(state.map);
-        }
-        if (geomVuelta && geomVuelta.length > 1) {
-          const offsetVuelta = offsetPolyline(geomVuelta, -4);
-          state.layers.vuelta = L.polyline(offsetVuelta, {
-            color: colorVuelta, weight: 6, opacity: 1,
-            lineJoin: 'round', lineCap: 'round'
-          }).addTo(state.map);
-        }
-      } catch(e) { console.warn('Redibujar trazos:', e); }
-
-      // 5️⃣ Esperar a que los tiles y trazos terminen de renderizar
-      await new Promise(r => setTimeout(r, 1200));
-
-      // 5️⃣ Capturar con html2canvas
-      const canvas = await html2canvas(mapContainer, {
-        useCORS: true,
-        allowTaint: false,
-        backgroundColor: '#0f1526',
-        logging: false,
-        scale: 2,                 // doble resolución para mejor calidad
-        width: 1200,
-        height: 630,
-        windowWidth: 1200,
-        windowHeight: 630
-      });
-
-      // 6️⃣ Convertir canvas a Blob → File
-      const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.9));
-      if(!blob) throw new Error('No se pudo generar la imagen');
-      const file = new File([blob], 'ruta_' + Date.now() + '.jpg', { type: 'image/jpeg' });
-
-      // 7️⃣ Subir a Cloudinary
-      const url = await Publisher.uploadToCloudinary(file);
-      return url;
-
-    } finally {
-      // 8️⃣ Restaurar el tamaño original del mapa
-      mapContainer.style.width  = originalWidth;
-      mapContainer.style.height = originalHeight;
-      mapContainer.style.position = '';
-      mapContainer.style.top = '';
-      mapContainer.style.left = '';
-      mapContainer.style.zIndex = '';
-      state.map.invalidateSize();
+    // 1️⃣ Ajustar el mapa para que se vea TODA la ruta antes de capturar
+    const allCoords = [];
+    if(state.routeDraft.puntos) allCoords.push(...state.routeDraft.puntos);
+    if(state.routeDraft.puntosVuelta) allCoords.push(...state.routeDraft.puntosVuelta);
+    if(state.routeDraft.geometriaIda) allCoords.push(...state.routeDraft.geometriaIda);
+    if(state.routeDraft.geometriaVuelta) allCoords.push(...state.routeDraft.geometriaVuelta);
+    if(allCoords.length > 1){
+      try{ state.map.fitBounds(L.latLngBounds(allCoords).pad(0.15)); }catch(e){}
     }
+
+    // 2️⃣ Esperar a que los tiles terminen de cargar
+    await new Promise(r => setTimeout(r, 800));
+
+    // 3️⃣ Capturar el canvas del mapa
+    const canvas = await new Promise((resolve, reject) => {
+      try{
+        leafletImage(state.map, (err, canvas) => {
+          if(err) return reject(err);
+          resolve(canvas);
+        });
+      }catch(e){ reject(e); }
+    });
+
+    // 4️⃣ Convertir canvas a Blob → File
+    const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.9));
+    if(!blob) throw new Error('No se pudo generar la imagen');
+    const file = new File([blob], 'ruta_' + Date.now() + '.jpg', { type: 'image/jpeg' });
+
+    // 5️⃣ Subir a Cloudinary
+    const url = await Publisher.uploadToCloudinary(file);
+    return url;
   }
 
   $$('.route-step').forEach((s,i)=>{});
