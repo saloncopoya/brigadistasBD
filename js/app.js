@@ -1055,15 +1055,38 @@ const url = location.origin + '/share/ruta/' + route.id;
     const wrap = document.getElementById(wrapId);
     if (!btn || !wrap) return;
 
-    // SVG: el mismo icono sirve de "expandir" y "salir" (lo rotamos por CSS)
+    // HTML de los dos estados del botón
+    const HTML_ENTER = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+        <path d="M8 3H5a2 2 0 0 0-2 2v3"/>
+        <path d="M21 8V5a2 2 0 0 0-2-2h-3"/>
+        <path d="M3 16v3a2 2 0 0 0 2 2h3"/>
+        <path d="M16 21h3a2 2 0 0 0 2-2v-3"/>
+      </svg>
+    `;
+    const HTML_EXIT = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+        <path d="M9 3v3a2 2 0 0 1-2 2H4"/>
+        <path d="M21 9h-3a2 2 0 0 0-2 2v3"/>
+        <path d="M3 15h3a2 2 0 0 1 2 2v3"/>
+        <path d="M15 21v-3a2 2 0 0 1 2-2h3"/>
+      </svg>
+    `;
+
+    // Asegurar estado inicial
+    btn.innerHTML = HTML_ENTER;
+    btn.title = 'Pantalla completa';
+
     btn.onclick = (e) => {
       e.stopPropagation();
       const isFs = wrap.classList.toggle('is-fullscreen');
       btn.classList.toggle('is-fullscreen', isFs);
       document.body.classList.toggle('fs-active', isFs);
+
+      // 🎨 Cambiar el icono y el tooltip según el estado
+      btn.innerHTML = isFs ? HTML_EXIT : HTML_ENTER;
       btn.title = isFs ? 'Salir de pantalla completa' : 'Pantalla completa';
 
-      // Invalidar el tamaño del mapa activo para que Leaflet recalcule
       setTimeout(() => {
         if (state.map && wrapId === 'routeMapWrap') state.map.invalidateSize();
         if (state.tripMap && wrapId === 'tripMapWrap') state.tripMap.invalidateSize();
