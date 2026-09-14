@@ -1,6 +1,16 @@
 {
   "posts": [
     {
+      "slug": "mirutafavorita139",
+      "title": "MI RUTA FAVORITA",
+      "description": "Ruta MI RUTA FAVORITA",
+      "image": "",
+      "url": "/share/ruta/mirutafavorita139",
+      "tipo": "ruta",
+      "timestamp": 1789355209989,
+      "updatedAt": "2026-09-14T03:06:49.989Z"
+    },
+    {
       "slug": "xxxx139",
       "title": "Xxxx",
       "description": "Ruta Xxxx",
@@ -231,8 +241,8 @@
       "updatedAt": "2026-09-13T08:52:43.612Z"
     }
   ],
-  "total": 23,
-  "updatedAt": "2026-09-14T03:01:25.617Z",
+  "total": 24,
+  "updatedAt": "2026-09-14T03:06:49.989Z",
   "version": 1,
-  "__sha": "f409e7ac90edc1c71ea2486be8fc20af8c4afed9"
+  "__sha": "8a504ae5ab5db6d950e4368964f86ecf628241a8"
 }
