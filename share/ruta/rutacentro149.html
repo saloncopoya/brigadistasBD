@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ruta centro · Rutas BGD</title>
+<meta name="description" content="Ruta Ruta centro">
+<link rel="canonical" href="https://brigadistasbd.pages.dev/share/ruta/rutacentro149">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Ruta centro">
+<meta property="og:description" content="Ruta Ruta centro">
+<meta property="og:image" content="https://res.cloudinary.com/davovja1g/image/upload/v1789390310/gybfsp6r09yffokihqn0.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:url" content="https://brigadistasbd.pages.dev/share/ruta/rutacentro149">
+<meta property="og:site_name" content="Rutas BGD">
+<meta property="og:locale" content="es_MX">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Ruta centro">
+<meta name="twitter:description" content="Ruta Ruta centro">
+<meta name="twitter:image" content="https://res.cloudinary.com/davovja1g/image/upload/v1789390310/gybfsp6r09yffokihqn0.jpg">
+
+<!-- PWA -->
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" type="image/svg+xml" href="/assets/icon.svg">
+<meta name="theme-color" content="#0a0e1a">
+
+<!-- Schema.org -->
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BusTrip","name":"Ruta centro","description":"Ruta Ruta centro","url":"https://brigadistasbd.pages.dev/share/ruta/rutacentro149","image":"https://res.cloudinary.com/davovja1g/image/upload/v1789390310/gybfsp6r09yffokihqn0.jpg","provider":{"@type":"Organization","name":"Rutas BGD","url":"https://brigadistasbd.pages.dev"}}</script>
+
+<style>
+:root{--cyan:#00e5ff;--bg:#0a0e1a;--surface:#141c30;--text:#e8edf7;--text-2:#a9b4cc;--border:#26314f}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding:0}
+.wrap{max-width:760px;margin:0 auto;padding:20px}
+.back{display:inline-flex;align-items:center;gap:6px;color:var(--cyan);text-decoration:none;font-size:13px;font-weight:700;margin-bottom:16px}
+h1{font-size:26px;font-weight:900;letter-spacing:-.4px;margin-bottom:8px;line-height:1.2}
+.meta{color:var(--text-2);font-size:13px;margin-bottom:20px}
+.post-content{font-size:15.5px;line-height:1.7;color:var(--text);background:var(--surface);padding:18px;border-radius:14px;border:1px solid var(--border);margin-bottom:20px}
+.post-image{width:100%;border-radius:14px;margin-bottom:20px;border:1px solid var(--border)}
+.badge{display:inline-block;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin-bottom:12px}
+.badge-urbana{background:rgba(0,229,255,.16);color:var(--cyan)}
+.badge-foranea{background:rgba(168,85,247,.18);color:#a855f7}
+.badge-green{background:rgba(16,185,129,.16);color:#10b981}
+.block{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px}
+.block h3{font-size:14px;font-weight:800;margin-bottom:10px;color:var(--cyan)}
+.block ul{list-style:none;padding:0}
+.block li{padding:7px 0;border-bottom:1px solid var(--border);font-size:14px}
+.block li:last-child{border-bottom:none}
+/* 🗺️ Bloque de mapa interactivo */
+.route-map-card{
+  background:var(--surface,#141c30);
+  border:1px solid var(--border,#26314f);
+  border-radius:14px;
+  padding:14px;
+  margin-bottom:16px;
+}
+.route-map-head{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-bottom:10px;
+}
+.route-map-head h3{
+  font-size:14px;
+  font-weight:800;
+  margin:0;
+  color:var(--cyan,#00e5ff);
+}
+.route-map-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font-size:11.5px;
+  font-weight:700;
+  color:var(--text-2,#a9b4cc);
+  background:var(--surface-2,#1c2540);
+  padding:4px 10px;
+  border-radius:99px;
+}
+#shareMap{
+  border-radius:12px;
+  background:#0f1526;
+}
+.leaflet-container{
+  background:#0f1526 !important;
+  font-family:inherit !important;
+}
+.leaflet-control-attribution{
+  background:rgba(20,28,48,.88) !important;
+  color:#a9b4cc !important;
+  font-size:10px !important;
+}
+.leaflet-control-attribution a{color:#00e5ff !important}
+.leaflet-control-zoom a{
+  background:#141c30 !important;
+  color:#e8edf7 !important;
+  border-color:#26314f !important;
+}
+.cta{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:11px 18px;border-radius:10px;font-weight:700;font-size:13.5px;text-decoration:none;border:none;cursor:pointer;font-family:inherit}
+.btn-primary{background:linear-gradient(135deg,var(--cyan),#00b8cc);color:#00121a}
+.btn-ghost{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+.price{font-size:22px;font-weight:900;color:#10b981;margin:10px 0}
+footer{margin-top:30px;padding-top:20px;border-top:1px solid var(--border);color:var(--text-2);font-size:12px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="https://brigadistasbd.pages.dev/">← Volver a Rutas BGD</a>
+  <span class="badge badge-urbana">Ruta</span>
+  <h1>Ruta centro</h1>
+  <div class="meta">14 de septiembre de 2026</div>
+  <img class="post-image" src="https://res.cloudinary.com/davovja1g/image/upload/v1789390310/gybfsp6r09yffokihqn0.jpg" alt="Ruta centro">
+  
+    <div class="route-map-card">
+      <div class="route-map-head">
+        <h3>🗺️ Trazado de la ruta</h3>
+        <span class="route-map-badge">Ida <span style="display:inline-block;width:12px;height:3px;background:#00e5ff;vertical-align:middle;border-radius:2px"></span></span>
+        <span class="route-map-badge">Regreso <span style="display:inline-block;width:12px;height:3px;background:#a855f7;vertical-align:middle;border-radius:2px"></span></span>
+      </div>
+      <div id="shareMap" style="width:100%;height:420px;border-radius:12px;overflow:hidden"></div>
+    </div>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin></script>
+    <script>
+    (function(){
+      var DATA = {"puntos":[[16.760783,-93.130468],[16.725977,-93.109525]],"puntosVuelta":[[16.726499,-93.110523],[16.698514,-93.106313]],"geomIda":[[16.760783,-93.130468],[16.760744,-93.130199],[16.760698,-93.129888],[16.76065,-93.129575],[16.760538,-93.128867],[16.760227,-93.126856],[16.760141,-93.126437],[16.759982,-93.125667],[16.759853,-93.125046],[16.759203,-93.125206],[16.758957,-93.125235],[16.758877,-93.125233],[16.758844,-93.125231],[16.758657,-93.125223],[16.758619,-93.12522],[16.758485,-93.125212],[16.757967,-93.125196],[16.757904,-93.125255],[16.757864,-93.125268],[16.757089,-93.125415],[16.756261,-93.125558],[16.755369,-93.125725],[16.754988,-93.125784],[16.754785,-93.125823],[16.754496,-93.125878],[16.75398,-93.125972],[16.753174,-93.126121],[16.752405,-93.126272],[16.751472,-93.126423],[16.750734,-93.126558],[16.749924,-93.126719],[16.74922,-93.126848],[16.748993,-93.126896],[16.748833,-93.126929],[16.747715,-93.127125],[16.746994,-93.127254],[16.746851,-93.12728],[16.746497,-93.127343],[16.745384,-93.127542],[16.745076,-93.127597],[16.744809,-93.127639],[16.744539,-93.127713],[16.744404,-93.127735],[16.744305,-93.127753],[16.7442,-93.127745],[16.744089,-93.127703],[16.744001,-93.127648],[16.743873,-93.127552],[16.743805,-93.12744],[16.743613,-93.12712],[16.743428,-93.126862],[16.743218,-93.126607],[16.742889,-93.126329],[16.742732,-93.12622],[16.741926,-93.125724],[16.741767,-93.125631],[16.741296,-93.125354],[16.740777,-93.125048],[16.739994,-93.124574],[16.739492,-93.12427],[16.739369,-93.124196],[16.739269,-93.124135],[16.738797,-93.123846],[16.738501,-93.123662],[16.7383,-93.123537],[16.737949,-93.12328],[16.737686,-93.123071],[16.737106,-93.122536],[16.736518,-93.121834],[16.736146,-93.12127],[16.735869,-93.120751],[16.735663,-93.120305],[16.735484,-93.119814],[16.735401,-93.119527],[16.735367,-93.119408],[16.735289,-93.119058],[16.735196,-93.118647],[16.735117,-93.117875],[16.735073,-93.117316],[16.735051,-93.116952],[16.735041,-93.116804],[16.734989,-93.115917],[16.734968,-93.115571],[16.734965,-93.11552],[16.734854,-93.115083],[16.734846,-93.114983],[16.734778,-93.114176],[16.734742,-93.113789],[16.734708,-93.113432],[16.734686,-93.113107],[16.734657,-93.112779],[16.73453,-93.112774],[16.734452,-93.112757],[16.734396,-93.11274],[16.734347,-93.112719],[16.734248,-93.112602],[16.734188,-93.112482],[16.734152,-93.112354],[16.734021,-93.111889],[16.733972,-93.11176],[16.733897,-93.111617],[16.733784,-93.111472],[16.733649,-93.111335],[16.7333,-93.11109],[16.73281,-93.110831],[16.732518,-93.110717],[16.732154,-93.110675],[16.731122,-93.110564],[16.73051,-93.110497],[16.729847,-93.110506],[16.728429,-93.110524],[16.728146,-93.110529],[16.726827,-93.110526],[16.726834,-93.110215],[16.726894,-93.109602],[16.726869,-93.109516],[16.726811,-93.109453],[16.726539,-93.109442],[16.72623,-93.109528],[16.725977,-93.109525]],"geomVuelta":[[16.726499,-93.110523],[16.724588,-93.110504],[16.724477,-93.110495],[16.724364,-93.110464],[16.724254,-93.110386],[16.724195,-93.110322],[16.724176,-93.110278],[16.724164,-93.110238],[16.72414,-93.11016],[16.724125,-93.110033],[16.724119,-93.109936],[16.724112,-93.109118],[16.724089,-93.108997],[16.724045,-93.1089],[16.72395,-93.108756],[16.723814,-93.108642],[16.723545,-93.108437],[16.723468,-93.108376],[16.723263,-93.108218],[16.722986,-93.107987],[16.72278,-93.107814],[16.722566,-93.10753],[16.722406,-93.107254],[16.722332,-93.107106],[16.722278,-93.107039],[16.722209,-93.106993],[16.722126,-93.10698],[16.722044,-93.107034],[16.722011,-93.10709],[16.721995,-93.107168],[16.721829,-93.107962],[16.721752,-93.108137],[16.7215,-93.108507],[16.721249,-93.10877],[16.721067,-93.108961],[16.720641,-93.1095],[16.720457,-93.109643],[16.720226,-93.109713],[16.720024,-93.109729],[16.719882,-93.109764],[16.719729,-93.109869],[16.71967,-93.109985],[16.719594,-93.110621],[16.719498,-93.111065],[16.719447,-93.111313],[16.719463,-93.111436],[16.719712,-93.111958],[16.719884,-93.112347],[16.719902,-93.112515],[16.719885,-93.112619],[16.719758,-93.112843],[16.719596,-93.112917],[16.719419,-93.112897],[16.719265,-93.112804],[16.719079,-93.112551],[16.718962,-93.112327],[16.718916,-93.112151],[16.718899,-93.111796],[16.718801,-93.111502],[16.718583,-93.111167],[16.718347,-93.110936],[16.718,-93.11072],[16.717705,-93.110469],[16.717518,-93.110274],[16.717386,-93.110091],[16.717288,-93.109983],[16.716934,-93.10985],[16.716285,-93.109746],[16.715888,-93.109664],[16.715867,-93.109662],[16.71456,-93.109437],[16.714413,-93.109422],[16.714216,-93.10943],[16.712989,-93.109743],[16.712246,-93.109915],[16.711998,-93.109977],[16.711255,-93.110168],[16.711082,-93.110207],[16.710938,-93.110235],[16.710776,-93.11027],[16.710331,-93.110392],[16.71012,-93.110471],[16.709595,-93.110771],[16.708978,-93.111091],[16.708931,-93.111116],[16.708875,-93.111145],[16.70876,-93.111205],[16.708184,-93.111479],[16.708058,-93.111515],[16.707939,-93.111524],[16.707801,-93.111516],[16.70767,-93.111483],[16.707495,-93.111388],[16.707301,-93.111203],[16.707268,-93.111162],[16.707156,-93.111032],[16.706935,-93.110751],[16.706725,-93.110481],[16.706394,-93.11007],[16.706141,-93.109737],[16.705931,-93.109469],[16.705742,-93.109226],[16.705475,-93.108886],[16.705432,-93.108857],[16.704829,-93.108073],[16.704789,-93.108025],[16.704406,-93.107562],[16.704278,-93.107477],[16.704151,-93.107418],[16.703978,-93.107388],[16.703908,-93.107378],[16.703146,-93.107447],[16.702687,-93.10749],[16.702182,-93.107538],[16.701679,-93.107585],[16.701406,-93.107611],[16.701317,-93.107619],[16.701195,-93.10763],[16.700311,-93.107715],[16.699431,-93.107792],[16.699351,-93.107559],[16.699202,-93.107146],[16.699035,-93.106722],[16.698821,-93.106193],[16.698763,-93.106232],[16.698675,-93.106266],[16.698517,-93.106312],[16.698514,-93.106313]],"colorIda":"#00e5ff","colorVuelta":"#a855f7","nombre":"RUTA CENTRO"};
+      if (typeof L === 'undefined') return;
+      var map = L.map('shareMap', { zoomControl: true, scrollWheelZoom: false });
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap'
+      }).addTo(map);
+
+      var allCoords = [];
+      function drawLine(coords, color, dashed){
+        if (!coords || coords.length < 2) return;
+        var line = L.polyline(coords, {
+          color: color,
+          weight: 5,
+          opacity: 0.95,
+          dashArray: dashed ? '10,6' : null,
+          lineJoin: 'round',
+          lineCap: 'round'
+        }).addTo(map);
+        allCoords = allCoords.concat(coords);
+      }
+
+      var idaCoords = (DATA.geomIda && DATA.geomIda.length > 1) ? DATA.geomIda : DATA.puntos;
+      var vueltaCoords = (DATA.geomVuelta && DATA.geomVuelta.length > 1) ? DATA.geomVuelta : DATA.puntosVuelta;
+      drawLine(idaCoords, DATA.colorIda, false);
+      drawLine(vueltaCoords, DATA.colorVuelta, true);
+
+      if (DATA.puntos && DATA.puntos.length) {
+        DATA.puntos.forEach(function(p){
+          L.circleMarker(p, { radius: 6, color: DATA.colorIda, fillColor: '#fff', fillOpacity: 1, weight: 3 }).addTo(map);
+        });
+      }
+      if (DATA.puntosVuelta && DATA.puntosVuelta.length) {
+        DATA.puntosVuelta.forEach(function(p){
+          L.circleMarker(p, { radius: 6, color: DATA.colorVuelta, fillColor: '#fff', fillOpacity: 1, weight: 3 }).addTo(map);
+        });
+      }
+
+      if (allCoords.length > 1) {
+        try { map.fitBounds(L.latLngBounds(allCoords).pad(0.15)); } catch(e) {}
+      } else if (allCoords.length === 1) {
+        map.setView(allCoords[0], 15);
+      } else {
+        map.setView([16.7530, -93.1150], 13);
+      }
+    })();
+    </script>
+  <div class="block"><h3>ℹ️ Información</h3><ul><li>📅 Días: todos</li></ul></div>
+  <div class="cta">
+    <a class="btn btn-primary" href="https://brigadistasbd.pages.dev/">🚌 Ver todas las rutas</a>
+    <a class="btn btn-ghost" href="https://brigadistasbd.pages.dev/?tab=market">🛒 Marketplace</a>
+  </div>
+  <footer>© 2026 Rutas BGD · <a href="https://brigadistasbd.pages.dev" style="color:var(--cyan)">brigadistasbd.pages.dev</a></footer>
+</div>
+</body>
+</html>
