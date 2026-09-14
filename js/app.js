@@ -1354,18 +1354,29 @@ const url = location.origin + '/share/m/' + id;
     });
   }
 
+  // Nombres amigables por defecto según el orden del punto
+  const TRIP_DEFAULT_NAMES = ['ESTOY AQUÍ', 'LLEGARÉ AQUÍ', 'PASO POR', 'DESVÍO A', 'DESTINO'];
+
   function addTripPoint(lat, lng) {
     const idx = state.tripPoints.length;
     const letter = String.fromCharCode(65 + idx); // A, B, C, D, E
     const color = ['#10b981', '#ef4444', '#f59e0b', '#3b82f6', '#a855f7'][idx] || '#00e5ff';
-    state.tripPoints.push({ lat, lng, letter, color, radius: state.tripRadius });
+    const name = TRIP_DEFAULT_NAMES[idx] || ('PUNTO ' + letter);
+    state.tripPoints.push({ lat, lng, letter, color, radius: state.tripRadius, name });
 
-    const icon = L.divIcon({
+       const icon = L.divIcon({
       className: '',
-      html: `<div class="marker-${letter.toLowerCase()}" style="background:${color}">${letter}</div>`,
+      html: `<div class="marker-${letter.toLowerCase()}" style="background:${color};position:relative">
+        ${letter}
+        <span style="position:absolute;top:-20px;left:50%;transform:translateX(-50%);
+          background:${color};color:#fff;font-size:9px;font-weight:800;
+          padding:2px 6px;border-radius:6px;white-space:nowrap;
+          box-shadow:0 2px 6px rgba(0,0,0,.4)">${name}</span>
+      </div>`,
       iconSize: [26, 26], iconAnchor: [13, 13]
     });
     const marker = L.marker([lat, lng], { icon }).addTo(state.tripMap);
+     
     const circle = L.circle([lat, lng], { radius: state.tripRadius, color, fillColor: color, fillOpacity: 0.1, weight: 1.5 }).addTo(state.tripMap);
     state.tripMarkers.push(marker);
     state.tripCircles.push(circle);
@@ -1383,7 +1394,7 @@ const url = location.origin + '/share/m/' + id;
     el.innerHTML = state.tripPoints.map((p, i) => `
       <div class="trip-point-card">
         <div class="tpc-letter" style="background:${p.color}">${p.letter}</div>
-        <span class="tpc-coords">${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}</span>
+        <span class="tpc-coords">${esc(p.name || ('Punto ' + p.letter))}</span>
         <div class="tpc-actions">
           <button data-trip-del="${i}" title="Eliminar">✕</button>
         </div>
@@ -1397,18 +1408,32 @@ const url = location.origin + '/share/m/' + id;
         state.tripMarkers.splice(i, 1);
         state.tripCircles.splice(i, 1);
         state.tripPoints.splice(i, 1);
-        // Reetiquetar
+        // Reetiquetar letras y colores (los nombres NO se reasignan para que
+        // "LLEGARÉ AQUÍ" siga siendo el último punto, etc.)
         state.tripPoints.forEach((p, idx) => {
           p.letter = String.fromCharCode(65 + idx);
           p.color = ['#10b981', '#ef4444', '#f59e0b', '#3b82f6', '#a855f7'][idx] || '#00e5ff';
+          // Asignar nombre por defecto si no lo tiene (para los que se movieron)
+          if (!p.name) p.name = TRIP_DEFAULT_NAMES[idx] || ('PUNTO ' + p.letter);
         });
-        // Redibujar markers en el mapa con nueva letra/color
+        // Reasignar nombres según nueva posición SOLO si eran nombres por defecto
+        state.tripPoints.forEach((p, idx) => {
+          const isDefault = TRIP_DEFAULT_NAMES.includes(p.name) || /^PUNTO [A-E]$/.test(p.name);
+          if (isDefault) p.name = TRIP_DEFAULT_NAMES[idx] || ('PUNTO ' + p.letter);
+        });
+        // Redibujar markers en el mapa con nueva letra/color/nombre
         state.tripMarkers.forEach((m, idx) => {
           const pt = state.tripPoints[idx];
           if (!pt) return;
           const icon = L.divIcon({
             className: '',
-            html: `<div class="marker-${pt.letter.toLowerCase()}" style="background:${pt.color}">${pt.letter}</div>`,
+            html: `<div class="marker-${pt.letter.toLowerCase()}" style="background:${pt.color};position:relative">
+              ${pt.letter}
+              <span style="position:absolute;top:-20px;left:50%;transform:translateX(-50%);
+                background:${pt.color};color:#fff;font-size:9px;font-weight:800;
+                padding:2px 6px;border-radius:6px;white-space:nowrap;
+                box-shadow:0 2px 6px rgba(0,0,0,.4)">${pt.name}</span>
+            </div>`,
             iconSize: [26, 26], iconAnchor: [13, 13]
           });
           m.setIcon(icon);
@@ -1439,15 +1464,45 @@ const url = location.origin + '/share/m/' + id;
     return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
 
+  // Devuelve TODAS las polilíneas posibles de una ruta (ida + vuelta)
+  // combinando geometría real (OSRM) y puntos crudos como fallback.
+  function getRouteAllSegments(route) {
+    const segments = [];
+    const ida = (route.geometriaIda && route.geometriaIda.length > 1)
+      ? route.geometriaIda
+      : (route.puntos || []);
+    const vuelta = (route.geometriaVuelta && route.geometriaVuelta.length > 1)
+      ? route.geometriaVuelta
+      : (route.puntosVuelta || []);
+    if (ida.length > 1) segments.push(ida);
+    if (vuelta.length > 1) segments.push(vuelta);
+    return segments;
+  }
+
+  // Distancia mínima (en metros) de un punto a CUALQUIER segmento de una ruta.
+  // Considera geometriaIda + geometriaVuelta (no solo los puntos crudos).
   function routeDistanceToPoint(route, lat, lng) {
-    const pts = (route.puntos || []).concat(route.puntosVuelta || []);
-    if (pts.length < 2) return Infinity;
+    const segments = getRouteAllSegments(route);
+    if (!segments.length) return Infinity;
     let min = Infinity;
-    for (let i = 0; i < pts.length - 1; i++) {
-      const d = pointToSegmentDistance([lat, lng], pts[i], pts[i + 1]);
-      // Convertir grados a metros aproximados
-      const dMeters = d * 111320;
-      if (dMeters < min) min = dMeters;
+    for (const pts of segments) {
+      for (let i = 0; i < pts.length - 1; i++) {
+        const d = pointToSegmentDistance([lat, lng], pts[i], pts[i + 1]);
+        // d está en grados; convertir a metros usando latitud media
+        const midLat = (pts[i][0] + pts[i + 1][0]) / 2;
+        const metersPerDegLat = 111320;
+        const metersPerDegLng = 111320 * Math.cos(midLat * Math.PI / 180);
+        // Proyección local: aproximamos el segmento como recta en un plano
+        const dLat = (lng != null ? (lat - (pts[i][0] + pts[i + 1][0]) / 2) : 0);
+        // Usamos una conversión más precisa:
+        const seg = [
+          [pts[i][0] * metersPerDegLat, pts[i][1] * metersPerDegLng],
+          [pts[i + 1][0] * metersPerDegLat, pts[i + 1][1] * metersPerDegLng]
+        ];
+        const p = [lat * metersPerDegLat, lng * metersPerDegLng];
+        const dMeters = pointToSegmentDistance(p, seg[0], seg[1]);
+        if (dMeters < min) min = dMeters;
+      }
     }
     return min;
   }
@@ -1469,12 +1524,20 @@ const url = location.origin + '/share/m/' + id;
     tripRouteLayers = [];
   }
 
-  // Devuelve las coordenadas [lat,lng] de una ruta (geometría o puntos)
+  // Devuelve las coordenadas [lat,lng] de la IDA de una ruta (geometría o puntos)
   function getRouteCoords(route) {
     if (route.geometriaIda && route.geometriaIda.length > 1) {
       return route.geometriaIda.map(c => [c[0], c[1]]);
     }
     return (route.puntos || []).map(c => [c[0], c[1]]);
+  }
+
+  // Devuelve las coordenadas [lat,lng] de la VUELTA de una ruta
+  function getRouteCoordsVuelta(route) {
+    if (route.geometriaVuelta && route.geometriaVuelta.length > 1) {
+      return route.geometriaVuelta.map(c => [c[0], c[1]]);
+    }
+    return (route.puntosVuelta || []).map(c => [c[0], c[1]]);
   }
 
   // Distancia total de una ruta (en metros)
@@ -1488,27 +1551,93 @@ const url = location.origin + '/share/m/' + id;
     return total;
   }
 
-  // Dibuja en el mapa un conjunto de rutas con colores únicos
+  // Offset perpendicular para separar visualmente 2 trazos en la misma calle.
+  // (mismo algoritmo que usa el render de ruta individual)
+  function offsetPolyline(coords, offsetMeters) {
+    if (!coords || coords.length < 2) return coords;
+    const out = [];
+    const R = 6371000;
+    for (let i = 0; i < coords.length; i++) {
+      const p = coords[i];
+      const prev = coords[Math.max(0, i - 1)];
+      const next = coords[Math.min(coords.length - 1, i + 1)];
+      const dLat = next[0] - prev[0];
+      const dLng = next[1] - prev[1];
+      const len = Math.hypot(dLat, dLng) || 1;
+      const perpLat = -dLng / len;
+      const perpLng =  dLat / len;
+      const dLatDeg = (offsetMeters / R) * (180 / Math.PI);
+      const dLngDeg = (offsetMeters / (R * Math.cos(p[0] * Math.PI / 180))) * (180 / Math.PI);
+      out.push([p[0] + perpLat * dLatDeg, p[1] + perpLng * dLngDeg]);
+    }
+    return out;
+  }
+
+  // Dibuja en el mapa un conjunto de rutas con colores únicos.
+  // AHORA dibuja IDA y VUELTA, con offset cuando hay varias rutas o ambos sentidos.
+  // Si se pasan varias rutas con el mismo color lógico (p.ej. varias directas),
+  // se separan con offsets perpendiculares para que se vean ambas.
   function drawTripRoutesOnMap(routeList, highlightIdx = null) {
     clearTripRouteLayers();
     if (!state.tripMap) return;
 
+    const total = routeList.length;
+
     routeList.forEach((item, idx) => {
       const route = item.route || item;
-      const coords = getRouteCoords(route);
-      if (coords.length < 2) return;
+      const coordsIda = getRouteCoords(route);
+      const coordsVuelta = getRouteCoordsVuelta(route);
       const color = TRIP_COLORS[idx % TRIP_COLORS.length];
       const isHl = highlightIdx === null || highlightIdx === idx;
-      const line = L.polyline(coords, {
-        color,
-        weight: isHl ? 6 : 3,
-        opacity: isHl ? 0.95 : 0.35,
-        lineJoin: 'round',
-        lineCap: 'round',
-        dashArray: item.type === 'transfer' ? '8,6' : null
-      }).addTo(state.tripMap);
-      line.bindTooltip((item.label || route.nombre || 'Ruta') + ` <span style="color:${color}">●</span>`, { sticky: true });
-      tripRouteLayers.push(line);
+
+      // ---- IDA ----
+      if (coordsIda.length > 1) {
+        // Si hay más de 1 ruta en el mapa, aplicamos offset alterno
+        // para que no se superpongan en calles compartidas.
+        let idaDraw = coordsIda;
+        if (total > 1) {
+          // Offset entre -6 y +6 metros según índice, alternando signo
+          const offset = (idx - (total - 1) / 2) * 4; // separa ±4m por índice
+          idaDraw = offsetPolyline(coordsIda, offset);
+        }
+        const lineIda = L.polyline(idaDraw, {
+          color,
+          weight: isHl ? 5 : 3,
+          opacity: isHl ? 0.95 : 0.5,
+          lineJoin: 'round',
+          lineCap: 'round',
+          dashArray: item.type === 'transfer' ? '8,6' : null
+        }).addTo(state.tripMap);
+        lineIda.bindTooltip(
+          (item.label || route.nombre || 'Ruta') + ' · IDA' +
+          ` <span style="color:${color}">●</span>`,
+          { sticky: true }
+        );
+        tripRouteLayers.push(lineIda);
+      }
+
+      // ---- VUELTA ----
+      if (coordsVuelta.length > 1) {
+        let vueltaDraw = coordsVuelta;
+        if (total > 1) {
+          const offset = (idx - (total - 1) / 2) * 4;
+          vueltaDraw = offsetPolyline(coordsVuelta, -offset); // signo contrario para separar de ida
+        }
+        const lineVuelta = L.polyline(vueltaDraw, {
+          color,
+          weight: isHl ? 4 : 2,
+          opacity: isHl ? 0.85 : 0.4,
+          lineJoin: 'round',
+          lineCap: 'round',
+          dashArray: '10,6' // guiones para distinguir vuelta de ida
+        }).addTo(state.tripMap);
+        lineVuelta.bindTooltip(
+          (item.label || route.nombre || 'Ruta') + ' · REGRESO' +
+          ` <span style="color:${color}">●</span>`,
+          { sticky: true }
+        );
+        tripRouteLayers.push(lineVuelta);
+      }
 
       // Si es transbordo, marcar el punto de encuentro
       if (item.transferPoint) {
@@ -1541,7 +1670,8 @@ const url = location.origin + '/share/m/' + id;
 
   // Encuentra todos los transbordos posibles (1, 2, 3, 4 saltos)
   function findTransferChains(startPoint, endPoint, maxTransfers) {
-    const chains = [];
+    maxTransfers = Math.max(1, +maxTransfers || 1);
+     const chains = [];
     const startRoutes = state.routes.filter(r => routeNearPoint(r, startPoint, startPoint.radius));
     const endRoutes   = state.routes.filter(r => routeNearPoint(r, endPoint, endPoint.radius));
 
@@ -1553,7 +1683,7 @@ const url = location.origin + '/share/m/' + id;
         endRoutes.forEach(r2 => {
           if (r1.id === r2.id) return;
           const inter = routesMinDistance(r1, r2);
-          if (inter.dist <= 300) {
+          if (inter.dist <= 400) {
             chains.push({
               type: 'transfer',
               legs: [r1, r2],
@@ -1572,7 +1702,7 @@ const url = location.origin + '/share/m/' + id;
         state.routes.forEach(r2 => {
           if (r2.id === r1.id) return;
           const i12 = routesMinDistance(r1, r2);
-          if (i12.dist > 300) return;
+          if (i12.dist > 400) return;
           endRoutes.forEach(r3 => {
             if (r3.id === r2.id || r3.id === r1.id) return;
             const i23 = routesMinDistance(r2, r3);
@@ -1603,7 +1733,7 @@ const url = location.origin + '/share/m/' + id;
             endRoutes.forEach(r4 => {
               if (r4.id === r3.id || r4.id === r2.id || r4.id === r1.id) return;
               const i34 = routesMinDistance(r3, r4);
-              if (i34.dist > 300) return;
+          if (i23.dist > 400) return;
               chains.push({
                 type: 'transfer',
                 legs: [r1, r2, r3, r4],
@@ -1631,11 +1761,11 @@ const url = location.origin + '/share/m/' + id;
             state.routes.forEach(r4 => {
               if (r4.id === r3.id || r4.id === r2.id || r4.id === r1.id) return;
               const i34 = routesMinDistance(r3, r4);
-              if (i34.dist > 300) return;
+              if (i34.dist > 400) return;
               endRoutes.forEach(r5 => {
                 if (r5.id === r4.id || r5.id === r3.id || r5.id === r2.id || r5.id === r1.id) return;
                 const i45 = routesMinDistance(r4, r5);
-                if (i45.dist > 300) return;
+                      if (i45.dist > 400) return;
                 chains.push({
                   type: 'transfer',
                   legs: [r1, r2, r3, r4, r5],
@@ -1666,8 +1796,8 @@ const url = location.origin + '/share/m/' + id;
     clearTripRouteLayers();
     if (state.tripPoints.length < 1) { el.innerHTML = ''; return; }
 
-    const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
-    const results = { direct: [], transfers: [] };
+    const maxTransfers = +($('#tripMaxTransfers')?.value || 1);
+     const results = { direct: [], transfers: [] };
 
     if (state.tripPoints.length === 1) {
       // Rutas que tocan el punto A
@@ -1689,9 +1819,11 @@ const url = location.origin + '/share/m/' + id;
         }
       });
 
-      // Si no hay directa, o si el usuario quiere ver también transbordos,
-      // calculamos cadenas de transbordos
+            // Si no hay directa, o si el usuario quiere ver también transbordos,
+      // calculamos cadenas de transbordos. SIEMPRE intentamos al menos 1.
       if (!results.direct.length || maxTransfers >= 1) {
+        const minTransfers = results.direct.length ? maxTransfers : Math.max(1, maxTransfers);
+         
         // Para 2 puntos
         if (state.tripPoints.length === 2) {
           const chains = findTransferChains(start, end, maxTransfers);
@@ -1729,9 +1861,17 @@ const url = location.origin + '/share/m/' + id;
       }
     }
 
-    // Si hay directas, dibujarlas en el mapa automáticamente
+    // Si hay directas, dibujarlas TODAS en el mapa con offset para que no se
+    // superpongan. El offset se calcula dentro de drawTripRoutesOnMap.
     if (results.direct.length) {
-      drawTripRoutesOnMap(results.direct.map(d => ({ ...d, label: d.route.nombre })));
+      drawTripRoutesOnMap(
+        results.direct.map(d => ({
+          route: d.route,
+          label: d.route.nombre,
+          type: 'direct'
+        })),
+        null  // sin highlight, todas con mismo peso
+      );
     }
 
     // Render de resultados
@@ -1815,17 +1955,26 @@ const url = location.origin + '/share/m/' + id;
         const idx = +b.dataset.tripShow;
         const t = results.transfers[idx];
         if (!t) return;
-        // Dibujar SOLO los trazos de este transbordo
+        // Dibujar SOLO los trazos de este transbordo (ida + vuelta)
         drawTripRoutesOnMap(t.legs.map((l, li) => ({
           route: l,
           label: l.nombre,
           transferPoint: li === 0 ? t.transferPoints[0] : null
         })));
-        // Hacer zoom a los trazos
+        // Recolectar todas las coordenadas (ida + vuelta + transbordos)
         const allCoords = [];
-        t.legs.forEach(l => allCoords.push(...getRouteCoords(l)));
+        t.legs.forEach(l => {
+          allCoords.push(...getRouteCoords(l));
+          allCoords.push(...getRouteCoordsVuelta(l));
+        });
+        t.transferPoints.forEach(tp => { if (tp) allCoords.push(tp); });
         if (allCoords.length) {
           try { state.tripMap.fitBounds(L.latLngBounds(allCoords).pad(0.15)); } catch(e){}
+        }
+        // 📜 Scroll automático al mapa
+        const mapEl = document.getElementById('tripMap');
+        if (mapEl) {
+          mapEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
         toast('Mostrando ' + t.legs.length + ' trazos del transbordo');
       };
@@ -1864,10 +2013,49 @@ const url = location.origin + '/share/m/' + id;
   $$('#tripToolbar .tb').forEach(b => {
     b.onclick = () => {
       const tool = b.dataset.tool;
+      if (tool === 'undo') {
+        if (!state.tripPoints.length) { toast('No hay puntos para deshacer', 'err'); return; }
+        const lastIdx = state.tripPoints.length - 1;
+        // Quitar marker y círculo del mapa
+        if (state.tripMarkers[lastIdx]) state.tripMap.removeLayer(state.tripMarkers[lastIdx]);
+        if (state.tripCircles[lastIdx]) state.tripMap.removeLayer(state.tripCircles[lastIdx]);
+        state.tripMarkers.splice(lastIdx, 1);
+        state.tripCircles.splice(lastIdx, 1);
+        state.tripPoints.splice(lastIdx, 1);
+        // Reetiquetar los que quedan
+        state.tripPoints.forEach((p, idx) => {
+          p.letter = String.fromCharCode(65 + idx);
+          p.color = ['#10b981', '#ef4444', '#f59e0b', '#3b82f6', '#a855f7'][idx] || '#00e5ff';
+          const isDefault = TRIP_DEFAULT_NAMES.includes(p.name) || /^PUNTO [A-E]$/.test(p.name);
+          if (isDefault) p.name = TRIP_DEFAULT_NAMES[idx] || ('PUNTO ' + p.letter);
+        });
+        // Redibujar markers con nueva letra/color/nombre
+        state.tripMarkers.forEach((m, idx) => {
+          const pt = state.tripPoints[idx];
+          if (!pt) return;
+          const icon = L.divIcon({
+            className: '',
+            html: `<div class="marker-${pt.letter.toLowerCase()}" style="background:${pt.color};position:relative">
+              ${pt.letter}
+              <span style="position:absolute;top:-20px;left:50%;transform:translateX(-50%);
+                background:${pt.color};color:#fff;font-size:9px;font-weight:800;
+                padding:2px 6px;border-radius:6px;white-space:nowrap;
+                box-shadow:0 2px 6px rgba(0,0,0,.4)">${pt.name}</span>
+            </div>`,
+            iconSize: [26, 26], iconAnchor: [13, 13]
+          });
+          m.setIcon(icon);
+        });
+        renderTripPointsList();
+        performTripSearch();
+        toast('Punto eliminado');
+        return;
+      }
       if (tool === 'clear') {
         state.tripMarkers.forEach(m => state.tripMap.removeLayer(m));
         state.tripCircles.forEach(c => state.tripMap.removeLayer(c));
         state.tripMarkers = []; state.tripCircles = []; state.tripPoints = [];
+        clearTripRouteLayers();
         renderTripPointsList(); performTripSearch();
         toast('Puntos limpiados');
         return;
