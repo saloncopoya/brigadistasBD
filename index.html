@@ -433,6 +433,43 @@ body.fs-active{overflow:hidden !important}
    .leaflet-popup-content-wrapper{background:var(--surface-3)!important;color:var(--text)!important;border-radius:12px!important;border:1px solid var(--border-2)!important}
 .leaflet-popup-tip{background:var(--surface-3)!important}
 
+   /* 🚶 Marcador de transbordo (muñequito caminando) */
+.transbordo-marker {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid #f59e0b;
+  box-shadow: 0 3px 12px rgba(0,0,0,.5), 0 0 0 3px rgba(245,158,11,.25);
+  display: grid;
+  place-items: center;
+  position: relative;
+  animation: transbordoPulse 2s ease-in-out infinite;
+}
+.transbordo-marker svg {
+  width: 20px;
+  height: 20px;
+  color: #f59e0b;
+  stroke: #f59e0b;
+  fill: #f59e0b;
+}
+.transbordo-marker::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 2px dashed rgba(245,158,11,.5);
+  animation: transbordoRotate 8s linear infinite;
+}
+@keyframes transbordoPulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.08); }
+}
+@keyframes transbordoRotate {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
 /* 🚫 Quitar el outline negro al hacer focus en cualquier capa SVG del mapa */
 .leaflet-interactive:focus,
 .leaflet-interactive:focus-visible,
