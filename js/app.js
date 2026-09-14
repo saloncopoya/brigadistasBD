@@ -1871,8 +1871,10 @@ const url = location.origin + '/share/m/' + id;
       }
     }
 
-    // Si hay directas, dibujarlas TODAS en el mapa con offset para que no se
+       // Si hay directas, dibujarlas TODAS en el mapa con offset para que no se
     // superpongan. El offset se calcula dentro de drawTripRoutesOnMap.
+    // Si NO hay directas pero SÍ hay transbordos, dibujamos automáticamente
+    // el primer resultado de transbordo para que el mapa no quede vacío.
     if (results.direct.length) {
       drawTripRoutesOnMap(
         results.direct.map(d => ({
@@ -1881,6 +1883,16 @@ const url = location.origin + '/share/m/' + id;
           type: 'direct'
         })),
         null  // sin highlight, todas con mismo peso
+      );
+    } else if (results.transfers.length) {
+      const t0 = results.transfers[0];
+      drawTripRoutesOnMap(
+        t0.legs.map((l, li) => ({
+          route: l,
+          label: l.nombre,
+          type: 'transfer',
+          transferPoint: li === 0 ? t0.transferPoints[0] : (t0.transferPoints[li - 1] || null)
+        }))
       );
     }
 
