@@ -1177,121 +1177,28 @@ body.fs-active{overflow:hidden !important}
     const ptsVuelta = state.routeDraft.puntosVuelta;
     const pts = ptsIda.length >= 2 ? ptsIda : ptsVuelta;
     if(pts.length<2){ toast('Traza al menos 2 puntos (ida o regreso)','err'); return; }
-
     const prog = $('#detectProg'); prog.classList.remove('hidden');
-    const progressBar = prog.querySelector('div');
-
-    // 📌 Respetar las calles ya existentes en el textarea (NO borrarlas)
-    const existingText = $('#routeCalles').value || '';
-    const existingStreets = splitList(existingText);
-    const existingNorm = new Set(existingStreets.map(s => s.toLowerCase().trim()));
-
-    // Muestrear más puntos para mejor detección (20 puntos en lugar de 12)
-    const samples = samplePoints(pts, 20);
-
-    // 🏘️ Estructura: mapa de "calle principal" → Set de "calles transversales"
-    const streetMap = new Map();
-    const seenNames = new Set();
-
+    const samples = samplePoints(pts, 12);
+    const streets = new Set(state.routeDraft.calles);
     for(let i=0;i<samples.length;i++){
       const [lat,lng] = samples[i];
       try{
-        // 🔍 Consulta 1: reverse geocoding con zoom 18 (máximo detalle)
-        const r = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=18&addressdetails=1&extratags=1`,
-          { headers:{'Accept':'application/json'} }
-        );
+        const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=17&addressdetails=1`,{
+          headers:{'Accept':'application/json'}
+        });
         const j = await r.json();
-        const a = j.address || {};
-        const road = a.road || a.pedestrian || a.footway || a.path || a.street;
-
-        if(!road) continue;
-
-        // Si ya vimos esta calle en este muestreo, saltar
-        if(seenNames.has(road)) continue;
-        seenNames.add(road);
-
-        // 🔍 Consulta 2: buscar la calle anterior y siguiente para saber "entre qué calles" está
-        let betweenText = '';
-        if (i > 0 && i < samples.length - 1) {
-          // Buscar la calle anterior (perpendicular)
-          const prevP = samples[i - 1];
-          const nextP = samples[i + 1];
-          try {
-            await new Promise(r => setTimeout(r, 350));
-            const rPrev = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?lat=${prevP[0]}&lon=${prevP[1]}&format=json&zoom=18&addressdetails=1`,
-              { headers:{'Accept':'application/json'} }
-            );
-            const jPrev = await rPrev.json();
-            const roadPrev = jPrev.address?.road || jPrev.address?.pedestrian || jPrev.address?.footway;
-
-            await new Promise(r => setTimeout(r, 350));
-            const rNext = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?lat=${nextP[0]}&lon=${nextP[1]}&format=json&zoom=18&addressdetails=1`,
-              { headers:{'Accept':'application/json'} }
-            );
-            const jNext = await rNext.json();
-            const roadNext = jNext.address?.road || jNext.address?.pedestrian || jNext.address?.footway;
-
-            // Si las calles vecinas son diferentes a la actual, las usamos como límites
-            const neighbors = [roadPrev, roadNext].filter(n => n && n !== road);
-            if (neighbors.length >= 2) {
-              betweenText = ` entre ${neighbors[0]} y ${neighbors[1]}`;
-            } else if (neighbors.length === 1) {
-              betweenText = ` cerca de ${neighbors[0]}`;
-            }
-          } catch(e) { /* ignorar */ }
-        }
-
-        // 📝 Formatear el nombre: "9 sur entre 1 y 6 oriente"
-        const fullName = betweenText ? `${road}${betweenText}` : road;
-
-        // 🎯 Agrupar por calle principal
-        const mainKey = road.toLowerCase().trim();
-        if (!streetMap.has(mainKey)) {
-          streetMap.set(mainKey, {
-            main: road,
-            variations: new Set()
-          });
-        }
-        streetMap.get(mainKey).variations.add(fullName);
-
-      }catch(e){ /* continuar con el siguiente */ }
-
-      // Actualizar barra de progreso
-      if (progressBar) {
-        progressBar.style.width = Math.round(((i+1)/samples.length)*100)+'%';
-      }
-      // Pausa entre peticiones (Nominatim requiere ~1s entre requests)
+        const a = j.address||{};
+        const name = a.road || a.pedestrian || a.footway || a.path;
+        if(name) streets.add(name);
+      }catch(e){ /* continuar */ }
+      prog.querySelector('div').style.width = Math.round(((i+1)/samples.length)*100)+'%';
       await new Promise(r=>setTimeout(r,1100));
     }
-
-    // 🧩 Combinar los resultados con los existentes
-    const finalStreets = [...existingStreets]; // Empezar con lo que ya había
-    const added = [];
-
-    for (const [key, data] of streetMap.entries()) {
-      // Si el usuario ya tenía la calle principal escrita, respetarla
-      if (existingNorm.has(key)) continue;
-
-      // Tomar la variación más larga (la que tiene "entre X y Y")
-      const variations = Array.from(data.variations);
-      const best = variations.sort((a, b) => b.length - a.length)[0] || data.main;
-
-      if (!finalStreets.includes(best)) {
-        finalStreets.push(best);
-        added.push(best);
-      }
-    }
-
-    state.routeDraft.calles = finalStreets;
-    $('#routeCalles').value = finalStreets.join(', ');
+    state.routeDraft.calles = Array.from(streets);
+    $('#routeCalles').value = state.routeDraft.calles.join(', ');
     updateEditorStatus();
-    prog.classList.add('hidden');
-    if (progressBar) progressBar.style.width='0%';
-
-    toast(`✅ ${added.length} calles nuevas detectadas (${finalStreets.length} en total)`);
+    prog.classList.add('hidden'); prog.querySelector('div').style.width='0%';
+    toast(`Detectadas ${state.routeDraft.calles.length} calles ✓`);
   }
 
   function samplePoints(pts, n){
