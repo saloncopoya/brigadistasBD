@@ -1,6 +1,16 @@
 {
   "posts": [
     {
+      "slug": "ruta3copoya139",
+      "title": "Ruta 3 copoya",
+      "description": "Ruta Ruta 3 copoya",
+      "image": "",
+      "url": "/share/ruta/ruta3copoya139",
+      "tipo": "ruta",
+      "timestamp": 1789347302760,
+      "updatedAt": "2026-09-14T00:55:02.760Z"
+    },
+    {
       "slug": "ruta2sur139",
       "title": "Ruta 2 sur",
       "description": "Ruta Ruta 2 sur",
@@ -171,8 +181,8 @@
       "updatedAt": "2026-09-13T08:52:43.612Z"
     }
   ],
-  "total": 17,
-  "updatedAt": "2026-09-14T00:54:00.928Z",
+  "total": 18,
+  "updatedAt": "2026-09-14T00:55:02.760Z",
   "version": 1,
-  "__sha": "29fa64bcf6e704d767a9c13c5d5782bc9074e27b"
+  "__sha": "cc57a55238e59a7c617c4b2c5579ce39f7a6316a"
 }
