@@ -792,6 +792,9 @@ const url = location.origin + '/share/post/' + post.id;
     if (state.map) { state.map.remove(); state.map = null; }
 
     state.map = L.map(container, { zoomControl: true }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+
+    // 🖥️ Conectar el botón de pantalla completa con este mapa
+    setTimeout(() => bindFullscreenButton('routeMapFsBtn', 'routeMapWrap'), 50);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '© OpenStreetMap'
@@ -1043,6 +1046,31 @@ const url = location.origin + '/share/ruta/' + route.id;
   };
 
   $('#btnMapSearch').onclick = () => navigateTo('trip');
+
+  // ============================================================
+  //  🖥️ BOTÓN DE PANTALLA COMPLETA PARA LOS MAPAS
+  // ============================================================
+  function bindFullscreenButton(btnId, wrapId) {
+    const btn = document.getElementById(btnId);
+    const wrap = document.getElementById(wrapId);
+    if (!btn || !wrap) return;
+
+    // SVG: el mismo icono sirve de "expandir" y "salir" (lo rotamos por CSS)
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      const isFs = wrap.classList.toggle('is-fullscreen');
+      btn.classList.toggle('is-fullscreen', isFs);
+      document.body.classList.toggle('fs-active', isFs);
+      btn.title = isFs ? 'Salir de pantalla completa' : 'Pantalla completa';
+
+      // Invalidar el tamaño del mapa activo para que Leaflet recalcule
+      setTimeout(() => {
+        if (state.map && wrapId === 'routeMapWrap') state.map.invalidateSize();
+        if (state.tripMap && wrapId === 'tripMapWrap') state.tripMap.invalidateSize();
+        if (state.map && wrapId === 'editorMapWrap') state.map.invalidateSize();
+      }, 250);
+    };
+  }
 
   // Chips de modo
   $$('#routeModes .chip').forEach(c => {
