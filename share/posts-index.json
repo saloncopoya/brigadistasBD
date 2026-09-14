@@ -141,16 +141,6 @@
       "updatedAt": "2026-09-14T00:53:03.762Z"
     },
     {
-      "slug": "holaposr1139",
-      "title": "Hola posr 1",
-      "description": "Jejwjd",
-      "image": "https://res.cloudinary.com/davovja1g/image/upload/v1789344751/putyzulmwrr2xpecmkly.png",
-      "url": "/share/post/holaposr1139",
-      "tipo": "post",
-      "timestamp": 1789344759867,
-      "updatedAt": "2026-09-14T00:12:39.867Z"
-    },
-    {
       "slug": "titulo1139",
       "title": "Título 1",
       "description": "Jejw",
@@ -261,8 +251,8 @@
       "updatedAt": "2026-09-13T08:52:43.612Z"
     }
   ],
-  "total": 26,
-  "updatedAt": "2026-09-14T12:03:04.570Z",
+  "total": 25,
+  "updatedAt": "2026-09-14T12:03:23.989Z",
   "version": 1,
   "__sha": "9d28e8cec6971a9011f87cc1c0104c14505db3cd"
 }
