@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ruta 2 · Rutas BGD</title>
+<meta name="description" content="🛣️ Calles: Avenida 6a Norte Poniente, Calle 7a. Oriente Sur">
+<link rel="canonical" href="https://brigadistasbd.pages.dev/share/ruta/ruta2149">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Ruta 2">
+<meta property="og:description" content="🛣️ Calles: Avenida 6a Norte Poniente, Calle 7a. Oriente Sur">
+<meta property="og:image" content="https://brigadistasbd.pages.dev/img.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:url" content="https://brigadistasbd.pages.dev/share/ruta/ruta2149">
+<meta property="og:site_name" content="Rutas BGD">
+<meta property="og:locale" content="es_MX">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Ruta 2">
+<meta name="twitter:description" content="🛣️ Calles: Avenida 6a Norte Poniente, Calle 7a. Oriente Sur">
+<meta name="twitter:image" content="https://brigadistasbd.pages.dev/img.png">
+
+<!-- PWA -->
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" type="image/svg+xml" href="/assets/icon.svg">
+<meta name="theme-color" content="#0a0e1a">
+
+<!-- Schema.org -->
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BusTrip","name":"Ruta 2","description":"🛣️ Calles: Avenida 6a Norte Poniente, Calle 7a. Oriente Sur","url":"https://brigadistasbd.pages.dev/share/ruta/ruta2149","image":"https://brigadistasbd.pages.dev/img.png","provider":{"@type":"Organization","name":"Rutas BGD","url":"https://brigadistasbd.pages.dev"}}</script>
+
+<style>
+:root{--cyan:#00e5ff;--bg:#0a0e1a;--surface:#141c30;--text:#e8edf7;--text-2:#a9b4cc;--border:#26314f}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding:0}
+.wrap{max-width:760px;margin:0 auto;padding:20px}
+.back{display:inline-flex;align-items:center;gap:6px;color:var(--cyan);text-decoration:none;font-size:13px;font-weight:700;margin-bottom:16px}
+h1{font-size:26px;font-weight:900;letter-spacing:-.4px;margin-bottom:8px;line-height:1.2}
+.meta{color:var(--text-2);font-size:13px;margin-bottom:20px}
+.post-content{font-size:15.5px;line-height:1.7;color:var(--text);background:var(--surface);padding:18px;border-radius:14px;border:1px solid var(--border);margin-bottom:20px}
+.post-image{width:100%;border-radius:14px;margin-bottom:20px;border:1px solid var(--border)}
+.badge{display:inline-block;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin-bottom:12px}
+.badge-urbana{background:rgba(0,229,255,.16);color:var(--cyan)}
+.badge-foranea{background:rgba(168,85,247,.18);color:#a855f7}
+.badge-green{background:rgba(16,185,129,.16);color:#10b981}
+.block{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px}
+.block h3{font-size:14px;font-weight:800;margin-bottom:10px;color:var(--cyan)}
+.block ul{list-style:none;padding:0}
+.block li{padding:7px 0;border-bottom:1px solid var(--border);font-size:14px}
+.block li:last-child{border-bottom:none}
+/* 🗺️ Bloque de mapa interactivo */
+.route-map-card{
+  background:var(--surface,#141c30);
+  border:1px solid var(--border,#26314f);
+  border-radius:14px;
+  padding:14px;
+  margin-bottom:16px;
+}
+.route-map-head{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-bottom:10px;
+}
+.route-map-head h3{
+  font-size:14px;
+  font-weight:800;
+  margin:0;
+  color:var(--cyan,#00e5ff);
+}
+.route-map-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font-size:11.5px;
+  font-weight:700;
+  color:var(--text-2,#a9b4cc);
+  background:var(--surface-2,#1c2540);
+  padding:4px 10px;
+  border-radius:99px;
+}
+#shareMap{
+  border-radius:12px;
+  background:#0f1526;
+}
+.leaflet-container{
+  background:#0f1526 !important;
+  font-family:inherit !important;
+}
+.leaflet-control-attribution{
+  background:rgba(20,28,48,.88) !important;
+  color:#a9b4cc !important;
+  font-size:10px !important;
+}
+.leaflet-control-attribution a{color:#00e5ff !important}
+.leaflet-control-zoom a{
+  background:#141c30 !important;
+  color:#e8edf7 !important;
+  border-color:#26314f !important;
+}
+.cta{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:11px 18px;border-radius:10px;font-weight:700;font-size:13.5px;text-decoration:none;border:none;cursor:pointer;font-family:inherit}
+.btn-primary{background:linear-gradient(135deg,var(--cyan),#00b8cc);color:#00121a}
+.btn-ghost{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+.price{font-size:22px;font-weight:900;color:#10b981;margin:10px 0}
+footer{margin-top:30px;padding-top:20px;border-top:1px solid var(--border);color:var(--text-2);font-size:12px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="https://brigadistasbd.pages.dev/">← Volver a Rutas BGD</a>
+  <span class="badge badge-urbana">Ruta</span>
+  <h1>Ruta 2</h1>
+  <div class="meta">14 de septiembre de 2026</div>
+  
+  
+    <div class="route-map-card">
+      <div class="route-map-head">
+        <h3>🗺️ Trazado de la ruta</h3>
+        <span class="route-map-badge">Ida <span style="display:inline-block;width:12px;height:3px;background:#00e5ff;vertical-align:middle;border-radius:2px"></span></span>
+        <span class="route-map-badge">Regreso <span style="display:inline-block;width:12px;height:3px;background:#a855f7;vertical-align:middle;border-radius:2px"></span></span>
+      </div>
+      <div id="shareMap" style="width:100%;height:420px;border-radius:12px;overflow:hidden"></div>
+    </div>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin></script>
+    <script>
+    (function(){
+      var DATA = {"puntos":[[16.761106,-93.126194],[16.748752,-93.110898]],"puntosVuelta":[],"geomIda":[[16.761106,-93.126194],[16.76129,-93.125456],[16.760731,-93.125534],[16.759982,-93.125667],[16.759853,-93.125046],[16.759203,-93.125206],[16.758957,-93.125235],[16.758877,-93.125233],[16.758844,-93.125231],[16.758657,-93.125223],[16.758619,-93.12522],[16.758485,-93.125212],[16.757967,-93.125196],[16.757904,-93.125255],[16.757864,-93.125268],[16.757089,-93.125415],[16.756261,-93.125558],[16.755369,-93.125725],[16.754988,-93.125784],[16.754785,-93.125823],[16.754496,-93.125878],[16.75398,-93.125972],[16.753174,-93.126121],[16.752405,-93.126272],[16.751472,-93.126423],[16.750734,-93.126558],[16.749924,-93.126719],[16.74922,-93.126848],[16.748993,-93.126896],[16.748833,-93.126929],[16.748809,-93.126814],[16.748911,-93.126505],[16.74896,-93.126346],[16.749022,-93.126067],[16.749068,-93.125893],[16.749069,-93.125784],[16.749053,-93.125672],[16.748954,-93.125535],[16.748823,-93.125446],[16.74868,-93.125381],[16.748419,-93.125399],[16.748308,-93.125394],[16.747971,-93.12549],[16.747791,-93.125494],[16.747619,-93.125391],[16.747411,-93.125271],[16.747313,-93.124685],[16.747247,-93.124289],[16.747089,-93.12334],[16.746964,-93.122592],[16.746826,-93.121763],[16.746698,-93.120995],[16.746544,-93.120068],[16.746411,-93.119273],[16.746271,-93.118428],[16.746122,-93.117537],[16.74599,-93.116732],[16.745849,-93.115876],[16.745728,-93.11513],[16.74559,-93.114298],[16.745507,-93.113731],[16.745368,-93.112812],[16.745285,-93.112223],[16.745226,-93.111835],[16.745177,-93.11152],[16.746028,-93.111372],[16.746797,-93.111238],[16.747674,-93.111085],[16.748678,-93.110911],[16.748752,-93.110898]],"geomVuelta":[],"colorIda":"#00e5ff","colorVuelta":"#a855f7","nombre":"RUTA 2"};
+      if (typeof L === 'undefined') return;
+      var map = L.map('shareMap', { zoomControl: true, scrollWheelZoom: false });
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap'
+      }).addTo(map);
+
+      var allCoords = [];
+      function drawLine(coords, color, dashed){
+        if (!coords || coords.length < 2) return;
+        var line = L.polyline(coords, {
+          color: color,
+          weight: 5,
+          opacity: 0.95,
+          dashArray: dashed ? '10,6' : null,
+          lineJoin: 'round',
+          lineCap: 'round'
+        }).addTo(map);
+        allCoords = allCoords.concat(coords);
+      }
+
+      var idaCoords = (DATA.geomIda && DATA.geomIda.length > 1) ? DATA.geomIda : DATA.puntos;
+      var vueltaCoords = (DATA.geomVuelta && DATA.geomVuelta.length > 1) ? DATA.geomVuelta : DATA.puntosVuelta;
+      drawLine(idaCoords, DATA.colorIda, false);
+      drawLine(vueltaCoords, DATA.colorVuelta, true);
+
+      if (DATA.puntos && DATA.puntos.length) {
+        DATA.puntos.forEach(function(p){
+          L.circleMarker(p, { radius: 6, color: DATA.colorIda, fillColor: '#fff', fillOpacity: 1, weight: 3 }).addTo(map);
+        });
+      }
+      if (DATA.puntosVuelta && DATA.puntosVuelta.length) {
+        DATA.puntosVuelta.forEach(function(p){
+          L.circleMarker(p, { radius: 6, color: DATA.colorVuelta, fillColor: '#fff', fillOpacity: 1, weight: 3 }).addTo(map);
+        });
+      }
+
+      if (allCoords.length > 1) {
+        try { map.fitBounds(L.latLngBounds(allCoords).pad(0.15)); } catch(e) {}
+      } else if (allCoords.length === 1) {
+        map.setView(allCoords[0], 15);
+      } else {
+        map.setView([16.7530, -93.1150], 13);
+      }
+    })();
+    </script>
+  <div class="block"><h3>ℹ️ Información</h3><ul><li>📅 Días: todos</li></ul></div><div class="block"><h3>🛣️ Calles</h3><ul><li>Avenida 6a Norte Poniente</li><li>Calle 7a. Oriente Sur</li></ul></div>
+  <div class="cta">
+    <a class="btn btn-primary" href="https://brigadistasbd.pages.dev/">🚌 Ver todas las rutas</a>
+    <a class="btn btn-ghost" href="https://brigadistasbd.pages.dev/?tab=market">🛒 Marketplace</a>
+  </div>
+  <footer>© 2026 Rutas BGD · <a href="https://brigadistasbd.pages.dev" style="color:var(--cyan)">brigadistasbd.pages.dev</a></footer>
+</div>
+</body>
+</html>
