@@ -1,6 +1,16 @@
 {
   "posts": [
     {
+      "slug": "rutacentro149",
+      "title": "Ruta centro",
+      "description": "Ruta Ruta centro",
+      "image": "https://res.cloudinary.com/davovja1g/image/upload/v1789390310/gybfsp6r09yffokihqn0.jpg",
+      "url": "/share/ruta/rutacentro149",
+      "tipo": "ruta",
+      "timestamp": 1789390316183,
+      "updatedAt": "2026-09-14T12:51:56.183Z"
+    },
+    {
       "slug": "rutax149",
       "title": "Rutax",
       "description": "Ruta Rutax",
@@ -201,8 +211,8 @@
       "updatedAt": "2026-09-13T08:52:43.612Z"
     }
   ],
-  "total": 20,
-  "updatedAt": "2026-09-14T12:41:45.344Z",
+  "total": 21,
+  "updatedAt": "2026-09-14T12:51:56.183Z",
   "version": 1,
-  "__sha": "47bde33422af57c92fb6e879db4d140d8abd4aeb"
+  "__sha": "5b9f9fa58780de3a60e510a3c83863bb9c121d8e"
 }
