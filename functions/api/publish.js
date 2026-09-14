@@ -34,6 +34,106 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ ok: true }), { headers });
     }
 
+    // ============================================================
+    //  🗑️ MODO ELIMINAR: borra el HTML, del índice y del sitemap
+    // ============================================================
+    if (body.__delete) {
+      if (!slug || !tipo) {
+        return new Response(JSON.stringify({ error: 'Faltan slug o tipo para eliminar' }), { status: 400, headers });
+      }
+
+      const {
+        GITHUB_TOKEN: T, REPO_OWNER: O, REPO_NAME: N, SITE_DOMAIN: D
+      } = env;
+
+      if (!T || !O || !N) {
+        return new Response(JSON.stringify({ error: 'Configuración de GitHub incompleta' }), { status: 500, headers });
+      }
+
+      const domain = (D || 'brigadistasbd.pages.dev').replace(/^https?:\/\//, '').replace(/\/$/, '');
+      const baseUrl = `https://${domain}`;
+
+      // Carpeta según tipo
+      let folder = 'share/post';
+      if (tipo === 'ruta') folder = 'share/ruta';
+      else if (tipo === 'market') folder = 'share/m';
+
+      const safeSlug = slug.replace(/[^a-z0-9\-_]/gi, '-').toLowerCase().replace(/-+/g, '-').replace(/^-|-$/g, '');
+      const htmlPath = `${folder}/${safeSlug}.html`;
+
+      const ghHeaders = {
+        'Authorization': `Bearer ${T}`,
+        'Accept': 'application/vnd.github+json',
+        'User-Agent': 'brigadistasbd-publisher',
+        'X-GitHub-Api-Version': '2022-11-28'
+      };
+      const apiBase = `https://api.github.com/repos/${O}/${N}/contents`;
+
+      // 1️⃣ Obtener SHA del HTML y borrarlo
+      let deletedHtml = false;
+      try {
+        const checkRes = await fetch(`${apiBase}/${htmlPath}?ref=main`, { headers: ghHeaders });
+        if (checkRes.ok) {
+          const checkJson = await checkRes.json();
+          const delRes = await fetch(`${apiBase}/${htmlPath}`, {
+            method: 'DELETE',
+            headers: ghHeaders,
+            body: JSON.stringify({
+              message: `eliminar: ${tipo} ${safeSlug}`,
+              sha: checkJson.sha,
+              branch: 'main'
+            })
+          });
+          deletedHtml = delRes.ok;
+        }
+      } catch (e) {}
+
+      // 2️⃣ Quitar del índice posts-index.json
+      const indexPath = 'share/posts-index.json';
+      try {
+        const idxRes = await fetch(`${apiBase}/${indexPath}?ref=main`, { headers: ghHeaders });
+        if (idxRes.ok) {
+          const idxJson = await idxRes.json();
+          const decoded = decodeURIComponent(escape(atob(idxJson.content.replace(/\n/g, ''))));
+          const index = JSON.parse(decoded);
+          index.posts = (index.posts || []).filter(p => p.slug !== safeSlug);
+          index.total = index.posts.length;
+          index.updatedAt = new Date().toISOString();
+
+          await fetch(`${apiBase}/${indexPath}`, {
+            method: 'PUT',
+            headers: ghHeaders,
+            body: JSON.stringify({
+              message: `actualizar índice (eliminar ${safeSlug})`,
+              content: b64EncodeUnicode(JSON.stringify(index, null, 2)),
+              sha: idxJson.sha,
+              branch: 'main'
+            })
+          });
+        }
+      } catch (e) {}
+
+      // 3️⃣ Regenerar sitemap sin la entrada borrada
+      try {
+        // Leer el índice actualizado
+        const idxRes2 = await fetch(`${apiBase}/${indexPath}?ref=main`, { headers: ghHeaders });
+        if (idxRes2.ok) {
+          const idxJson2 = await idxRes2.json();
+          const decoded2 = decodeURIComponent(escape(atob(idxJson2.content.replace(/\n/g, ''))));
+          const index2 = JSON.parse(decoded2);
+          await regenerateSitemap(env, ghHeaders, baseUrl, index2);
+        }
+      } catch (e) {}
+
+      return new Response(JSON.stringify({
+        ok: true,
+        deleted: true,
+        slug: safeSlug,
+        htmlDeleted: deletedHtml
+      }), { headers });
+    }
+
+    // ---------- Si no es eliminar, es crear/actualizar ----------
     if (!slug || !title) {
       return new Response(JSON.stringify({ error: 'Faltan slug o título' }), { status: 400, headers });
     }
