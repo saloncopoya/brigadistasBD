@@ -1378,11 +1378,14 @@ const url = location.origin + '/share/m/' + id;
   }
 
   // ==================== TRIP SEARCH (MAPA) ====================
-  function initTripMap() {
+    function initTripMap() {
     if (state.tripMap) { state.tripMap.invalidateSize(); return; }
     const el = document.getElementById('tripMap');
     if (!el) return;
     state.tripMap = L.map(el, { zoomControl: true }).setView(DEFAULT_CENTER, 13);
+
+    // 🖥️ Conectar el botón de pantalla completa con este mapa
+    setTimeout(() => bindFullscreenButton('tripMapFsBtn', 'tripMapWrap'), 50);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19, attribution: '© OpenStreetMap'
     }).addTo(state.tripMap);
