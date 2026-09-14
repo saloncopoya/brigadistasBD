@@ -851,8 +851,17 @@ body.fs-active{overflow:hidden !important}
 
 
       <!-- Mapa + toolbar DEBAJO del mapa -->
-      <div class="map-wrap">
+      <div class="map-wrap" id="tripMapWrap">
         <div id="tripMap" style="width:100%;height:40vh;min-height:260px;z-index:1"></div>
+        <!-- 🖥️ Botón de pantalla completa -->
+        <button class="map-fs-btn" id="tripMapFsBtn" title="Pantalla completa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3"/>
+            <path d="M21 8V5a2 2 0 0 0-2-2h-3"/>
+            <path d="M3 16v3a2 2 0 0 0 2 2h3"/>
+            <path d="M16 21h3a2 2 0 0 0 2-2v-3"/>
+          </svg>
+        </button>
       </div>
       <div class="map-toolbar-below" id="tripToolbar">
         <button class="tb active" data-tool="addpoint">
