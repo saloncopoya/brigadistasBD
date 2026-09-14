@@ -472,6 +472,7 @@ body.fs-active{overflow:hidden !important}
 <div class="toast-wrap" id="toastWrap"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet-image@0.4.0/leaflet-image.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/idb@8/build/umd.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
@@ -860,6 +861,48 @@ body.fs-active{overflow:hidden !important}
     el.textContent = `Ida: ${state.routeDraft.puntos.length} · Regreso: ${state.routeDraft.puntosVuelta.length} · Calles: ${state.routeDraft.calles.length} · POIs: ${state.routeDraft.pois.length}`;
   }
 
+  // ================================================================
+  //  🗺️  CAPTURAR EL MAPA COMO IMAGEN Y SUBIRLA A CLOUDINARY
+  // ================================================================
+  async function captureAndUploadMap(){
+    if(!state.map) throw new Error('Mapa no inicializado');
+    if(!state.routeDraft.puntos.length && !state.routeDraft.puntosVuelta.length){
+      throw new Error('No hay trazado para capturar');
+    }
+
+    // 1️⃣ Ajustar el mapa para que se vea TODA la ruta antes de capturar
+    const allCoords = [];
+    if(state.routeDraft.puntos) allCoords.push(...state.routeDraft.puntos);
+    if(state.routeDraft.puntosVuelta) allCoords.push(...state.routeDraft.puntosVuelta);
+    if(state.routeDraft.geometriaIda) allCoords.push(...state.routeDraft.geometriaIda);
+    if(state.routeDraft.geometriaVuelta) allCoords.push(...state.routeDraft.geometriaVuelta);
+    if(allCoords.length > 1){
+      try{ state.map.fitBounds(L.latLngBounds(allCoords).pad(0.15)); }catch(e){}
+    }
+
+    // 2️⃣ Esperar a que los tiles terminen de cargar
+    await new Promise(r => setTimeout(r, 800));
+
+    // 3️⃣ Capturar el canvas del mapa
+    const canvas = await new Promise((resolve, reject) => {
+      try{
+        leafletImage(state.map, (err, canvas) => {
+          if(err) return reject(err);
+          resolve(canvas);
+        });
+      }catch(e){ reject(e); }
+    });
+
+    // 4️⃣ Convertir canvas a Blob → File
+    const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.9));
+    if(!blob) throw new Error('No se pudo generar la imagen');
+    const file = new File([blob], 'ruta_' + Date.now() + '.jpg', { type: 'image/jpeg' });
+
+    // 5️⃣ Subir a Cloudinary
+    const url = await Publisher.uploadToCloudinary(file);
+    return url;
+  }
+
   $$('.route-step').forEach((s,i)=>{});
   function goStep(n){
     state.routeStep = n;
@@ -1091,45 +1134,73 @@ body.fs-active{overflow:hidden !important}
   $('#routeSave').onclick = async ()=>{
     const name = $('#routeName').value.trim();
     if(!name){ toast('El nombre es obligatorio','err'); goStep(1); return; }
-    const {dia,mes} = nowDM();
-    const id = state.editingRoute?.id || slugify(name,dia,mes);
-    const route = {
-      id, slug:id, nombre:name.toUpperCase(),
-      categoria: $('#routeCat').value,
-      colorIda: state.routeDraft.colorIda,
-      colorVuelta: state.routeDraft.colorVuelta,
-      tarifa: $('#routeTarifa').value.trim(),
-      frecuencia: $('#routeFrec').value.trim(),
-      horarioIni: $('#routeHoraIni').value.trim(),
-      horarioFin: $('#routeHoraFin').value.trim(),
-      dias: $('#routeDias').value,
-      accesibilidad: $('#routeAcces').value,
-      notas: $('#routeNotas').value.trim(),
-      paradas: splitList($('#routeParadas').value),
-      retornos: splitList($('#routeRetornos').value),
-      pois: (state.routeDraft.pois && state.routeDraft.pois.length) ? state.routeDraft.pois : splitList($('#routePoisIda').value),
-      poisVuelta: splitList($('#routePoisVuelta').value),
-      calles: splitList($('#routeCalles').value),
-      puntos: state.routeDraft.puntos,
-      puntosVuelta: state.routeDraft.puntosVuelta,
-      geometriaIda: state.routeDraft.geometriaIda || [],
-      geometriaVuelta: state.routeDraft.geometriaVuelta || [],
-      timestamp: state.editingRoute?.timestamp || Date.now(),
-      updatedAt: Date.now(),
-      url:`/share/ruta/${id}`
-    };
-    await DB.put('routes', route);
-    try{
-      const res = await Publisher.publish({
-        tipo:'ruta', slug:id, title:name, content:`Ruta ${name}`,
-        password: prompt('Contraseña admin:')||'',
-        extra:{ route }
-      });
-      if(res?.ok) toast('Ruta publicada en GitHub ✓');
-      else toast('Guardada local (GitHub: '+(res?.error||'pendiente')+')','err');
-    }catch(err){ toast('Guardada local (sin conexión)','err'); }
-    if(fbDB) fbDB.ref('rutas_colectivos_tgz/'+id).set(route).catch(()=>{});
-    resetRouteForm(); loadRoutes();
+
+    const btn = $('#routeSave');
+    btn.disabled = true;
+    const originalHTML = btn.innerHTML;
+    btn.innerHTML = '⏳ Generando imagen del mapa...';
+
+    try {
+      // 🗺️ Capturar el mapa y subirlo a Cloudinary
+      let mapImage = state.editingRoute?.mapImage || '';
+      try {
+        mapImage = await captureAndUploadMap();
+        toast('Imagen del mapa subida ✓');
+      } catch(e) {
+        console.warn('No se pudo capturar el mapa:', e);
+        toast('No se pudo generar imagen del mapa', 'err');
+      }
+
+      const {dia,mes} = nowDM();
+      const id = state.editingRoute?.id || slugify(name,dia,mes);
+      const route = {
+        id, slug:id, nombre:name.toUpperCase(),
+        categoria: $('#routeCat').value,
+        colorIda: state.routeDraft.colorIda,
+        colorVuelta: state.routeDraft.colorVuelta,
+        tarifa: $('#routeTarifa').value.trim(),
+        frecuencia: $('#routeFrec').value.trim(),
+        horarioIni: $('#routeHoraIni').value.trim(),
+        horarioFin: $('#routeHoraFin').value.trim(),
+        dias: $('#routeDias').value,
+        accesibilidad: $('#routeAcces').value,
+        notas: $('#routeNotas').value.trim(),
+        paradas: splitList($('#routeParadas').value),
+        retornos: splitList($('#routeRetornos').value),
+        pois: (state.routeDraft.pois && state.routeDraft.pois.length) ? state.routeDraft.pois : splitList($('#routePoisIda').value),
+        poisVuelta: splitList($('#routePoisVuelta').value),
+        calles: splitList($('#routeCalles').value),
+        puntos: state.routeDraft.puntos,
+        puntosVuelta: state.routeDraft.puntosVuelta,
+        geometriaIda: state.routeDraft.geometriaIda || [],
+        geometriaVuelta: state.routeDraft.geometriaVuelta || [],
+        mapImage: mapImage,   // ← imagen OG del mapa
+        timestamp: state.editingRoute?.timestamp || Date.now(),
+        updatedAt: Date.now(),
+        url:`/share/ruta/${id}`
+      };
+      await DB.put('routes', route);
+
+      btn.innerHTML = '⏳ Publicando en GitHub...';
+
+      try{
+        const res = await Publisher.publish({
+          tipo:'ruta', slug:id, title:name, content:`Ruta ${name}`,
+          image: mapImage,   // ← imagen OG en el HTML de la ruta
+          password: prompt('Contraseña admin:')||'',
+          extra:{ route }
+        });
+        if(res?.ok) toast('Ruta publicada en GitHub ✓');
+        else toast('Guardada local (GitHub: '+(res?.error||'pendiente')+')','err');
+      }catch(err){ toast('Guardada local (sin conexión)','err'); }
+
+      if(fbDB) fbDB.ref('rutas_colectivos_tgz/'+id).set(route).catch(()=>{});
+      resetRouteForm(); loadRoutes();
+
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = originalHTML;
+    }
   };
 
   function resetRouteForm(){
