@@ -1978,14 +1978,24 @@ const url = location.origin + '/share/m/' + id;
       html += results.transfers.map((t, idx) => {
         const colorOffset = results.direct.length;
         const color = TRIP_COLORS[(colorOffset + idx) % TRIP_COLORS.length];
-        const legsHtml = t.legs.map((leg, li) => `
-          <div class="rc-step" style="border-left:3px solid ${TRIP_COLORS[(colorOffset + li) % TRIP_COLORS.length]};padding-left:8px">
-            <div class="step-num" style="background:${TRIP_COLORS[(colorOffset + li) % TRIP_COLORS.length]}">${li+1}</div>
-            <div>
-              <b>${esc(leg.nombre)}</b>
-              ${li < t.legs.length - 1 ? `<div class="tiny" style="margin-top:2px">🔽 Baja y transborda aquí</div>` : ''}
-            </div>
-          </div>`).join('');
+
+        // Chips del encabezado: un chip cuadrado por cada tramo (ruta) del transbordo
+        const chipsHtml = t.legs.map((leg, li) => {
+          const legColor = TRIP_COLORS[(colorOffset + li) % TRIP_COLORS.length];
+          return `
+            <div class="trip-chain-item">
+              <div class="trip-chain-chip" style="background:${legColor}">${li + 1}</div>
+              <span class="trip-chain-name">${esc(leg.nombre)}</span>
+            </div>`;
+        }).join('<span class="trip-chain-sep">›</span>');
+
+        // Botones: "Ver trazos" + "Abrir Nª ruta" para cada tramo
+        const buttonsHtml = t.legs.map((leg, li) => `
+          <button class="btn btn-ghost btn-sm" data-trip-focus="${leg.id}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="14" height="14"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+            Abrir ${li + 1}ª ruta
+          </button>`).join('');
+
         return `
         <div class="result-card transbordo" data-result-idx="${idx}" data-result-type="transfer">
           <div class="rc-head">
@@ -1993,21 +2003,17 @@ const url = location.origin + '/share/m/' + id;
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/></svg>
             </div>
             <div style="flex:1">
-              <div class="rc-route">${t.legs.map(l => esc(l.nombre)).join(' → ')}</div>
               <div class="rc-sub">${t.transfers} transbordo(s) · ~${Math.round(t.totalDist)}m totales</div>
             </div>
             <span class="badge badge-amber">${t.transfers}T</span>
           </div>
-          <div class="rc-steps">${legsHtml}</div>
+          <div class="trip-chain">${chipsHtml}</div>
           <div class="trip-result-actions">
             <button class="btn btn-primary btn-sm" data-trip-show="${idx}">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="14" height="14"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/></svg>
               Ver trazos en mapa
             </button>
-            <button class="btn btn-ghost btn-sm" data-trip-focus="${t.legs[0].id}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="14" height="14"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
-              Abrir 1ª ruta
-            </button>
+            ${buttonsHtml}
           </div>
         </div>`;
       }).join('');
