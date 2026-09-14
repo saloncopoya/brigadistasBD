@@ -1,6 +1,16 @@
 {
   "posts": [
     {
+      "slug": "rutacentrosurnorte139",
+      "title": "Ruta centro sur norte",
+      "description": "Ruta Ruta centro sur norte",
+      "image": "",
+      "url": "/share/ruta/rutacentrosurnorte139",
+      "tipo": "ruta",
+      "timestamp": 1789347346015,
+      "updatedAt": "2026-09-14T00:55:46.015Z"
+    },
+    {
       "slug": "ruta3copoya139",
       "title": "Ruta 3 copoya",
       "description": "Ruta Ruta 3 copoya",
@@ -181,8 +191,8 @@
       "updatedAt": "2026-09-13T08:52:43.612Z"
     }
   ],
-  "total": 18,
-  "updatedAt": "2026-09-14T00:55:02.760Z",
+  "total": 19,
+  "updatedAt": "2026-09-14T00:55:46.015Z",
   "version": 1,
-  "__sha": "cc57a55238e59a7c617c4b2c5579ce39f7a6316a"
+  "__sha": "e8f38ff2cab555423bcdf882e3e393d2d55af543"
 }
