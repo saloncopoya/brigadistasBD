@@ -2,13 +2,13 @@
   "posts": [
     {
       "slug": "ruta1149",
-      "title": "Ruta 1",
-      "description": "Ruta Ruta 1",
-      "image": "https://res.cloudinary.com/davovja1g/image/upload/v1789389096/ecxxfctccsikjgpvxhy7.jpg",
+      "title": "RUTA 1",
+      "description": "Ruta RUTA 1",
+      "image": "https://res.cloudinary.com/davovja1g/image/upload/v1789389551/wg9wbqrakiougnjs54ft.jpg",
       "url": "/share/ruta/ruta1149",
       "tipo": "ruta",
-      "timestamp": 1789389103735,
-      "updatedAt": "2026-09-14T12:31:43.735Z"
+      "timestamp": 1789389558289,
+      "updatedAt": "2026-09-14T12:39:18.289Z"
     },
     {
       "slug": "mirutafavorita139",
@@ -192,7 +192,7 @@
     }
   ],
   "total": 19,
-  "updatedAt": "2026-09-14T12:31:43.735Z",
+  "updatedAt": "2026-09-14T12:39:18.289Z",
   "version": 1,
-  "__sha": "59f79b89de5c593c90ecf4c58b2d7d6f0812f559"
+  "__sha": "aa8f6d02e7753a4ab28a21c4a97558500d22dd57"
 }
