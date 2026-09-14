@@ -141,16 +141,6 @@
       "updatedAt": "2026-09-13T21:27:43.754Z"
     },
     {
-      "slug": "totota139",
-      "title": "Totota",
-      "description": "Desciepcio",
-      "image": "https://res.cloudinary.com/davovja1g/image/upload/v1789334006/dvkm6lbvn3kvj9hydobe.jpg",
-      "url": "/share/m/totota139",
-      "tipo": "market",
-      "timestamp": 1789334019781,
-      "updatedAt": "2026-09-13T21:13:39.781Z"
-    },
-    {
       "slug": "7139",
       "title": "7",
       "description": "Ruta 7",
@@ -191,8 +181,8 @@
       "updatedAt": "2026-09-13T08:52:43.612Z"
     }
   ],
-  "total": 19,
-  "updatedAt": "2026-09-14T12:04:44.723Z",
+  "total": 18,
+  "updatedAt": "2026-09-14T12:04:59.002Z",
   "version": 1,
   "__sha": "9d28e8cec6971a9011f87cc1c0104c14505db3cd"
 }
