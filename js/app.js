@@ -1862,7 +1862,7 @@ const url = location.origin + '/share/m/' + id;
     clearTripRouteLayers();
     if (state.tripPoints.length < 1) { el.innerHTML = ''; return; }
 
-    const maxTransfers = +($('#tripMaxTransfers')?.value || 1);
+const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
      const results = { direct: [], transfers: [] };
 
     if (state.tripPoints.length === 1) {
