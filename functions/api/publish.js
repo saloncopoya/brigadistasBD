@@ -166,7 +166,7 @@ export async function onRequest(context) {
 
     const safeSlug = slug.replace(/[^a-z0-9\-_]/gi, '-').toLowerCase().replace(/-+/g, '-').replace(/^-|-$/g, '');
      const htmlPath = `${folder}/${safeSlug}.html`;
-const cleanPath = `${folder}/${safeSlug}.html`;
+const cleanPath = `${folder}/${safeSlug}`;
     const pageUrl = `${baseUrl}/${cleanPath}`;
     // ---------- Generar HTML con SEO completo ----------
     const html = generateHTML({
