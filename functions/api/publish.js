@@ -345,7 +345,11 @@ const safeDesc = escapeHTML(enrichedContent.slice(0, 160));
      description: enrichedContent.slice(0, 160),
       url: pageUrl,
       image: safeImage,
-      provider: { '@type': 'Organization', name: 'Rutas BGD', url: baseUrl }
+      provider: { '@type': 'Organization', name: 'Rutas BGD', url: baseUrl },
+       departureTime: route.horarioIni,
+  arrivalTime: route.horarioFin,
+  offers: { '@type': 'Offer', price: route.tarifa, priceCurrency: 'MXN' },
+  itinerary: route.paradas?.map(p => ({ '@type': 'Place', name: p }))
     };
   } else if (tipo === 'market') {
     schema = {
@@ -736,23 +740,35 @@ function renderRouteMapBlock(route) {
 
 function renderRouteBody(route) {
   const blocks = [];
-  if (route.paradas?.length) blocks.push(`<div class="block"><h3>📍 Paradas</h3><ul>${route.paradas.map(p => `<li>${escapeHTML(p)}</li>`).join('')}</ul></div>`);
-  if (route.retornos?.length) blocks.push(`<div class="block"><h3>↩️ Retornos</h3><ul>${route.retornos.map(p => `<li>${escapeHTML(p)}</li>`).join('')}</ul></div>`);
-  if (route.pois?.length) blocks.push(`<div class="block"><h3>🏥 POIs de Ida</h3><ul>${route.pois.map(p => `<li>${escapeHTML(p)}</li>`).join('')}</ul></div>`);
-  if (route.poisVuelta?.length) blocks.push(`<div class="block"><h3>🏥 POIs de Regreso</h3><ul>${route.poisVuelta.map(p => `<li>${escapeHTML(p)}</li>`).join('')}</ul></div>`);
-  if (route.calles?.length) blocks.push(`<div class="block"><h3>🛣️ Calles</h3><ul>${route.calles.map(p => `<li>${escapeHTML(p)}</li>`).join('')}</ul></div>`);
- // 📝 Bloque de Notas adicionales (arriba de Información)
-  let notasBlock = '';
+
+  // 📝 NOTAS primero (arriba de todo)
   if (route.notas && String(route.notas).trim()) {
-    notasBlock = `<div class="block"><h3>📝 </h3><div style="font-size:14px;line-height:1.6;color:var(--text-2);white-space:pre-wrap">${escapeHTML(route.notas)}</div></div>`;
+    blocks.push(`<div class="block"><h3>📝 Notas adicionales</h3><div style="font-size:14px;line-height:1.6;color:var(--text-2);white-space:pre-wrap">${escapeHTML(route.notas)}</div></div>`);
   }
-   
-   const info = [];
+
+  // ℹ️ Información
+  const info = [];
   if (route.tarifa) info.push(`<li>💰 Tarifa: ${escapeHTML(route.tarifa)}</li>`);
   if (route.frecuencia) info.push(`<li>⏱️ Frecuencia: ${escapeHTML(route.frecuencia)}</li>`);
   if (route.horarioIni) info.push(`<li>🕐 Horario: ${escapeHTML(route.horarioIni)} - ${escapeHTML(route.horarioFin || '')}</li>`);
   if (route.dias) info.push(`<li>📅 Días: ${escapeHTML(route.dias)}</li>`);
-  if (info.length) blocks.unshift(`<div class="block"><h3>ℹ️ Información</h3><ul>${info.join('')}</ul></div>`);
+  if (info.length) blocks.push(`<div class="block"><h3>ℹ️ Información</h3><ul>${info.join('')}</ul></div>`);
+
+  // 📍 Paradas
+  if (route.paradas?.length) blocks.push(`<div class="block"><h3>📍 Paradas</h3><ul>${route.paradas.map(p => `<li>${escapeHTML(p)}</li>`).join('')}</ul></div>`);
+
+  // ↩️ Retornos
+  if (route.retornos?.length) blocks.push(`<div class="block"><h3>↩️ Retornos</h3><ul>${route.retornos.map(p => `<li>${escapeHTML(p)}</li>`).join('')}</ul></div>`);
+
+  // 🏥 POIs de Ida
+  if (route.pois?.length) blocks.push(`<div class="block"><h3>🏥 POIs de Ida</h3><ul>${route.pois.map(p => `<li>${escapeHTML(p)}</li>`).join('')}</ul></div>`);
+
+  // 🏥 POIs de Regreso
+  if (route.poisVuelta?.length) blocks.push(`<div class="block"><h3>🏥 POIs de Regreso</h3><ul>${route.poisVuelta.map(p => `<li>${escapeHTML(p)}</li>`).join('')}</ul></div>`);
+
+  // 🛣️ Calles
+  if (route.calles?.length) blocks.push(`<div class="block"><h3>🛣️ Calles</h3><ul>${route.calles.map(p => `<li>${escapeHTML(p)}</li>`).join('')}</ul></div>`);
+
   return blocks.join('');
 }
 
