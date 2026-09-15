@@ -2083,9 +2083,15 @@ transferPoints: [inter.p1],
     // 2 transbordos (3 rutas)
     if (maxTransfers >= 2) {
       startRoutes.forEach(r1 => {
-        state.routes.forEach(r2 => {
+        // Pre-filtro: solo rutas que pasan cerca de A o B
+        const candidatas = state.routes.filter(r =>
+          routeNearPoint(r, startPoint, startPoint.radius * 3) ||
+          routeNearPoint(r, endPoint, endPoint.radius * 3)
+        );
+        candidatas.forEach(r2 => {
           if (r2.id === r1.id) return;
           const i12 = routesMinDistanceNearPoint(r1, r2, startPoint);
+           
           if (i12.dist > 400) return;
           endRoutes.forEach(r3 => {
             if (r3.id === r2.id || r3.id === r1.id) return;
