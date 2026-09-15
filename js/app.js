@@ -2403,7 +2403,42 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
       } catch (e) { console.warn('SW:', e); }
     }
 
-       // Leer URL inicial
+    // 🔥 NUEVO: Detectar datos inyectados desde HTML estático (publish.js)
+    const injectedData = window.__ROUTE_DATA__ || window.__POST_DATA__ || window.__MARKET_DATA__;
+    if (injectedData) {
+      const tipo = window.__ROUTE_DATA__ ? 'ruta' : (window.__POST_DATA__ ? 'post' : 'market');
+      console.log('[App] Datos inyectados detectados:', tipo, injectedData);
+      
+      // Guardar en IndexedDB para que esté disponible offline
+      try {
+        if (tipo === 'ruta') {
+          await DB.put('routes', injectedData);
+          state.routes = [injectedData];
+        } else if (tipo === 'post') {
+          await DB.put('posts', injectedData);
+          state.posts = [injectedData];
+        } else if (tipo === 'market') {
+          await DB.put('market', injectedData);
+          state.market = [injectedData];
+        }
+      } catch (e) { console.warn('[App] Error guardando datos inyectados:', e); }
+
+      // Renderizar directamente la página correspondiente
+      if (tipo === 'ruta') {
+        navigateTo('route', { ruta: injectedData.id, route: injectedData, replace: true });
+        return;
+      } else if (tipo === 'post') {
+        state.currentPost = injectedData;
+        navigateTo('post', { post: injectedData.id, postObj: injectedData, replace: true });
+        renderSinglePost(injectedData);
+        return;
+      } else if (tipo === 'market') {
+        navigateTo('market', { replace: true });
+        return;
+      }
+    }
+
+    // Leer URL inicial
     const params = new URLSearchParams(location.search);
     const tab = params.get('tab') || 'routes';
     const postParam = params.get('post');
