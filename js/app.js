@@ -1597,10 +1597,10 @@ const url = location.origin + '/share/m/' + id;
     const el = $('#tripPointsList');
     if (!el) return;
     if (!state.tripPoints.length) {
-      el.innerHTML = '<div class="empty-trip"> Toca el mapa para agregar ubicaciones y ver las rutas cercanas. </div>';
+      el.innerHTML = '<div class="empty-trip"> Toca el mapa para agregar ubicaciones y ver las rutas cercanas.</div>';
       return;
-    }turn;
     }
+     
     el.innerHTML = state.tripPoints.map((p, i) => `
       <div class="trip-point-card">
         <div class="tpc-letter" style="background:${p.color}">${p.letter}</div>
