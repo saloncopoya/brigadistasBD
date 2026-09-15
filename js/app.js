@@ -1862,11 +1862,37 @@ const url = location.origin + '/share/m/' + id;
         tripRouteLayers.push(lineVuelta);
       }
 
-      // Si es transbordo, marcar el punto de encuentro
+      // Si es transbordo, marcar el punto de encuentro con ícono de peatón 🚶
       if (item.transferPoint) {
-        const tp = L.circleMarker(item.transferPoint, {
-          radius: 9, color: '#fff', fillColor: color, fillOpacity: 1, weight: 3
-        }).addTo(state.tripMap).bindPopup('🔄 Transbordo: ' + (item.label || ''));
+        const pedIcon = L.divIcon({
+          className: '',
+          html: `
+            <div style="
+              width:26px;height:26px;
+              border-radius:50%;
+              background:#fff;
+              border:3px solid ${color};
+              display:grid;place-items:center;
+              box-shadow:0 2px 8px rgba(0,0,0,.45);
+            ">
+              <svg viewBox="0 0 24 24" width="16" height="16"
+                   fill="none" stroke="${color}" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <!-- 🚶 Letrero de tránsito de peatón -->
+                <circle cx="13" cy="4" r="1.8" fill="${color}" stroke="none"/>
+                <path d="M13 7l-3 3 1.5 3L10 21"/>
+                <path d="M13 7l3 2 2.5 1"/>
+                <path d="M11.5 13l-4 3"/>
+                <path d="M13.5 13l3.5 3"/>
+              </svg>
+            </div>`,
+          iconSize: [26, 26],
+          iconAnchor: [13, 13],
+          popupAnchor: [0, -13]
+        });
+        const tp = L.marker(item.transferPoint, { icon: pedIcon, zIndexOffset: 1000 })
+          .addTo(state.tripMap)
+          .bindPopup('🚶 Transbordo: ' + (item.label || ''));
         tripRouteLayers.push(tp);
       }
     });
