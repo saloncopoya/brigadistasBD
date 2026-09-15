@@ -891,30 +891,59 @@ async function regenerateSitemap(env, ghHeaders, baseUrl, index) {
   const apiBase = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents`;
 
   const today = new Date().toISOString().split('T')[0];
+
+  // ✅ Solo URLs limpias (sin ?tab=, sin .html)
   const urls = [
-    { loc: baseUrl + '/', priority: '1.0', changefreq: 'daily' },
-    { loc: baseUrl + '/?tab=routes', priority: '0.95', changefreq: 'daily' },
-    { loc: baseUrl + '/?tab=home', priority: '0.9', changefreq: 'daily' },
-    { loc: baseUrl + '/?tab=market', priority: '0.9', changefreq: 'daily' }
+    { loc: baseUrl + '/', priority: '1.0', changefreq: 'daily' }
   ];
+
+  // Escapar XML y limpiar URLs
+  const escapeXml = (str) => String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
 
   (index.posts || []).forEach(p => {
     let cleanUrl = String(p.url || '');
+
+    // 1️⃣ Quitar .html si lo tiene
+    cleanUrl = cleanUrl.replace(/\.html$/i, '');
+
+    // 2️⃣ Quitar query strings (?tab=...)
+    cleanUrl = cleanUrl.split('?')[0];
+
+    // 3️⃣ Asegurar que empiece con /
     if (!cleanUrl.startsWith('/')) cleanUrl = '/' + cleanUrl;
+
+    // 4️⃣ Quitar slash final (excepto si es solo /)
+    if (cleanUrl.length > 1 && cleanUrl.endsWith('/')) {
+      cleanUrl = cleanUrl.slice(0, -1);
+    }
+
+    // 5️⃣ Codificar caracteres especiales (+ → %2B, espacios → %20, etc.)
+    //    IMPORTANTE: solo codificamos la parte de la URL, no el dominio
+    const parts = cleanUrl.split('/');
+    const encodedParts = parts.map(part => encodeURIComponent(part));
+    const encodedUrl = encodedParts.join('/');
+
+    const fullUrl = baseUrl + encodedUrl;
+
     urls.push({
-      loc: `${baseUrl}${cleanUrl}`,
+      loc: fullUrl,
       priority: '0.8',
       changefreq: 'weekly',
-      image: p.image || null,
+      image: p.image ? escapeXml(p.image) : null,
       lastmod: p.updatedAt || today
     });
   });
-
+  // ✅ Generar XML con TODAS las URLs escapadas
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 ${urls.map(u => `  <url>
-    <loc>${u.loc}</loc>
+    <loc>${escapeXml(u.loc)}</loc>
     <lastmod>${u.lastmod || today}</lastmod>
     <changefreq>${u.changefreq}</changefreq>
     <priority>${u.priority}</priority>${u.image ? `
