@@ -754,6 +754,8 @@ const url = location.origin + '/share/post/' + post.id;
 
   function renderRouteDetail(route) {
     const hero = $('#routeHero');
+        // El `hero` mostrará la info, pero la imagen grande ya no se mostrará aquí.
+    // La imagen OCULTA para SEO ya está en el HTML generado por publish.js.
     hero.innerHTML = `
       <div>
         <div style="font-size:11.5px;color:var(--text-3);font-weight:700;letter-spacing:.4px">RUTA</div>
@@ -876,6 +878,7 @@ const url = location.origin + '/share/post/' + post.id;
       }).addTo(state.map);
       layers.push(lineIda);
 
+
       // Marcadores de inicio/fin de ida
       const startIda = finalPts[0];
       const endIda = finalPts[finalPts.length - 1];
@@ -908,7 +911,6 @@ const url = location.origin + '/share/post/' + post.id;
       L.circleMarker(endV, { radius: 7, color: colorVuelta, fillColor: colorVuelta, fillOpacity: 1, weight: 2 })
         .addTo(state.map).bindPopup('🔵 Fin regreso');
     }
-
     // --- POIs ---
     (route.pois || []).forEach((poi, i) => {
       if (Array.isArray(poi) && poi.length === 2) {
@@ -2506,11 +2508,83 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
     isAdmin: () => state.isAdmin
   };
 
-  // Arrancar
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+  // ==================== INIT PARA PÁGINA ESTÁTICA ====================
+  // Si estamos en una página de ruta generada por publish.js, usamos los datos
+  // pre-inyectados en lugar de cargar todo desde cero.
+  async function initStaticPage() {
+    console.log('[App] Inicializando página de ruta estática...');
+    const routeData = window.ROUTE_DATA_FOR_STATIC_PAGE;
+    if (!routeData) {
+      console.error('[App] No se encontraron datos de la ruta estática.');
+      return;
+    }
+
+    // 1️⃣ Cargar la ruta estática en el estado
+    state.routes = [routeData];
+    state.currentRoute = routeData;
+
+    // 2️⃣ Asegurar que la página de ruta esté activa (por si el HTML no la activó)
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const pageRoute = document.getElementById('page-route');
+    if (pageRoute) pageRoute.classList.add('active');
+
+    // 3️⃣ Marcar el nav inferior como "Rutas" activo
+    document.querySelectorAll('.nav-item').forEach(n => {
+      n.classList.toggle('active', n.dataset.page === 'routes');
+    });
+
+    // 4️⃣ Renderizar el detalle de la ruta directamente (sin navigateTo)
+    renderRouteDetail(routeData);
+
+    // 5️⃣ Inicializar el tema
+    const savedTheme = localStorage.getItem('tgz_theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    updateThemeIcon();
+    if ($('#themeBtn')) {
+      $('#themeBtn').onclick = () => {
+        const cur = document.documentElement.getAttribute('data-theme');
+        const next = cur === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('tgz_theme', next);
+        updateThemeIcon();
+        if (state.map) {
+          state.map.eachLayer(l => { if (l instanceof L.TileLayer) l.redraw(); });
+        }
+      };
+    }
+
+    // 6️⃣ Configurar el botón de pantalla completa (por si renderRouteDetail no lo hizo)
+    setTimeout(() => bindFullscreenButton('routeMapFsBtn', 'routeMapWrap'), 100);
+
+    // 7️⃣ Override del botón "Regresar" para que vaya al inicio del sitio
+    // (porque estamos en una página estática, no dentro de la app)
+    setTimeout(() => {
+      const backBtn = document.getElementById('btnBackRoute');
+      if (backBtn) {
+        backBtn.onclick = () => { window.location.href = '/'; };
+      }
+      const shareBtn = document.getElementById('btnShareRoute');
+      if (shareBtn) {
+        shareBtn.onclick = () => shareRoute(routeData);
+      }
+    }, 300);
+  }
+
+  // ==================== ARRANQUE ====================
+  if (window.ROUTE_DATA_FOR_STATIC_PAGE) {
+    // Es una página de ruta estática generada por publish.js
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initStaticPage);
+    } else {
+      initStaticPage();
+    }
   } else {
-    init();
+    // Es la aplicación principal (index.html)
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
   }
 
 })(window);
