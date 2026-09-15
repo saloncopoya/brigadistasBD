@@ -338,18 +338,23 @@ const safeDesc = escapeHTML(enrichedContent.slice(0, 160));
   // Schema.org
   let schema;
   if (tipo === 'ruta') {
+    const r = extra?.route || {};
     schema = {
       '@context': 'https://schema.org',
       '@type': 'BusTrip',
       name: title,
-     description: enrichedContent.slice(0, 160),
+      description: enrichedContent.slice(0, 160),
       url: pageUrl,
       image: safeImage,
       provider: { '@type': 'Organization', name: 'Rutas BGD', url: baseUrl },
-       departureTime: route.horarioIni,
-  arrivalTime: route.horarioFin,
-  offers: { '@type': 'Offer', price: route.tarifa, priceCurrency: 'MXN' },
-  itinerary: route.paradas?.map(p => ({ '@type': 'Place', name: p }))
+      departureTime: r.horarioIni || undefined,
+      arrivalTime: r.horarioFin || undefined,
+      offers: r.tarifa ? {
+        '@type': 'Offer',
+        price: String(r.tarifa).replace(/[^0-9.]/g, '') || '0',
+        priceCurrency: 'MXN'
+      } : undefined,
+      itinerary: (r.paradas || []).map(p => ({ '@type': 'Place', name: p }))
     };
   } else if (tipo === 'market') {
     schema = {
