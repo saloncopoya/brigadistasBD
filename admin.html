@@ -2421,24 +2421,34 @@ if (f.size > 20 * 1024 * 1024) {
     btn.innerHTML = usingCustomImage ? '⏳ Guardando ruta...' : '⏳ Generando imagen del mapa...';
 
     try {
-      // 🖼️ Si hay imagen personalizada, úsala. Si no, genera la del mapa.
+      // 🖼️ Lógica de imagen en 3 pasos:
+      //   1. Si el usuario subió una imagen nueva → usarla
+      //   2. Si estamos EDITANDO y ya tiene imagen guardada → conservarla (NO regenerar)
+      //   3. Si es NUEVA ruta o no tiene imagen → generar automáticamente desde el mapa
       let mapImage = '';
+      const tieneImagenPrevia = !!(state.editingRoute && state.editingRoute.mapImage);
       
       if (state.routeDraft.customImage) {
-        // ✅ Usuario subió una imagen propia
+        // ✅ Caso 1: Usuario subió imagen nueva (reemplaza la anterior)
         mapImage = state.routeDraft.customImage;
-        console.log('[Ruta] Usando imagen personalizada:', mapImage);
+        console.log('[Ruta] Usando imagen personalizada NUEVA:', mapImage);
+        toast('Imagen personalizada actualizada ✓');
+      } else if (tieneImagenPrevia) {
+        // ✅ Caso 2: Editando ruta existente → conservar imagen anterior
+        mapImage = state.editingRoute.mapImage;
+        console.log('[Ruta] Conservando imagen previa (NO se regenera):', mapImage);
+        toast('Imagen existente conservada ✓');
       } else {
-        // 🗺️ Generar imagen automática desde el mapa
+        // 🗺️ Caso 3: Ruta nueva o sin imagen → generar desde el mapa
         try {
-          
+          btn.innerHTML = '⏳ Generando imagen del mapa...';
           mapImage = await captureAndUploadMap();
-          toast('Imagen del mapa subida ✓');
+          toast('Imagen del mapa generada ✓');
+          console.log('[Ruta] Imagen generada desde mapa:', mapImage);
         } catch(e) {
           console.warn('No se pudo capturar el mapa:', e);
           toast('No se pudo generar imagen del mapa', 'err');
-          // Fallback: usar la imagen anterior si estamos editando
-          mapImage = state.editingRoute?.mapImage || '';
+          mapImage = ''; // Sin imagen, se usará el default
         }
       }
 
