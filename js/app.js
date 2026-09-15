@@ -536,8 +536,10 @@ const url = location.origin + '/share/post/' + post.id;
   async function loadRoutes() {
     let local = [];
     try { local = await DB.getAll('routes'); } catch (e) {}
-    state.routes = local.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
-
+    state.routes = local.sort((a, b) =>
+      String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es', { numeric: true, sensitivity: 'base' })
+    );
+     
     // Complementar con Firebase si online
     if (state.online && fbDB) {
       try {
@@ -547,7 +549,9 @@ const url = location.origin + '/share/post/' + post.id;
         Object.values(val).forEach(r => {
           if (r && r.id && !map.has(r.id)) map.set(r.id, r);
         });
-        state.routes = Array.from(map.values());
+               state.routes = Array.from(map.values()).sort((a, b) =>
+          String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es', { numeric: true, sensitivity: 'base' })
+        );
       } catch (e) {}
     }
     return state.routes;
@@ -573,8 +577,11 @@ const url = location.origin + '/share/post/' + post.id;
         <p>${state.isAdmin ? 'Usa el botón + para agregar la primera ruta.' : 'Vuelve más tarde.'}</p>
       </div>`;
     }
-    return `<div class="routes-grid">` + state.routes.map(r => `
-      <div class="route-card" data-route-id="${esc(r.id)}">
+    const rutasOrdenadas = [...state.routes].sort((a, b) =>
+      String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es', { numeric: true, sensitivity: 'base' })
+    );
+    return `<div class="routes-grid">` + rutasOrdenadas.map(r => `
+    <div class="route-card" data-route-id="${esc(r.id)}">
         ${state.isAdmin ? `<div class="edit-del">
           <button class="icon-btn" data-act="edit" title="Editar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
           <button class="icon-btn" data-act="del" title="Eliminar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
@@ -782,8 +789,8 @@ const url = location.origin + '/share/post/' + post.id;
     // Panel inferior
     const panel = $('#routePanel');
     const blocks = [
-      { key: 'paradas', title: 'Paradas', icon: '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>', items: route.paradas || [] },
-      { key: 'retornos', title: 'Retornos', icon: '<polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/>', items: route.retornos || [] },
+      ...(route.notas && String(route.notas).trim() ? [{ key: 'notas', title: 'Notas adicionales', icon: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/>', items: [route.notas], isText: true }] : []),
+      { key: 'paradas', title: 'Paradas', icon: '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>', items: route.paradas || [] },      { key: 'retornos', title: 'Retornos', icon: '<polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/>', items: route.retornos || [] },
       { key: 'pois', title: 'POIs de Ida', icon: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>', items: route.pois || [] },
       { key: 'poisVuelta', title: 'POIs de Regreso', icon: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>', items: route.poisVuelta || [] },
       { key: 'calles', title: 'Recorrido de calles', icon: '<path d="M4 20h16"/><path d="M4 4h16"/><path d="M12 4v16"/>', items: route.calles || [] }
@@ -801,12 +808,14 @@ const url = location.origin + '/share/post/' + post.id;
           </div>
         </div>
         <div class="route-block-body">
-          ${b.items.length
-            ? (b.key === 'calles'
+                   ${b.items.length
+            ? (b.isText
+              ? `<div style="font-size:14px;line-height:1.6;color:var(--text-2);white-space:pre-wrap">${esc(b.items[0])}</div>`
+              : b.key === 'calles'
               ? `<div class="street-seq">${b.items.map((it, i) => `<span class="street-step">${i > 0 ? '<span class="arrow">→</span>' : ''}${esc(it)}</span>`).join('')}</div>`
               : `<div class="poi-list">${b.items.map(it => `<div class="poi-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${esc(it)}</div>`).join('')}</div>`)
             : '<div class="tiny" style="padding:8px 0">Sin datos registrados</div>'}
-        </div>
+            </div>
       </div>`).join('');
 
     panel.querySelectorAll('.route-block-head').forEach(h => {
