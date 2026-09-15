@@ -283,9 +283,6 @@ function escapeHTML(s) {
   }[c]));
 }
 
-// ==========================================================================
-//  Generador de HTML (VERSIÓN UNIFICADA)
-// ==========================================================================
 function generateHTML({ tipo, title, content, image, slug, pageUrl, baseUrl, extra }) {
   const safeTitle = escapeHTML(title);
   const safeImage = image ? escapeHTML(image) : `${baseUrl}/img.png`;
@@ -350,23 +347,15 @@ function generateHTML({ tipo, title, content, image, slug, pageUrl, baseUrl, ext
     };
   }
 
-  // Cuerpo del contenido (mapa, info, etc.)
-  let bodyContent = '';
-  if (tipo === 'ruta' && extra?.route) {
-    bodyContent = renderRouteMapBlock(extra.route) + renderRouteBody(extra.route);
-  } else if (tipo === 'market' && extra?.market) {
-    bodyContent = renderMarketBody(extra.market);
-  } else {
-    bodyContent = `<div class="post-content">${escapeHTML(content).replace(/\n/g, '<br>')}</div>`;
-  }
+  // Serializar los datos de la ruta para inyectar en el HTML (¡escapando </script>!)
+  const routeDataJSON = JSON.stringify(extra?.route || null).replace(/<\/script/gi, '<\\/script');
 
-  // ✨ INICIO DE LA PLANTILLA UNIFICADA ✨
-  // Esta plantilla replica la estructura y los estilos de la aplicación principal (index.html + app.js).
-  // Se cargan los mismos scripts para que la lógica del mapa, las secciones colapsables, etc., funcionen igual.
+  // ✨ HTML unificado: réplica exacta de index.html pero solo con la página de ruta activa
   return `<!DOCTYPE html>
 <html lang="es" data-theme="dark">
 <head>
 <meta charset="UTF-8">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
 <meta name="theme-color" content="#0a0e1a">
 <meta name="description" content="${safeDesc}">
@@ -403,9 +392,7 @@ function generateHTML({ tipo, title, content, image, slug, pageUrl, baseUrl, ext
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 
 <!-- Schema.org -->
-<script type="application/ld+json">${JSON.stringify(schema)}</script>
-
-<!-- Estilos de la App (copiados para que se vea idéntico) -->
+<script type="application/ld+json">${JSON.stringify(schema)}<\/script>
 
 <style>
 /* ============================================================
@@ -431,45 +418,24 @@ function generateHTML({ tipo, title, content, image, slug, pageUrl, baseUrl, ext
   --transition:.25s cubic-bezier(.4,0,.2,1);
 }
 [data-theme="dark"]{
-  --bg:#0a0e1a;
-  --bg-2:#0f1526;
-  --bg-3:#161e33;
-  --surface:#141c30;
-  --surface-2:#1c2540;
-  --surface-3:#242f4d;
-  --border:#26314f;
-  --border-2:#334066;
-  --text:#e8edf7;
-  --text-2:#a9b4cc;
-  --text-3:#6b7793;
-  --input-bg:#0f1626;
-  --overlay:rgba(5,8,16,.85);
-  --map-filter:none;
+  --bg:#0a0e1a;--bg-2:#0f1526;--bg-3:#161e33;
+  --surface:#141c30;--surface-2:#1c2540;--surface-3:#242f4d;
+  --border:#26314f;--border-2:#334066;
+  --text:#e8edf7;--text-2:#a9b4cc;--text-3:#6b7793;
+  --input-bg:#0f1626;--overlay:rgba(5,8,16,.85);--map-filter:none;
 }
 [data-theme="light"]{
-  --bg:#f4f6fb;
-  --bg-2:#ffffff;
-  --bg-3:#eef1f8;
-  --surface:#ffffff;
-  --surface-2:#f4f6fb;
-  --surface-3:#e8ecf5;
-  --border:#dde3ee;
-  --border-2:#c5cfe2;
-  --text:#0c1322;
-  --text-2:#4a5773;
-  --text-3:#8a95ad;
-  --input-bg:#f8fafd;
-  --overlay:rgba(15,20,35,.55);
-  --map-filter:none;
+  --bg:#f4f6fb;--bg-2:#ffffff;--bg-3:#eef1f8;
+  --surface:#ffffff;--surface-2:#f4f6fb;--surface-3:#e8ecf5;
+  --border:#dde3ee;--border-2:#c5cfe2;
+  --text:#0c1322;--text-2:#4a5773;--text-3:#8a95ad;
+  --input-bg:#f8fafd;--overlay:rgba(15,20,35,.55);--map-filter:none;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
 body{
-  font-family:var(--font);
-  background:var(--bg);
-  color:var(--text);
-  overflow-x:hidden;
-  overscroll-behavior-y:none;
+  font-family:var(--font);background:var(--bg);color:var(--text);
+  overflow-x:hidden;overscroll-behavior-y:none;
   transition:background var(--transition),color var(--transition);
   -webkit-font-smoothing:antialiased;
 }
@@ -479,21 +445,16 @@ a{color:var(--cyan);text-decoration:none}
 img{max-width:100%;display:block}
 .hidden{display:none!important}
 ::selection{background:var(--cyan);color:#00121a}
-
-/* Scrollbar */
 ::-webkit-scrollbar{width:8px;height:8px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:8px}
 ::-webkit-scrollbar-thumb:hover{background:var(--cyan-d)}
 
-/* ============================================================
-   HEADER
-   ============================================================ */
+/* HEADER */
 .header{
   position:fixed;top:0;left:0;right:0;height:var(--header-h);
   background:color-mix(in srgb,var(--surface) 92%,transparent);
-  backdrop-filter:blur(16px);
-  -webkit-backdrop-filter:blur(16px);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
   border-bottom:1px solid var(--border);
   display:flex;align-items:center;justify-content:space-between;
   padding:0 14px;z-index:1000;
@@ -515,31 +476,15 @@ img{max-width:100%;display:block}
 .icon-btn:hover{background:var(--surface-2);color:var(--cyan)}
 .icon-btn:active{transform:scale(.92)}
 .icon-btn svg{width:20px;height:20px}
-.conn-dot{
-  position:absolute;bottom:6px;right:6px;width:8px;height:8px;border-radius:50%;
-  background:var(--green);border:2px solid var(--surface);transition:var(--transition);
-}
-.conn-dot.off{background:var(--red)}
-.install-btn{
-  display:none;align-items:center;gap:6px;padding:8px 12px;border-radius:10px;
-  background:linear-gradient(135deg,var(--cyan),var(--cyan-d));color:#00121a;
-  font-weight:700;font-size:12.5px;
-}
-.install-btn.show{display:flex}
 
-/* ============================================================
-   LAYOUT PRINCIPAL
-   ============================================================ */
+/* LAYOUT */
 .app{padding-top:var(--header-h);padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom));min-height:100vh}
 .page{display:none;animation:fadeIn .3s ease}
 .page.active{display:block}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-
 .container{max-width:1100px;margin:0 auto;padding:14px}
 
-/* ============================================================
-   NAV INFERIOR
-   ============================================================ */
+/* NAV INFERIOR */
 .bottom-nav{
   position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav-h) + env(safe-area-inset-bottom));
   padding-bottom:env(safe-area-inset-bottom);
@@ -562,22 +507,6 @@ img{max-width:100%;display:block}
 }
 .nav-item:active{transform:scale(.94)}
 
-/* ============================================================
-   TARJETAS / UI GENERAL
-   ============================================================ */
-.card{
-  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
-  padding:14px;transition:var(--transition);
-}
-.card:hover{border-color:var(--border-2)}
-.section-title{
-  font-size:15px;font-weight:800;letter-spacing:.3px;margin:18px 0 10px;
-  display:flex;align-items:center;gap:8px;color:var(--text);
-}
-.section-title svg{width:18px;height:18px;color:var(--cyan)}
-.muted{color:var(--text-2);font-size:13px}
-.tiny{color:var(--text-3);font-size:11.5px}
-
 /* Botones */
 .btn{
   display:inline-flex;align-items:center;justify-content:center;gap:8px;
@@ -587,42 +516,19 @@ img{max-width:100%;display:block}
 .btn svg{width:17px;height:17px}
 .btn:active{transform:scale(.96)}
 .btn-primary{background:linear-gradient(135deg,var(--cyan),var(--cyan-d));color:#00121a;box-shadow:0 6px 18px -6px var(--cyan-glow)}
-.btn-primary:hover{filter:brightness(1.08);box-shadow:0 8px 22px -6px var(--cyan-glow)}
+.btn-primary:hover{filter:brightness(1.08)}
 .btn-ghost{background:var(--surface-2);color:var(--text);border-color:var(--border)}
 .btn-ghost:hover{background:var(--surface-3);border-color:var(--border-2)}
-.btn-danger{background:color-mix(in srgb,var(--red) 18%,transparent);color:var(--red);border-color:color-mix(in srgb,var(--red) 35%,transparent)}
-.btn-danger:hover{background:color-mix(in srgb,var(--red) 28%,transparent)}
-.btn-block{width:100%}
 .btn-sm{padding:8px 12px;font-size:12.5px}
-.btn-icon{padding:9px;width:38px;height:38px}
 
 /* Chips */
-.chips{display:flex;gap:8px;overflow-x:auto;padding:4px 2px;scrollbar-width:none}
-.chips::-webkit-scrollbar{display:none}
 .chip{
   flex-shrink:0;padding:8px 14px;border-radius:99px;font-size:12.5px;font-weight:700;
   background:var(--surface-2);color:var(--text-2);border:1px solid var(--border);
   transition:var(--transition);white-space:nowrap;
   display:inline-flex;align-items:center;gap:6px;
 }
-.chip svg{flex-shrink:0;transition:var(--transition);}
-.chip.active svg{color:#00121a;}
-.chip:hover{border-color:var(--border-2);color:var(--text)}
-.chip.active{background:linear-gradient(135deg,var(--cyan),var(--cyan-d));color:#00121a;border-color:transparent;box-shadow:0 4px 14px -4px var(--cyan-glow)}
 .chip.mini{padding:4px 10px;font-size:11px;font-weight:600}
-
-/* Inputs */
-.input,.textarea,.select{
-  width:100%;padding:12px 14px;border-radius:var(--radius-sm);
-  background:var(--input-bg);border:1px solid var(--border);color:var(--text);
-  font-size:14px;transition:var(--transition);
-}
-.input:focus,.textarea:focus,.select:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px color-mix(in srgb,var(--cyan) 18%,transparent)}
-.textarea{resize:vertical;min-height:90px;line-height:1.5}
-.select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7793' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;background-size:16px;padding-right:38px}
-.field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
-.field label{font-size:12.5px;font-weight:700;color:var(--text-2);letter-spacing:.2px}
-.form-grid{display:grid;grid-template-columns:1fr;gap:0}
 
 /* Badges */
 .badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;font-size:10.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase}
@@ -630,12 +536,6 @@ img{max-width:100%;display:block}
 .badge-foranea{background:color-mix(in srgb,var(--purple) 18%,transparent);color:var(--purple);border:1px solid color-mix(in srgb,var(--purple) 32%,transparent)}
 .badge-green{background:color-mix(in srgb,var(--green) 16%,transparent);color:var(--green);border:1px solid color-mix(in srgb,var(--green) 30%,transparent)}
 .badge-amber{background:color-mix(in srgb,var(--amber) 18%,transparent);color:var(--amber);border:1px solid color-mix(in srgb,var(--amber) 32%,transparent)}
-
-/* Empty state */
-.empty{text-align:center;padding:40px 20px;color:var(--text-3)}
-.empty svg{width:56px;height:56px;margin-bottom:12px;opacity:.4}
-.empty h3{font-size:15px;margin-bottom:6px;color:var(--text-2)}
-.empty p{font-size:13px;max-width:300px;margin:0 auto}
 
 /* Toast */
 .toast-wrap{position:fixed;top:calc(var(--header-h) + 10px);left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;width:calc(100% - 24px);max-width:400px}
@@ -652,135 +552,9 @@ img{max-width:100%;display:block}
 .toast.err svg{color:var(--red)}
 @keyframes toastIn{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:none}}
 
-/* Modal base */
-.modal{
-  position:fixed;inset:0;background:var(--overlay);z-index:2000;
-  display:flex;align-items:flex-end;justify-content:center;
-  opacity:0;pointer-events:none;transition:opacity .25s ease;
-  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
-}
-.modal.open{opacity:1;pointer-events:auto}
-.modal.center{align-items:center;padding:16px}
-.modal-sheet{
-  background:var(--surface);width:100%;max-width:560px;border-radius:var(--radius-lg) var(--radius-lg) 0 0;
-  max-height:92vh;display:flex;flex-direction:column;
-  transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1);
-  border-top:1px solid var(--border-2);
-}
-.modal.open .modal-sheet{transform:translateY(0)}
-.modal.center .modal-sheet{border-radius:var(--radius-lg);transform:scale(.94);border:1px solid var(--border-2)}
-.modal.center.open .modal-sheet{transform:scale(1)}
-.sheet-handle{padding:10px 0 4px;display:grid;place-items:center;cursor:grab}
-.sheet-handle::before{content:"";width:40px;height:4px;border-radius:99px;background:var(--border-2)}
-.sheet-head{padding:6px 18px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
-.sheet-head h3{font-size:16px;font-weight:800}
-.sheet-body{padding:16px 18px;overflow-y:auto;flex:1}
-
-/* Visor imagen */
-.viewer{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:3000;display:none;align-items:center;justify-content:center;padding:20px}
-.viewer.open{display:flex}
-.viewer img,.viewer video{max-width:100%;max-height:100%;border-radius:8px;object-fit:contain}
-.viewer-close{position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.12);display:grid;place-items:center;color:#fff;backdrop-filter:blur(8px)}
-.viewer-close svg{width:22px;height:22px}
-
-/* ============================================================
-   FEED (INICIO)
-   ============================================================ */
-.feed{display:flex;flex-direction:column;gap:14px;max-width:620px;margin:0 auto;padding:14px}
-.post-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:var(--transition)}
-.post-card:hover{border-color:var(--border-2)}
-.post-head{display:flex;align-items:center;gap:10px;padding:12px 14px}
-.post-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--cyan-d));display:grid;place-items:center;color:#00121a;font-weight:800;font-size:16px;flex-shrink:0}
-.post-meta{flex:1;min-width:0}
-.post-meta .name{font-weight:700;font-size:14px}
-.post-meta .time{font-size:11.5px;color:var(--text-3)}
-.post-body{padding:0 14px 12px;font-size:14.5px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
-.post-media{width:100%;max-height:520px;object-fit:cover;background:#000;cursor:zoom-in}
-.post-actions{display:flex;border-top:1px solid var(--border);padding:4px}
-.post-action{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px;border-radius:8px;color:var(--text-2);font-size:13px;font-weight:700;transition:var(--transition);position:relative}
-.post-action:hover{background:var(--surface-2);color:var(--text)}
-.post-action.liked{color:var(--pink)}
-.post-action svg{width:19px;height:19px}
-.heart-burst{position:absolute;pointer-events:none;font-size:38px;animation:heartBurst .8s ease forwards}
-@keyframes heartBurst{0%{transform:scale(0);opacity:1}50%{transform:scale(1.4)}100%{transform:scale(1.8) translateY(-40px);opacity:0}}
-
-/* ============================================================
-   RUTAS
-   ============================================================ */
-.search-bar{display:grid;gap:10px;margin-bottom:14px}
-.search-row{display:flex;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px 4px 4px 14px;position:relative}
-.search-row svg{width:18px;height:18px;color:var(--text-3);flex-shrink:0}
-.search-row input{flex:1;border:none;background:transparent;padding:11px 8px;font-size:14px}
-.search-row input:focus{outline:none}
-.search-row .swap{background:var(--surface-2);border-radius:8px;width:36px;height:36px;display:grid;place-items:center;color:var(--cyan);flex-shrink:0}
-.suggestions{
-  position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--surface-3);
-  border:1px solid var(--border-2);border-radius:var(--radius-sm);z-index:50;
-  max-height:260px;overflow-y:auto;box-shadow:var(--shadow);
-}
-.suggestion{padding:11px 14px;display:flex;align-items:center;gap:10px;font-size:13.5px;cursor:pointer;transition:var(--transition)}
-.suggestion:hover,.suggestion.hl{background:var(--surface-2);color:var(--cyan)}
-.suggestion svg{width:16px;height:16px;color:var(--cyan);flex-shrink:0}
-
-.routes-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-  .route-card{
-  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
-  padding:12px 10px;position:relative;transition:var(--transition);overflow:hidden;
-  display:flex;flex-direction:column;gap:8px;min-height:110px;
-  align-items:center;text-align:center;
-}
-.route-card:hover{border-color:var(--cyan);transform:translateY(-2px);box-shadow:var(--shadow-sm)}
-.route-card .route-icon{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,var(--cyan),var(--cyan-d));display:grid;place-items:center;color:#00121a}
-.route-card .route-icon svg{width:24px;height:24px}
-.route-card .route-name{font-weight:800;font-size:14px;letter-spacing:.3px;text-transform:uppercase;line-height:1.25;word-break:break-word;text-align:center;width:100%}
-   
-   .route-card .route-actions{display:flex;gap:6px;margin-top:auto}
-.route-card .route-actions .icon-btn{width:32px;height:32px;background:var(--surface-2);border-radius:8px}
-.route-card .route-actions .icon-btn svg{width:15px;height:15px}
-.route-card .edit-del{position:absolute;top:8px;right:8px;display:flex;gap:4px;opacity:0;transition:var(--transition)}
-.route-card:hover .edit-del,.route-card:focus-within .edit-del{opacity:1}
-.route-card .edit-del .icon-btn{width:28px;height:28px;background:var(--surface-3);border-radius:7px}
-.route-card .edit-del .icon-btn svg{width:14px;height:14px}
-
-.list-group{display:flex;flex-direction:column;gap:10px}
-.list-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;display:flex;flex-direction:column;gap:8px}
-.list-item .li-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.list-item .li-title{font-weight:700;font-size:13.5px}
-.list-item .li-chips{display:flex;flex-wrap:wrap;gap:6px}
-
-/* Resultados búsqueda */
-.result-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px;transition:var(--transition);cursor:pointer}
-.result-card:hover{border-color:var(--cyan);box-shadow:var(--shadow-sm)}
-.result-card.directa{border-left:3px solid var(--green)}
-.result-card.transbordo{border-left:3px solid var(--amber)}
-.result-card.warn{border-left:3px solid var(--amber);background:color-mix(in srgb,var(--amber) 6%,var(--surface))}
-.result-card .rc-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.result-card .rc-head .rc-icon{width:36px;height:36px;border-radius:9px;background:var(--surface-2);display:grid;place-items:center;color:var(--cyan)}
-.result-card .rc-head .rc-icon svg{width:20px;height:20px}
-.result-card .rc-route{font-weight:800;font-size:14px;text-transform:uppercase}
-.result-card .rc-sub{font-size:11.5px;color:var(--text-3)}
-.result-card .rc-body{font-size:13px;color:var(--text-2);line-height:1.5}
-.result-card .rc-steps{margin-top:8px;display:flex;flex-direction:column;gap:6px}
-.rc-step{display:flex;gap:8px;font-size:12.5px;padding:8px 10px;background:var(--surface-2);border-radius:8px}
-.rc-step .step-num{width:20px;height:20px;border-radius:50%;background:var(--cyan);color:#00121a;display:grid;place-items:center;font-weight:800;font-size:11px;flex-shrink:0}
-
-/* Mapa */
+/* MAPA */
 .map-wrap{position:relative;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);background:var(--surface-2)}
-#map,#mapFull{width:100%;height:42vh;min-height:260px;z-index:1}
-   .map-toolbar{
-  position:absolute;top:10px;left:10px;right:10px;z-index:500;
-  display:flex;gap:6px;flex-wrap:wrap;pointer-events:none;
-}
-.map-toolbar .tb{pointer-events:auto;background:color-mix(in srgb,var(--surface) 94%,transparent);backdrop-filter:blur(10px);border:1px solid var(--border-2);border-radius:10px;padding:8px 11px;font-size:12px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:5px;box-shadow:var(--shadow-sm);transition:var(--transition)}
-.map-toolbar .tb svg{width:15px;height:15px}
-.map-toolbar .tb:hover{border-color:var(--cyan);color:var(--cyan)}
-.map-toolbar .tb.active{background:var(--cyan);color:#00121a;border-color:transparent}
-.map-back{position:absolute;top:12px;left:12px;z-index:600;background:color-mix(in srgb,var(--surface) 96%,transparent);border:1px solid var(--border-2);border-radius:12px;width:42px;height:42px;display:grid;place-items:center;color:var(--text);box-shadow:var(--shadow);backdrop-filter:blur(10px)}
-.map-back svg{width:22px;height:22px}
-.map-full-btn{position:absolute;top:12px;right:12px;z-index:600;background:color-mix(in srgb,var(--surface) 96%,transparent);border:1px solid var(--border-2);border-radius:12px;width:42px;height:42px;display:grid;place-items:center;color:var(--text);box-shadow:var(--shadow);backdrop-filter:blur(10px)}
-.map-full-btn svg{width:20px;height:20px}
-
-/* 🖥️ Botón de pantalla completa dentro del mapa (esquina inferior derecha) */
+#map{width:100%;height:42vh;min-height:260px;z-index:1}
 .map-fs-btn{
   position:absolute;bottom:12px;right:12px;z-index:600;
   background:color-mix(in srgb,var(--surface) 96%,transparent);
@@ -793,59 +567,24 @@ img{max-width:100%;display:block}
 .map-fs-btn:hover{background:var(--surface-3);border-color:var(--cyan);color:var(--cyan)}
 .map-fs-btn:active{transform:scale(.94)}
 .map-fs-btn svg{width:20px;height:20px}
-
-/* Estado de pantalla completa: el wrapper ocupa toda la pantalla */
-.map-wrap.is-fullscreen,
-#routeMapWrap.is-fullscreen,
-#tripMapWrap.is-fullscreen{
-  position:fixed !important;
-  inset:0 !important;
-  z-index:9500 !important;
-  margin:0 !important;
-  border-radius:0 !important;
-  border:none !important;
+.map-wrap.is-fullscreen{
+  position:fixed !important;inset:0 !important;z-index:9500 !important;
+  margin:0 !important;border-radius:0 !important;border:none !important;
 }
-.map-wrap.is-fullscreen > div[id$="Map"],
-.map-wrap.is-fullscreen > div[id="map"]{
-  height:100vh !important;
-  width:100vw !important;
-}
+.map-wrap.is-fullscreen #map{height:100vh !important;width:100vw !important}
 body.fs-active{overflow:hidden !important}
 
 .leaflet-container{background:var(--bg-2)!important;font-family:var(--font)!important}
 .leaflet-control-zoom a{background:var(--surface)!important;color:var(--text)!important;border-color:var(--border)!important}
 .leaflet-control-attribution{background:color-mix(in srgb,var(--surface) 88%,transparent)!important;color:var(--text-2)!important;font-size:10px!important}
 .leaflet-control-attribution a{color:var(--cyan)!important}
-
-
-   .leaflet-popup-content-wrapper{background:var(--surface-3)!important;color:var(--text)!important;border-radius:12px!important;border:1px solid var(--border-2)!important}
+.leaflet-popup-content-wrapper{background:var(--surface-3)!important;color:var(--text)!important;border-radius:12px!important;border:1px solid var(--border-2)!important}
 .leaflet-popup-tip{background:var(--surface-3)!important}
-
-/* 🚫 Quitar el outline negro al hacer focus en cualquier capa SVG del mapa */
-.leaflet-interactive:focus,
-.leaflet-interactive:focus-visible,
-.leaflet-interactive:active {
-  outline: none !important;
-  outline-width: 0 !important;
-  outline-offset: 0 !important;
-  box-shadow: none !important;
-  -webkit-tap-highlight-color: transparent !important;
+.leaflet-interactive:focus,.leaflet-interactive:focus-visible,.leaflet-interactive:active{
+  outline:none!important;box-shadow:none!important;-webkit-tap-highlight-color:transparent!important;
 }
 
-/* Por si el navegador dibuja el outline sobre el SVG padre */
-.leaflet-container svg:focus,
-.leaflet-container svg:focus-visible,
-.leaflet-container svg path:focus,
-.leaflet-container svg path:focus-visible {
-  outline: none !important;
-  outline-width: 0 !important;
-  -webkit-tap-highlight-color: transparent !important;
-}
-   
-.marker-a,.marker-b,.marker-c,.marker-d,.marker-e{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:12px;color:#fff;border:2.5px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.5)}
-.marker-a{background:#10b981}.marker-b{background:#ef4444}.marker-c{background:#f59e0b}.marker-d{background:#3b82f6}.marker-e{background:#a855f7}
-
-/* Panel ruta individual */
+/* RUTA individual */
 .route-hero{padding:14px;display:flex;flex-direction:column;gap:10px}
 .route-hero h1{font-size:24px;font-weight:900;letter-spacing:-.4px;text-transform:uppercase;line-height:1.15}
 .route-hero .hero-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -861,219 +600,20 @@ body.fs-active{overflow:hidden !important}
 .route-block-head .chev{transition:transform .25s ease}
 .route-block.open .route-block-head .chev{transform:rotate(180deg)}
 .poi-list{display:flex;flex-direction:column;gap:6px}
-.poi-item{padding:9px 12px;background:var(--surface-2);border-radius:9px;font-size:13px;display:flex;align-items:center;gap:9px;cursor:pointer;transition:var(--transition)}
-.poi-item:hover{background:var(--surface-3);color:var(--cyan)}
+.poi-item{padding:9px 12px;background:var(--surface-2);border-radius:9px;font-size:13px;display:flex;align-items:center;gap:9px;transition:var(--transition)}
 .poi-item svg{width:14px;height:14px;color:var(--cyan);flex-shrink:0}
-
-/* Calles con flechas */
 .street-seq{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .street-step{display:inline-flex;align-items:center;gap:6px;padding:7px 11px;background:var(--surface-2);border-radius:99px;font-size:12.5px;font-weight:600}
 .street-step .arrow{color:var(--cyan);font-weight:800}
 
-/* ============================================================
-   MARKETPLACE
-   ============================================================ */
-.market-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
-.market-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:var(--transition);display:flex;flex-direction:column}
-.market-card:hover{border-color:var(--cyan);transform:translateY(-3px);box-shadow:var(--shadow)}
-.market-media{width:100%;aspect-ratio:4/3;object-fit:cover;background:var(--surface-3);display:grid;place-items:center;color:var(--text-3)}
-.market-media svg{width:44px;height:44px}
-.market-body{padding:12px 14px;display:flex;flex-direction:column;gap:8px;flex:1}
-.market-title{font-weight:800;font-size:14.5px;line-height:1.3}
-.market-price{font-weight:800;font-size:16px;color:var(--green)}
-.market-desc{font-size:12.5px;color:var(--text-2);line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.market-foot{display:flex;gap:6px;padding:0 14px 14px;margin-top:auto}
+/* Leyenda del mapa */
+.map-legend{pointer-events:none}
 
-/* Admin */
-.admin-bar{position:fixed;bottom:calc(var(--nav-h) + 14px);right:14px;z-index:900}
-.fab{width:54px;height:54px;border-radius:16px;background:linear-gradient(135deg,var(--cyan),var(--cyan-d));color:#00121a;display:grid;place-items:center;box-shadow:0 10px 28px -8px var(--cyan-glow);transition:var(--transition)}
-.fab:hover{transform:translateY(-3px) scale(1.04)}
-.fab:active{transform:scale(.94)}
-.fab svg{width:26px;height:26px}
-
-/* Pasos wizard */
-.steps{display:flex;align-items:center;gap:6px;margin-bottom:16px}
-.step-dot{flex:1;height:5px;border-radius:99px;background:var(--border);transition:var(--transition)}
-.step-dot.done{background:var(--green)}
-.step-dot.active{background:var(--cyan);box-shadow:0 0 10px var(--cyan-glow)}
-.step-num{font-size:11px;font-weight:800;color:var(--text-3);text-align:center;margin-bottom:4px}
-
-/* Barra progreso */
-.progress{height:6px;border-radius:99px;background:var(--surface-3);overflow:hidden}
-.progress > div{height:100%;background:linear-gradient(90deg,var(--cyan),var(--cyan-d));transition:width .3s ease;border-radius:99px}
-
-/* ============================================================
-   RESPONSIVE
-   ============================================================ */
-/* ============================================================
-   TRIP SEARCH — Controles compactos arriba del mapa
-   ============================================================ */
-.trip-controls{
-  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
-  padding:10px;margin-bottom:10px;display:flex;flex-direction:column;gap:8px;
-}
-
-/* Toolbar DENTRO del mapa (esquina inferior izquierda) */
-.map-toolbar-below{
-  position:absolute;
-  left:12px;
-  bottom:12px;
-  z-index:600;
-  display:flex;
-  gap:5px;
-  padding:4px;
-  background:color-mix(in srgb,var(--surface) 96%,transparent);
-  border:1px solid var(--border-2);
-  border-radius:10px;
-  backdrop-filter:blur(10px);
-  -webkit-backdrop-filter:blur(10px);
-  box-shadow:var(--shadow);
-}
-   
-.map-toolbar-below .tb{
-  width:34px;height:28px;
-  justify-content:center;align-items:center;
-  background:var(--surface-2);
-  border:1px solid var(--border);
-  border-radius:8px;
-  color:var(--text);
-  display:flex;
-  transition:var(--transition);
-  padding:0;
-}
-
-   .map-toolbar-below .tb.tb-text{
-  width:auto;
-  padding:0 10px;
-  gap:5px;
-}
-.map-toolbar-below .tb.tb-text span{
-  font-size:10.5px;
-  font-weight:800;
-  letter-spacing:.3px;
-  color:inherit;
-  line-height:1;
-}
-.map-toolbar-below .tb svg{width:14px;height:14px}
-.map-toolbar-below .tb:hover{border-color:var(--cyan);color:var(--cyan)}
-.map-toolbar-below .tb.active{background:var(--cyan);color:#00121a;border-color:transparent}
-   
-.trip-controls-row{
-  display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;
-}
-.trip-controls-row .trip-radius-box{flex:2;min-width:140px}
-.trip-controls-row .trip-transfers-box{flex:1;min-width:110px}
-.trip-controls-row label{
-  font-size:11px;font-weight:700;color:var(--text-2);display:block;margin-bottom:3px;
-}
-.trip-controls-row input[type="range"]{width:100%;accent-color:var(--cyan)}
-.trip-controls-row .select{padding:7px 28px 7px 10px;font-size:12px}
-
-.trip-points-grid{
-  display:grid;grid-template-columns:1fr 1fr;gap:6px;
-}
-.trip-points-grid .trip-point-card{
-  background:var(--surface-2);border:1px solid var(--border);border-radius:8px;
-  padding:6px 8px;display:flex;align-items:center;gap:6px;font-size:11px;
-  min-width:0;
-}
-.trip-points-grid .trip-point-card .tpc-letter{
-  width:24px;height:24px;border-radius:50%;display:grid;place-items:center;
-  color:#fff;font-weight:800;font-size:12px;flex-shrink:0;
-}
-.trip-points-grid .trip-point-card .tpc-coords{
-  flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  color:var(--text);font-size:12px;font-weight:800;
-  letter-spacing:.2px;
-}
-.trip-points-grid .trip-point-card .tpc-actions{display:flex;gap:2px;flex-shrink:0}
-.trip-points-grid .trip-point-card .tpc-actions button{
-  width:20px;height:20px;border-radius:5px;background:var(--surface-3);
-  display:grid;place-items:center;color:var(--text-2);font-size:11px;
-}
-.trip-points-grid .trip-point-card .tpc-actions button:hover{color:var(--red)}
-.trip-points-grid .empty-trip{
-  grid-column:1/-1;text-align:center;padding:14px 10px;font-size:12.5px;
-  color:var(--text-2);font-weight:600;line-height:1.5;
-  border:1px dashed var(--border-2);border-radius:10px;
-  background:var(--surface-2);
-}
-
-/* Resultados enriquecidos */
-.trip-result-actions{
-  display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;
-}
-.trip-result-actions .btn{padding:6px 10px;font-size:11.5px}
-.trip-badge-route{
-  display:inline-block;padding:2px 7px;border-radius:99px;font-size:10px;
-  font-weight:800;color:#fff;margin-right:4px;
-}
-
-/* 🔗 Cadena de rutas (chips cuadrados) en el encabezado de cada transbordo */
-.trip-chain{
-  display:flex;flex-wrap:wrap;align-items:center;gap:4px;
-  padding:0;
-  margin-bottom:4px;
-}
-.trip-chain-item{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:4px 8px 4px 4px;
-  background:var(--surface-2);
-  border:1px solid var(--border);
-  border-radius:10px;
-}
-.trip-chain-chip{
-  width:22px;height:22px;border-radius:6px;
-  display:grid;place-items:center;
-  color:#fff;font-weight:800;font-size:11px;flex-shrink:0;
-  box-shadow:0 2px 6px rgba(0,0,0,.25);
-}
-.trip-chain-name{
-  font-size:12.5px;font-weight:700;color:var(--text);
-  text-transform:uppercase;letter-spacing:.2px;
-  white-space:nowrap;
-}
-.trip-chain-sep{
-  color:var(--text-3);font-weight:800;font-size:16px;
-  margin:0 2px;line-height:1;
-}
-.trip-legend{
-  display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;padding:8px 10px;
-  background:var(--surface-2);border-radius:8px;font-size:11px;
-}
-.trip-legend .tl-item{display:flex;align-items:center;gap:5px}
-.trip-legend .tl-color{width:14px;height:4px;border-radius:2px}
-
-/* ============================================================
-   RESPONSIVE
-   ============================================================ */
-@media(min-width:720px){
-  .form-grid{grid-template-columns:1fr 1fr;gap:0 14px}
-  .form-grid .field.full{grid-column:1/-1}
-  .routes-grid{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
-   .feed{max-width:680px}
-}
+/* Responsive */
 @media(min-width:1000px){
   .app{max-width:1200px;margin:0 auto}
   .bottom-nav{max-width:560px;left:50%;transform:translateX(-50%);border-radius:18px 18px 0 0;border-left:1px solid var(--border);border-right:1px solid var(--border)}
   #map{height:70vh}
-}
-@media(max-width:380px){
-  .map-toolbar-below .tb{width:28px;height:24px}
-  .map-toolbar-below .tb svg{width:12px;height:12px}
-  .routes-grid{grid-template-columns:repeat(3,1fr)}
-   
-  .header-brand .brand-txt{font-size:14px}
-  .route-card{padding:10px 8px;min-height:100px}
-  .route-card .route-icon{width:34px;height:34px}
-  .route-card .route-icon svg{width:18px;height:18px}
-  .route-card .route-name{font-size:11px}
-  .route-card .route-actions .icon-btn{width:26px;height:26px}
-  .route-card .edit-del .icon-btn{width:24px;height:24px}
-}
-   /* Leyenda del mapa */
-.map-legend {
-  pointer-events: none;
 }
 </style>
 </head>
@@ -1099,15 +639,21 @@ body.fs-active{overflow:hidden !important}
 
 <!-- ============================ APP ============================ -->
 <main class="app" id="app">
-  <!-- PÁGINA: RUTA INDIVIDUAL (única página que se muestra) -->
   <section class="page active" id="page-route">
-    <!-- La imagen OG se oculta visualmente pero se mantiene para SEO -->
-    <img src="${safeImage}" alt="${safeTitle}" style="display:none;">
+    <!-- 🖼️ Imagen OG oculta visualmente (Google la lee para indexación) -->
+    <img src="${safeImage}" alt="${safeTitle}" style="display:none" aria-hidden="true">
     
     <div class="route-hero" id="routeHero"></div>
     <div class="map-wrap" id="routeMapWrap" style="margin:0 14px">
       <div id="map"></div>
-      <button class="map-fs-btn" id="routeMapFsBtn" title="Pantalla completa">...</button>
+      <button class="map-fs-btn" id="routeMapFsBtn" title="Pantalla completa">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+          <path d="M8 3H5a2 2 0 0 0-2 2v3"/>
+          <path d="M21 8V5a2 2 0 0 0-2-2h-3"/>
+          <path d="M3 16v3a2 2 0 0 0 2 2h3"/>
+          <path d="M16 21h3a2 2 0 0 0 2-2v-3"/>
+        </svg>
+      </button>
     </div>
     <div class="container">
       <div class="route-panel" id="routePanel"></div>
@@ -1131,6 +677,14 @@ body.fs-active{overflow:hidden !important}
   </button>
 </nav>
 
+<!-- Toast wrap -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- ⚠️ IMPORTANTE: ROUTE_DATA_FOR_STATIC_PAGE debe ir ANTES de app.js -->
+<script>
+  window.ROUTE_DATA_FOR_STATIC_PAGE = ${routeDataJSON};
+<\/script>
+
 <!-- ============================ SCRIPTS ============================ -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="https://cdn.jsdelivr.net/npm/idb@8/build/umd.js"></script>
@@ -1140,10 +694,6 @@ body.fs-active{overflow:hidden !important}
 <script src="/js/publisher.js"></script>
 <script src="/js/app.js"></script>
 
-<!-- Script de inicialización específico para esta página -->
-<script>
-  window.ROUTE_DATA_FOR_STATIC_PAGE = ${JSON.stringify(extra?.route || null)};
-</script>
 </body>
 </html>`;
 }
