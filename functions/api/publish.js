@@ -439,6 +439,16 @@ function generateHTML({ tipo, title, content, image, slug, pageUrl, baseUrl, ext
     .join('\n');
 
   // ============================================================
+  //  🔥 DETERMINAR QUÉ PÁGINA DEBE ESTAR ACTIVA EN EL HTML ESTÁTICO
+  //  Esto evita el parpadeo (FOUC) y ayuda al SEO sin JS
+  // ============================================================
+  const activePage = tipo === 'post'
+    ? 'page-post'
+    : tipo === 'market'
+      ? 'page-market'
+      : 'page-route';
+
+  // ============================================================
   //  HTML COMPLETO CON LA MISMA INTERFAZ QUE index.html
   // ============================================================
   return `<!DOCTYPE html>
@@ -715,7 +725,7 @@ body.fs-active{overflow:hidden !important}
 
 <!-- ============================ APP ============================ -->
 <main class="app" id="app">
-  <section class="page active" id="page-route">
+  <section class="page ${activePage === 'page-route' ? 'active' : ''}" id="page-route">
     <div class="route-hero" id="routeHero"></div>
     <div class="map-wrap" id="routeMapWrap" style="margin:0 14px">
       <div id="map"></div>
@@ -733,9 +743,8 @@ body.fs-active{overflow:hidden !important}
     </div>
   </section>
 
-  <!-- Página post (oculta por defecto, se activa si es post) -->
-  <section class="page" id="page-post">
-    <div class="container">
+  <!-- Página post -->
+  <section class="page ${activePage === 'page-post' ? 'active' : ''}" id="page-post">    <div class="container">
       <button class="btn btn-ghost btn-sm" id="postBack" style="margin-bottom:12px">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
         Volver
@@ -744,8 +753,8 @@ body.fs-active{overflow:hidden !important}
     </div>
   </section>
 
-  <!-- Página market (oculta por defecto) -->
-  <section class="page" id="page-market">
+  <!-- Página market -->
+  <section class="page ${activePage === 'page-market' ? 'active' : ''}" id="page-market">
     <div class="container">
       <div class="section-title">Marketplace</div>
       <div class="market-grid" id="marketGrid"></div>
