@@ -982,12 +982,12 @@ body.fs-active{overflow:hidden !important}
     <div class="sheet-handle" id="commentsHandle"></div>
     <div class="sheet-head">
       <h3>Comentarios</h3>
-      <button class="icon-btn" id="commentsClose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      <button class="icon-btn" id="commentsClose" aria-label="Cerrar comentarios"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
     <div class="sheet-body" id="commentsList"></div>
     <div style="padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:8px">
       <input class="input" id="commentInput" placeholder="Escribe un comentario...">
-      <button class="btn btn-primary btn-icon" id="commentSend">
+      <button class="btn btn-primary btn-icon" id="commentSend" aria-label="Enviar comentario">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
       </button>
     </div>
@@ -999,7 +999,7 @@ body.fs-active{overflow:hidden !important}
     <div class="sheet-handle"></div>
     <div class="sheet-head">
       <h3 id="editorTitle">Registrar ruta</h3>
-      <button class="icon-btn" onclick="App.closeModal('editorModal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      <button class="icon-btn" onclick="App.closeModal('editorModal')"  aria-label="Cerrar editor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
     <div class="sheet-body" id="editorBody"></div>
   </div>
@@ -1009,7 +1009,7 @@ body.fs-active{overflow:hidden !important}
   <div class="modal-sheet">
     <div class="sheet-head">
       <h3>🔐 Acceso administrador</h3>
-      <button class="icon-btn" onclick="App.closeModal('authModal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      <button class="icon-btn" onclick="App.closeModal('authModal')" aria-label="Cerrar ventana de acceso"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
     <div class="sheet-body">
       <div class="field">
