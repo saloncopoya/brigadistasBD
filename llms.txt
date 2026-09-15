@@ -1,0 +1,14 @@
+# Rutas BGD
+
+> Aplicación web online y offline para consultar, explorar y administrar rutas de colectivos en Tuxtla Gutierrez, Chiapas.
+
+## Páginas principales
+
+- [Inicio](https://brigadistasbd.pages.dev/): Feed de publicaciones recientes.
+- [Rutas](https://brigadistasbd.pages.dev/?tab=routes): Buscador de rutas de colectivos.
+- [Marketplace](https://brigadistasbd.pages.dev/?tab=market): Anuncios clasificados.
+- [Buscar viaje en mapa](https://brigadistasbd.pages.dev/?tab=trip): Búsqueda de rutas en mapa interactivo.
+
+## Sobre el proyecto
+
+Esta aplicación permite a los usuarios encontrar rutas de transporte público, ver sus paradas y planificar viajes con transbordos.
