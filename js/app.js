@@ -2221,7 +2221,13 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
         // 📜 Scroll automático al mapa
         const mapEl = document.getElementById('tripMap');
         if (mapEl) {
-          mapEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          const mapWrap = document.querySelector('#page-trip .map-wrap');
+          if (mapWrap) {
+            const headerH = 58;
+            const rect = mapWrap.getBoundingClientRect();
+            const targetY = window.scrollY + rect.top - headerH - 8;
+            window.scrollTo({ top: targetY, behavior: 'smooth' });
+          }
         }
         toast('Mostrando trazo de: ' + r.route.nombre);
       };
@@ -2263,7 +2269,15 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
         // 📜 Scroll automático al mapa
         const mapEl = document.getElementById('tripMap');
         if (mapEl) {
-          mapEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                     const mapWrap = document.querySelector('#page-trip .map-wrap');
+          if (mapWrap) {
+            const headerH = 58;
+            const rect = mapWrap.getBoundingClientRect();
+            const targetY = window.scrollY + rect.top - headerH - 8;
+            window.scrollTo({ top: targetY, behavior: 'smooth' });
+          }
+        
         }
         toast('Mostrando ' + t.legs.length + ' trazos del transbordo');
       };
