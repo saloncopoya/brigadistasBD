@@ -905,7 +905,8 @@ const url = location.origin + '/share/post/' + post.id;
         weight: 5,
         opacity: 0.95,
         lineJoin: 'round',
-        lineCap: 'round'
+        lineCap: 'round',
+                 dashArray: '10,6'
       }).addTo(state.map);
       layers.push(lineVuelta);
 
