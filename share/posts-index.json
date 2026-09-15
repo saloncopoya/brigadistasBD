@@ -4,11 +4,11 @@
       "slug": "900149",
       "title": "900",
       "description": "Ruta 900",
-      "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789436686/j81m8aqhlj4iopilon3h.jpg",
+      "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789439175/xzspmfcibsjvwtfjwsqb.jpg",
       "url": "/share/ruta/900149",
       "tipo": "ruta",
-      "timestamp": 1789436692172,
-      "updatedAt": "2026-09-15T01:44:52.172Z"
+      "timestamp": 1789439183297,
+      "updatedAt": "2026-09-15T02:26:23.297Z"
     },
     {
       "slug": "2738149",
@@ -242,7 +242,7 @@
     }
   ],
   "total": 24,
-  "updatedAt": "2026-09-15T01:44:52.172Z",
+  "updatedAt": "2026-09-15T02:26:23.297Z",
   "version": 1,
-  "__sha": "f28253cad1c1de3a9ff829d2484f521ff9e22bb6"
+  "__sha": "b1e68e3c40a00c975e8eff02f3851543698ae109"
 }
