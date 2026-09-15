@@ -1900,8 +1900,11 @@ const url = location.origin + '/share/m/' + id;
 
   // Calcula la distancia mínima entre dos rutas (para transbordos)
   function routesMinDistance(r1, r2) {
-    const c1 = getRouteCoords(r1);
-    const c2 = getRouteCoords(r2);
+    // Unir IDA + VUELTA de cada ruta para comparar TODAS las combinaciones
+    // (ida↔ida, ida↔vuelta, vuelta↔ida, vuelta↔vuelta)
+    const c1 = [...getRouteCoords(r1), ...getRouteCoordsVuelta(r1)];
+    const c2 = [...getRouteCoords(r2), ...getRouteCoordsVuelta(r2)];
+     
     let best = Infinity, bestPt = null, bestPt2 = null;
     c1.forEach(p1 => {
       c2.forEach(p2 => {
