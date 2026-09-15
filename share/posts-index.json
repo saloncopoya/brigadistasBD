@@ -136,16 +136,6 @@
       ]
     },
     {
-      "slug": "123adx159",
-      "title": "123adx",
-      "description": "Ruta 123adx",
-      "image": "",
-      "url": "/share/ruta/123adx159",
-      "tipo": "ruta",
-      "timestamp": 1789496162299,
-      "updatedAt": "2026-09-15T18:16:02.299Z"
-    },
-    {
       "slug": "publicacionq149",
       "title": "Publicación q",
       "description": "Descripción",
@@ -356,8 +346,8 @@
       "updatedAt": "2026-09-13T08:52:43.612Z"
     }
   ],
-  "total": 24,
-  "updatedAt": "2026-09-15T20:28:08.365Z",
+  "total": 23,
+  "updatedAt": "2026-09-15T20:28:18.033Z",
   "version": 1,
   "__sha": "f82c18d95ba80ab63acefeb00e470607a791c73e"
 }
