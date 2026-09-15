@@ -55,6 +55,16 @@
     "route_to": "new-client"
 },
     
+    "edge_side_panel": {
+    "preferred_width": 400
+},
+"url_handlers": [
+    {
+        "origin": "https://brigadistasbd.pages.dev",
+        "url": "/share/*"
+    }
+]
+    
     "handle_links": "preferred",
     
     "share_target": {
