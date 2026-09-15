@@ -356,10 +356,10 @@ const safeDescOG = escapeHTML(enrichedContent.slice(0, 125));
      // 🖼️ OG Image: forzar 1200x630 JPG para redes sociales
   let safeImage = image ? escapeHTML(image) : `${baseUrl}/img.png`;
   if (safeImage.includes('res.cloudinary.com') && safeImage.includes('/upload/')) {
-    // Insertar transformaciones fijas de OG (1200x630, JPG, calidad alta)
+    // ✅ c_pad: NO recorta, añade relleno blanco para llegar a 1200x630
     safeImage = safeImage.replace(
       /\/upload\/(?:[^\/]*\/)?/,
-      '/upload/c_fill,w_1200,h_630,q_auto:good,f_jpg/'
+      '/upload/c_pad,w_1200,h_630,b_white,q_auto:good,f_jpg/'
     );
   }
    
