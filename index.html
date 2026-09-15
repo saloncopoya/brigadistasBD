@@ -2,107 +2,397 @@
 <html lang="es" data-theme="dark">
 <head>
 <meta charset="UTF-8">
-  <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="robots" content="noindex, nofollow">
+   <meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
 <meta name="theme-color" content="#0a0e1a">
-<title>Admin · Rutas BGD</title>
+<meta name="description" content="Consulta, explora y administra rutas de colectivos. Blog y marketplace con mapas interactivos, GPS en tiempo real y modo offline.">
+<meta name="google-site-verification" content="7ZxhOaDTX2gZU-ZDyZjaysQo1z3vnxmA8ouLzTcjsu4" />
+   <title>Rutas Colectivos · Blog & Market</title>
+
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" type="image/svg+xml" href="/assets/icon.svg">
+<link rel="apple-touch-icon" href="/assets/icon.svg">
 <link rel="preconnect" href="https://unpkg.com">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<link rel="preconnect" href="https://tile.openstreetmap.org">
+<link rel="preconnect" href="https://res.cloudinary.com">
+<link rel="preconnect" href="https://www.gstatic.com">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+
 <style>
+/* ============================================================
+   VARIABLES Y TEMAS
+   ============================================================ */
 :root{
-  --cyan:#00e5ff;--cyan-d:#00b8cc;--cyan-glow:rgba(0,229,255,.35);
-  --purple:#a855f7;--green:#10b981;--amber:#f59e0b;--red:#ef4444;
-  --radius:14px;--radius-sm:10px;--radius-lg:22px;
-  --shadow:0 10px 30px rgba(0,0,0,.35);--shadow-sm:0 4px 12px rgba(0,0,0,.25);
+  --cyan:#00e5ff;
+  --cyan-d:#00b8cc;
+  --cyan-glow:rgba(0,229,255,.35);
+  --purple:#a855f7;
+  --green:#10b981;
+  --amber:#f59e0b;
+  --red:#ef4444;
+  --pink:#ec4899;
+  --radius:14px;
+  --radius-sm:10px;
+  --radius-lg:22px;
+  --shadow:0 10px 30px rgba(0,0,0,.35);
+  --shadow-sm:0 4px 12px rgba(0,0,0,.25);
   --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-  --header-h:58px;--transition:.25s cubic-bezier(.4,0,.2,1);
+  --nav-h:64px;
+  --header-h:58px;
+  --transition:.25s cubic-bezier(.4,0,.2,1);
 }
-[data-theme="dark"]{--bg:#0a0e1a;--bg-2:#0f1526;--bg-3:#161e33;--surface:#141c30;--surface-2:#1c2540;--surface-3:#242f4d;--border:#26314f;--border-2:#334066;--text:#e8edf7;--text-2:#a9b4cc;--text-3:#6b7793;--input-bg:#0f1626;--overlay:rgba(5,8,16,.85)}
-[data-theme="light"]{--bg:#f4f6fb;--bg-2:#fff;--bg-3:#eef1f8;--surface:#fff;--surface-2:#f4f6fb;--surface-3:#e8ecf5;--border:#dde3ee;--border-2:#c5cfe2;--text:#0c1322;--text-2:#4a5773;--text-3:#8a95ad;--input-bg:#f8fafd;--overlay:rgba(15,20,35,.55)}
+[data-theme="dark"]{
+  --bg:#0a0e1a;
+  --bg-2:#0f1526;
+  --bg-3:#161e33;
+  --surface:#141c30;
+  --surface-2:#1c2540;
+  --surface-3:#242f4d;
+  --border:#26314f;
+  --border-2:#334066;
+  --text:#e8edf7;
+  --text-2:#a9b4cc;
+  --text-3:#6b7793;
+  --input-bg:#0f1626;
+  --overlay:rgba(5,8,16,.85);
+  --map-filter:none;
+}
+[data-theme="light"]{
+  --bg:#f4f6fb;
+  --bg-2:#ffffff;
+  --bg-3:#eef1f8;
+  --surface:#ffffff;
+  --surface-2:#f4f6fb;
+  --surface-3:#e8ecf5;
+  --border:#dde3ee;
+  --border-2:#c5cfe2;
+  --text:#0c1322;
+  --text-2:#4a5773;
+  --text-3:#8a95ad;
+  --input-bg:#f8fafd;
+  --overlay:rgba(15,20,35,.55);
+  --map-filter:none;
+}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;transition:background var(--transition),color var(--transition);-webkit-font-smoothing:antialiased}
+html,body{height:100%}
+body{
+  font-family:var(--font);
+  background:var(--bg);
+  color:var(--text);
+  overflow-x:hidden;
+  overscroll-behavior-y:none;
+  transition:background var(--transition),color var(--transition);
+  -webkit-font-smoothing:antialiased;
+}
 button,input,textarea,select{font-family:inherit;font-size:inherit;color:inherit}
 button{cursor:pointer;border:none;background:none}
+a{color:var(--cyan);text-decoration:none}
+img{max-width:100%;display:block}
 .hidden{display:none!important}
 ::selection{background:var(--cyan);color:#00121a}
+
+/* Scrollbar */
 ::-webkit-scrollbar{width:8px;height:8px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:8px}
+::-webkit-scrollbar-thumb:hover{background:var(--cyan-d)}
 
-.header{position:sticky;top:0;height:var(--header-h);background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 14px;z-index:1000}
-.header-brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:16px}
-.header-brand .logo{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--red),#b91c1c);display:grid;place-items:center;color:#fff;box-shadow:0 0 18px rgba(239,68,68,.4)}
-.header-actions{display:flex;gap:6px}
-.icon-btn{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;color:var(--text-2);transition:var(--transition)}
+/* ============================================================
+   HEADER
+   ============================================================ */
+.header{
+  position:fixed;top:0;left:0;right:0;height:var(--header-h);
+  background:color-mix(in srgb,var(--surface) 92%,transparent);
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 14px;z-index:1000;
+}
+.header-brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px;letter-spacing:-.3px}
+.header-brand .logo{
+  width:32px;height:32px;border-radius:9px;
+  background:linear-gradient(135deg,var(--cyan),var(--cyan-d));
+  display:grid;place-items:center;color:#00121a;font-size:17px;
+  box-shadow:0 0 18px var(--cyan-glow);
+}
+.header-brand .logo svg{width:20px;height:20px}
+.header-brand .brand-txt{background:linear-gradient(90deg,var(--cyan),#7dd3fc);-webkit-background-clip:text;background-clip:text;color:transparent}
+.header-actions{display:flex;align-items:center;gap:6px}
+.icon-btn{
+  width:40px;height:40px;border-radius:11px;display:grid;place-items:center;
+  color:var(--text-2);transition:var(--transition);position:relative;
+}
 .icon-btn:hover{background:var(--surface-2);color:var(--cyan)}
+.icon-btn:active{transform:scale(.92)}
 .icon-btn svg{width:20px;height:20px}
+.conn-dot{
+  position:absolute;bottom:6px;right:6px;width:8px;height:8px;border-radius:50%;
+  background:var(--green);border:2px solid var(--surface);transition:var(--transition);
+}
+.conn-dot.off{background:var(--red)}
+.install-btn{
+  display:none;align-items:center;gap:6px;padding:8px 12px;border-radius:10px;
+  background:linear-gradient(135deg,var(--cyan),var(--cyan-d));color:#00121a;
+  font-weight:700;font-size:12.5px;
+}
+.install-btn.show{display:flex}
 
-.wrap{max-width:900px;margin:0 auto;padding:16px}
-.tabs{display:flex;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:6px;margin-bottom:16px;overflow-x:auto;scrollbar-width:none}
-.tabs::-webkit-scrollbar{display:none}
-.tab{flex:1;min-width:100px;padding:11px 14px;border-radius:10px;font-weight:700;font-size:13px;color:var(--text-2);transition:var(--transition);white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:6px}
-.tab svg{width:16px;height:16px}
-.tab:hover{background:var(--surface-2);color:var(--text)}
-.tab.active{background:linear-gradient(135deg,var(--cyan),var(--cyan-d));color:#00121a;box-shadow:0 4px 14px -4px var(--cyan-glow)}
-
-.panel{display:none;animation:fadeIn .3s ease}
-.panel.active{display:block}
+/* ============================================================
+   LAYOUT PRINCIPAL
+   ============================================================ */
+.app{padding-top:var(--header-h);padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom));min-height:100vh}
+.page{display:none;animation:fadeIn .3s ease}
+.page.active{display:block}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px}
-.card-title{font-size:14px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:8px;color:var(--text)}
-.card-title svg{width:17px;height:17px;color:var(--cyan)}
-.form-grid{display:grid;grid-template-columns:1fr;gap:12px}
-@media(min-width:640px){.form-grid{grid-template-columns:1fr 1fr}.form-grid .full{grid-column:1/-1}}
-.field{display:flex;flex-direction:column;gap:6px}
-.field label{font-size:12.5px;font-weight:700;color:var(--text-2)}
-.input,.textarea,.select{width:100%;padding:12px 14px;border-radius:var(--radius-sm);background:var(--input-bg);border:1px solid var(--border);color:var(--text);font-size:14px;transition:var(--transition)}
-.input:focus,.textarea:focus,.select:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px color-mix(in srgb,var(--cyan) 18%,transparent)}
-.textarea{resize:vertical;min-height:90px;line-height:1.5}
-.select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7793' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;background-size:16px;padding-right:38px}
+.container{max-width:1100px;margin:0 auto;padding:14px}
 
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 16px;border-radius:var(--radius-sm);font-weight:700;font-size:13.5px;transition:var(--transition);border:1px solid transparent}
+/* ============================================================
+   NAV INFERIOR
+   ============================================================ */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav-h) + env(safe-area-inset-bottom));
+  padding-bottom:env(safe-area-inset-bottom);
+  background:color-mix(in srgb,var(--surface) 96%,transparent);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border-top:1px solid var(--border);
+  display:grid;grid-template-columns:repeat(3,1fr);z-index:1000;
+}
+.nav-item{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;color:var(--text-3);font-size:11px;font-weight:600;
+  transition:var(--transition);position:relative;
+}
+.nav-item svg{width:23px;height:23px;transition:var(--transition)}
+.nav-item.active{color:var(--cyan)}
+.nav-item.active svg{transform:translateY(-2px) scale(1.08)}
+.nav-item.active::before{
+  content:"";position:absolute;top:6px;width:44px;height:3px;border-radius:0 0 4px 4px;
+  background:var(--cyan);box-shadow:0 0 14px var(--cyan-glow);
+}
+.nav-item:active{transform:scale(.94)}
+
+/* ============================================================
+   TARJETAS / UI GENERAL
+   ============================================================ */
+.card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px;transition:var(--transition);
+}
+.card:hover{border-color:var(--border-2)}
+.section-title{
+  font-size:15px;font-weight:800;letter-spacing:.3px;margin:18px 0 10px;
+  display:flex;align-items:center;gap:8px;color:var(--text);
+}
+.section-title svg{width:18px;height:18px;color:var(--cyan)}
+.muted{color:var(--text-2);font-size:13px}
+.tiny{color:var(--text-3);font-size:11.5px}
+
+/* Botones */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:11px 16px;border-radius:var(--radius-sm);font-weight:700;font-size:13.5px;
+  transition:var(--transition);border:1px solid transparent;
+}
 .btn svg{width:17px;height:17px}
-.btn:active{transform:scale(.97)}
+.btn:active{transform:scale(.96)}
 .btn-primary{background:linear-gradient(135deg,var(--cyan),var(--cyan-d));color:#00121a;box-shadow:0 6px 18px -6px var(--cyan-glow)}
-.btn-primary:hover{filter:brightness(1.08)}
+.btn-primary:hover{filter:brightness(1.08);box-shadow:0 8px 22px -6px var(--cyan-glow)}
 .btn-ghost{background:var(--surface-2);color:var(--text);border-color:var(--border)}
 .btn-ghost:hover{background:var(--surface-3);border-color:var(--border-2)}
 .btn-danger{background:color-mix(in srgb,var(--red) 18%,transparent);color:var(--red);border-color:color-mix(in srgb,var(--red) 35%,transparent)}
+.btn-danger:hover{background:color-mix(in srgb,var(--red) 28%,transparent)}
 .btn-block{width:100%}
 .btn-sm{padding:8px 12px;font-size:12.5px}
+.btn-icon{padding:9px;width:38px;height:38px}
 
+/* Chips */
+.chips{display:flex;gap:8px;overflow-x:auto;padding:4px 2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{
+  flex-shrink:0;padding:8px 14px;border-radius:99px;font-size:12.5px;font-weight:700;
+  background:var(--surface-2);color:var(--text-2);border:1px solid var(--border);
+  transition:var(--transition);white-space:nowrap;
+  display:inline-flex;align-items:center;gap:6px;
+}
+.chip svg{flex-shrink:0;transition:var(--transition);}
+.chip.active svg{color:#00121a;}
+.chip:hover{border-color:var(--border-2);color:var(--text)}
+.chip.active{background:linear-gradient(135deg,var(--cyan),var(--cyan-d));color:#00121a;border-color:transparent;box-shadow:0 4px 14px -4px var(--cyan-glow)}
+.chip.mini{padding:4px 10px;font-size:11px;font-weight:600}
+
+/* Inputs */
+.input,.textarea,.select{
+  width:100%;padding:12px 14px;border-radius:var(--radius-sm);
+  background:var(--input-bg);border:1px solid var(--border);color:var(--text);
+  font-size:14px;transition:var(--transition);
+}
+.input:focus,.textarea:focus,.select:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px color-mix(in srgb,var(--cyan) 18%,transparent)}
+.textarea{resize:vertical;min-height:90px;line-height:1.5}
+.select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7793' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;background-size:16px;padding-right:38px}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.field label{font-size:12.5px;font-weight:700;color:var(--text-2);letter-spacing:.2px}
+.form-grid{display:grid;grid-template-columns:1fr;gap:0}
+
+/* Badges */
 .badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;font-size:10.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase}
-.badge-urbana{background:color-mix(in srgb,var(--cyan) 16%,transparent);color:var(--cyan)}
-.badge-foranea{background:color-mix(in srgb,var(--purple) 18%,transparent);color:var(--purple)}
-.badge-green{background:color-mix(in srgb,var(--green) 16%,transparent);color:var(--green)}
-.badge-amber{background:color-mix(in srgb,var(--amber) 18%,transparent);color:var(--amber)}
+.badge-urbana{background:color-mix(in srgb,var(--cyan) 16%,transparent);color:var(--cyan);border:1px solid color-mix(in srgb,var(--cyan) 30%,transparent)}
+.badge-foranea{background:color-mix(in srgb,var(--purple) 18%,transparent);color:var(--purple);border:1px solid color-mix(in srgb,var(--purple) 32%,transparent)}
+.badge-green{background:color-mix(in srgb,var(--green) 16%,transparent);color:var(--green);border:1px solid color-mix(in srgb,var(--green) 30%,transparent)}
+.badge-amber{background:color-mix(in srgb,var(--amber) 18%,transparent);color:var(--amber);border:1px solid color-mix(in srgb,var(--amber) 32%,transparent)}
 
-.list{display:flex;flex-direction:column;gap:8px}
-.list-item{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;transition:var(--transition)}
-.list-item:hover{border-color:var(--border-2)}
-.list-item .li-info{flex:1;min-width:0}
-.list-item .li-title{font-weight:700;font-size:13.5px;margin-bottom:2px}
-.list-item .li-sub{font-size:11.5px;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.list-item .li-actions{display:flex;gap:6px;flex-shrink:0}
+/* Empty state */
+.empty{text-align:center;padding:40px 20px;color:var(--text-3)}
+.empty svg{width:56px;height:56px;margin-bottom:12px;opacity:.4}
+.empty h3{font-size:15px;margin-bottom:6px;color:var(--text-2)}
+.empty p{font-size:13px;max-width:300px;margin:0 auto}
 
-.steps{display:flex;gap:6px;margin-bottom:16px}
-.step-dot{flex:1;height:5px;border-radius:99px;background:var(--border);transition:var(--transition)}
-.step-dot.done{background:var(--green)}
-.step-dot.active{background:var(--cyan);box-shadow:0 0 10px var(--cyan-glow)}
+/* Toast */
+.toast-wrap{position:fixed;top:calc(var(--header-h) + 10px);left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;width:calc(100% - 24px);max-width:400px}
+.toast{
+  background:var(--surface-3);color:var(--text);padding:12px 16px;border-radius:var(--radius-sm);
+  border:1px solid var(--border-2);box-shadow:var(--shadow);font-size:13.5px;font-weight:600;
+  display:flex;align-items:center;gap:10px;pointer-events:auto;
+  animation:toastIn .3s cubic-bezier(.4,0,.2,1);
+}
+.toast.ok{border-color:color-mix(in srgb,var(--green) 50%,transparent)}
+.toast.err{border-color:color-mix(in srgb,var(--red) 50%,transparent)}
+.toast svg{width:18px;height:18px;flex-shrink:0}
+.toast.ok svg{color:var(--green)}
+.toast.err svg{color:var(--red)}
+@keyframes toastIn{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:none}}
 
-.empty{text-align:center;padding:36px 20px;color:var(--text-3)}
-.empty svg{width:48px;height:48px;margin-bottom:10px;opacity:.4}
-.empty p{font-size:13px}
+/* Modal base */
+.modal{
+  position:fixed;inset:0;background:var(--overlay);z-index:2000;
+  display:flex;align-items:flex-end;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .25s ease;
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+}
+.modal.open{opacity:1;pointer-events:auto}
+.modal.center{align-items:center;padding:16px}
+.modal-sheet{
+  background:var(--surface);width:100%;max-width:560px;border-radius:var(--radius-lg) var(--radius-lg) 0 0;
+  max-height:92vh;display:flex;flex-direction:column;
+  transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1);
+  border-top:1px solid var(--border-2);
+}
+.modal.open .modal-sheet{transform:translateY(0)}
+.modal.center .modal-sheet{border-radius:var(--radius-lg);transform:scale(.94);border:1px solid var(--border-2)}
+.modal.center.open .modal-sheet{transform:scale(1)}
+.sheet-handle{padding:10px 0 4px;display:grid;place-items:center;cursor:grab}
+.sheet-handle::before{content:"";width:40px;height:4px;border-radius:99px;background:var(--border-2)}
+.sheet-head{padding:6px 18px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.sheet-head h3{font-size:16px;font-weight:800}
+.sheet-body{padding:16px 18px;overflow-y:auto;flex:1}
 
-.map-wrap{position:relative;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);background:var(--surface-2);margin-bottom:14px}
-#editorMap{width:100%;height:44vh;min-height:300px;z-index:1}
-.map-toolbar{position:absolute;top:10px;left:10px;right:10px;z-index:500;display:flex;gap:6px;flex-wrap:wrap}
+/* Visor imagen */
+.viewer{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:3000;display:none;align-items:center;justify-content:center;padding:20px}
+.viewer.open{display:flex}
+.viewer img,.viewer video{max-width:100%;max-height:100%;border-radius:8px;object-fit:contain}
+.viewer-close{position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.12);display:grid;place-items:center;color:#fff;backdrop-filter:blur(8px)}
+.viewer-close svg{width:22px;height:22px}
 
-/* 🖥️ Botón de pantalla completa dentro del mapa */
+/* ============================================================
+   FEED (INICIO)
+   ============================================================ */
+.feed{display:flex;flex-direction:column;gap:14px;max-width:620px;margin:0 auto;padding:14px}
+.post-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:var(--transition)}
+.post-card:hover{border-color:var(--border-2)}
+.post-head{display:flex;align-items:center;gap:10px;padding:12px 14px}
+.post-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--cyan-d));display:grid;place-items:center;color:#00121a;font-weight:800;font-size:16px;flex-shrink:0}
+.post-meta{flex:1;min-width:0}
+.post-meta .name{font-weight:700;font-size:14px}
+.post-meta .time{font-size:11.5px;color:var(--text-3)}
+.post-body{padding:0 14px 12px;font-size:14.5px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
+.post-media{width:100%;max-height:520px;object-fit:cover;background:#000;cursor:zoom-in}
+.post-actions{display:flex;border-top:1px solid var(--border);padding:4px}
+.post-action{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px;border-radius:8px;color:var(--text-2);font-size:13px;font-weight:700;transition:var(--transition);position:relative}
+.post-action:hover{background:var(--surface-2);color:var(--text)}
+.post-action.liked{color:var(--pink)}
+.post-action svg{width:19px;height:19px}
+.heart-burst{position:absolute;pointer-events:none;font-size:38px;animation:heartBurst .8s ease forwards}
+@keyframes heartBurst{0%{transform:scale(0);opacity:1}50%{transform:scale(1.4)}100%{transform:scale(1.8) translateY(-40px);opacity:0}}
+
+/* ============================================================
+   RUTAS
+   ============================================================ */
+.search-bar{display:grid;gap:10px;margin-bottom:14px}
+.search-row{display:flex;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px 4px 4px 14px;position:relative}
+.search-row svg{width:18px;height:18px;color:var(--text-3);flex-shrink:0}
+.search-row input{flex:1;border:none;background:transparent;padding:11px 8px;font-size:14px}
+.search-row input:focus{outline:none}
+.search-row .swap{background:var(--surface-2);border-radius:8px;width:36px;height:36px;display:grid;place-items:center;color:var(--cyan);flex-shrink:0}
+.suggestions{
+  position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--surface-3);
+  border:1px solid var(--border-2);border-radius:var(--radius-sm);z-index:50;
+  max-height:260px;overflow-y:auto;box-shadow:var(--shadow);
+}
+.suggestion{padding:11px 14px;display:flex;align-items:center;gap:10px;font-size:13.5px;cursor:pointer;transition:var(--transition)}
+.suggestion:hover,.suggestion.hl{background:var(--surface-2);color:var(--cyan)}
+.suggestion svg{width:16px;height:16px;color:var(--cyan);flex-shrink:0}
+
+.routes-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .route-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:12px 10px;position:relative;transition:var(--transition);overflow:hidden;
+  display:flex;flex-direction:column;gap:8px;min-height:110px;
+  align-items:center;text-align:center;
+}
+.route-card:hover{border-color:var(--cyan);transform:translateY(-2px);box-shadow:var(--shadow-sm)}
+.route-card .route-icon{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,var(--cyan),var(--cyan-d));display:grid;place-items:center;color:#00121a}
+.route-card .route-icon svg{width:24px;height:24px}
+.route-card .route-name{font-weight:800;font-size:14px;letter-spacing:.3px;text-transform:uppercase;line-height:1.25;word-break:break-word;text-align:center;width:100%}
+   
+   .route-card .route-actions{display:flex;gap:6px;margin-top:auto}
+.route-card .route-actions .icon-btn{width:32px;height:32px;background:var(--surface-2);border-radius:8px}
+.route-card .route-actions .icon-btn svg{width:15px;height:15px}
+.route-card .edit-del{position:absolute;top:8px;right:8px;display:flex;gap:4px;opacity:0;transition:var(--transition)}
+.route-card:hover .edit-del,.route-card:focus-within .edit-del{opacity:1}
+.route-card .edit-del .icon-btn{width:28px;height:28px;background:var(--surface-3);border-radius:7px}
+.route-card .edit-del .icon-btn svg{width:14px;height:14px}
+
+.list-group{display:flex;flex-direction:column;gap:10px}
+.list-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.list-item .li-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.list-item .li-title{font-weight:700;font-size:13.5px}
+.list-item .li-chips{display:flex;flex-wrap:wrap;gap:6px}
+
+/* Resultados búsqueda */
+.result-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px;transition:var(--transition);cursor:pointer}
+.result-card:hover{border-color:var(--cyan);box-shadow:var(--shadow-sm)}
+.result-card.directa{border-left:3px solid var(--green)}
+.result-card.transbordo{border-left:3px solid var(--amber)}
+.result-card.warn{border-left:3px solid var(--amber);background:color-mix(in srgb,var(--amber) 6%,var(--surface))}
+.result-card .rc-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.result-card .rc-head .rc-icon{width:36px;height:36px;border-radius:9px;background:var(--surface-2);display:grid;place-items:center;color:var(--cyan)}
+.result-card .rc-head .rc-icon svg{width:20px;height:20px}
+.result-card .rc-route{font-weight:800;font-size:14px;text-transform:uppercase}
+.result-card .rc-sub{font-size:11.5px;color:var(--text-3)}
+.result-card .rc-body{font-size:13px;color:var(--text-2);line-height:1.5}
+.result-card .rc-steps{margin-top:8px;display:flex;flex-direction:column;gap:6px}
+.rc-step{display:flex;gap:8px;font-size:12.5px;padding:8px 10px;background:var(--surface-2);border-radius:8px}
+.rc-step .step-num{width:20px;height:20px;border-radius:50%;background:var(--cyan);color:#00121a;display:grid;place-items:center;font-weight:800;font-size:11px;flex-shrink:0}
+
+/* Mapa */
+.map-wrap{position:relative;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);background:var(--surface-2)}
+#map,#mapFull{width:100%;height:42vh;min-height:260px;z-index:1}
+   .map-toolbar{
+  position:absolute;top:10px;left:10px;right:10px;z-index:500;
+  display:flex;gap:6px;flex-wrap:wrap;pointer-events:none;
+}
+.map-toolbar .tb{pointer-events:auto;background:color-mix(in srgb,var(--surface) 94%,transparent);backdrop-filter:blur(10px);border:1px solid var(--border-2);border-radius:10px;padding:8px 11px;font-size:12px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:5px;box-shadow:var(--shadow-sm);transition:var(--transition)}
+.map-toolbar .tb svg{width:15px;height:15px}
+.map-toolbar .tb:hover{border-color:var(--cyan);color:var(--cyan)}
+.map-toolbar .tb.active{background:var(--cyan);color:#00121a;border-color:transparent}
+.map-back{position:absolute;top:12px;left:12px;z-index:600;background:color-mix(in srgb,var(--surface) 96%,transparent);border:1px solid var(--border-2);border-radius:12px;width:42px;height:42px;display:grid;place-items:center;color:var(--text);box-shadow:var(--shadow);backdrop-filter:blur(10px)}
+.map-back svg{width:22px;height:22px}
+.map-full-btn{position:absolute;top:12px;right:12px;z-index:600;background:color-mix(in srgb,var(--surface) 96%,transparent);border:1px solid var(--border-2);border-radius:12px;width:42px;height:42px;display:grid;place-items:center;color:var(--text);box-shadow:var(--shadow);backdrop-filter:blur(10px)}
+.map-full-btn svg{width:20px;height:20px}
+
+/* 🖥️ Botón de pantalla completa dentro del mapa (esquina inferior derecha) */
 .map-fs-btn{
   position:absolute;bottom:12px;right:12px;z-index:600;
   background:color-mix(in srgb,var(--surface) 96%,transparent);
@@ -116,8 +406,10 @@ button{cursor:pointer;border:none;background:none}
 .map-fs-btn:active{transform:scale(.94)}
 .map-fs-btn svg{width:20px;height:20px}
 
-/* Estado de pantalla completa */
-.map-wrap.is-fullscreen{
+/* Estado de pantalla completa: el wrapper ocupa toda la pantalla */
+.map-wrap.is-fullscreen,
+#routeMapWrap.is-fullscreen,
+#tripMapWrap.is-fullscreen{
   position:fixed !important;
   inset:0 !important;
   z-index:9500 !important;
@@ -125,2319 +417,591 @@ button{cursor:pointer;border:none;background:none}
   border-radius:0 !important;
   border:none !important;
 }
-.map-wrap.is-fullscreen #editorMap{
+.map-wrap.is-fullscreen > div[id$="Map"],
+.map-wrap.is-fullscreen > div[id="map"]{
   height:100vh !important;
   width:100vw !important;
 }
 body.fs-active{overflow:hidden !important}
-  .tb{background:color-mix(in srgb,var(--surface) 94%,transparent);backdrop-filter:blur(10px);border:1px solid var(--border-2);border-radius:10px;padding:8px 11px;font-size:12px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:5px;box-shadow:var(--shadow-sm);transition:var(--transition)}
-.tb svg{width:15px;height:15px}
-.tb:hover{border-color:var(--cyan);color:var(--cyan)}
-.tb.active{background:var(--cyan);color:#00121a;border-color:transparent}
 
-.color-swatches{display:flex;gap:8px;flex-wrap:wrap}
-.swatch{width:36px;height:36px;border-radius:10px;border:2px solid var(--border);cursor:pointer;transition:var(--transition)}
-.swatch:hover{transform:scale(1.08)}
-.swatch.active{border-color:var(--cyan);box-shadow:0 0 0 3px color-mix(in srgb,var(--cyan) 30%,transparent)}
+.leaflet-container{background:var(--bg-2)!important;font-family:var(--font)!important}
+.leaflet-control-zoom a{background:var(--surface)!important;color:var(--text)!important;border-color:var(--border)!important}
+.leaflet-control-attribution{background:color-mix(in srgb,var(--surface) 88%,transparent)!important;color:var(--text-2)!important;font-size:10px!important}
+.leaflet-control-attribution a{color:var(--cyan)!important}
 
-.thumb-preview{width:100%;max-height:220px;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-2);margin-top:8px}
 
-.progress{height:6px;border-radius:99px;background:var(--surface-3);overflow:hidden;margin-top:8px}
-.progress>div{height:100%;background:linear-gradient(90deg,var(--cyan),var(--cyan-d));transition:width .3s ease;border-radius:99px}
+   .leaflet-popup-content-wrapper{background:var(--surface-3)!important;color:var(--text)!important;border-radius:12px!important;border:1px solid var(--border-2)!important}
+.leaflet-popup-tip{background:var(--surface-3)!important}
 
-.toast-wrap{position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;width:calc(100% - 24px);max-width:400px}
-.toast{background:var(--surface-3);color:var(--text);padding:12px 16px;border-radius:var(--radius-sm);border:1px solid var(--border-2);box-shadow:var(--shadow);font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:10px;pointer-events:auto;animation:toastIn .3s ease}
-.toast.ok{border-color:color-mix(in srgb,var(--green) 50%,transparent)}
-.toast.err{border-color:color-mix(in srgb,var(--red) 50%,transparent)}
-.toast svg{width:18px;height:18px;flex-shrink:0}
-.toast.ok svg{color:var(--green)}
-.toast.err svg{color:var(--red)}
-@keyframes toastIn{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:none}}
-
-.upload-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:var(--radius-sm);background:var(--surface-2);border:1px dashed var(--border-2);color:var(--text-2);font-size:13px;font-weight:700;cursor:pointer;transition:var(--transition);width:100%;justify-content:center}
-.upload-btn:hover{border-color:var(--cyan);color:var(--cyan);background:var(--surface-3)}
-.upload-btn svg{width:17px;height:17px}
-
-.chip-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.chip{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:99px;background:var(--surface-2);border:1px solid var(--border);font-size:11.5px;font-weight:600}
-.chip button{color:var(--text-3);font-weight:800;font-size:14px;line-height:1}
-.chip button:hover{color:var(--red)}
-
-  /* Grid de 3 columnas para el editor de rutas */
-.admin-cols-3{
-  display:grid;
-  grid-template-columns:repeat(3, 1fr);
-  gap:12px;
-  margin-top:8px;
+/* 🚫 Quitar el outline negro al hacer focus en cualquier capa SVG del mapa */
+.leaflet-interactive:focus,
+.leaflet-interactive:focus-visible,
+.leaflet-interactive:active {
+  outline: none !important;
+  outline-width: 0 !important;
+  outline-offset: 0 !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent !important;
 }
-.admin-col{
+
+/* Por si el navegador dibuja el outline sobre el SVG padre */
+.leaflet-container svg:focus,
+.leaflet-container svg:focus-visible,
+.leaflet-container svg path:focus,
+.leaflet-container svg path:focus-visible {
+  outline: none !important;
+  outline-width: 0 !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+   
+.marker-a,.marker-b,.marker-c,.marker-d,.marker-e{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:12px;color:#fff;border:2.5px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.5)}
+.marker-a{background:#10b981}.marker-b{background:#ef4444}.marker-c{background:#f59e0b}.marker-d{background:#3b82f6}.marker-e{background:#a855f7}
+
+/* Panel ruta individual */
+.route-hero{padding:14px;display:flex;flex-direction:column;gap:10px}
+.route-hero h1{font-size:24px;font-weight:900;letter-spacing:-.4px;text-transform:uppercase;line-height:1.15}
+.route-hero .hero-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.route-hero .share-row{display:flex;gap:8px;margin-top:4px}
+.route-panel{margin-top:14px;display:flex;flex-direction:column;gap:10px}
+.route-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.route-block-head{padding:12px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
+.route-block-head .rbh-l{display:flex;align-items:center;gap:9px;font-weight:800;font-size:13.5px}
+.route-block-head .rbh-l svg{width:17px;height:17px;color:var(--cyan)}
+.route-block-head .count{font-size:11.5px;color:var(--text-3);background:var(--surface-2);padding:3px 9px;border-radius:99px;font-weight:700}
+.route-block-body{padding:0 14px 14px;display:none}
+.route-block.open .route-block-body{display:block;animation:fadeIn .25s ease}
+.route-block-head .chev{transition:transform .25s ease}
+.route-block.open .route-block-head .chev{transform:rotate(180deg)}
+.poi-list{display:flex;flex-direction:column;gap:6px}
+.poi-item{padding:9px 12px;background:var(--surface-2);border-radius:9px;font-size:13px;display:flex;align-items:center;gap:9px;cursor:pointer;transition:var(--transition)}
+.poi-item:hover{background:var(--surface-3);color:var(--cyan)}
+.poi-item svg{width:14px;height:14px;color:var(--cyan);flex-shrink:0}
+
+/* Calles con flechas */
+.street-seq{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.street-step{display:inline-flex;align-items:center;gap:6px;padding:7px 11px;background:var(--surface-2);border-radius:99px;font-size:12.5px;font-weight:600}
+.street-step .arrow{color:var(--cyan);font-weight:800}
+
+/* ============================================================
+   MARKETPLACE
+   ============================================================ */
+.market-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.market-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:var(--transition);display:flex;flex-direction:column}
+.market-card:hover{border-color:var(--cyan);transform:translateY(-3px);box-shadow:var(--shadow)}
+.market-media{width:100%;aspect-ratio:4/3;object-fit:cover;background:var(--surface-3);display:grid;place-items:center;color:var(--text-3)}
+.market-media svg{width:44px;height:44px}
+.market-body{padding:12px 14px;display:flex;flex-direction:column;gap:8px;flex:1}
+.market-title{font-weight:800;font-size:14.5px;line-height:1.3}
+.market-price{font-weight:800;font-size:16px;color:var(--green)}
+.market-desc{font-size:12.5px;color:var(--text-2);line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.market-foot{display:flex;gap:6px;padding:0 14px 14px;margin-top:auto}
+
+/* Admin */
+.admin-bar{position:fixed;bottom:calc(var(--nav-h) + 14px);right:14px;z-index:900}
+.fab{width:54px;height:54px;border-radius:16px;background:linear-gradient(135deg,var(--cyan),var(--cyan-d));color:#00121a;display:grid;place-items:center;box-shadow:0 10px 28px -8px var(--cyan-glow);transition:var(--transition)}
+.fab:hover{transform:translateY(-3px) scale(1.04)}
+.fab:active{transform:scale(.94)}
+.fab svg{width:26px;height:26px}
+
+/* Pasos wizard */
+.steps{display:flex;align-items:center;gap:6px;margin-bottom:16px}
+.step-dot{flex:1;height:5px;border-radius:99px;background:var(--border);transition:var(--transition)}
+.step-dot.done{background:var(--green)}
+.step-dot.active{background:var(--cyan);box-shadow:0 0 10px var(--cyan-glow)}
+.step-num{font-size:11px;font-weight:800;color:var(--text-3);text-align:center;margin-bottom:4px}
+
+/* Barra progreso */
+.progress{height:6px;border-radius:99px;background:var(--surface-3);overflow:hidden}
+.progress > div{height:100%;background:linear-gradient(90deg,var(--cyan),var(--cyan-d));transition:width .3s ease;border-radius:99px}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+/* ============================================================
+   TRIP SEARCH — Controles compactos arriba del mapa
+   ============================================================ */
+.trip-controls{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:10px;margin-bottom:10px;display:flex;flex-direction:column;gap:8px;
+}
+
+/* Toolbar DEBAJO del mapa (no flotante) */
+.map-toolbar-below{
+  display:flex;gap:6px;flex-wrap:wrap;
+  margin-top:8px;margin-bottom:12px;
+  padding:8px;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+}
+.map-toolbar-below .tb{
+  flex:1;min-width:70px;justify-content:center;
+  background:var(--surface-2);border:1px solid var(--border);
+  border-radius:10px;padding:8px 10px;
+  font-size:11.5px;font-weight:700;color:var(--text);
+  display:flex;align-items:center;gap:5px;
+  transition:var(--transition);
+}
+.map-toolbar-below .tb svg{width:14px;height:14px}
+.map-toolbar-below .tb:hover{border-color:var(--cyan);color:var(--cyan)}
+.map-toolbar-below .tb.active{background:var(--cyan);color:#00121a;border-color:transparent}
+   
+.trip-controls-row{
+  display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;
+}
+.trip-controls-row .trip-radius-box{flex:2;min-width:140px}
+.trip-controls-row .trip-transfers-box{flex:1;min-width:110px}
+.trip-controls-row label{
+  font-size:11px;font-weight:700;color:var(--text-2);display:block;margin-bottom:3px;
+}
+.trip-controls-row input[type="range"]{width:100%;accent-color:var(--cyan)}
+.trip-controls-row .select{padding:7px 28px 7px 10px;font-size:12px}
+
+.trip-points-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:6px;
+}
+.trip-points-grid .trip-point-card{
+  background:var(--surface-2);border:1px solid var(--border);border-radius:8px;
+  padding:6px 8px;display:flex;align-items:center;gap:6px;font-size:11px;
+  min-width:0;
+}
+.trip-points-grid .trip-point-card .tpc-letter{
+  width:20px;height:20px;border-radius:50%;display:grid;place-items:center;
+  color:#fff;font-weight:800;font-size:10px;flex-shrink:0;
+}
+.trip-points-grid .trip-point-card .tpc-coords{
+  flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  color:var(--text-2);font-size:10px;
+}
+.trip-points-grid .trip-point-card .tpc-actions{display:flex;gap:2px;flex-shrink:0}
+.trip-points-grid .trip-point-card .tpc-actions button{
+  width:20px;height:20px;border-radius:5px;background:var(--surface-3);
+  display:grid;place-items:center;color:var(--text-2);font-size:11px;
+}
+.trip-points-grid .trip-point-card .tpc-actions button:hover{color:var(--red)}
+.trip-points-grid .empty-trip{
+  grid-column:1/-1;text-align:center;padding:10px;font-size:11.5px;color:var(--text-3);
+}
+
+/* Resultados enriquecidos */
+.trip-result-actions{
+  display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;
+}
+.trip-result-actions .btn{padding:6px 10px;font-size:11.5px}
+.trip-badge-route{
+  display:inline-block;padding:2px 7px;border-radius:99px;font-size:10px;
+  font-weight:800;color:#fff;margin-right:4px;
+}
+
+/* 🔗 Cadena de rutas (chips cuadrados) en el encabezado de cada transbordo */
+.trip-chain{
+  display:flex;flex-wrap:wrap;align-items:center;gap:4px;
+  padding:0;
+  margin-bottom:4px;
+}
+.trip-chain-item{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:4px 8px 4px 4px;
   background:var(--surface-2);
   border:1px solid var(--border);
-  border-radius:var(--radius-sm);
-  padding:12px;
-  display:flex;
-  flex-direction:column;
-  gap:8px;
+  border-radius:10px;
 }
-.admin-col-title{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  font-size:11.5px;
-  font-weight:800;
-  text-transform:uppercase;
-  letter-spacing:.5px;
-  color:var(--cyan);
-  padding-bottom:8px;
-  margin-bottom:4px;
-  border-bottom:1px solid var(--border);
+.trip-chain-chip{
+  width:22px;height:22px;border-radius:6px;
+  display:grid;place-items:center;
+  color:#fff;font-weight:800;font-size:11px;flex-shrink:0;
+  box-shadow:0 2px 6px rgba(0,0,0,.25);
 }
-.admin-col .field{margin-bottom:0}
-.admin-col .field label{font-size:11px}
-.admin-col .input,
-.admin-col .select{padding:8px 10px;font-size:12.5px}
-.admin-col .select{padding-right:28px;background-size:14px}
+.trip-chain-name{
+  font-size:12.5px;font-weight:700;color:var(--text);
+  text-transform:uppercase;letter-spacing:.2px;
+  white-space:nowrap;
+}
+.trip-chain-sep{
+  color:var(--text-3);font-weight:800;font-size:16px;
+  margin:0 2px;line-height:1;
+}
+.trip-legend{
+  display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;padding:8px 10px;
+  background:var(--surface-2);border-radius:8px;font-size:11px;
+}
+.trip-legend .tl-item{display:flex;align-items:center;gap:5px}
+.trip-legend .tl-color{width:14px;height:4px;border-radius:2px}
 
-/* En móvil también se ven 3 columnas (más compactas) */
-@media(max-width:720px){
-  .admin-cols-3{
-    grid-template-columns:repeat(3, 1fr);
-    gap:6px;
-  }
-  .admin-col{
-    padding:8px 6px;
-  }
-  .admin-col-title{
-    font-size:9.5px;
-    letter-spacing:.2px;
-    gap:4px;
-    padding-bottom:6px;
-    margin-bottom:2px;
-  }
-  .admin-col-title svg{
-    width:12px;
-    height:12px;
-  }
-  .admin-col .field label{
-    font-size:9.5px;
-  }
-  .admin-col .input,
-  .admin-col .select{
-    padding:6px 8px;
-    font-size:11px;
-    border-radius:8px;
-  }
-  .admin-col .select{
-    padding-right:22px;
-    background-size:12px;
-    background-position:right 6px center;
-  }
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media(min-width:720px){
+  .form-grid{grid-template-columns:1fr 1fr;gap:0 14px}
+  .form-grid .field.full{grid-column:1/-1}
+  .routes-grid{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
+   .feed{max-width:680px}
 }
-  
+@media(min-width:1000px){
+  .app{max-width:1200px;margin:0 auto}
+  .bottom-nav{max-width:560px;left:50%;transform:translateX(-50%);border-radius:18px 18px 0 0;border-left:1px solid var(--border);border-right:1px solid var(--border)}
+  #map{height:70vh}
+}
+@media(max-width:380px){
+  .routes-grid{grid-template-columns:repeat(3,1fr)}
+  .header-brand .brand-txt{font-size:14px}
+  .route-card{padding:10px 8px;min-height:100px}
+  .route-card .route-icon{width:34px;height:34px}
+  .route-card .route-icon svg{width:18px;height:18px}
+  .route-card .route-name{font-size:11px}
+  .route-card .route-actions .icon-btn{width:26px;height:26px}
+  .route-card .edit-del .icon-btn{width:24px;height:24px}
+}
+   /* Leyenda del mapa */
+.map-legend {
+  pointer-events: none;
+}
 </style>
 </head>
 <body>
 
+<!-- ============================ HEADER ============================ -->
 <header class="header">
   <div class="header-brand">
-    
-        <div class="logo">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="18" height="18" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+        <circle cx="12" cy="10" r="3"/>
+      </svg>
     </div>
-    
-    <span>Admin Panel</span>
+    <span class="brand-txt">Rutas BGD</span>
   </div>
   <div class="header-actions">
-    <button class="icon-btn" id="themeBtn" title="Tema">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    <button class="install-btn" id="installBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Instalar
     </button>
-    <a class="icon-btn" href="/" title="Ir al sitio">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-    </a>
+    <button class="icon-btn" id="themeBtn" title="Cambiar tema">
+      <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <button class="icon-btn" id="connBtn" title="Estado de conexión">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+      <span class="conn-dot" id="connDot"></span>
+    </button>
   </div>
 </header>
 
-<div class="wrap">
-  <div class="tabs">
-    <button class="tab active" data-tab="posts">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-      Posts
-    </button>
-    <button class="tab" data-tab="rutas">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M6 16V9a4 4 0 0 1 4-4h4"/></svg>
-      Rutas
-    </button>
-    <button class="tab" data-tab="market">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
-      Market
-    </button>
-  </div>
+<!-- ============================ APP ============================ -->
+<main class="app" id="app">
 
-  <!-- ================= PANEL POSTS ================= -->
-  <section class="panel active" id="panel-posts">
-    <div class="card">
-      <div class="card-title">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        <span id="postFormTitle">Nueva publicación</span>
+  <!-- ===================== PÁGINA: INICIO (FEED) ===================== -->
+  <section class="page" id="page-home">
+     <div class="container">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Publicaciones recientes
       </div>
-      <div class="form-grid">
-        <div class="field full">
-          <label>Título</label>
-          <input class="input" id="postTitle" placeholder="Ej: Nueva ruta disponible...">
-        </div>
-        <div class="field full">
-          <label>Contenido</label>
-          <textarea class="textarea" id="postContent" placeholder="Escribe el contenido de la publicación..."></textarea>
-        </div>
-        <div class="field full">
-          <label>Imagen o video</label>
-          <label class="upload-btn" for="postFile">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            Subir archivo a Cloudinary
-          </label>
-          <input type="file" id="postFile" accept="image/*,video/*" class="hidden">
-          <input class="input" id="postMediaUrl" placeholder="...o pega una URL" style="margin-top:8px">
-          <div class="progress hidden" id="postUploadProg"><div style="width:0%"></div></div>
-          <img class="thumb-preview hidden" id="postPreview" alt="">
-        </div>
-      </div>
-      <div style="display:flex;gap:8px;margin-top:14px">
-        <button class="btn btn-ghost" id="postCancel">Cancelar</button>
-        <button class="btn btn-primary" style="flex:1" id="postSave">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-          Guardar publicación
+      <div class="feed" id="feed"></div>
+      <div id="feedAdminBar" class="hidden" style="max-width:620px;margin:0 auto 14px">
+        <button class="btn btn-primary btn-block" onclick="App.openPostEditor()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Nueva publicación
         </button>
       </div>
     </div>
-
-    <div class="card">
-      <div class="card-title">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-        Publicaciones existentes
-      </div>
-      <div class="list" id="postsList"></div>
-    </div>
   </section>
 
-  <!-- ================= PANEL RUTAS ================= -->
-  <section class="panel" id="panel-rutas">
-    <div class="card">
-      <div class="card-title">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M6 16V9a4 4 0 0 1 4-4h4"/></svg>
-        <span id="routeFormTitle">Registrar nueva ruta</span>
+  <!-- ===================== PÁGINA: RUTAS ===================== -->
+  <section class="page active" id="page-routes">
+    <div class="container">
+      <!-- Buscador dual -->
+      <div class="search-bar">
+        <div class="search-row">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <input type="text" id="originInput" placeholder="Estoy en..." autocomplete="off">
+          <div class="suggestions hidden" id="originSug"></div>
+        </div>
+        <div class="search-row">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+          <input type="text" id="destInput" placeholder="¿A dónde vamos?" autocomplete="off">
+          <div class="suggestions hidden" id="destSug"></div>
+        </div>
+
+         
+     
+                 <div style="display:flex;gap:8px">
+          <button class="btn" style="flex:1;background:linear-gradient(135deg,var(--purple),#7e22ce);color:#fff;box-shadow:0 6px 18px -6px rgba(168,85,247,.55);border-color:transparent" id="btnMapSearch" title="Ver rutas en mapa">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+            VER MAPA
+          </button>
+          <button class="btn btn-primary" style="flex:1" id="btnSearch">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            BUSCAR RUTAS
+          </button>
+          <button class="btn btn-ghost btn-icon" id="btnClearSearch" title="Limpiar" aria-label="Limpiar búsqueda">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+
+         
       </div>
 
-      <div class="steps">
-        <div class="step-dot active" data-step="1"></div>
-        <div class="step-dot" data-step="2"></div>
-        <div class="step-dot" data-step="3"></div>
-      </div>
-
-      <!-- Paso 1 -->
-
-      <div class="route-step" data-step="1">
-        <div class="field full">
-          <label>Nombre de la ruta *</label>
-          <input class="input" id="routeName" placeholder="Ej: Ruta Centro - Universidad">
-        </div>
-
-        <!-- 🎨 Colores en su propia fila -->
-        <div class="form-grid" style="margin-bottom:12px">
-          <div class="field">
-            <label>Color de ida</label>
-            <div class="color-swatches" id="colorIda"></div>
-          </div>
-          <div class="field">
-            <label>Color de regreso</label>
-            <div class="color-swatches" id="colorVuelta"></div>
-          </div>
-        </div>
-
-        <!-- 📋 3 columnas de información -->
-        <div class="admin-cols-3">
-
-          <!-- Columna 1: Info general -->
-          <div class="admin-col">
-            <div class="admin-col-title">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-              Información
-            </div>
-            <div class="field">
-              <label>Categoría *</label>
-              <select class="select" id="routeCat">
-                <option value="urbana">Urbana</option>
-                <option value="foranea">Foránea</option>
-              </select>
-            </div>
-            <div class="field">
-              <label>Tarifa</label>
-              <input class="input" id="routeTarifa" placeholder="$10">
-            </div>
-            <div class="field">
-              <label>Frecuencia</label>
-              <input class="input" id="routeFrec" placeholder="Cada 15 min">
-            </div>
-          </div>
-
-          <!-- Columna 2: Horarios -->
-          <div class="admin-col">
-            <div class="admin-col-title">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              Horario
-            </div>
-            <div class="field">
-              <label>Hora de inicio</label>
-              <input class="input" id="routeHoraIni" placeholder="05:00">
-            </div>
-            <div class="field">
-              <label>Hora de fin</label>
-              <input class="input" id="routeHoraFin" placeholder="22:00">
-            </div>
-            <div class="field">
-              <label>Días de operación</label>
-              <select class="select" id="routeDias">
-                <option value="todos">Todos los días</option>
-                <option value="l-v">Lunes a Viernes</option>
-                <option value="l-s">Lunes a Sábado</option>
-                <option value="finde">Solo fines de semana</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Columna 3: Accesibilidad -->
-          <div class="admin-col">
-            <div class="admin-col-title">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg>
-              Detalles
-            </div>
-            <div class="field">
-              <label>Accesibilidad</label>
-              <select class="select" id="routeAcces">
-                <option value="no">No accesible</option>
-                <option value="si">Accesible</option>
-                <option value="parcial">Parcialmente</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <!-- 📝 Notas: ocupa 2 columnas (todo el ancho disponible) -->
-        <div class="field full" style="margin-top:12px">
-          <label>Notas adicionales</label>
-          <textarea class="textarea" id="routeNotas" placeholder="Notas sobre la ruta..."></textarea>
-        </div>
-      </div>
-      <!-- Paso 2 -->
-      <div class="route-step hidden" data-step="2">
-        <div class="field full">
-          <label>Paradas (separadas por coma o salto de línea)</label>
-          <textarea class="textarea" id="routeParadas" placeholder="Parada 1, Parada 2&#10;Parada 3"></textarea>
-        </div>
-        <div class="field full">
-          <label>Retornos (separados por coma o salto de línea)</label>
-          <textarea class="textarea" id="routeRetornos" placeholder="Retorno 1, Retorno 2"></textarea>
-        </div>
-        <div class="field full">
-          <label>POIs de ida</label>
-          <textarea class="textarea" id="routePoisIda" placeholder="Hospital, Plaza, Escuela"></textarea>
-        </div>
-        <div class="field full">
-          <label>POIs de regreso</label>
-          <textarea class="textarea" id="routePoisVuelta" placeholder="Hospital, Plaza, Escuela"></textarea>
-        </div>
-      </div>
-
-      <!-- Paso 3 -->
-      <div class="route-step hidden" data-step="3">
-        <div class="field full">
-          <label>Calles por donde pasa la ruta</label>
-          <textarea class="textarea" id="routeCalles" placeholder="Calle 1, Calle 2&#10;Avenida 3"></textarea>
-        </div>
-
-        <!-- ============================================================ -->
-<!-- 📋 PANEL DE COORDENADAS — Pegar/exportar/editar coordenadas  -->
-<!-- ============================================================ -->
-<details class="coord-panel" id="coordPanel" style="margin-top:16px">
-  <summary style="padding:12px 14px;cursor:pointer;font-weight:800;font-size:13px;color:var(--cyan);background:var(--surface-2);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;gap:8px">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="16" height="16">
-      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-      <circle cx="12" cy="10" r="3"/>
-    </svg>
-    📋 Coordenadas (pegar / exportar / editar)
-  </summary>
-  <div style="padding:14px;background:var(--surface-2);border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px">
-
-    <!-- Tabs IDA / REGRESO -->
-    <div style="display:flex;gap:6px;margin-bottom:12px">
-      <button class="btn btn-primary btn-sm coord-tab active" data-coord-tab="ida" style="flex:1">
-        🟢 IDA
-      </button>
-      <button class="btn btn-ghost btn-sm coord-tab" data-coord-tab="vuelta" style="flex:1">
-        🟣 REGRESO
-      </button>
-    </div>
-
-    <!-- Textarea de IDA -->
-    <div class="coord-tab-content" data-coord-tab="ida">
-      <label style="font-size:12px;color:var(--text-2);display:block;margin-bottom:6px">
-        Pega las coordenadas de IDA (una por línea: <code>lat, lng</code>)
-      </label>
-      <textarea
-        id="coordIdaInput"
-        class="textarea"
-        placeholder="16.7524, -93.1150&#10;16.7524, -93.1149&#10;16.7523, -93.1149&#10;..."
-        style="min-height:140px;font-family:monospace;font-size:12px;line-height:1.5"></textarea>
-      <div style="display:flex;gap:6px;margin-top:8px">
-        <button class="btn btn-primary btn-sm" id="btnApplyCoordIda" style="flex:1">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>
-          Dibujar IDA en el mapa
+      <!-- Modos de vista -->
+      <div class="chips" id="routeModes">
+        <button class="chip active" data-mode="rutas">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M3 11h18"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/></svg>
+          Rutas
         </button>
-        <button class="btn btn-ghost btn-sm" id="btnLoadCoordIda">⬇ Cargar del mapa</button>
-      </div>
-    </div>
-
-    <!-- Textarea de REGRESO -->
-    <div class="coord-tab-content hidden" data-coord-tab="vuelta">
-      <label style="font-size:12px;color:var(--text-2);display:block;margin-bottom:6px">
-        Pega las coordenadas de REGRESO (una por línea: <code>lat, lng</code>)
-      </label>
-      <textarea
-        id="coordVueltaInput"
-        class="textarea"
-        placeholder="16.7525, -93.1136&#10;16.7524, -93.1136&#10;16.7523, -93.1133&#10;..."
-        style="min-height:140px;font-family:monospace;font-size:12px;line-height:1.5"></textarea>
-      <div style="display:flex;gap:6px;margin-top:8px">
-        <button class="btn btn-primary btn-sm" id="btnApplyCoordVuelta" style="flex:1">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>
-          Dibujar REGRESO en el mapa
+        <button class="chip" data-mode="paradas">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          Paradas
         </button>
-        <button class="btn btn-ghost btn-sm" id="btnLoadCoordVuelta">⬇ Cargar del mapa</button>
-      </div>
-    </div>
-
-    <!-- Acciones globales -->
-    <div style="display:flex;gap:6px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);flex-wrap:wrap">
-      <button class="btn btn-ghost btn-sm" id="btnExportMyMaps" style="flex:1;min-width:140px">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        📊 Exportar para My Maps (CSV)
-      </button>
-      <button class="btn btn-ghost btn-sm" id="btnExportKML" style="flex:1;min-width:140px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border-color:transparent">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/></svg>
-  🗺️ Exportar KML 
-</button>
-      
-      <button class="btn btn-ghost btn-sm" id="btnExportJSON" style="flex:1;min-width:140px">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        💾 Exportar JSON (backup)
-      </button>
-      <button class="btn btn-ghost btn-sm" id="btnImportJSON" style="flex:1;min-width:140px">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        📥 Importar JSON
-      </button>
-      <input type="file" id="importJSONFile" accept=".json,application/json" class="hidden">
-    </div>
-
-    <div class="tiny" style="margin-top:8px;text-align:center">
-      💡 Formato aceptado: <code>lat, lng</code> · uno por línea · también acepta <code>[[lat,lng],...]</code> o <code>lat lng</code>
-    </div>
-  </div>
-</details>
-        
-        
-        <div class="card-title" style="margin-top:16px">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/></svg>
-          Mapa de la ruta
-        </div>
-        <div class="map-wrap" id="editorMapWrap" style="margin:0">
-          <div id="editorMap"></div>
-          <!-- 🖥️ Botón de pantalla completa (esquina inferior derecha) -->
-          <button class="map-fs-btn" id="editorMapFsBtn" title="Pantalla completa">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
-              <path d="M8 3H5a2 2 0 0 0-2 2v3"/>
-              <path d="M21 8V5a2 2 0 0 0-2-2h-3"/>
-              <path d="M3 16v3a2 2 0 0 0 2 2h3"/>
-              <path d="M16 21h3a2 2 0 0 0 2-2v-3"/>
-            </svg>
-          </button>
-          <div class="map-toolbar">
-<button class="tb" data-tool="draw-ida">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
-  Ida
-</button>
-<button class="tb" data-tool="draw-vuelta">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
-  Regreso
-</button>
-            <button class="tb" data-tool="gps">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
-              GPS
-            </button>
-            <button class="tb" data-tool="poi">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-              POI
-            </button>
-            <button class="tb" data-tool="undo">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 3-7.7L3 8"/></svg>
-              Deshacer
-            </button>
-            <button class="tb" data-tool="clear">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
-              Limpiar
-            </button>
-            <button class="tb" data-tool="detect">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              Detectar
-            </button>
-          </div>
-        </div>
-               <div class="muted tiny" id="editorStatus" style="margin-top:6px">Puntos: 0 · Calles: 0 · POIs: 0</div>
-        <div class="progress hidden" id="detectProg"><div style="width:0%"></div></div>
-
-        <!-- 🖼️ Imagen personalizada para la ruta -->
-        <div class="field full" style="margin-top:14px">
-          <label style="display:flex;align-items:center;gap:6px">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14" style="color:var(--cyan)"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-            Imagen personalizada de la ruta (opcional)
-          </label>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <label class="upload-btn" for="routeCustomImg" style="flex:1;min-width:180px;margin:0">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="17" height="17"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              Subir imagen desde mi dispositivo
-            </label>
-            <input type="file" id="routeCustomImg" accept="image/*" class="hidden">
-            <button type="button" class="btn btn-ghost btn-sm hidden" id="routeCustomImgClear" title="Quitar imagen">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              Quitar
-            </button>
-          </div>
-          <div class="progress hidden" id="routeImgProg" style="margin-top:6px"><div style="width:0%"></div></div>
-          <img class="thumb-preview hidden" id="routeImgPreview" alt="" style="margin-top:8px">
-          <div class="muted tiny" style="margin-top:6px" id="routeImgHint">
-            Si no subes una imagen, se generará automáticamente desde el mapa.
-          </div>
-        </div>
+        <button class="chip" data-mode="pois">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+          POIs
+        </button>
+        <button class="chip" data-mode="calles">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M4 20h16"/><path d="M4 4h16"/><path d="M12 4v4"/><path d="M12 12v4"/><path d="M12 20v-4"/></svg>
+          Calles
+        </button>
+        <button class="chip" data-mode="retornos">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+          Retornos
+        </button>
       </div>
 
-      <div style="display:flex;gap:8px;margin-top:16px">
-        <button class="btn btn-ghost" id="routePrev">← Anterior</button>
-        <button class="btn btn-primary" style="flex:1" id="routeNext">Siguiente →</button>
-        <button class="btn btn-primary hidden" style="flex:1" id="routeSave">Guardar ruta</button>
-      </div>
-    </div>
+      <!-- Resultados búsqueda -->
+      <div id="searchResults" class="hidden" style="margin-top:14px"></div>
 
-    <div class="card" id="routesListCard">
-      <div class="card-title">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/></svg>
-        Rutas registradas
+      <!-- Contenido por modo -->
+      <div id="routeContent" style="margin-top:14px"></div>
+
+      <!-- Admin FAB -->
+      <div class="admin-bar hidden" id="adminFab">
+        <button class="fab" onclick="App.openRouteEditor()" title="Registrar ruta">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
       </div>
-      <div class="list" id="routesList"></div>
     </div>
   </section>
 
-  <!-- ================= PANEL MARKET ================= -->
-  <section class="panel" id="panel-market">
-    <div class="card">
-      <div class="card-title">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        <span id="marketFormTitle">Nuevo anuncio</span>
+  <!-- ===================== PÁGINA: MARKETPLACE ===================== -->
+  <section class="page" id="page-market">
+    <div class="container">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Marketplace
       </div>
-      <div class="form-grid">
-        <div class="field full">
-          <label>Título *</label>
-          <input class="input" id="mkTitle" placeholder="Ej: Toyota Corolla 2015">
-        </div>
-        <div class="field">
-          <label>Categoría *</label>
-          <select class="select" id="mkCat">
-            <option value="Auto o Camioneta">Auto o Camioneta</option>
-            <option value="Terreno o Lote">Terreno o Lote</option>
-            <option value="Casa o Renta">Casa o Renta</option>
-            <option value="Servicio">Servicio</option>
-            <option value="Otro">Otro</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Precio</label>
-          <input class="input" id="mkPrice" placeholder="$5000">
-        </div>
-        <div class="field full">
-          <label>WhatsApp del vendedor (con código país)</label>
-          <input class="input" id="mkPhone" placeholder="+521234567890">
-        </div>
-        <div class="field full">
-          <label>Descripción</label>
-          <textarea class="textarea" id="mkDesc" placeholder="Describe el producto o servicio..."></textarea>
-        </div>
-        <div class="field full">
-          <label>Imagen</label>
-          <label class="upload-btn" for="mkFile">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            Subir imagen a Cloudinary
-          </label>
-          <input type="file" id="mkFile" accept="image/*" class="hidden">
-          <input class="input" id="mkImgUrl" placeholder="...o pega una URL" style="margin-top:8px">
-          <img class="thumb-preview hidden" id="mkPreview" alt="">
-        </div>
+      <input class="input" id="marketSearch" placeholder="Buscar productos o servicios..." style="margin-bottom:12px">
+      <div class="chips" id="marketCats">
+        <button class="chip active" data-cat="all">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          Todos
+        </button>
+        <button class="chip" data-cat="Auto o Camioneta">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M5 17h14M5 17a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM23 17a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/><path d="M3 17V9l2-5h14l2 5v8"/></svg>
+          Auto
+        </button>
+        <button class="chip" data-cat="Terreno o Lote">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M3 20h18"/><path d="M5 20V10l7-6 7 6v10"/><path d="M9 20v-6h6v6"/></svg>
+          Terreno
+        </button>
+        <button class="chip" data-cat="Casa o Renta">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Casa
+        </button>
+        <button class="chip" data-cat="Servicio">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+          Servicio
+        </button>
+        <button class="chip" data-cat="Otro">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+          Otro
+        </button>
       </div>
-      <div style="display:flex;gap:8px;margin-top:14px">
-        <button class="btn btn-ghost" id="mkCancel">Cancelar</button>
-        <button class="btn btn-primary" style="flex:1" id="mkSave">Guardar anuncio</button>
+      <div class="market-grid" id="marketGrid" style="margin-top:14px"></div>
+      <div id="marketAdminBar" class="hidden" style="margin-top:14px">
+        <button class="btn btn-primary btn-block" onclick="App.openMarketEditor()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Publicar anuncio
+        </button>
       </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">Anuncios existentes</div>
-      <div class="list" id="marketList"></div>
     </div>
   </section>
-</div>
 
-<div class="toast-wrap" id="toastWrap"></div>
+  <!-- ===================== PÁGINA: RUTA INDIVIDUAL ===================== -->
+  <section class="page" id="page-route">
+    <div class="route-hero" id="routeHero"></div>
+    <div class="map-wrap" id="routeMapWrap" style="margin:0 14px">
+      <div id="map"></div>
+      <!-- 🖥️ Botón de pantalla completa (esquina inferior derecha) -->
+      <button class="map-fs-btn" id="routeMapFsBtn" title="Pantalla completa">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+          <path d="M8 3H5a2 2 0 0 0-2 2v3"/>
+          <path d="M21 8V5a2 2 0 0 0-2-2h-3"/>
+          <path d="M3 16v3a2 2 0 0 0 2 2h3"/>
+          <path d="M16 21h3a2 2 0 0 0 2-2v-3"/>
+        </svg>
+      </button>
+    </div>
+    <div class="container">
+      <div class="route-panel" id="routePanel"></div>
+    </div>
+  </section>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-<script src="https://unpkg.com/leaflet-image@0.4.0/leaflet-image.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/idb@8/build/umd.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-<script src="/js/db.js"></script>
-<script src="/js/publisher.js"></script>
-<script>
-/* ========================================================================
-   ADMIN.JS — Lógica embebida del panel de administración
-   ======================================================================== */
-(function(){
-  'use strict';
+  <!-- ===================== PÁGINA: POST INDIVIDUAL ===================== -->
+  <section class="page" id="page-post">
+    <div class="container">
+      <button class="btn btn-ghost btn-sm" id="postBack" style="margin-bottom:12px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Volver
+      </button>
+      <div class="feed" id="postSingle" style="padding:0"></div>
+    </div>
+  </section>
 
-  const FIREBASE_CONFIG = {
-   apiKey: "AIzaSyAiojpfnGUPhaoQkpAh1Yey3fp6uWU-iFQ",
-  authDomain: "aplicacion-2c1c8.firebaseapp.com",
-  databaseURL: "https://aplicacion-2c1c8.firebaseio.com",
-  projectId: "aplicacion-2c1c8",
-  storageBucket: "aplicacion-2c1c8.firebasestorage.app",
-  messagingSenderId: "837629411067",
-  appId: "1:837629411067:web:6c96cfcd7490b049787a5e",
-  measurementId: "G-SFP1SEY20W"
-  };
-  const CLOUDINARY = { cloud: 'davovja1g', preset: 'sinfirmaupload' };
+  
+  <!-- ===================== PÁGINA: BUSCAR VIAJE MAPA ===================== -->
+  <section class="page" id="page-trip">
+    <div class="container">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+        Buscar viaje en mapa
+      </div>
 
-  // ---------- Estado ----------
-  const state = {
-    editingPost: null,
-    editingRoute: null,
-    editingMarket: null,
-    routeStep: 1,
-    routeDraft: { puntos: [], calles: [], pois: [], puntosVuelta: [], callesVuelta: [], poisVuelta: [] },
-    drawMode: null,
-    drawing: false,
-    gpsWatch: null,
-    currentLineColor: '#00e5ff',
-    map: null,
-    layers: { ida: null, vuelta: null, markers: [] },
-    markerMeta: []   // ← nuevo: guarda {tipo:'ida'|'vuelta'|'poi'} por cada marker
-  };
-
-  // ---------- Firebase ----------
-  let fbDB = null;
-  try { firebase.initializeApp(FIREBASE_CONFIG); fbDB = firebase.database(); } catch(e){ console.warn('FB init:', e); }
-
-  // ---------- Utilidades ----------
-  const $ = (s,r=document)=>r.querySelector(s);
-  const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
-  const esc = s => String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const toast = (msg,type='ok')=>{
-    const w=$('#toastWrap'); const t=document.createElement('div');
-    t.className='toast '+type;
-    t.innerHTML = (type==='ok'
-      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg>'
-      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>')
-      + '<span>'+esc(msg)+'</span>';
-    w.appendChild(t); setTimeout(()=>{t.style.opacity='0';t.style.transform='translateY(-10px)';setTimeout(()=>t.remove(),300)},2800);
-  };
- const slugify = (s,dia,mes)=>{
-  const base = String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-    .replace(/[^a-z0-9]/g,'').trim().replace(/\s+/g,'').slice(0,60);
-  const num = `${dia}${mes}`.replace(/[^0-9]/g,'');
-  return `${base}${num}`;
-};
-  const splitList = v => String(v||'').split(/[\n,;]+/).map(s=>s.trim()).filter(Boolean);
-  const nowDM = ()=>{ const d=new Date(); return {dia:d.getDate(),mes:d.getMonth()+1}; };
-  const colores = ['#00e5ff','#a855f7','#10b981','#f59e0b','#ef4444','#ec4899','#3b82f6','#84cc16'];
-
-  // ---------- Tema ----------
-  const savedTheme = localStorage.getItem('tgz_theme') || 'dark';
-  document.documentElement.setAttribute('data-theme', savedTheme);
-  $('#themeBtn').onclick = ()=>{
-    const t = document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
-    document.documentElement.setAttribute('data-theme', t);
-    localStorage.setItem('tgz_theme', t);
-  };
-
-  // ---------- Tabs ----------
-  $$('.tab').forEach(t=>t.onclick=()=>{
-    $$('.tab').forEach(x=>x.classList.remove('active'));
-    t.classList.add('active');
-    $$('.panel').forEach(p=>p.classList.remove('active'));
-    $('#panel-'+t.dataset.tab).classList.add('active');
-    if(t.dataset.tab==='rutas'){ setTimeout(()=>state.map && state.map.invalidateSize(),200); }
-  });
-
-  // ================================================================
-  //   POSTS
-  // ================================================================
-  async function loadPosts(){
-    const list = await DB.getAll('posts');
-    list.sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
-    const el = $('#postsList');
-    if(!list.length){ el.innerHTML = '<div class="empty"><p>Sin publicaciones aún</p></div>'; return; }
-    el.innerHTML = list.map(p=>`
-      <div class="list-item" data-id="${esc(p.id)}">
-        <div class="li-info">
-          <div class="li-title">${esc(p.title||'(sin título)')}</div>
-          <div class="li-sub">${esc((p.content||'').slice(0,80))}...</div>
-        </div>
-        <div class="li-actions">
-          <button class="btn btn-ghost btn-sm" data-act="edit">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          </button>
-          <button class="btn btn-danger btn-sm" data-act="del">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+      <!-- Barra de control compacta ARRIBA del mapa -->
+      <div class="trip-controls">
+        <div class="trip-controls-row">
+          <div class="trip-radius-box">
+            <label>Radio de busqueda: <span id="tripRadiusVal">300</span>m</label>
+            <input type="range" id="tripRadius" min="10" max="2000" value="300" step="10">
+          </div>
+          <div class="trip-transfers-box">
+            <label>Máx. transbordos:</label>
+            <select class="select" id="tripMaxTransfers">
+              <option value="1">1 transbordo</option>
+              <option value="2" selected>2 transbordos</option>
+              <option value="3">3 transbordos</option>
+              <option value="4">4 transbordos</option>
+            </select>
+          </div>
+          <button class="btn btn-primary btn-sm" id="btnTripSearch">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Buscar
           </button>
         </div>
-      </div>`).join('');
-    el.querySelectorAll('.list-item').forEach(row=>{
-      const id = row.dataset.id;
-      row.querySelector('[data-act="edit"]').onclick = ()=>editPost(id);
-      row.querySelector('[data-act="del"]').onclick = async ()=>{
-        if(!confirm('¿Eliminar esta publicación?')) return;
-        const pass = prompt('Contraseña admin para eliminar en GitHub:') || '';
-        await DB.delete('posts', id);
-        if(fbDB) fbDB.ref('publicaciones/'+id).remove().catch(()=>{});
+        <!-- Puntos en 2 columnas compactas -->
+        <div id="tripPointsList" class="trip-points-grid"></div>
+      </div>
 
-        // 🗑️ Eliminar también el HTML del repositorio GitHub
-        if (pass) {
-          try {
-            const res = await Publisher.deleteFromGitHub({
-              tipo: 'post', slug: id, password: pass
-            });
-            if (res.ok) toast('Publicación eliminada (GitHub ✓)');
-            else toast('Eliminado local. GitHub: ' + (res.error || 'sin borrar'), 'err');
-          } catch (e) {
-            toast('Eliminado local (sin conexión a GitHub)', 'err');
-          }
-        } else {
-          toast('Eliminado local (sin GitHub)');
-        }
-        loadPosts();
-      };
-    });
-  }
-  async function editPost(id){
-    const p = await DB.get('posts', id);
-    if(!p) return;
-    state.editingPost = p;
-    $('#postFormTitle').textContent = 'Editar publicación';
-    $('#postTitle').value = p.title||'';
-    $('#postContent').value = p.content||'';
-    $('#postMediaUrl').value = p.media||'';
-    if(p.media){ $('#postPreview').src=p.media; $('#postPreview').classList.remove('hidden'); }
-    window.scrollTo({top:0,behavior:'smooth'});
-  }
-  $('#postCancel').onclick = ()=>{
-    state.editingPost=null;
-    $('#postFormTitle').textContent='Nueva publicación';
-    ['postTitle','postContent','postMediaUrl'].forEach(i=>$('#'+i).value='');
-    $('#postPreview').classList.add('hidden'); $('#postPreview').src='';
-    $('#postFile').value='';
-  };
-  $('#postFile').onchange = async e=>{
-    const f = e.target.files[0]; if(!f) return;
-    $('#postUploadProg').classList.remove('hidden');
-    try{
-      const url = await Publisher.uploadToCloudinary(f, pct=>{ $('#postUploadProg>div').style.width = pct+'%'; });
-      $('#postMediaUrl').value = url;
-      $('#postPreview').src = url; $('#postPreview').classList.remove('hidden');
-      toast('Archivo subido a Cloudinary');
-    }catch(err){
-      toast('Error al subir: '+err.message,'err');
-    }finally{
-      setTimeout(()=>{ $('#postUploadProg').classList.add('hidden'); $('#postUploadProg>div').style.width='0%'; },500);
-    }
-  };
-  $('#postMediaUrl').oninput = e=>{
-    const v = e.target.value.trim();
-    if(v){ $('#postPreview').src=v; $('#postPreview').classList.remove('hidden'); }
-    else $('#postPreview').classList.add('hidden');
-  };
-  $('#postSave').onclick = async ()=>{
-    const title = $('#postTitle').value.trim();
-    const content = $('#postContent').value.trim();
-    const media = $('#postMediaUrl').value.trim();
-    if(!title){ toast('El título es obligatorio','err'); return; }
-    const {dia,mes} = nowDM();
-    const id = state.editingPost?.id || slugify(title,dia,mes);
-    const post = {
-      id, slug: id, title, content, media,
-      tipo: 'post',
-      timestamp: state.editingPost?.timestamp || Date.now(),
-      updatedAt: Date.now(),
-      likes: state.editingPost?.likes || 0,
-      likedBy: state.editingPost?.likedBy || [],
-      comments: state.editingPost?.comments || [],
-      url: `/share/post/${id}`
-    };
-    await DB.put('posts', post);
-    try{
-      const res = await Publisher.publish({
-        tipo:'post', slug:id, title, content, image:media,
-        password: prompt('Contraseña admin para publicar en GitHub:') || '',
-        extra:{ dia, mes }
-      });
-      if(res && res.ok){ toast('Publicado en GitHub ✓'); }
-      else { toast('Guardado local. GitHub: '+(res?.error||'sin publicar'),'err'); }
-    }catch(err){ toast('Guardado local (sin conexión a GitHub)','err'); }
-    if(fbDB) fbDB.ref('publicaciones/'+id).set(post).catch(()=>{});
-    $('#postCancel').click();
-    loadPosts();
-  };
 
-  // ================================================================
-  //   RUTAS — Wizard de 3 pasos + Mapa
-  // ================================================================
-  function initColorSwatches(){
-    const build = (el, current, onPick)=>{
-      el.innerHTML = colores.map(c=>`<button class="swatch${c===current?' active':''}" data-color="${c}" style="background:${c}"></button>`).join('');
-      el.querySelectorAll('.swatch').forEach(s=>s.onclick=()=>{
-        el.querySelectorAll('.swatch').forEach(x=>x.classList.remove('active'));
-        s.classList.add('active'); onPick(s.dataset.color);
-      });
-    };
-    state.routeDraft.colorIda = state.routeDraft.colorIda || colores[0];
-    state.routeDraft.colorVuelta = state.routeDraft.colorVuelta || colores[1];
-    build($('#colorIda'), state.routeDraft.colorIda, c=>{ state.routeDraft.colorIda=c; redrawLines(); });
-    build($('#colorVuelta'), state.routeDraft.colorVuelta, c=>{ state.routeDraft.colorVuelta=c; redrawLines(); });
-  }
-
-   // -------- Debounce para redibujar el trazo (evita múltiples fetch a OSRM) --------
-  let redrawTimer = null;
-  function scheduleRedraw(){
-    if(redrawTimer) clearTimeout(redrawTimer);
-    redrawTimer = setTimeout(() => redrawLines(), 250);
-  }
-
-  function initEditorMap(){
-    if(state.map) return;
-    state.map = L.map('editorMap',{zoomControl:true}).setView([16.7530,-93.1150],13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-      maxZoom:19, attribution:'© OpenStreetMap'
-    }).addTo(state.map);
-
-    // 🖥️ Conectar botón de pantalla completa
-    setTimeout(() => {
-      const btn = document.getElementById('editorMapFsBtn');
-      const wrap = document.getElementById('editorMapWrap');
-      if (btn && wrap) {
-        const HTML_ENTER = `
+      <!-- Mapa + toolbar DEBAJO del mapa -->
+      <div class="map-wrap" id="tripMapWrap">
+        <div id="tripMap" style="width:100%;height:40vh;min-height:260px;z-index:1"></div>
+        <!-- 🖥️ Botón de pantalla completa -->
+        <button class="map-fs-btn" id="tripMapFsBtn" title="Pantalla completa">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
             <path d="M8 3H5a2 2 0 0 0-2 2v3"/>
             <path d="M21 8V5a2 2 0 0 0-2-2h-3"/>
             <path d="M3 16v3a2 2 0 0 0 2 2h3"/>
             <path d="M16 21h3a2 2 0 0 0 2-2v-3"/>
           </svg>
-        `;
-        const HTML_EXIT = `
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
-            <path d="M9 3v3a2 2 0 0 1-2 2H4"/>
-            <path d="M21 9h-3a2 2 0 0 0-2 2v3"/>
-            <path d="M3 15h3a2 2 0 0 1 2 2v3"/>
-            <path d="M15 21v-3a2 2 0 0 1 2-2h3"/>
-          </svg>
-        `;
-
-        btn.innerHTML = HTML_ENTER;
-        btn.title = 'Pantalla completa';
-
-        btn.onclick = () => {
-          const isFs = wrap.classList.toggle('is-fullscreen');
-          btn.classList.toggle('is-fullscreen', isFs);
-          document.body.classList.toggle('fs-active', isFs);
-          btn.innerHTML = isFs ? HTML_EXIT : HTML_ENTER;
-          btn.title = isFs ? 'Salir de pantalla completa' : 'Pantalla completa';
-          setTimeout(() => state.map && state.map.invalidateSize(), 250);
-        };
-      }
-    }, 50);
-     state.map.on('click', async e=>{
-  if(!state.drawing) return;
-  const snapped = await snapToRoad(e.latlng.lat, e.latlng.lng);
-
-  if(state.drawMode === 'poi'){
-    state.routeDraft.pois.push(snapped);
-    const poiMarker = L.circleMarker([snapped[0], snapped[1]],{radius:7,color:'#a855f7',fillColor:'#a855f7',fillOpacity:1,weight:2}).addTo(state.map);
-    state.layers.markers.push(poiMarker);
-    state.markerMeta.push({ tipo: 'poi' });   // ← AÑADIR ESTA LÍNEA
-    updateEditorStatus();
-    return;
-  }
-
-  if(state.drawMode === 'draw-vuelta'){
-    state.routeDraft.puntosVuelta.push(snapped);
-    addMarker(snapped[0], snapped[1], state.routeDraft.colorVuelta || '#a855f7', 'vuelta');
-  } else {
-    state.routeDraft.puntos.push(snapped);
-    addMarker(snapped[0], snapped[1], state.routeDraft.colorIda || '#ef4444', 'ida');
-  }
-  scheduleRedraw();
-  updateEditorStatus();
-});
-  }
-
-  // Snap-to-road usando OSRM (gratuito, sin API key)
-  async function snapToRoad(lat, lng){
-    try{
-      const url = `https://router.project-osrm.org/nearest/v1/driving/${lng},${lat}?number=1`;
-      const r = await fetch(url);
-      const j = await r.json();
-      if(j.code === 'Ok' && j.waypoints && j.waypoints[0]){
-        const [sLng, sLat] = j.waypoints[0].location;
-        return [sLat, sLng];
-      }
-    }catch(err){ /* fallback: punto original */ }
-    return [lat, lng];
-  }
- function addMarker(lat,lng,color='#ef4444',tipo='ida'){
-  const m = L.circleMarker([lat,lng],{radius:5,color,fillColor:color,fillOpacity:1,weight:2}).addTo(state.map);
-  state.layers.markers.push(m);
-  state.markerMeta.push({ tipo });
-}
-  // Offset perpendicular a una polyline (separa ida y regreso en la misma calle)
-  function offsetPolyline(coords, offsetMeters){
-    if(!coords || coords.length < 2) return coords;
-    const out = [];
-    const R = 6371000;
-    for(let i=0;i<coords.length;i++){
-      const p = coords[i];
-      const prev = coords[Math.max(0,i-1)];
-      const next = coords[Math.min(coords.length-1,i+1)];
-      const dLat = next[0]-prev[0];
-      const dLng = next[1]-prev[1];
-      const len = Math.hypot(dLat,dLng) || 1;
-      // Perpendicular unitaria
-      const perpLat = -dLng/len;
-      const perpLng =  dLat/len;
-      // Convertir metros a grados
-      const dLatDeg = (offsetMeters / R) * (180/Math.PI);
-      const dLngDeg = (offsetMeters / (R*Math.cos(p[0]*Math.PI/180))) * (180/Math.PI);
-      out.push([p[0] + perpLat*dLatDeg, p[1] + perpLng*dLngDeg]);
-    }
-    return out;
-  }
-
-  async function redrawLines(){
-    if(!state.map) return;
-    if(state.layers.ida) state.map.removeLayer(state.layers.ida);
-    if(state.layers.vuelta) state.map.removeLayer(state.layers.vuelta);
-
-    const pts = state.routeDraft.puntos;
-    const pv = state.routeDraft.puntosVuelta;
-
-    if(pts.length>1){
-      const geom = await getRouteGeometry(pts);
-      state.routeDraft.geometriaIda = geom;
-      // Offset hacia la derecha (ida) — 4 metros
-      const offsetGeom = offsetPolyline(geom, 4);
-      state.layers.ida = L.polyline(offsetGeom,{
-        color: state.routeDraft.colorIda || '#00e5ff',
-        weight: 4, opacity: .95
-      }).addTo(state.map);
-    }
-
-    if(pv.length>1){
-      const geomV = await getRouteGeometry(pv);
-      state.routeDraft.geometriaVuelta = geomV;
-      // Offset hacia la izquierda (regreso) — -4 metros
-      const offsetGeomV = offsetPolyline(geomV, -4);
-      state.layers.vuelta = L.polyline(offsetGeomV,{
-        color: state.routeDraft.colorVuelta || '#a855f7',
-        weight: 4, opacity: .95
-      }).addTo(state.map);
-    }
-  }
-
-  // Obtiene la geometría real de la calle entre los puntos usando OSRM
-  async function getRouteGeometry(points){
-    if(points.length < 2) return points;
-    try{
-      const coords = points.map(p => `${p[1]},${p[0]}`).join(';');
-      const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
-      const r = await fetch(url);
-      const j = await r.json();
-      if(j.code === 'Ok' && j.routes && j.routes[0]){
-        // Convertir [lng,lat] a [lat,lng] para Leaflet
-        return j.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
-      }
-    }catch(err){ /* fallback a línea recta */ }
-    return points;
-  }
-   function updateEditorStatus(){
-    const el = $('#editorStatus');
-    if(!el) return;
-    el.textContent = `Ida: ${state.routeDraft.puntos.length} · Regreso: ${state.routeDraft.puntosVuelta.length} · Calles: ${state.routeDraft.calles.length} · POIs: ${state.routeDraft.pois.length}`;
-  }
-
-  // ================================================================
-  //  🗺️  CAPTURAR EL MAPA COMO IMAGEN Y SUBIRLA A CLOUDINARY
-  // ================================================================
-  async function captureAndUploadMap(){
-    if(!state.map) throw new Error('Mapa no inicializado');
-    if(!state.routeDraft.puntos.length && !state.routeDraft.puntosVuelta.length){
-      throw new Error('No hay trazado para capturar');
-    }
-
-    // 1️⃣ Ajustar el mapa para que se vea TODA la ruta antes de capturar
-    const allCoords = [];
-    if(state.routeDraft.puntos) allCoords.push(...state.routeDraft.puntos);
-    if(state.routeDraft.puntosVuelta) allCoords.push(...state.routeDraft.puntosVuelta);
-    if(state.routeDraft.geometriaIda) allCoords.push(...state.routeDraft.geometriaIda);
-    if(state.routeDraft.geometriaVuelta) allCoords.push(...state.routeDraft.geometriaVuelta);
-    if(allCoords.length > 1){
-      try{ state.map.fitBounds(L.latLngBounds(allCoords).pad(0.15)); }catch(e){}
-    }
-
-    // 2️⃣ Esperar a que los tiles terminen de cargar
-    await new Promise(r => setTimeout(r, 800));
-
-    // 3️⃣ Capturar el canvas del mapa
-    const canvas = await new Promise((resolve, reject) => {
-      try{
-        leafletImage(state.map, (err, canvas) => {
-          if(err) return reject(err);
-          resolve(canvas);
-        });
-      }catch(e){ reject(e); }
-    });
-
-    // 4️⃣ Convertir canvas a Blob → File
-    const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.9));
-    if(!blob) throw new Error('No se pudo generar la imagen');
-    const file = new File([blob], 'ruta_' + Date.now() + '.jpg', { type: 'image/jpeg' });
-
-    // 5️⃣ Subir a Cloudinary
-    const url = await Publisher.uploadToCloudinary(file);
-    return url;
-  }
-
-  $$('.route-step').forEach((s,i)=>{});
-  function goStep(n){
-    state.routeStep = n;
-    $$('.route-step').forEach(s=>s.classList.toggle('hidden', +s.dataset.step!==n));
-    $$('.step-dot').forEach(d=>{
-      const s = +d.dataset.step;
-      d.classList.toggle('active', s===n);
-      d.classList.toggle('done', s<n);
-    });
-    $('#routePrev').style.visibility = n===1?'hidden':'visible';
-    $('#routeNext').classList.toggle('hidden', n===3);
-    $('#routeSave').classList.toggle('hidden', n!==3);
-    if(n===3){
-      setTimeout(()=>{
-        initEditorMap();
-        if(state.map){
-          state.map.invalidateSize();
-
-          // Limpiar TODOS los markers y las líneas previas
-          state.layers.markers.forEach(m=>state.map.removeLayer(m));
-          state.layers.markers = [];
-          state.markerMeta = [];
-          if(state.layers.ida){ state.map.removeLayer(state.layers.ida); state.layers.ida = null; }
-          if(state.layers.vuelta){ state.map.removeLayer(state.layers.vuelta); state.layers.vuelta = null; }
-
-          // Dibujar puntos de IDA con su color
-          if(state.routeDraft.puntos && state.routeDraft.puntos.length){
-            state.routeDraft.puntos.forEach(p=>{
-              addMarker(p[0], p[1], state.routeDraft.colorIda || '#ef4444', 'ida');
-            });
-          }
-
-          // Dibujar puntos de REGRESO con su color
-          if(state.routeDraft.puntosVuelta && state.routeDraft.puntosVuelta.length){
-            state.routeDraft.puntosVuelta.forEach(p=>{
-              addMarker(p[0], p[1], state.routeDraft.colorVuelta || '#a855f7', 'vuelta');
-            });
-          }
-
-          // Dibujar POIs
-          if(state.routeDraft.pois && state.routeDraft.pois.length){
-            state.routeDraft.pois.forEach(p=>{
-              const poiMarker = L.circleMarker([p[0], p[1]],{radius:7,color:'#a855f7',fillColor:'#a855f7',fillOpacity:1,weight:2}).addTo(state.map);
-              state.layers.markers.push(poiMarker);
-              state.markerMeta.push({ tipo: 'poi' });
-            });
-          }
-
-          // 🔥 DIBUJAR LA GEOMETRÍA GUARDADA (ida + vuelta)
-          // Se ejecuta tanto si editamos como si es nueva ruta.
-          // Primero intentamos con geometría real (OSRM), y si no existe,
-          // unimos los puntos crudos con una línea recta punteada.
-          const isEdit = !!state.editingRoute;
-          const r = state.editingRoute || {};
-          const colorIda = state.routeDraft.colorIda || '#00e5ff';
-          const colorVuelta = state.routeDraft.colorVuelta || '#a855f7';
-
-          // ---- IDA ----
-          if (r.geometriaIda && r.geometriaIda.length > 1) {
-            state.routeDraft.geometriaIda = r.geometriaIda;
-            const offsetGeom = offsetPolyline(r.geometriaIda, 4);
-            state.layers.ida = L.polyline(offsetGeom, {
-              color: colorIda, weight: 4, opacity: .95
-            }).addTo(state.map);
-          } else if (state.routeDraft.puntos.length > 1) {
-            state.layers.ida = L.polyline(state.routeDraft.puntos, {
-              color: colorIda, weight: 4, opacity: .95,
-              dashArray: '6,6'
-            }).addTo(state.map);
-          }
-
-          // ---- VUELTA ----
-          if (r.geometriaVuelta && r.geometriaVuelta.length > 1) {
-            state.routeDraft.geometriaVuelta = r.geometriaVuelta;
-            const offsetGeomV = offsetPolyline(r.geometriaVuelta, -4);
-            state.layers.vuelta = L.polyline(offsetGeomV, {
-              color: colorVuelta, weight: 4, opacity: .95
-            }).addTo(state.map);
-          } else if (state.routeDraft.puntosVuelta.length > 1) {
-            state.layers.vuelta = L.polyline(state.routeDraft.puntosVuelta, {
-              color: colorVuelta, weight: 4, opacity: .95,
-              dashArray: '6,6'
-            }).addTo(state.map);
-          }
-
-          // 🔍 FORZAR el zoom para que se vea toda la ruta (geometría + puntos)
-          // Esto soluciona el problema de "no veo el trazado" porque
-          // fitBounds se hace sobre TODA la geometría, no solo los puntos crudos.
-          setTimeout(() => {
-            const allCoords = [];
-            if (state.routeDraft.puntos) allCoords.push(...state.routeDraft.puntos);
-            if (state.routeDraft.puntosVuelta) allCoords.push(...state.routeDraft.puntosVuelta);
-            if (state.routeDraft.geometriaIda) allCoords.push(...state.routeDraft.geometriaIda);
-            if (state.routeDraft.geometriaVuelta) allCoords.push(...state.routeDraft.geometriaVuelta);
-            if (allCoords.length > 1) {
-              try {
-                state.map.fitBounds(L.latLngBounds(allCoords).pad(0.15));
-              } catch(e) { /* ignorar */ }
-            }
-          }, 300);
-
-          // Si NO es edición, refrescamos por si acaso
-          if (!isEdit) redrawLines();
-
-          updateEditorStatus();
-        }
-      },200);
-    }
-  }
-  $('#routePrev').onclick = ()=>goStep(Math.max(1,state.routeStep-1));
-  $('#routeNext').onclick = ()=>goStep(Math.min(3,state.routeStep+1));
-
-    // 🖼️ Listener para subir imagen personalizada de la ruta
-  $('#routeCustomImg').onchange = async (e) => {
-    const f = e.target.files[0];
-    if (!f) return;
-    
-    const prog = $('#routeImgProg');
-    const prev = $('#routeImgPreview');
-    const clearBtn = $('#routeCustomImgClear');
-    const hint = $('#routeImgHint');
-    
-    // Validar tamaño máximo (ahora 20MB, se comprimirá automáticamente)
-if (f.size > 20 * 1024 * 1024) {
-  toast('La imagen es muy grande (máx. 20MB)', 'err');
-  return;
-}
-    
-    prog.classList.remove('hidden');
-    prog.querySelector('div').style.width = '30%';
-    
-    try {
-      const url = await Publisher.uploadToCloudinary(f, pct => {
-        prog.querySelector('div').style.width = pct + '%';
-      });
-      
-      state.routeDraft.customImage = url;
-      prev.src = url;
-      prev.classList.remove('hidden');
-      clearBtn.classList.remove('hidden');
-      hint.textContent = '✅ Imagen personalizada cargada. Se usará esta en lugar de la generada automáticamente.';
-      toast('Imagen subida ✓');
-    } catch (err) {
-      toast('Error al subir: ' + err.message, 'err');
-    } finally {
-      setTimeout(() => {
-        prog.classList.add('hidden');
-        prog.querySelector('div').style.width = '0%';
-      }, 500);
-    }
-  };
-
-  // 🗑️ Botón para quitar la imagen personalizada
-  $('#routeCustomImgClear').onclick = () => {
-    state.routeDraft.customImage = '';
-    $('#routeCustomImg').value = '';
-    $('#routeImgPreview').classList.add('hidden');
-    $('#routeImgPreview').src = '';
-    $('#routeCustomImgClear').classList.add('hidden');
-    $('#routeImgHint').textContent = 'Si no subes una imagen, se generará automáticamente desde el mapa.';
-    toast('Imagen quitada');
-  };
-
-   // Toolbar del mapa
-  $$('.tb').forEach(b=>b.onclick=()=>{
-    const tool = b.dataset.tool;
-
-    if(tool==='undo'){
-      // Quitar el último marker REALMENTE añadido (por orden cronológico)
-      const meta = state.markerMeta.pop();
-      const m = state.layers.markers.pop();
-      if(m) state.map.removeLayer(m);
-
-      if(meta){
-        if(meta.tipo === 'vuelta')      state.routeDraft.puntosVuelta.pop();
-        else if(meta.tipo === 'poi')    state.routeDraft.pois.pop();
-        else                            state.routeDraft.puntos.pop();
-      }
-      scheduleRedraw(); updateEditorStatus(); return;
-    }
-
-    if(tool==='clear'){
-      state.routeDraft.puntos=[];
-      state.routeDraft.puntosVuelta=[];
-      state.routeDraft.calles=[];
-      state.routeDraft.pois=[];
-      state.routeDraft.poisVuelta=[];
-      state.routeDraft.geometriaIda=[];
-      state.routeDraft.geometriaVuelta=[];
-      state.layers.markers.forEach(m=>state.map.removeLayer(m));
-      state.layers.markers=[];
-            state.markerMeta=[]; 
-      scheduleRedraw(); updateEditorStatus(); return;
-    }
-
-    if(tool==='gps'){
-      toggleGPS(b); return;
-    }
-
-    if(tool==='detect'){
-      detectStreets(); return;
-    }
-
-    // draw-ida / draw-vuelta / poi: toggle de modo
-    if(state.drawMode === tool){
-      b.classList.remove('active');
-      state.drawing = false;
-      state.drawMode = null;
-      return;
-    }
-    $$('.tb').forEach(x=>x.classList.remove('active'));
-    b.classList.add('active');
-    state.drawing = true;
-    state.drawMode = tool;
-  });
-
-  function toggleGPS(btn){
-    if(state.gpsWatch){
-      navigator.geolocation.clearWatch(state.gpsWatch);
-      state.gpsWatch = null; btn.classList.remove('active');
-      toast('GPS detenido'); return;
-    }
-    if(!navigator.geolocation){ toast('GPS no disponible','err'); return; }
-
-    // Si no hay modo activo, asumimos ida por defecto
-    if(!state.drawMode) { state.drawMode = 'draw-ida'; state.drawing = true; }
-
-    btn.classList.add('active');
-    const modo = state.drawMode === 'draw-vuelta' ? 'REGRESO' : 'IDA';
-    toast('Grabando GPS en modo ' + modo + '...');
-
-    state.gpsWatch = navigator.geolocation.watchPosition(pos=>{
-      const {latitude:lat,longitude:lng} = pos.coords;
-      if(state.drawMode === 'draw-vuelta'){
-        state.routeDraft.puntosVuelta.push([lat,lng]);
-        addMarker(lat,lng, state.routeDraft.colorVuelta || '#a855f7', 'vuelta');
-      } else {
-        state.routeDraft.puntos.push([lat,lng]);
-        addMarker(lat,lng, state.routeDraft.colorIda || '#ef4444', 'ida');
-      }
-      scheduleRedraw(); updateEditorStatus();
-    },err=>{ toast('GPS: '+err.message,'err'); },{enableHighAccuracy:true,maximumAge:0,timeout:15000});
-  }
-
-  async function detectStreets(){
-    const ptsIda = state.routeDraft.puntos;
-    const ptsVuelta = state.routeDraft.puntosVuelta;
-    const pts = ptsIda.length >= 2 ? ptsIda : ptsVuelta;
-    if(pts.length<2){ toast('Traza al menos 2 puntos (ida o regreso)','err'); return; }
-
-    const prog = $('#detectProg'); prog.classList.remove('hidden');
-    const progressBar = prog.querySelector('div');
-
-    // 📌 Respetar las calles ya existentes en el textarea (NO borrarlas)
-    const existingText = $('#routeCalles').value || '';
-    const existingStreets = splitList(existingText);
-    const existingNorm = new Set(existingStreets.map(s => s.toLowerCase().trim()));
-
-    // Muestrear más puntos para mejor detección (20 puntos)
-    const samples = samplePoints(pts, 20);
-
-    // 🏘️ Estructura: mapa de "calle principal" → Set de variaciones
-    const streetMap = new Map();
-    const seenNames = new Set();
-
-    for(let i=0;i<samples.length;i++){
-      const [lat,lng] = samples[i];
-      try{
-        // 🔍 Consulta al PROXY en Cloudflare (no directo a Nominatim)
-        const r = await fetch(`/api/geocode?lat=${lat}&lon=${lng}`);
-        const j = await r.json();
-        const a = j.address || {};
-        const road = a.road || a.pedestrian || a.footway || a.path || a.street;
-
-        if(!road) continue;
-        if(seenNames.has(road)) continue;
-        seenNames.add(road);
-
-        // 🔍 Consulta 2: buscar la calle anterior y siguiente para saber "entre qué calles" está
-        let betweenText = '';
-        if (i > 0 && i < samples.length - 1) {
-          const prevP = samples[i - 1];
-          const nextP = samples[i + 1];
-          try {
-            await new Promise(r => setTimeout(r, 350));
-            const rPrev = await fetch(`/api/geocode?lat=${prevP[0]}&lon=${prevP[1]}`);
-            const jPrev = await rPrev.json();
-            const roadPrev = jPrev.address?.road || jPrev.address?.pedestrian || jPrev.address?.footway;
-
-            await new Promise(r => setTimeout(r, 350));
-            const rNext = await fetch(`/api/geocode?lat=${nextP[0]}&lon=${nextP[1]}`);
-            const jNext = await rNext.json();
-            const roadNext = jNext.address?.road || jNext.address?.pedestrian || jNext.address?.footway;
-
-            const neighbors = [roadPrev, roadNext].filter(n => n && n !== road);
-            if (neighbors.length >= 2) {
-              betweenText = ` entre ${neighbors[0]} y ${neighbors[1]}`;
-            } else if (neighbors.length === 1) {
-              betweenText = ` cerca de ${neighbors[0]}`;
-            }
-          } catch(e) { /* ignorar */ }
-        }
-
-        // 📝 Formatear el nombre: "9 sur entre 1 y 6 oriente"
-        const fullName = betweenText ? `${road}${betweenText}` : road;
-
-        const mainKey = road.toLowerCase().trim();
-        if (!streetMap.has(mainKey)) {
-          streetMap.set(mainKey, { main: road, variations: new Set() });
-        }
-        streetMap.get(mainKey).variations.add(fullName);
-
-      }catch(e){ /* continuar con el siguiente */ }
-
-      if (progressBar) {
-        progressBar.style.width = Math.round(((i+1)/samples.length)*100)+'%';
-      }
-      // Pausa entre peticiones (el proxy cachea, pero respetamos el límite)
-      await new Promise(r=>setTimeout(r,800));
-    }
-
-    // 🧩 Combinar con los resultados existentes
-    const finalStreets = [...existingStreets];
-    const added = [];
-
-    for (const [key, data] of streetMap.entries()) {
-      if (existingNorm.has(key)) continue;
-      const variations = Array.from(data.variations);
-      const best = variations.sort((a, b) => b.length - a.length)[0] || data.main;
-      if (!finalStreets.includes(best)) {
-        finalStreets.push(best);
-        added.push(best);
-      }
-    }
-
-    state.routeDraft.calles = finalStreets;
-    $('#routeCalles').value = finalStreets.join(', ');
-    updateEditorStatus();
-    prog.classList.add('hidden');
-    if (progressBar) progressBar.style.width='0%';
-
-    toast(`✅ ${added.length} calles nuevas detectadas (${finalStreets.length} en total)`);
-  }
-
-  function samplePoints(pts, n){
-    if(pts.length<=n) return pts;
-    const out=[]; const step=(pts.length-1)/(n-1);
-    for(let i=0;i<n;i++) out.push(pts[Math.round(i*step)]);
-    return out;
-  }
-
-    // ================================================================
-  //  📋 SECCIÓN DE COORDENADAS — Pegar/Exportar/Editar
-  // ================================================================
-
-  // ---------- Parser flexible de coordenadas ----------
-  function parseCoordsText(text) {
-    if (!text || !text.trim()) return [];
-    
-    const pts = [];
-    const seen = new Set();
-    
-    // Estrategia 1: JSON [[lat,lng],[lat,lng],...]
-    const jsonMatch = text.match(/\[\s*\[\s*[-+]?\d/);
-    if (jsonMatch) {
-      try {
-        const arr = JSON.parse(text);
-        if (Array.isArray(arr)) {
-          arr.forEach(p => {
-            if (Array.isArray(p) && p.length >= 2) {
-              const lat = parseFloat(p[0]);
-              const lng = parseFloat(p[1]);
-              if (!isNaN(lat) && !isNaN(lng)) {
-                const key = lat.toFixed(6) + ',' + lng.toFixed(6);
-                if (!seen.has(key)) { seen.add(key); pts.push([lat, lng]); }
-              }
-            }
-          });
-          if (pts.length) return pts;
-        }
-      } catch (e) { /* no es JSON, seguir */ }
-    }
-    
-    // Estrategia 2: Líneas con "lat, lng" o "lat lng" o "lat,lng"
-    const lines = text.split(/\r?\n/);
-    lines.forEach(line => {
-      line = line.trim();
-      if (!line || line.startsWith('#')) return;
-      // Buscar todos los pares de números
-      const matches = line.match(/[-+]?\d+\.?\d*/g);
-      if (matches && matches.length >= 2) {
-        for (let i = 0; i < matches.length - 1; i += 2) {
-          const lat = parseFloat(matches[i]);
-          const lng = parseFloat(matches[i + 1]);
-          if (!isNaN(lat) && !isNaN(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180) {
-            const key = lat.toFixed(6) + ',' + lng.toFixed(6);
-            if (!seen.has(key)) { seen.add(key); pts.push([lat, lng]); }
-          }
-        }
-      }
-    });
-    
-    return pts;
-  }
-
-  // ---------- Formatear coordenadas para textarea ----------
-  function formatCoordsForText(points) {
-    if (!points || !points.length) return '';
-    return points.map(p => {
-      const lat = Array.isArray(p) ? p[0] : p.lat;
-      const lng = Array.isArray(p) ? p[1] : p.lng;
-      return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-    }).join('\n');
-  }
-
-  // ---------- Aplicar coordenadas al mapa ----------
-  function applyCoordsToMap(tipo) {
-    // tipo: 'ida' o 'vuelta'
-    const isIda = tipo === 'ida';
-    const inputEl = isIda ? document.getElementById('coordIdaInput') : document.getElementById('coordVueltaInput');
-    const text = inputEl.value.trim();
-    
-    if (!text) { toast('Pega las coordenadas primero', 'err'); return; }
-    
-    const coords = parseCoordsText(text);
-    if (coords.length < 2) {
-      toast('Se necesitan al menos 2 coordenadas válidas', 'err');
-      return;
-    }
-    
-    // Asegurar que el mapa existe
-    if (!state.map) {
-      toast('El mapa no está inicializado. Ve al paso 3 primero.', 'err');
-      return;
-    }
-    
-    // Limpiar puntos anteriores del tipo correspondiente
-    if (isIda) {
-      state.routeDraft.puntos = coords;
-      // Eliminar markers de ida existentes
-      const newMarkers = [];
-      const newMeta = [];
-      state.layers.markers.forEach((m, i) => {
-        const meta = state.markerMeta[i];
-        if (meta && meta.tipo === 'ida') {
-          state.map.removeLayer(m);
-        } else {
-          newMarkers.push(m);
-          newMeta.push(meta);
-        }
-      });
-      state.layers.markers = newMarkers;
-      state.markerMeta = newMeta;
-      // Agregar nuevos markers
-      coords.forEach(p => addMarker(p[0], p[1], state.routeDraft.colorIda || '#00e5ff', 'ida'));
-    } else {
-      state.routeDraft.puntosVuelta = coords;
-      const newMarkers = [];
-      const newMeta = [];
-      state.layers.markers.forEach((m, i) => {
-        const meta = state.markerMeta[i];
-        if (meta && meta.tipo === 'vuelta') {
-          state.map.removeLayer(m);
-        } else {
-          newMarkers.push(m);
-          newMeta.push(meta);
-        }
-      });
-      state.layers.markers = newMarkers;
-      state.markerMeta = newMeta;
-      coords.forEach(p => addMarker(p[0], p[1], state.routeDraft.colorVuelta || '#a855f7', 'vuelta'));
-    }
-    
-    // Redibujar líneas (con OSRM)
-    scheduleRedraw();
-    updateEditorStatus();
-    
-    // Ajustar zoom
-    const allCoords = [...state.routeDraft.puntos, ...state.routeDraft.puntosVuelta];
-    if (allCoords.length > 1) {
-      try { state.map.fitBounds(L.latLngBounds(allCoords).pad(0.15)); } catch(e){}
-    }
-    
-    toast(`✅ ${coords.length} puntos de ${isIda ? 'IDA' : 'REGRESO'} dibujados`);
-  }
-
-  // ---------- Cargar coordenadas del mapa al textarea ----------
-  function loadCoordsFromMap(tipo) {
-    const isIda = tipo === 'ida';
-    const coords = isIda ? state.routeDraft.puntos : state.routeDraft.puntosVuelta;
-    const text = formatCoordsForText(coords);
-    const inputEl = isIda ? document.getElementById('coordIdaInput') : document.getElementById('coordVueltaInput');
-    inputEl.value = text;
-    toast(`${coords.length} puntos de ${isIda ? 'IDA' : 'REGRESO'} cargados`);
-  }
-
-  // ---------- Exportar para My Maps (CSV) ----------
-  function exportToMyMaps() {
-    const nombre = ($('#routeName').value || 'RUTA').trim().toUpperCase();
-    const ida = state.routeDraft.puntos || [];
-    const vuelta = state.routeDraft.puntosVuelta || [];
-    const calles = splitList($('#routeCalles').value);
-    const paradas = splitList($('#routeParadas').value);
-    
-    if (!ida.length && !vuelta.length) {
-      toast('No hay coordenadas para exportar', 'err');
-      return;
-    }
-    
-    // CSV con formato My Maps: Latitude, Longitude, Name, Description
-    const rows = [];
-    rows.push(['Latitude', 'Longitude', 'Name', 'Description']);
-    
-    // IDA
-    ida.forEach((p, i) => {
-      rows.push([
-        p[0].toFixed(6),
-        p[1].toFixed(6),
-        `${nombre} - IDA ${i + 1}`,
-        `Punto ${i + 1} de la ruta ${nombre} (ida)`
-      ]);
-    });
-    
-    // VUELTA
-    vuelta.forEach((p, i) => {
-      rows.push([
-        p[0].toFixed(6),
-        p[1].toFixed(6),
-        `${nombre} - REGRESO ${i + 1}`,
-        `Punto ${i + 1} de la ruta ${nombre} (regreso)`
-      ]);
-    });
-    
-    // Paradas (si existen)
-    paradas.forEach((p, i) => {
-      // Intentar encontrar la coordenada de la parada por nombre
-      rows.push([
-        '',
-        '',
-        `${nombre} - PARADA: ${p}`,
-        `Parada de la ruta ${nombre}`
-      ]);
-    });
-    
-    // Calles
-    calles.forEach((c, i) => {
-      rows.push([
-        '',
-        '',
-        `${nombre} - CALLE: ${c}`,
-        `Calle de la ruta ${nombre}`
-      ]);
-    });
-    
-    // Generar CSV
-    const csv = rows.map(r => 
-      r.map(cell => {
-        const s = String(cell || '');
-        // Escapar comillas y envolver en comillas si contiene coma
-        if (s.includes(',') || s.includes('"') || s.includes('\n')) {
-          return '"' + s.replace(/"/g, '""') + '"';
-        }
-        return s;
-      }).join(',')
-    ).join('\n');
-    
-    // Descargar
-    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${nombre.replace(/[^a-z0-9]/gi, '_')}_mymaps.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    
-    toast(`✅ CSV exportado (${ida.length + vuelta.length} puntos)`);
-  }
-
+        </button>
+      </div>
+      <div class="map-toolbar-below" id="tripToolbar">
+        <button class="tb active" data-tool="addpoint">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Agregar
+        </button>
+        <button class="tb" data-tool="locate">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+          GPS
+        </button>
+        <button class="tb" data-tool="undo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 3-7.7L3 8"/></svg>
+          Deshacer
+        </button>
+        <button class="tb" data-tool="clear">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Limpiar
+        </button>
+      </div>
+      <!-- Resultados con botones "ver en mapa" -->
+      <div id="tripResults" style="margin-top:14px"></div>
+    </div>
+  </section>
    
-    // ================================================================
-  //  🗺️ EXPORTAR KML PARA GOOGLE MY MAPS (con líneas/trazos)
-  //  ✅ Versión mejorada: asegura que OSRM haya generado la geometría
-  // ================================================================
-  async function exportToKML() {
-    const nombre = ($('#routeName').value || 'RUTA').trim().toUpperCase();
-    const ida = state.routeDraft.puntos || [];
-    const vuelta = state.routeDraft.puntosVuelta || [];
-    const calles = splitList($('#routeCalles').value);
-    const paradas = splitList($('#routeParadas').value);
-    
-    if (!ida.length && !vuelta.length) {
-      toast('No hay coordenadas para exportar', 'err');
-      return;
-    }
-    
-    // 🔄 PASO 1: Asegurar que OSRM haya generado la geometría
-    // Si tenemos puntos crudos pero no geometría, la generamos AHORA
-    const btn = document.getElementById('btnExportKML');
-    const originalHTML = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '⏳ Generando trazo real...';
-    
-    try {
-      // Si hay puntos de IDA pero no geometría → generar con OSRM
-      if (ida.length >= 2 && (!state.routeDraft.geometriaIda || state.routeDraft.geometriaIda.length < 2)) {
-        console.log('[KML] Generando geometría de IDA con OSRM...');
-        state.routeDraft.geometriaIda = await getRouteGeometry(ida);
-      }
-      
-      // Si hay puntos de VUELTA pero no geometría → generar con OSRM
-      if (vuelta.length >= 2 && (!state.routeDraft.geometriaVuelta || state.routeDraft.geometriaVuelta.length < 2)) {
-        console.log('[KML] Generando geometría de REGRESO con OSRM...');
-        state.routeDraft.geometriaVuelta = await getRouteGeometry(vuelta);
-      }
-      
-      // Ahora sí, usar la geometría (ya generada)
-      const geomIda = (state.routeDraft.geometriaIda && state.routeDraft.geometriaIda.length >= 2)
-        ? state.routeDraft.geometriaIda
-        : ida;
-      const geomVuelta = (state.routeDraft.geometriaVuelta && state.routeDraft.geometriaVuelta.length >= 2)
-        ? state.routeDraft.geometriaVuelta
-        : vuelta;
-      
-      // Verificar resultado
-      console.log('[KML] Puntos IDA:', geomIda.length);
-      console.log('[KML] Puntos REGRESO:', geomVuelta.length);
-      
-      // 🎨 Colores
-      const colorIdaHex = (state.routeDraft.colorIda || '#00e5ff').replace('#', '');
-      const colorVueltaHex = (state.routeDraft.colorVuelta || '#a855f7').replace('#', '');
-      
-      function hexToKmlColor(hex) {
-        const r = hex.substring(0, 2);
-        const g = hex.substring(2, 4);
-        const b = hex.substring(4, 6);
-        return `ff${b}${g}${r}`;
-      }
-      
-      const kmlColorIda = hexToKmlColor(colorIdaHex);
-      const kmlColorVuelta = hexToKmlColor(colorVueltaHex);
-      
-      const formatCoord = (p) => {
-        const lat = Array.isArray(p) ? p[0] : p.lat;
-        const lng = Array.isArray(p) ? p[1] : p.lng;
-        return `${lng.toFixed(6)},${lat.toFixed(6)},0`;
-      };
-      
-      // 🧩 Construir KML
-      let kml = `<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2">
-  <Document>
-    <name>${escapeXML(nombre)}</name>
-    <description>Ruta exportada desde Rutas BGD - ${new Date().toLocaleDateString('es-MX')}</description>
-    <Style id="styleIda">
-      <LineStyle>
-        <color>${kmlColorIda}</color>
-        <width>5</width>
-      </LineStyle>
-    </Style>
-    <Style id="styleVuelta">
-      <LineStyle>
-        <color>${kmlColorVuelta}</color>
-        <width>5</width>
-      </LineStyle>
-    </Style>
-    <Style id="stylePunto">
-      <IconStyle>
-        <color>ffffffff</color>
-        <scale>0.6</scale>
-        <Icon>
-          <href>http://maps.google.com/mapfiles/kml/shapes/placemark_circle.png</href>
-        </Icon>
-      </IconStyle>
-    </Style>`;
+</main>
 
-      // ---- IDA (con geometría real) ----
-      if (geomIda && geomIda.length >= 2) {
-        const coordsIda = geomIda.map(formatCoord).join(' ');
-        kml += `
-    <Placemark>
-      <name>${escapeXML(nombre)} - IDA</name>
-      <description><![CDATA[
-        <b>Ruta:</b> ${escapeXML(nombre)}<br>
-        <b>Sentido:</b> Ida<br>
-        <b>Puntos:</b> ${geomIda.length}<br>
-        <b>Color:</b> ${state.routeDraft.colorIda || '#00e5ff'}
-      ]]></description>
-      <styleUrl>#styleIda</styleUrl>
-      <LineString>
-        <extrude>0</extrude>
-        <tessellate>1</tessellate>
-        <altitudeMode>clampToGround</altitudeMode>
-        <coordinates>${coordsIda}</coordinates>
-      </LineString>
-    </Placemark>`;
-      }
+<!-- ============================ NAV INFERIOR ============================ -->
+<nav class="bottom-nav">
+  <button class="nav-item" data-page="home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>Inicio</span>
+  </button>
+  <button class="nav-item active" data-page="routes">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M6 16V9a4 4 0 0 1 4-4h4"/><path d="M18 8v7a4 4 0 0 1-4 4H9"/></svg>
+    <span>Rutas</span>
+  </button>
+  <button class="nav-item" data-page="market">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+    <span>Market</span>
+  </button>
+</nav>
 
-      // ---- VUELTA (con geometría real) ----
-      if (geomVuelta && geomVuelta.length >= 2) {
-        const coordsVuelta = geomVuelta.map(formatCoord).join(' ');
-        kml += `
-    <Placemark>
-      <name>${escapeXML(nombre)} - REGRESO</name>
-      <description><![CDATA[
-        <b>Ruta:</b> ${escapeXML(nombre)}<br>
-        <b>Sentido:</b> Regreso<br>
-        <b>Puntos:</b> ${geomVuelta.length}<br>
-        <b>Color:</b> ${state.routeDraft.colorVuelta || '#a855f7'}
-      ]]></description>
-      <styleUrl>#styleVuelta</styleUrl>
-      <LineString>
-        <extrude>0</extrude>
-        <tessellate>1</tessellate>
-        <altitudeMode>clampToGround</altitudeMode>
-        <coordinates>${coordsVuelta}</coordinates>
-      </LineString>
-    </Placemark>`;
-      }
+<!-- ============================ MODALES ============================ -->
+<div class="modal" id="commentsModal">
+  <div class="modal-sheet" id="commentsSheet">
+    <div class="sheet-handle" id="commentsHandle"></div>
+    <div class="sheet-head">
+      <h3>Comentarios</h3>
+      <button class="icon-btn" id="commentsClose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="sheet-body" id="commentsList"></div>
+    <div style="padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:8px">
+      <input class="input" id="commentInput" placeholder="Escribe un comentario...">
+      <button class="btn btn-primary btn-icon" id="commentSend">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
 
-      // ---- PARADAS ----
-      paradas.forEach((p) => {
-        kml += `
-    <Placemark>
-      <name>${escapeXML(p)}</name>
-      <description><![CDATA[
-        <b>Ruta:</b> ${escapeXML(nombre)}<br>
-        <b>Tipo:</b> Parada
-      ]]></description>
-      <styleUrl>#stylePunto</styleUrl>
-    </Placemark>`;
-      });
+<div class="modal" id="editorModal">
+  <div class="modal-sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h3 id="editorTitle">Registrar ruta</h3>
+      <button class="icon-btn" onclick="App.closeModal('editorModal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="sheet-body" id="editorBody"></div>
+  </div>
+</div>
 
-      // ---- CALLES ----
-      if (calles.length) {
-        const callesTexto = calles.map((c, i) => `${i + 1}. ${c}`).join('<br>');
-        kml += `
-    <Placemark>
-      <name>${escapeXML(nombre)} - Calles</name>
-      <description><![CDATA[
-        <b>Calles del recorrido:</b><br>
-        ${callesTexto}
-      ]]></description>
-    </Placemark>`;
-      }
+<div class="modal center" id="authModal">
+  <div class="modal-sheet">
+    <div class="sheet-head">
+      <h3>🔐 Acceso administrador</h3>
+      <button class="icon-btn" onclick="App.closeModal('authModal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="sheet-body">
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" class="input" id="adminPass" placeholder="••••••••">
+      </div>
+      <button class="btn btn-primary btn-block" id="adminLogin">Entrar</button>
+    </div>
+  </div>
+</div>
 
-      kml += `
-  </Document>
-</kml>`;
+<div class="viewer" id="viewer">
+  <button class="viewer-close" id="viewerClose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+  <div id="viewerContent"></div>
+</div>
 
-      // 📥 Descargar
-      const blob = new Blob([kml], { type: 'application/vnd.google-earth.kml+xml;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${nombre.replace(/[^a-z0-9]/gi, '_')}_mymaps.kml`;
-      a.click();
-      URL.revokeObjectURL(url);
-      
-      toast(`✅ KML exportado (${geomIda.length} pts IDA, ${geomVuelta.length} pts REGRESO)`);
-      
-    } catch (err) {
-      console.error('[KML] Error:', err);
-      toast('Error al exportar KML: ' + err.message, 'err');
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = originalHTML;
-    }
-  }
+<div class="toast-wrap" id="toastWrap"></div>
 
-  function escapeXML(s) {
-    return String(s || '').replace(/[<>&'"]/g, c => ({
-      '<': '&lt;',
-      '>': '&gt;',
-      '&': '&amp;',
-      "'": '&apos;',
-      '"': '&quot;'
-    }[c]));
-  }
-  
-  // ---------- Exportar JSON completo ----------
-  function exportToJSON() {
-    const nombre = ($('#routeName').value || 'RUTA').trim().toUpperCase();
-    const data = {
-      version: 1,
-      exportado: new Date().toISOString(),
-      ruta: {
-        nombre: nombre,
-        categoria: $('#routeCat').value,
-        tarifa: $('#routeTarifa').value,
-        frecuencia: $('#routeFrec').value,
-        horarioIni: $('#routeHoraIni').value,
-        horarioFin: $('#routeHoraFin').value,
-        dias: $('#routeDias').value,
-        accesibilidad: $('#routeAcces').value,
-        notas: $('#routeNotas').value,
-        paradas: splitList($('#routeParadas').value),
-        retornos: splitList($('#routeRetornos').value),
-        pois: splitList($('#routePoisIda').value),
-        poisVuelta: splitList($('#routePoisVuelta').value),
-        calles: splitList($('#routeCalles').value),
-        colorIda: state.routeDraft.colorIda,
-        colorVuelta: state.routeDraft.colorVuelta,
-        puntos: state.routeDraft.puntos || [],
-        puntosVuelta: state.routeDraft.puntosVuelta || [],
-        geometriaIda: state.routeDraft.geometriaIda || [],
-        geometriaVuelta: state.routeDraft.geometriaVuelta || []
-      }
-    };
-    
-    const json = JSON.stringify(data, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${nombre.replace(/[^a-z0-9]/gi, '_')}_backup.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    
-    toast(`✅ JSON exportado`);
-  }
+<!-- ============================ SCRIPTS ============================ -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://cdn.jsdelivr.net/npm/idb@8/build/umd.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="/js/db.js"></script>
+<script src="/js/publisher.js"></script>
+<script src="/js/app.js"></script>
 
-  // ---------- Importar JSON ----------
-  function importFromJSON(file) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const data = JSON.parse(e.target.result);
-        const r = data.ruta || data;
-        
-        // Cargar campos
-        if (r.nombre) $('#routeName').value = r.nombre;
-        if (r.categoria) $('#routeCat').value = r.categoria;
-        if (r.tarifa) $('#routeTarifa').value = r.tarifa;
-        if (r.frecuencia) $('#routeFrec').value = r.frecuencia;
-        if (r.horarioIni) $('#routeHoraIni').value = r.horarioIni;
-        if (r.horarioFin) $('#routeHoraFin').value = r.horarioFin;
-        if (r.dias) $('#routeDias').value = r.dias;
-        if (r.accesibilidad) $('#routeAcces').value = r.accesibilidad;
-        if (r.notas) $('#routeNotas').value = r.notas;
-        if (r.paradas) $('#routeParadas').value = r.paradas.join(', ');
-        if (r.retornos) $('#routeRetornos').value = r.retornos.join(', ');
-        if (r.pois) $('#routePoisIda').value = r.pois.join(', ');
-        if (r.poisVuelta) $('#routePoisVuelta').value = r.poisVuelta.join(', ');
-        if (r.calles) $('#routeCalles').value = r.calles.join(', ');
-        
-        // Cargar puntos
-        if (r.puntos) {
-          state.routeDraft.puntos = r.puntos;
-          $('#coordIdaInput').value = formatCoordsForText(r.puntos);
-        }
-        if (r.puntosVuelta) {
-          state.routeDraft.puntosVuelta = r.puntosVuelta;
-          $('#coordVueltaInput').value = formatCoordsForText(r.puntosVuelta);
-        }
-        if (r.geometriaIda) state.routeDraft.geometriaIda = r.geometriaIda;
-        if (r.geometriaVuelta) state.routeDraft.geometriaVuelta = r.geometriaVuelta;
-        if (r.colorIda) state.routeDraft.colorIda = r.colorIda;
-        if (r.colorVuelta) state.routeDraft.colorVuelta = r.colorVuelta;
-        
-        // Redibujar
-        initColorSwatches();
-        if (state.map) {
-          // Limpiar markers
-          state.layers.markers.forEach(m => state.map.removeLayer(m));
-          state.layers.markers = [];
-          state.markerMeta = [];
-          
-          // Dibujar puntos
-          (state.routeDraft.puntos || []).forEach(p => addMarker(p[0], p[1], state.routeDraft.colorIda, 'ida'));
-          (state.routeDraft.puntosVuelta || []).forEach(p => addMarker(p[0], p[1], state.routeDraft.colorVuelta, 'vuelta'));
-          
-          scheduleRedraw();
-          updateEditorStatus();
-          
-          const allCoords = [...(state.routeDraft.puntos || []), ...(state.routeDraft.puntosVuelta || [])];
-          if (allCoords.length > 1) {
-            try { state.map.fitBounds(L.latLngBounds(allCoords).pad(0.15)); } catch(e){}
-          }
-        }
-        
-        toast(`✅ Ruta importada: ${r.nombre || 'Sin nombre'}`);
-      } catch (err) {
-        toast('Error al importar JSON: ' + err.message, 'err');
-      }
-    };
-    reader.readAsText(file);
-  }
-
-  // ---------- Conectar eventos ----------
-  // Tabs IDA / REGRESO
-  $$('.coord-tab').forEach(tab => {
-    tab.onclick = () => {
-      $$('.coord-tab').forEach(t => {
-        t.classList.remove('active', 'btn-primary');
-        t.classList.add('btn-ghost');
-      });
-      tab.classList.remove('btn-ghost');
-      tab.classList.add('active', 'btn-primary');
-      
-      const target = tab.dataset.coordTab;
-      $$('.coord-tab-content').forEach(c => {
-        c.classList.toggle('hidden', c.dataset.coordTab !== target);
-      });
-    };
-  });
-
-  // Botones de aplicar
-  document.getElementById('btnApplyCoordIda').onclick = () => applyCoordsToMap('ida');
-  document.getElementById('btnApplyCoordVuelta').onclick = () => applyCoordsToMap('vuelta');
-
-  // Botones de cargar del mapa
-  document.getElementById('btnLoadCoordIda').onclick = () => loadCoordsFromMap('ida');
-  document.getElementById('btnLoadCoordVuelta').onclick = () => loadCoordsFromMap('vuelta');
-
-  // Exportar
-  document.getElementById('btnExportMyMaps').onclick = exportToMyMaps;
-  document.getElementById('btnExportKML').onclick = exportToKML;
-  document.getElementById('btnExportJSON').onclick = exportToJSON;
-
-  // Importar
-  document.getElementById('btnImportJSON').onclick = () => {
-    document.getElementById('importJSONFile').click();
-  };
-  document.getElementById('importJSONFile').onchange = (e) => {
-    const f = e.target.files[0];
-    if (f) importFromJSON(f);
-    e.target.value = '';
-  };
-  
-  $('#routeSave').onclick = async ()=>{
-    const name = $('#routeName').value.trim();
-    if(!name){ toast('El nombre es obligatorio','err'); goStep(1); return; }
-
-    const btn = $('#routeSave');
-    btn.disabled = true;
-        const originalHTML = btn.innerHTML;
-    
-    // 🖼️ Determinar qué hacer ANTES de cambiar el texto del botón
-    const usingCustomImage = !!state.routeDraft.customImage;
-    btn.innerHTML = usingCustomImage ? '⏳ Guardando ruta...' : '⏳ Generando imagen del mapa...';
-
-    try {
-      // 🖼️ Si hay imagen personalizada, úsala. Si no, genera la del mapa.
-      let mapImage = '';
-      
-      if (state.routeDraft.customImage) {
-        // ✅ Usuario subió una imagen propia
-        mapImage = state.routeDraft.customImage;
-        console.log('[Ruta] Usando imagen personalizada:', mapImage);
-      } else {
-        // 🗺️ Generar imagen automática desde el mapa
-        try {
-          
-          mapImage = await captureAndUploadMap();
-          toast('Imagen del mapa subida ✓');
-        } catch(e) {
-          console.warn('No se pudo capturar el mapa:', e);
-          toast('No se pudo generar imagen del mapa', 'err');
-          // Fallback: usar la imagen anterior si estamos editando
-          mapImage = state.editingRoute?.mapImage || '';
-        }
-      }
-
-      const {dia,mes} = nowDM();
-      const id = state.editingRoute?.id || slugify(name,dia,mes);
-      const route = {
-        id, slug:id, nombre:name.toUpperCase(),
-        categoria: $('#routeCat').value,
-        colorIda: state.routeDraft.colorIda,
-        colorVuelta: state.routeDraft.colorVuelta,
-        tarifa: $('#routeTarifa').value.trim(),
-        frecuencia: $('#routeFrec').value.trim(),
-        horarioIni: $('#routeHoraIni').value.trim(),
-        horarioFin: $('#routeHoraFin').value.trim(),
-        dias: $('#routeDias').value,
-        accesibilidad: $('#routeAcces').value,
-        notas: $('#routeNotas').value.trim(),
-        paradas: splitList($('#routeParadas').value),
-        retornos: splitList($('#routeRetornos').value),
-        pois: (state.routeDraft.pois && state.routeDraft.pois.length) ? state.routeDraft.pois : splitList($('#routePoisIda').value),
-        poisVuelta: splitList($('#routePoisVuelta').value),
-        calles: splitList($('#routeCalles').value),
-        puntos: state.routeDraft.puntos,
-        puntosVuelta: state.routeDraft.puntosVuelta,
-        geometriaIda: state.routeDraft.geometriaIda || [],
-        geometriaVuelta: state.routeDraft.geometriaVuelta || [],
-        mapImage: mapImage,   // ← imagen OG del mapa
-        timestamp: state.editingRoute?.timestamp || Date.now(),
-        updatedAt: Date.now(),
-        url:`/share/ruta/${id}`
-      };
-      await DB.put('routes', route);
-
-      btn.innerHTML = '⏳ Publicando en GitHub...';
-
-      try{
-        const res = await Publisher.publish({
-          tipo:'ruta', slug:id, title:name, content:`Ruta ${name}`,
-          image: mapImage,   // ← imagen OG en el HTML de la ruta
-          password: prompt('Contraseña admin:')||'',
-          extra:{ route }
-        });
-        if(res?.ok) toast('Ruta publicada en GitHub ✓');
-        else toast('Guardada local (GitHub: '+(res?.error||'pendiente')+')','err');
-      }catch(err){ toast('Guardada local (sin conexión)','err'); }
-
-      if(fbDB) fbDB.ref('rutas_colectivos_tgz/'+id).set(route).catch(()=>{});
-      resetRouteForm(); loadRoutes();
-
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = originalHTML;
-    }
-  };
-
-  function resetRouteForm(){
-    state.editingRoute = null;
-
-        // Mostrar de nuevo la lista de rutas registradas
-    const listCard = document.getElementById('routesListCard');
-    if (listCard) listCard.classList.remove('hidden');
-    
-    state.routeDraft = {
-      puntos:[], puntosVuelta:[],
-      calles:[], callesVuelta:[],
-      pois:[], poisVuelta:[],
-      geometriaIda:[], geometriaVuelta:[],
-      colorIda: colores[0], colorVuelta: colores[1]
-    };
-    state.drawMode = null;
-    state.drawing = false;
-
-         ['routeName','routeTarifa','routeFrec','routeHoraIni','routeHoraFin','routeNotas',
-       'routeParadas','routeRetornos','routePoisIda','routePoisVuelta','routeCalles',
-       'coordIdaInput','coordVueltaInput']
-        .forEach(i=>{ const el=$('#'+i); if(el) el.value=''; });
-
-      // 🖼️ Reset de la imagen personalizada
-      state.routeDraft.customImage = '';
-      const imgPrev = $('#routeImgPreview');
-      const imgInput = $('#routeCustomImg');
-      const imgClear = $('#routeCustomImgClear');
-      const imgHint = $('#routeImgHint');
-      if (imgPrev) { imgPrev.classList.add('hidden'); imgPrev.src = ''; }
-      if (imgInput) imgInput.value = '';
-      if (imgClear) imgClear.classList.add('hidden');
-      if (imgHint) imgHint.textContent = 'Si no subes una imagen, se generará automáticamente desde el mapa.';
-    
-
-    if(state.map){
-      // Quitar TODOS los markers
-      state.layers.markers.forEach(m=>state.map.removeLayer(m));
-      state.layers.markers = [];
-      state.markerMeta = [];
-      // Quitar líneas
-      if(state.layers.ida) { state.map.removeLayer(state.layers.ida); state.layers.ida = null; }
-      if(state.layers.vuelta) { state.map.removeLayer(state.layers.vuelta); state.layers.vuelta = null; }
-    }
-
-    // Quitar cualquier botón de la toolbar activo
-    $$('.tb').forEach(x=>x.classList.remove('active'));
-
-    updateEditorStatus();
-    $('#routeFormTitle').textContent = 'Registrar nueva ruta';
-    initColorSwatches();
-    goStep(1);
-  }
-
-  async function loadRoutes(){
-    const list = await DB.getAll('routes');
-    list.sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
-    const el = $('#routesList');
-    if(!list.length){ el.innerHTML='<div class="empty"><p>Sin rutas registradas</p></div>'; return; }
-
-        // Mostrar de nuevo la lista de rutas registradas
-    const listCard = document.getElementById('routesListCard');
-    if (listCard) listCard.classList.remove('hidden');
-    
-    el.innerHTML = list.map(r=>`
-      <div class="list-item" data-id="${esc(r.id)}">
-        <div class="li-info">
-          <div class="li-title">${esc(r.nombre)}</div>
-          <div class="li-sub">
-            <span class="badge badge-${r.categoria==='foranea'?'foranea':'urbana'}">${esc(r.categoria)}</span>
-            · ${(r.paradas||[]).length} paradas · ${(r.calles||[]).length} calles
-          </div>
-        </div>
-        <div class="li-actions">
-          <button class="btn btn-ghost btn-sm" data-act="edit">Editar</button>
-          <button class="btn btn-danger btn-sm" data-act="del">Borrar</button>
-        </div>
-      </div>`).join('');
-    el.querySelectorAll('.list-item').forEach(row=>{
-      const id=row.dataset.id;
-          row.querySelector('[data-act="edit"]').onclick=async()=>{
-        const r = await DB.get('routes',id); if(!r) return;
-        state.editingRoute = r;
-
-                    // Ocultar la lista de rutas mientras se edita
-        const listCard = document.getElementById('routesListCard');
-        if (listCard) listCard.classList.add('hidden');
-            
-        state.routeDraft = {
-          puntos: r.puntos||[],
-          puntosVuelta: r.puntosVuelta||[],
-          calles: r.calles||[],
-          callesVuelta: r.callesVuelta||[],
-          pois: r.pois||[],
-          poisVuelta: r.poisVuelta||[],
-          geometriaIda: r.geometriaIda||[],
-          geometriaVuelta: r.geometriaVuelta||[],
-          colorIda: r.colorIda||colores[0],
-          colorVuelta: r.colorVuelta||colores[1]
-        };
-        $('#routeFormTitle').textContent='Editar ruta';
-        $('#routeName').value=r.nombre||'';
-        $('#routeCat').value=r.categoria||'urbana';
-        $('#routeTarifa').value=r.tarifa||'';
-        $('#routeFrec').value=r.frecuencia||'';
-        $('#routeHoraIni').value=r.horarioIni||'';
-        $('#routeHoraFin').value=r.horarioFin||'';
-        $('#routeDias').value=r.dias||'todos';
-        $('#routeAcces').value=r.accesibilidad||'no';
-        $('#routeNotas').value=r.notas||'';
-        $('#routeParadas').value=(r.paradas||[]).join(', ');
-        $('#routeRetornos').value=(r.retornos||[]).join(', ');
-        $('#routePoisIda').value=(r.pois||[]).join(', ');
-        $('#routePoisVuelta').value=(r.poisVuelta||[]).join(', ');
-                                $('#routeCalles').value=(r.calles||[]).join(', ');
-        
-        // 🖼️ Restaurar vista previa de la imagen existente (pero sin marcarla como "personalizada")
-        // Solo se marcará como personalizada si el usuario sube una NUEVA imagen
-        state.routeDraft.customImage = '';
-        
-        const imgPrev = $('#routeImgPreview');
-        const clearBtn = $('#routeCustomImgClear');
-        const hint = $('#routeImgHint');
-        
-        if (r.mapImage) {
-          // Mostrar la imagen existente como referencia visual
-          if (imgPrev) {
-            imgPrev.src = r.mapImage;
-            imgPrev.classList.remove('hidden');
-          }
-          if (clearBtn) clearBtn.classList.add('hidden'); // No permitir quitarla todavía
-          if (hint) hint.textContent = '📷 Imagen actual de la ruta. Si subes una nueva, reemplazará esta. Si no, se mantendrá.';
-        } else {
-          if (imgPrev) {
-            imgPrev.classList.add('hidden');
-            imgPrev.src = '';
-          }
-          if (clearBtn) clearBtn.classList.add('hidden');
-          if (hint) hint.textContent = 'Si no subes una imagen, se generará automáticamente desde el mapa.';
-        }
-        
-     initColorSwatches(); goStep(1);
-        
-        // 📋 Cargar coordenadas en los textareas
-        const idaInput = document.getElementById('coordIdaInput');
-        const vueltaInput = document.getElementById('coordVueltaInput');
-        if (idaInput) idaInput.value = formatCoordsForText(r.puntos || []);
-        if (vueltaInput) vueltaInput.value = formatCoordsForText(r.puntosVuelta || []);
-        
-        // Centrar el mapa en la ruta cargada
-        if(state.map && (r.puntos?.length || r.puntosVuelta?.length)){
-          setTimeout(()=>{
-            const all = (r.puntos||[]).concat(r.puntosVuelta||[]);
-            if(all.length){
-              try{ state.map.fitBounds(L.latLngBounds(all).pad(0.15)); }catch(e){}
-            }
-          }, 300);
-        }
-        window.scrollTo({top:0,behavior:'smooth'});
-        toast('Ruta cargada para edición');
-            
-      };
-      row.querySelector('[data-act="del"]').onclick=async()=>{
-        if(!confirm('¿Eliminar esta ruta?')) return;
-        const pass = prompt('Contraseña admin para eliminar en GitHub:') || '';
-        await DB.delete('routes',id);
-        if(fbDB) fbDB.ref('rutas_colectivos_tgz/'+id).remove().catch(()=>{});
-
-        // 🗑️ Eliminar también el HTML del repositorio GitHub
-        if (pass) {
-          try {
-            const res = await Publisher.deleteFromGitHub({
-              tipo: 'ruta', slug: id, password: pass
-            });
-            if (res.ok) toast('Ruta eliminada (GitHub ✓)');
-            else toast('Eliminado local. GitHub: ' + (res.error || 'sin borrar'), 'err');
-          } catch (e) {
-            toast('Eliminado local (sin conexión a GitHub)', 'err');
-          }
-        } else {
-          toast('Eliminado local (sin GitHub)');
-        }
-        loadRoutes();
-      };
-    });
-  }
-
-  // ================================================================
-  //   MARKET
-  // ================================================================
-  async function loadMarket(){
-    const list = await DB.getAll('market');
-    list.sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
-    const el=$('#marketList');
-    if(!list.length){ el.innerHTML='<div class="empty"><p>Sin anuncios</p></div>'; return; }
-    el.innerHTML=list.map(m=>`
-      <div class="list-item" data-id="${esc(m.id)}">
-        <div class="li-info">
-          <div class="li-title">${esc(m.title)}</div>
-          <div class="li-sub">${esc(m.categoria)} · ${esc(m.price||'')}</div>
-        </div>
-        <div class="li-actions">
-          <button class="btn btn-ghost btn-sm" data-act="edit">Editar</button>
-          <button class="btn btn-danger btn-sm" data-act="del">Borrar</button>
-        </div>
-      </div>`).join('');
-    el.querySelectorAll('.list-item').forEach(row=>{
-      const id=row.dataset.id;
-      row.querySelector('[data-act="edit"]').onclick=async()=>{
-        const m=await DB.get('market',id); if(!m) return;
-        state.editingMarket=m;
-        $('#marketFormTitle').textContent='Editar anuncio';
-        $('#mkTitle').value=m.title||''; $('#mkCat').value=m.categoria||'Otro';
-        $('#mkPrice').value=m.price||''; $('#mkPhone').value=m.phone||'';
-        $('#mkDesc').value=m.description||''; $('#mkImgUrl').value=m.image||'';
-        if(m.image){ $('#mkPreview').src=m.image; $('#mkPreview').classList.remove('hidden'); }
-        window.scrollTo({top:0,behavior:'smooth'});
-      };
-      row.querySelector('[data-act="del"]').onclick=async()=>{
-        if(!confirm('¿Eliminar este anuncio?')) return;
-        const pass = prompt('Contraseña admin para eliminar en GitHub:') || '';
-        await DB.delete('market',id);
-        if(fbDB) fbDB.ref('marketplace/'+id).remove().catch(()=>{});
-
-        // 🗑️ Eliminar también el HTML del repositorio GitHub
-        if (pass) {
-          try {
-            const res = await Publisher.deleteFromGitHub({
-              tipo: 'market', slug: id, password: pass
-            });
-            if (res.ok) toast('Anuncio eliminado (GitHub ✓)');
-            else toast('Eliminado local. GitHub: ' + (res.error || 'sin borrar'), 'err');
-          } catch (e) {
-            toast('Eliminado local (sin conexión a GitHub)', 'err');
-          }
-        } else {
-          toast('Eliminado local (sin GitHub)');
-        }
-        loadMarket();
-      };
-    });
-  }
-  $('#mkCancel').onclick=()=>{
-    state.editingMarket=null;
-    $('#marketFormTitle').textContent='Nuevo anuncio';
-    ['mkTitle','mkPrice','mkPhone','mkDesc','mkImgUrl'].forEach(i=>$('#'+i).value='');
-    $('#mkPreview').classList.add('hidden'); $('#mkPreview').src=''; $('#mkFile').value='';
-  };
-  $('#mkFile').onchange = async e=>{
-    const f=e.target.files[0]; if(!f) return;
-    try{
-      const url = await Publisher.uploadToCloudinary(f);
-      $('#mkImgUrl').value=url; $('#mkPreview').src=url; $('#mkPreview').classList.remove('hidden');
-      toast('Imagen subida');
-    }catch(err){ toast('Error: '+err.message,'err'); }
-  };
-  $('#mkImgUrl').oninput = e=>{
-    const v=e.target.value.trim();
-    if(v){ $('#mkPreview').src=v; $('#mkPreview').classList.remove('hidden'); }
-    else $('#mkPreview').classList.add('hidden');
-  };
-  $('#mkSave').onclick = async ()=>{
-    const title=$('#mkTitle').value.trim();
-    if(!title){ toast('El título es obligatorio','err'); return; }
-    const {dia,mes}=nowDM();
-    const id = state.editingMarket?.id || slugify(title,dia,mes);
-    const ad = {
-      id, slug:id, title, categoria:$('#mkCat').value,
-      price:$('#mkPrice').value.trim(), phone:$('#mkPhone').value.trim(),
-      description:$('#mkDesc').value.trim(), image:$('#mkImgUrl').value.trim(),
-      tipo:'market', timestamp: state.editingMarket?.timestamp||Date.now(),
-      updatedAt:Date.now(), url:`/share/m/${id}`
-    };
-    await DB.put('market',ad);
-    try{
-      const res=await Publisher.publish({
-        tipo:'market', slug:id, title, content:ad.description, image:ad.image,
-        password: prompt('Contraseña admin:')||'', extra:{ market:ad }
-      });
-      if(res?.ok) toast('Anuncio publicado ✓');
-      else toast('Guardado local (GitHub: '+(res?.error||'pendiente')+')','err');
-    }catch(err){ toast('Guardado local','err'); }
-    if(fbDB) fbDB.ref('marketplace/'+id).set(ad).catch(()=>{});
-    $('#mkCancel').click(); loadMarket();
-  };
-
-  // ================================================================
-  //   INICIALIZACIÓN
-  // ================================================================
-  (async()=>{
-    initColorSwatches();
-    goStep(1);
-    await loadPosts();
-    await loadRoutes();
-    await loadMarket();
-  })();
-
-})();
-</script>
 </body>
 </html>
