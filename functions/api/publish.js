@@ -298,7 +298,25 @@ function escapeHTML(s) {
 //  Generador de HTML
 // ==========================================================================
 function generateHTML({ tipo, title, content, image, slug, pageUrl, baseUrl, extra }) {
-  const safeTitle = escapeHTML(title);
+  // 📰 Título optimizado para SEO (50-60 caracteres)
+  let seoTitle = title;
+  if (tipo === 'ruta') {
+    // Añadir palabras clave al título
+    const cat = extra?.route?.categoria ? ` - ${extra.route.categoria}` : '';
+    const kw = 'Ruta Tuxtla Gutiérrez Chiapas';
+    seoTitle = `${title}${cat} · ${kw}`;
+  } else if (tipo === 'market') {
+    seoTitle = `${title} · Marketplace Tuxtla Gutiérrez`;
+  } else {
+    seoTitle = `${title} · Blog Rutas BGD`;
+  }
+  // Limitar a 60 caracteres
+  if (seoTitle.length > 60) seoTitle = seoTitle.slice(0, 57) + '...';
+
+  const safeTitle = escapeHTML(title);       // título original (para h1)
+  const safeSeoTitle = escapeHTML(seoTitle); // título SEO (para <title> y og:title)
+
+   
  // Construir descripción enriquecida según el tipo
 let enrichedContent = content || '';
 if (tipo === 'ruta' && extra?.route) {
@@ -330,9 +348,21 @@ if (tipo === 'ruta' && extra?.route) {
   }
 }
 
-const safeDesc = escapeHTML(enrichedContent.slice(0, 160));
-  const safeImage = image ? escapeHTML(image) : `${baseUrl}/img.png`;
-
+// 📝 Descripción: 155 caracteres para meta description (Google corta a ~160)
+const safeDesc = escapeHTML(enrichedContent.slice(0, 155));
+// 🐦 Para OG (redes sociales cortan a ~125)
+const safeDescOG = escapeHTML(enrichedContent.slice(0, 125));
+   
+     // 🖼️ OG Image: forzar 1200x630 JPG para redes sociales
+  let safeImage = image ? escapeHTML(image) : `${baseUrl}/img.png`;
+  if (safeImage.includes('res.cloudinary.com') && safeImage.includes('/upload/')) {
+    // Insertar transformaciones fijas de OG (1200x630, JPG, calidad alta)
+    safeImage = safeImage.replace(
+      /\/upload\/(?:[^\/]*\/)?/,
+      '/upload/c_fill,w_1200,h_630,q_auto:good,f_jpg/'
+    );
+  }
+   
   const typeLabel = tipo === 'ruta' ? 'Ruta' : tipo === 'market' ? 'Anuncio' : 'Publicación';
 
   // Schema.org
@@ -406,18 +436,26 @@ const safeDesc = escapeHTML(enrichedContent.slice(0, 160));
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
 <meta name="theme-color" content="#0a0e1a">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<title>${safeTitle} · Rutas BGD</title>
+<title>${safeSeoTitle}</title>
 <meta name="description" content="${safeDesc}">
 <link rel="canonical" href="${pageUrl}">
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" type="image/svg+xml" href="/assets/icon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/icon.svg">
+<link rel="apple-touch-icon" sizes="152x152" href="/assets/icon.svg">
+<link rel="apple-touch-icon" sizes="120x120" href="/assets/icon.svg">
+<meta name="format-detection" content="telephone=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rutas BGD">
 <link rel="preconnect" href="https://unpkg.com">
 <link rel="preconnect" href="https://tile.openstreetmap.org">
 
 <!-- Open Graph -->
 <meta property="og:type" content="${tipo === 'post' ? 'article' : 'website'}">
-<meta property="og:title" content="${safeTitle}">
-<meta property="og:description" content="${safeDesc}">
+<meta property="og:title" content="${safeSeoTitle}">
+<meta property="og:description" content="${safeDescOG}">
 <meta property="og:image" content="${safeImage}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -428,8 +466,8 @@ const safeDesc = escapeHTML(enrichedContent.slice(0, 160));
 
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="${safeTitle}">
-<meta name="twitter:description" content="${safeDesc}">
+<meta name="twitter:title" content="${safeSeoTitle}">
+<meta name="twitter:description" content="${safeDescOG}">
 <meta name="twitter:image" content="${safeImage}">
 
 <!-- Schema.org -->
