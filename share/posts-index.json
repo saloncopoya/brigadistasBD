@@ -1,6 +1,25 @@
 {
   "posts": [
     {
+      "slug": "otrarutw159",
+      "title": "Otrarutw",
+      "description": "Ruta Otrarutw",
+      "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789497655/rbkube9yepdyumru2m5y.jpg",
+      "url": "/share/ruta/otrarutw159",
+      "tipo": "ruta",
+      "timestamp": 1789497664666,
+      "updatedAt": "2026-09-15T18:41:04.666Z",
+      "categoria": "urbana",
+      "tarifa": "10",
+      "frecuencia": "12",
+      "horarioIni": "5",
+      "horarioFin": "21",
+      "dias": "todos",
+      "paradas": [],
+      "calles": [],
+      "pois": []
+    },
+    {
       "slug": "123adx159",
       "title": "123adx",
       "description": "Ruta 123adx",
@@ -241,8 +260,8 @@
       "updatedAt": "2026-09-13T08:52:43.612Z"
     }
   ],
-  "total": 24,
-  "updatedAt": "2026-09-15T18:16:02.299Z",
+  "total": 25,
+  "updatedAt": "2026-09-15T18:41:04.666Z",
   "version": 1,
-  "__sha": "cbcf9f063bddec966768197c34eb50c39f45be89"
+  "__sha": "b0b0a5a6fa7fd349dbb4cc4b67541ffe278e606d"
 }
