@@ -165,8 +165,8 @@ export async function onRequest(context) {
     else if (tipo === 'market') folder = 'share/m';
 
     const safeSlug = slug.replace(/[^a-z0-9\-_]/gi, '-').toLowerCase().replace(/-+/g, '-').replace(/^-|-$/g, '');
-   const htmlPath = `${folder}/${safeSlug}.html`;
-const cleanPath = `${folder}/${safeSlug}`;
+     const htmlPath = `${folder}/${safeSlug}.html`;
+const cleanPath = `${folder}/${safeSlug}.html`;
     const pageUrl = `${baseUrl}/${cleanPath}`;
     // ---------- Generar HTML con SEO completo ----------
     const html = generateHTML({
@@ -770,8 +770,7 @@ async function regenerateSitemap(env, ghHeaders, baseUrl, index) {
   ];
 
   (index.posts || []).forEach(p => {
-    // Normalizar: quitar .html del final si existe
-    let cleanUrl = String(p.url || '').replace(/\.html$/, '');
+    let cleanUrl = String(p.url || '');
     if (!cleanUrl.startsWith('/')) cleanUrl = '/' + cleanUrl;
     urls.push({
       loc: `${baseUrl}${cleanUrl}`,
