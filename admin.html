@@ -851,8 +851,8 @@ body.fs-active{overflow:hidden !important}
 };
   const splitList = v => String(v||'').split(/[\n,;]+/).map(s=>s.trim()).filter(Boolean);
   const nowDM = ()=>{ const d=new Date(); return {dia:d.getDate(),mes:d.getMonth()+1}; };
-  const colores = ['#00e5ff','#a855f7','#10b981','#f59e0b','#ef4444','#ec4899','#3b82f6','#84cc16'];
-
+  // 🎨 Paleta: azul primero (IDA), rojo segundo (REGRESO)
+  const colores = ['#3b82f6','#ef4444','#00e5ff','#a855f7','#10b981','#f59e0b','#ec4899','#84cc16'];
   // ---------- Tema ----------
   const savedTheme = localStorage.getItem('tgz_theme') || 'dark';
   document.documentElement.setAttribute('data-theme', savedTheme);
