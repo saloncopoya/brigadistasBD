@@ -546,6 +546,13 @@ body.fs-active{overflow:hidden!important}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:11px 18px;border-radius:10px;font-weight:700;font-size:13.5px;text-decoration:none;border:none;cursor:pointer;font-family:inherit}
 .btn-primary{background:linear-gradient(135deg,var(--cyan),#00b8cc);color:#00121a}
 .btn-ghost{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+/* 📝 PÁRRAFOS INTRODUCTORIOS (SEO) */
+.intro-paragraphs{margin:20px 0}
+.intro-paragraphs p{font-size:14.5px;line-height:1.75;color:var(--text-2);margin-bottom:14px;text-align:justify}
+.intro-paragraphs p strong{color:var(--text);font-weight:700}
+.intro-paragraphs p a{color:var(--cyan);text-decoration:none}
+.intro-paragraphs p a:hover{text-decoration:underline}
+
 footer{margin-top:30px;padding-top:20px;border-top:1px solid var(--border);color:var(--text-2);font-size:12px;text-align:center}
 footer a{color:var(--cyan)}
 </style>
@@ -561,7 +568,7 @@ footer a{color:var(--cyan)}
         <circle cx="12" cy="10" r="3"/>
       </svg>
     </div>
-    <span class="brand-txt">VER TODAS LAS RUTAS</span>
+    <span class="brand-txt">TUXRUTAS</span>
     </a>
   <div class="header-actions">
     <a class="icon-btn" href="${baseUrl}/" title="Ir al inicio">
@@ -571,6 +578,13 @@ footer a{color:var(--cyan)}
 </header>
 
 <div class="wrap">
+
+ <div class="cta">
+    <a class="btn btn-primary" href="${baseUrl}/">🚌 Ver todas las rutas</a>
+    <a class="btn btn-ghost" href="${baseUrl}/?tab=market" rel="nofollow">🛒 Marketplace</a>
+  </div>
+
+  
   <span class="badge badge-${tipo === 'ruta' ? (extra?.route?.categoria === 'foranea' ? 'foranea' : 'urbana') : tipo === 'market' ? 'green' : 'urbana'}">${typeLabel}</span>
   <h1>${safeTitle}</h1>
   <div class="meta">${new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
@@ -580,10 +594,11 @@ footer a{color:var(--cyan)}
 
   ${bodyContent}
 
-   <div class="cta">
-    <a class="btn btn-primary" href="${baseUrl}/">🚌 Ver todas las rutas</a>
-    <a class="btn btn-ghost" href="${baseUrl}/?tab=market" rel="nofollow">🛒 Marketplace</a>
-  </div>
+
+  ${introParagraph(extra?.route, title, baseUrl)}
+
+
+  
   
   <footer>© ${new Date().getFullYear()} Rutas BGD · <a href="${baseUrl}">${cleanDomain(baseUrl)}</a></footer>
 </div>
@@ -764,6 +779,56 @@ function renderRouteMapBlock(route) {
   `;
 }
 
+// ============================================================
+//  📝 PÁRRAFO INTRODUCTORIO — texto largo para SEO
+// ============================================================
+function introParagraph(route, title, baseUrl) {
+  if (!route) return '';
+  const r = route;
+
+  const paradas = r.paradas || [];
+  const pois = r.pois || [];
+  const poisVuelta = r.poisVuelta || [];
+  const calles = r.calles || [];
+  const retornos = r.retornos || [];
+  const notas = r.notas || '';
+  const tarifa = r.tarifa || '';
+  const frecuencia = r.frecuencia || '';
+  const horarioIni = r.horarioIni || '';
+  const horarioFin = r.horarioFin || '';
+  const dias = r.dias || '';
+  const categoria = r.categoria || 'urbana';
+
+  const p1 = `<p>La <strong>${escapeHTML(title)}</strong> es una ruta de colectivo de categoría <strong>${escapeHTML(categoria)}</strong> que opera en la ciudad de Tuxtla Gutiérrez, Chiapas, México. ${tarifa ? `El costo del pasaje es de <strong>${escapeHTML(tarifa)}</strong>.` : ''} ${frecuencia ? `La frecuencia de paso aproximada es <strong>${escapeHTML(frecuencia)}</strong>.` : ''} ${horarioIni ? `Presta servicio desde las <strong>${escapeHTML(horarioIni)}</strong> hasta las <strong>${escapeHTML(horarioFin || 'última hora')}</strong>.` : ''} ${dias ? `Los días de operación son <strong>${escapeHTML(dias)}</strong>.` : ''}</p>`;
+
+  const p2 = paradas.length
+    ? `<p>Esta ruta cuenta con un total de <strong>${paradas.length} paradas oficiales</strong> a lo largo de su recorrido, entre las que destacan: ${paradas.slice(0, 10).map(p => escapeHTML(p)).join(', ')}${paradas.length > 10 ? ', entre otras' : ''}. Los usuarios pueden abordar y descender en cualquiera de estos puntos para llegar a su destino de forma segura y eficiente.</p>`
+    : '';
+
+  const p3 = calles.length
+    ? `<p>El recorrido de la ruta atraviesa las siguientes vialidades principales de Tuxtla Gutiérrez: ${calles.slice(0, 12).map(c => escapeHTML(c)).join(', ')}${calles.length > 12 ? ', entre otras calles y avenidas' : ''}. Este trayecto conecta zonas clave de la ciudad y facilita el transporte de miles de pasajeros diariamente.</p>`
+    : '';
+
+  const allPois = [...pois, ...poisVuelta];
+  const p4 = allPois.length
+    ? `<p>A lo largo de su trayecto, esta ruta pasa cerca de importantes puntos de interés (POIs) como: ${allPois.slice(0, 10).map(p => escapeHTML(p)).join(', ')}${allPois.length > 10 ? ', entre otros lugares de interés' : ''}. Estos puntos de referencia son de gran utilidad para los usuarios que necesitan ubicarse dentro de la ciudad o identificar su parada más cercana.</p>`
+    : '';
+
+  const p5 = retornos.length
+    ? `<p>Los principales retornos y puntos de regreso de esta ruta incluyen: ${retornos.slice(0, 8).map(r2 => escapeHTML(r2)).join(', ')}${retornos.length > 8 ? ', entre otros' : ''}. Esto permite a los conductores y usuarios conocer el sentido completo del recorrido de ida y vuelta.</p>`
+    : '';
+
+  const p6 = notas
+    ? `<p><strong>Notas adicionales:</strong> ${escapeHTML(notas)}</p>`
+    : '';
+
+  const p7 = `<p>Si necesitas planificar tu viaje en transporte público dentro de Tuxtla Gutiérrez, esta ruta de colectivo es una excelente opción. Puedes consultar más detalles, ver el mapa interactivo del trazado completo, las paradas oficiales y los puntos de interés cercanos directamente en esta página. Además, puedes compartir esta información con otros usuarios para que también puedan aprovecharla.</p>`;
+
+  const p8 = `<p>La información aquí presentada se actualiza periódicamente para asegurar que los usuarios cuenten con los datos más precisos sobre tarifas, horarios, recorridos y paradas. Si detectas alguna inconsistencia o deseas sugerir una mejora, puedes contactarnos a través del sitio principal <a href="${baseUrl}/">${baseUrl.replace(/^https?:\/\//, '')}</a>.</p>`;
+
+  return `<div class="intro-paragraphs">${p1}${p2}${p3}${p4}${p5}${p6}${p7}${p8}</div>`;
+}
+
 function renderRouteBody(route) {
   const blocks = [];
 
@@ -772,6 +837,18 @@ function renderRouteBody(route) {
     blocks.push(`<div class="block"><h3>📝 Notas adicionales</h3><div style="font-size:14px;line-height:1.6;color:var(--text-2);white-space:pre-wrap">${escapeHTML(route.notas)}</div></div>`);
   }
 
+  // 🗺️ PÁRRAFO RESUMEN DE LA RUTA
+  const resumen = [];
+  if (route.paradas?.length) resumen.push(`${route.paradas.length} paradas oficiales`);
+  if (route.calles?.length) resumen.push(`${route.calles.length} calles y avenidas`);
+  if (route.pois?.length) resumen.push(`${route.pois.length} POIs de ida`);
+  if (route.poisVuelta?.length) resumen.push(`${route.poisVuelta.length} POIs de regreso`);
+  if (route.retornos?.length) resumen.push(`${route.retornos.length} retornos`);
+
+  if (resumen.length) {
+    blocks.push(`<div class="block"><h3>📊 Resumen del recorrido</h3><p style="font-size:14.5px;line-height:1.75;color:var(--text-2);margin:0">Esta ruta de colectivo cuenta con un total de <strong>${resumen.join(', ')}</strong> a lo largo de su recorrido completo. A continuación se detalla cada uno de estos elementos para que los usuarios puedan planificar su viaje con información precisa y actualizada.</p></div>`);
+  }
+   
   // ℹ️ Información
   const info = [];
   if (route.tarifa) info.push(`<li>💰 Tarifa: ${escapeHTML(route.tarifa)}</li>`);
