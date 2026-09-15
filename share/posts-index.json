@@ -4,11 +4,11 @@
       "slug": "ruta1149",
       "title": "RUTA 1",
       "description": "Ruta RUTA 1",
-      "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789462955/u2skfzwxr3f06zytkmb0.png",
+      "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789508995/c3vghvath2eewvchgl0c.png",
       "url": "/share/ruta/ruta1149",
       "tipo": "ruta",
-      "timestamp": 1789508147417,
-      "updatedAt": "2026-09-15T21:35:47.417Z",
+      "timestamp": 1789509011892,
+      "updatedAt": "2026-09-15T21:50:11.892Z",
       "categoria": "urbana",
       "tarifa": "",
       "frecuencia": "",
@@ -347,7 +347,7 @@
     }
   ],
   "total": 23,
-  "updatedAt": "2026-09-15T21:35:47.417Z",
+  "updatedAt": "2026-09-15T21:50:11.892Z",
   "version": 1,
-  "__sha": "3310f8519b3dae7d06218aaf48fed90d14b2e938"
+  "__sha": "7db57a97ee51fe52ec0e3bfa642aefbe76ce4328"
 }
