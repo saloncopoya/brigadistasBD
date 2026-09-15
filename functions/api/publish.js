@@ -411,11 +411,28 @@ function generateHTML({ tipo, title, content, image, slug, pageUrl, baseUrl, ext
   // ============================================================
   //  DATOS INYECTADOS PARA LA APP
   // ============================================================
-  const injectedData = tipo === 'ruta'
-    ? { __ROUTE_DATA__: JSON.stringify(extra?.route || {}) }
-    : tipo === 'post'
-      ? { __POST_DATA__: JSON.stringify({ id: slug, title, content, media: image, tipo: 'post', timestamp: Date.now(), url: pageUrl }) }
-      : { __MARKET_DATA__: JSON.stringify(extra?.market || {}) };
+  let injectedData;
+  if (tipo === 'ruta') {
+    injectedData = { __ROUTE_DATA__: JSON.stringify(extra?.route || {}) };
+  } else if (tipo === 'post') {
+    injectedData = {
+      __POST_DATA__: JSON.stringify({
+        id: slug, slug: slug, title: title, content: content,
+        media: image, tipo: 'post', timestamp: Date.now(),
+        updatedAt: Date.now(), url: pageUrl,
+        likes: 0, likedBy: [], comments: []
+      })
+    };
+  } else {
+    injectedData = {
+      __MARKET_DATA__: JSON.stringify({
+        id: slug, slug: slug, title: title, description: content,
+        image: image, tipo: 'market', timestamp: Date.now(),
+        updatedAt: Date.now(), url: pageUrl,
+        ...(extra?.market || {})
+      })
+    };
+  }
 
   const injectedScript = Object.entries(injectedData)
     .map(([k, v]) => `window.${k} = ${v};`)
