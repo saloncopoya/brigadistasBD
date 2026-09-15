@@ -1800,7 +1800,7 @@ const url = location.origin + '/share/m/' + id;
   // AHORA dibuja IDA y VUELTA, con offset cuando hay varias rutas o ambos sentidos.
   // Si se pasan varias rutas con el mismo color lógico (p.ej. varias directas),
   // se separan con offsets perpendiculares para que se vean ambas.
-    function drawTripRoutesOnMap(routeList, highlightIdx = null) {
+  function drawTripRoutesOnMap(routeList, highlightIdx = null) {
     clearTripRouteLayers();
     if (!state.tripMap) return;
 
@@ -1815,9 +1815,12 @@ const url = location.origin + '/share/m/' + id;
 
       // ---- IDA ----
       if (coordsIda.length > 1) {
+        // Si hay más de 1 ruta en el mapa, aplicamos offset alterno
+        // para que no se superpongan en calles compartidas.
         let idaDraw = coordsIda;
         if (total > 1) {
-          const offset = (idx - (total - 1) / 2) * 4;
+          // Offset entre -6 y +6 metros según índice, alternando signo
+          const offset = (idx - (total - 1) / 2) * 4; // separa ±4m por índice
           idaDraw = offsetPolyline(coordsIda, offset);
         }
         const lineIda = L.polyline(idaDraw, {
@@ -1841,7 +1844,7 @@ const url = location.origin + '/share/m/' + id;
         let vueltaDraw = coordsVuelta;
         if (total > 1) {
           const offset = (idx - (total - 1) / 2) * 4;
-          vueltaDraw = offsetPolyline(coordsVuelta, -offset);
+          vueltaDraw = offsetPolyline(coordsVuelta, -offset); // signo contrario para separar de ida
         }
         const lineVuelta = L.polyline(vueltaDraw, {
           color,
@@ -1849,7 +1852,7 @@ const url = location.origin + '/share/m/' + id;
           opacity: isHl ? 0.85 : 0.4,
           lineJoin: 'round',
           lineCap: 'round',
-          dashArray: '10,6'
+          dashArray: '10,6' // guiones para distinguir vuelta de ida
         }).addTo(state.tripMap);
         lineVuelta.bindTooltip(
           (item.label || route.nombre || 'Ruta') + ' · REGRESO' +
@@ -1858,350 +1861,100 @@ const url = location.origin + '/share/m/' + id;
         );
         tripRouteLayers.push(lineVuelta);
       }
-    });
 
-    // ============================================================
-    //  🚶 DIBUJAR MARCADORES DE TRANSBORDO (muñequito caminando)
-    // ============================================================
-    if (total > 1) {
-      const transbordoPts = [];
-      routeList.forEach((item) => {
-        if (item.transferPoint) {
-          transbordoPts.push({
-            latlng: item.transferPoint,
-            label: item.label || 'Transbordo'
-          });
-        }
-      });
-
-      if (transbordoPts.length) {
-        transbordoPts.forEach((tp, i) => {
-          const icon = L.divIcon({
-            className: '',
-            html: `
-              <div class="transbordo-marker" title="Transbordo ${i + 1}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="13" cy="4" r="2" />
-                  <path d="M13 6 L11 10 L8 12" />
-                  <path d="M11 10 L14 13 L14 19" />
-                  <path d="M14 19 L11 21" />
-                  <path d="M14 13 L18 13 L19 10" />
-                </svg>
-              </div>
-            `,
-            iconSize: [34, 34],
-            iconAnchor: [17, 17],
-            popupAnchor: [0, -17]
-          });
-
-          const marker = L.marker(tp.latlng, { icon }).addTo(state.tripMap);
-
-          const popupContent = `
-            <div style="font-family:system-ui,sans-serif;font-size:13px;min-width:180px">
-              <div style="font-weight:800;font-size:14px;margin-bottom:4px;color:#f59e0b">
-                🚶 Punto de Transbordo
-              </div>
-              <div style="color:#666;font-size:12px;line-height:1.4">
-                Aquí puedes cambiar de ruta caminando.
-              </div>
+      // 🚶 Si es transbordo, marcar el punto de encuentro con muñequito
+      if (item.transferPoint && Array.isArray(item.transferPoint) && item.transferPoint.length === 2) {
+        const icon = L.divIcon({
+          className: '',
+          html: `
+            <div class="transbordo-marker" title="Transbordo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="13" cy="4" r="2" />
+                <path d="M13 6 L11 10 L8 12" />
+                <path d="M11 10 L14 13 L14 19" />
+                <path d="M14 19 L11 21" />
+                <path d="M14 13 L18 13 L19 10" />
+              </svg>
             </div>
-          `;
-          marker.bindPopup(popupContent);
-
-          tripRouteLayers.push(marker);
+          `,
+          iconSize: [34, 34],
+          iconAnchor: [17, 17],
+          popupAnchor: [0, -17]
         });
+        const marker = L.marker(item.transferPoint, { icon }).addTo(state.tripMap);
+        marker.bindPopup('🚶 Punto de Transbordo: ' + (item.label || ''));
+        tripRouteLayers.push(marker);
       }
-    }
-  }
-
-     // ============================================================
-  //  🚶 CÁLCULO DE INTERSECCIÓN ENTRE DOS RUTAS
-  // ============================================================
-
-  function haversineM(lat1, lng1, lat2, lng2) {
-    const R = 6371000;
-    const φ1 = lat1 * Math.PI / 180, φ2 = lat2 * Math.PI / 180;
-    const Δφ = (lat2 - lat1) * Math.PI / 180;
-    const Δλ = (lng2 - lng1) * Math.PI / 180;
-    const a = Math.sin(Δφ/2)**2 + Math.cos(φ1)*Math.cos(φ2)*Math.sin(Δλ/2)**2;
-    return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  }
-
-  function pointToSegmentDeg(p, a, b) {
-    const [px, py] = p, [ax, ay] = a, [bx, by] = b;
-    const dx = bx - ax, dy = by - ay;
-    const len2 = dx*dx + dy*dy;
-    if (len2 === 0) return Math.hypot(px - ax, py - ay);
-    let t = ((px-ax)*dx + (py-ay)*dy) / len2;
-    t = Math.max(0, Math.min(1, t));
-    return Math.hypot(px - (ax + t*dx), py - (ay + t*dy));
-  }
-
-    // ============================================================
-  //  🎯 PUNTOS MÁS CERCANOS ENTRE 2 POLILÍNEAS
-  //  ✅ CORREGIDO: prioriza intersecciones reales
-  // ============================================================
-  function closestPointsBetweenPolylines(poly1, poly2) {
-    let best = {
-      dist: Infinity,
-      mid: null,
-      p1: null,
-      p2: null,
-      seg1Idx: -1,
-      seg2Idx: -1,
-      t1: 0,
-      t2: 0,
-      isRealIntersection: false
-    };
-    
-    let bestIntersection = null;
-    
-    for (let i = 0; i < poly1.length - 1; i++) {
-      const a1 = poly1[i];
-      const a2 = poly1[i + 1];
-      for (let j = 0; j < poly2.length - 1; j++) {
-        const b1 = poly2[j];
-        const b2 = poly2[j + 1];
-        const result = segmentIntersection(a1, a2, b1, b2);
-        
-        // 🎯 Si es intersección real, guardarla como prioridad
-        if (result.isRealIntersection) {
-          if (!bestIntersection || result.dist < bestIntersection.dist) {
-            bestIntersection = {
-              dist: result.dist,
-              mid: result.mid,
-              p1: result.p1,
-              p2: result.p2,
-              seg1Idx: i,
-              seg2Idx: j,
-              t1: result.t1,
-              t2: result.t2,
-              isRealIntersection: true
-            };
-          }
-        }
-        
-        // Guardar el más cercano (para fallback)
-        if (result.dist < best.dist) {
-          best = {
-            dist: result.dist,
-            mid: result.mid,
-            p1: result.p1,
-            p2: result.p2,
-            seg1Idx: i,
-            seg2Idx: j,
-            t1: result.t1,
-            t2: result.t2,
-            isRealIntersection: false
-          };
-        }
-      }
-    }
-    
-    // 🎯 Priorizar intersección real si existe
-    if (bestIntersection) return bestIntersection;
-    return best;
-  }
-
-    // ============================================================
-  //  🎯 INTERSECCIÓN ENTRE 2 SEGMENTOS
-  //  ✅ CORREGIDO: calcula la intersección real si los segmentos se cruzan
-  // ============================================================
-  function segmentIntersection(a1, a2, b1, b2) {
-    const [ax1, ay1] = a1;
-    const [ax2, ay2] = a2;
-    const [bx1, by1] = b1;
-    const [bx2, by2] = b2;
-    
-    const dx1 = ax2 - ax1, dy1 = ay2 - ay1;
-    const dx2 = bx2 - bx1, dy2 = by2 - by1;
-    
-    const denom = dx1 * dy2 - dy1 * dx2;
-    
-    let t1, t2;
-    let isRealIntersection = false;
-    
-    if (Math.abs(denom) < 1e-12) {
-      // Segmentos paralelos → usar el punto más cercano
-      t1 = 0.5;
-      t2 = 0.5;
-    } else {
-      const ex = bx1 - ax1;
-      const ey = by1 - ay1;
-      const t1Raw = (ex * dy2 - ey * dx2) / denom;
-      const t2Raw = (ex * dy1 - ey * dx1) / denom;
-      
-      // 🎯 Si ambos t están dentro de [0, 1], es una intersección REAL
-      if (t1Raw >= 0 && t1Raw <= 1 && t2Raw >= 0 && t2Raw <= 1) {
-        isRealIntersection = true;
-      }
-      
-      t1 = Math.max(0, Math.min(1, t1Raw));
-      t2 = Math.max(0, Math.min(1, t2Raw));
-    }
-    
-    const px1 = ax1 + t1 * dx1;
-    const py1 = ay1 + t1 * dy1;
-    const px2 = bx1 + t2 * dx2;
-    const py2 = by1 + t2 * dy2;
-    
-    // 🎯 Si es intersección REAL, usar el punto exacto de intersección
-    let midLat, midLng;
-    if (isRealIntersection) {
-      // Calcular el punto exacto donde se cruzan los segmentos
-      midLat = (py1 + py2) / 2;
-      midLng = (px1 + px2) / 2;
-    } else {
-      // Si no se cruzan, usar el punto medio entre los más cercanos
-      midLat = (py1 + py2) / 2;
-      midLng = (px1 + px2) / 2;
-    }
-    
-    const dLat = (py1 - py2) * 111320;
-    const dLng = (px1 - px2) * 111320 * Math.cos(midLat * Math.PI / 180);
-    const dist = Math.hypot(dLat, dLng);
-    
-    return {
-      dist,
-      mid: [midLat, midLng],
-      p1: [py1, px1],
-      p2: [py2, px2],
-      t1,
-      t2,
-      isRealIntersection
-    };
-  }
-
-    // ============================================================
-  //  🎯 ENCONTRAR EL MEJOR PUNTO DE TRANSBORDO
-  //  ✅ CORREGIDO: prioriza intersecciones reales y elige la más
-  //     cercana a los puntos del usuario
-  // ============================================================
-  function findBestTransbordo(r1, r2, userPoints) {
-    const segs1 = getRouteAllSegments(r1);
-    const segs2 = getRouteAllSegments(r2);
-    
-    if (!segs1.length || !segs2.length) {
-      return { mid: null, dist: Infinity, isIntersection: false };
-    }
-    
-    const candidatos = [];
-    
-    // 🔍 Buscar TODAS las intersecciones entre los segmentos
-    segs1.forEach((s1, si) => {
-      segs2.forEach((s2, sj) => {
-        const inter = closestPointsBetweenPolylines(s1, s2);
-        if (inter.mid && inter.dist < 500) {
-          // 🎯 Es intersección REAL si los segmentos se cruzan (< 5m)
-          const isRealIntersection = inter.dist < 5;
-          candidatos.push({
-            mid: inter.mid,
-            dist: inter.dist,
-            isIntersection: isRealIntersection,
-            seg1: si,
-            seg2: sj,
-            p1: inter.p1,
-            p2: inter.p2
-          });
-        }
-      });
     });
-    
-    if (!candidatos.length) {
-      return { mid: null, dist: Infinity, isIntersection: false };
-    }
-    
-    // 🎯 ORDENAR candidatos:
-    // 1. Primero las intersecciones REALES (isIntersection = true)
-    // 2. Luego por distancia al punto del usuario más cercano
-    // 3. Luego por distancia entre los trazos
-    candidatos.sort((a, b) => {
-      // Prioridad 1: intersección real
-      if (a.isIntersection && !b.isIntersection) return -1;
-      if (!a.isIntersection && b.isIntersection) return 1;
-      
-      // Prioridad 2: distancia al usuario
-      if (userPoints && userPoints.length) {
-        const distA = Math.min(...userPoints.map(p => 
-          haversineM(a.mid[0], a.mid[1], p.lat, p.lng)
-        ));
-        const distB = Math.min(...userPoints.map(p => 
-          haversineM(b.mid[0], b.mid[1], p.lat, p.lng)
-        ));
-        if (Math.abs(distA - distB) > 5) return distA - distB;
-      }
-      
-      // Prioridad 3: distancia entre los trazos
-      return a.dist - b.dist;
-    });
-    
-    return candidatos[0];
   }
 
-  function findBestTransbordoChain(legs, userPoints) {
-    const transbordos = [];
-    for (let i = 0; i < legs.length - 1; i++) {
-      const r1 = legs[i];
-      const r2 = legs[i + 1];
-      const best = findBestTransbordo(r1, r2, userPoints);
-      if (best.mid) {
-        transbordos.push(best);
-      }
-    }
-    return transbordos;
-  }
-   
-    // ============================================================
-  //  📏 DISTANCIA MÍNIMA ENTRE 2 RUTAS (con intersección real)
-  //  ✅ CORREGIDO: siempre devuelve el punto de intersección real
   // ============================================================
-  function routesMinDistance(r1, r2, userPoints = null) {
-    // 🎯 SIEMPRE usar findBestTransbordo para obtener la intersección real
-    const best = findBestTransbordo(r1, r2, userPoints);
-    
-    if (best && best.mid) {
-      // ✅ Encontramos intersección real o punto más cercano
-      return {
-        dist: best.dist,
-        p1: best.p1,
-        p2: best.p2,
-        mid: best.mid,
-        isIntersection: best.isIntersection
-      };
-    }
-    
-    // ⚠️ Fallback: si no hay intersección, calcular el punto MÁS CERCANO
-    // pero SIN usar el promedio (eso causaba el bug del muñequito)
+  //  📏 DISTANCIA MÍNIMA ENTRE 2 RUTAS
+  //  ✅ El punto de transbordo es el más cercano a los puntos
+  //     del usuario (no el punto medio fijo)
+  // ============================================================
+  function routesMinDistance(r1, r2) {
     const c1 = getRouteCoords(r1);
     const c2 = getRouteCoords(r2);
-    let min = Infinity, bestPt = null, bestPt2 = null;
+    
+    if (!c1.length || !c2.length) {
+      return { dist: Infinity, mid: null, p1: null, p2: null };
+    }
+    
+    // 🎯 Puntos del usuario (origen y destino)
+    const userPoints = state.tripPoints.map(p => ({ lat: p.lat, lng: p.lng }));
+    
+    // 🎯 Buscar el par de puntos más cercanos ENTRE las 2 rutas
+    //    y que además esté cerca de algún punto del usuario
+    let bestScore = Infinity;
+    let bestPt1 = null;
+    let bestPt2 = null;
+    let bestDist = Infinity;
     
     c1.forEach(p1 => {
       c2.forEach(p2 => {
-        const d = haversineM(p1[0], p1[1], p2[0], p2[1]);
-        if (d < min) { min = d; bestPt = p1; bestPt2 = p2; }
+        // Distancia entre los 2 puntos (de rutas distintas)
+        const distBetween = haversine(p1[0], p1[1], p2[0], p2[1]);
+        
+        // Descartar si están muy lejos entre sí
+        if (distBetween > 400) return;
+        
+        // Punto medio entre los 2
+        const mid = [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2];
+        
+        // 🎯 Distancia del punto medio a los puntos del usuario
+        let distToUser = Infinity;
+        if (userPoints.length) {
+          distToUser = Math.min(...userPoints.map(up => 
+            haversine(mid[0], mid[1], up.lat, up.lng)
+          ));
+        }
+        
+        // 🎯 SCORE: priorizar puntos cercanos al usuario
+        //    pero también cercanos entre las 2 rutas
+        const score = distToUser + distBetween * 0.5;
+        
+        if (score < bestScore) {
+          bestScore = score;
+          bestPt1 = p1;
+          bestPt2 = p2;
+          bestDist = distBetween;
+        }
       });
     });
     
-    // 🎯 Si hay 2 puntos, usar el punto medio SOLO si están cerca (< 50m)
-    // Si están lejos, usar el punto de la ruta 1 (el más cercano)
-    let mid = null;
-    if (bestPt && bestPt2) {
-      if (min < 50) {
-        // Puntos muy cercanos → usar punto medio
-        mid = [(bestPt[0] + bestPt2[0]) / 2, (bestPt[1] + bestPt2[1]) / 2];
-      } else {
-        // Puntos lejanos → usar el punto de la ruta 1 (más preciso)
-        mid = bestPt;
-      }
+    if (!bestPt1 || !bestPt2) {
+      return { dist: Infinity, mid: null, p1: null, p2: null };
     }
     
+    // 🎯 Punto medio entre los 2 puntos más cercanos
+    const mid = [(bestPt1[0] + bestPt2[0]) / 2, (bestPt1[1] + bestPt2[1]) / 2];
+    
     return {
-      dist: min,
-      p1: bestPt,
+      dist: bestDist,
+      p1: bestPt1,
       p2: bestPt2,
-      mid: mid,
-      isIntersection: false
+      mid: mid
     };
   }
 
@@ -2211,83 +1964,77 @@ const url = location.origin + '/share/m/' + id;
   }
 
   // Encuentra todos los transbordos posibles (1, 2, 3, 4 saltos)
-    function findTransferChains(startPoint, endPoint, maxTransfers) {
+  function findTransferChains(startPoint, endPoint, maxTransfers) {
     maxTransfers = Math.max(1, +maxTransfers || 1);
-    const chains = [];
-    
-    const userPoints = state.tripPoints.map(p => ({ lat: p.lat, lng: p.lng }));
-    
+     const chains = [];
     const startRoutes = state.routes.filter(r => routeNearPoint(r, startPoint, startPoint.radius));
     const endRoutes   = state.routes.filter(r => routeNearPoint(r, endPoint, endPoint.radius));
 
     if (!startRoutes.length || !endRoutes.length) return chains;
 
-    // 1 transbordo
+    // 1 transbordo (2 rutas)
     if (maxTransfers >= 1) {
       startRoutes.forEach(r1 => {
         endRoutes.forEach(r2 => {
           if (r1.id === r2.id) return;
-          const inter = routesMinDistance(r1, r2, userPoints);
+          const inter = routesMinDistance(r1, r2);
           if (inter.dist <= 400) {
             chains.push({
               type: 'transfer',
               legs: [r1, r2],
               transferPoints: [inter.mid],
               totalDist: routeTotalDistance(r1) + routeTotalDistance(r2),
-              transfers: 1,
-              isIntersection: inter.isIntersection
+              transfers: 1
             });
           }
         });
       });
     }
 
-    // 2 transbordos
+    // 2 transbordos (3 rutas)
     if (maxTransfers >= 2) {
       startRoutes.forEach(r1 => {
         state.routes.forEach(r2 => {
           if (r2.id === r1.id) return;
-          const i12 = routesMinDistance(r1, r2, userPoints);
+          const i12 = routesMinDistance(r1, r2);
           if (i12.dist > 400) return;
           endRoutes.forEach(r3 => {
             if (r3.id === r2.id || r3.id === r1.id) return;
-            const i23 = routesMinDistance(r2, r3, userPoints);
+            const i23 = routesMinDistance(r2, r3);
             if (i23.dist > 400) return;
             chains.push({
               type: 'transfer',
               legs: [r1, r2, r3],
               transferPoints: [i12.mid, i23.mid],
               totalDist: routeTotalDistance(r1) + routeTotalDistance(r2) + routeTotalDistance(r3),
-              transfers: 2,
-              isIntersection: i12.isIntersection && i23.isIntersection
+              transfers: 2
             });
           });
         });
       });
     }
 
-    // 3 transbordos
+    // 3 transbordos (4 rutas)
     if (maxTransfers >= 3) {
       startRoutes.forEach(r1 => {
         state.routes.forEach(r2 => {
           if (r2.id === r1.id) return;
-          const i12 = routesMinDistance(r1, r2, userPoints);
+          const i12 = routesMinDistance(r1, r2);
           if (i12.dist > 400) return;
           state.routes.forEach(r3 => {
             if (r3.id === r2.id || r3.id === r1.id) return;
-            const i23 = routesMinDistance(r2, r3, userPoints);
+            const i23 = routesMinDistance(r2, r3);
             if (i23.dist > 400) return;
             endRoutes.forEach(r4 => {
               if (r4.id === r3.id || r4.id === r2.id || r4.id === r1.id) return;
-              const i34 = routesMinDistance(r3, r4, userPoints);
+              const i34 = routesMinDistance(r3, r4);
               if (i34.dist > 400) return;
               chains.push({
                 type: 'transfer',
                 legs: [r1, r2, r3, r4],
                 transferPoints: [i12.mid, i23.mid, i34.mid],
                 totalDist: routeTotalDistance(r1) + routeTotalDistance(r2) + routeTotalDistance(r3) + routeTotalDistance(r4),
-                transfers: 3,
-                isIntersection: i12.isIntersection && i23.isIntersection && i34.isIntersection
+                transfers: 3
               });
             });
           });
@@ -2295,32 +2042,31 @@ const url = location.origin + '/share/m/' + id;
       });
     }
 
-    // 4 transbordos
+    // 4 transbordos (5 rutas)
     if (maxTransfers >= 4) {
       startRoutes.forEach(r1 => {
         state.routes.forEach(r2 => {
           if (r2.id === r1.id) return;
-          const i12 = routesMinDistance(r1, r2, userPoints);
+          const i12 = routesMinDistance(r1, r2);
           if (i12.dist > 400) return;
           state.routes.forEach(r3 => {
             if (r3.id === r2.id || r3.id === r1.id) return;
-            const i23 = routesMinDistance(r2, r3, userPoints);
+            const i23 = routesMinDistance(r2, r3);
             if (i23.dist > 400) return;
             state.routes.forEach(r4 => {
               if (r4.id === r3.id || r4.id === r2.id || r4.id === r1.id) return;
-              const i34 = routesMinDistance(r3, r4, userPoints);
+              const i34 = routesMinDistance(r3, r4);
               if (i34.dist > 400) return;
               endRoutes.forEach(r5 => {
                 if (r5.id === r4.id || r5.id === r3.id || r5.id === r2.id || r5.id === r1.id) return;
-                const i45 = routesMinDistance(r4, r5, userPoints);
-                if (i45.dist > 400) return;
+                const i45 = routesMinDistance(r4, r5);
+                      if (i45.dist > 400) return;
                 chains.push({
                   type: 'transfer',
                   legs: [r1, r2, r3, r4, r5],
                   transferPoints: [i12.mid, i23.mid, i34.mid, i45.mid],
                   totalDist: routeTotalDistance(r1) + routeTotalDistance(r2) + routeTotalDistance(r3) + routeTotalDistance(r4) + routeTotalDistance(r5),
-                  transfers: 4,
-                  isIntersection: i12.isIntersection && i23.isIntersection && i34.isIntersection && i45.isIntersection
+                  transfers: 4
                 });
               });
             });
@@ -2329,6 +2075,7 @@ const url = location.origin + '/share/m/' + id;
       });
     }
 
+    // Eliminar cadenas duplicadas (misma secuencia de rutas)
     const seen = new Set();
     return chains.filter(c => {
       const key = c.legs.map(l => l.id).join('>');
@@ -2407,14 +2154,18 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
       }
     }
 
-     if (results.direct.length) {
+       // Si hay directas, dibujarlas TODAS en el mapa con offset para que no se
+    // superpongan. El offset se calcula dentro de drawTripRoutesOnMap.
+    // Si NO hay directas pero SÍ hay transbordos, dibujamos automáticamente
+    // el primer resultado de transbordo para que el mapa no quede vacío.
+    if (results.direct.length) {
       drawTripRoutesOnMap(
         results.direct.map(d => ({
           route: d.route,
           label: d.route.nombre,
           type: 'direct'
         })),
-        null
+        null  // sin highlight, todas con mismo peso
       );
     } else if (results.transfers.length) {
       const t0 = results.transfers[0];
@@ -2423,10 +2174,10 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
           route: l,
           label: l.nombre,
           type: 'transfer',
-          transferPoint: t0.transferPoints[li] || null
+          transferPoint: li === 0 ? t0.transferPoints[0] : (t0.transferPoints[li - 1] || null)
         }))
       );
-    } 
+    }
 
     // Render de resultados
     let html = '';
@@ -2558,7 +2309,7 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
     });
 
     // Eventos de resultados (transbordos)
-        el.querySelectorAll('[data-trip-show]').forEach(b => {
+    el.querySelectorAll('[data-trip-show]').forEach(b => {
       b.onclick = (e) => {
         e.stopPropagation();
         const idx = +b.dataset.tripShow;
@@ -2568,10 +2319,9 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
         drawTripRoutesOnMap(t.legs.map((l, li) => ({
           route: l,
           label: l.nombre,
-          type: 'transfer',
-          transferPoint: t.transferPoints[li] || null
+          type: 'transfer',                        // ← añadido
+          transferPoint: li === 0 ? t.transferPoints[0] : (t.transferPoints[li - 1] || null)
         })));
-         
         // Recolectar todas las coordenadas (ida + vuelta + transbordos)
         const allCoords = [];
         t.legs.forEach(l => {
