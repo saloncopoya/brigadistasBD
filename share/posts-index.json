@@ -7,8 +7,8 @@
       "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789497655/rbkube9yepdyumru2m5y.jpg",
       "url": "/share/ruta/otrarutw159",
       "tipo": "ruta",
-      "timestamp": 1789499459170,
-      "updatedAt": "2026-09-15T19:10:59.170Z",
+      "timestamp": 1789500158021,
+      "updatedAt": "2026-09-15T19:22:38.021Z",
       "categoria": "urbana",
       "tarifa": "10",
       "frecuencia": "12",
@@ -268,7 +268,7 @@
     }
   ],
   "total": 25,
-  "updatedAt": "2026-09-15T19:10:59.170Z",
+  "updatedAt": "2026-09-15T19:22:38.021Z",
   "version": 1,
-  "__sha": "f048b796853b306fda02e370966b2e1577cb02cd"
+  "__sha": "a2bc739a9569fcb060567407b2b17af36d7871cc"
 }
