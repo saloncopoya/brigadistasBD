@@ -303,7 +303,7 @@ function generateHTML({ tipo, title, content, image, slug, pageUrl, baseUrl, ext
   if (tipo === 'ruta') {
     // Añadir palabras clave al título
     const cat = extra?.route?.categoria ? ` - ${extra.route.categoria}` : '';
-    const kw = 'Ruta Tuxtla Gutiérrez Chiapas';
+    const kw = 'Tuxtla Gutiérrez Chiapas';
     seoTitle = `${title}${cat} · ${kw}`;
   } else if (tipo === 'market') {
     seoTitle = `${title} · Marketplace Tuxtla Gutiérrez`;
