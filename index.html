@@ -532,21 +532,22 @@ body.fs-active{overflow:hidden !important}
   bottom:12px;
   z-index:600;
   display:flex;
-  gap:6px;
-  padding:6px;
+  gap:5px;
+  padding:4px;
   background:color-mix(in srgb,var(--surface) 96%,transparent);
   border:1px solid var(--border-2);
-  border-radius:12px;
+  border-radius:10px;
   backdrop-filter:blur(10px);
   -webkit-backdrop-filter:blur(10px);
   box-shadow:var(--shadow);
 }
+   
 .map-toolbar-below .tb{
-  width:34px;height:34px;
+  width:34px;height:28px;
   justify-content:center;align-items:center;
   background:var(--surface-2);
   border:1px solid var(--border);
-  border-radius:9px;
+  border-radius:8px;
   color:var(--text);
   display:flex;
   transition:var(--transition);
@@ -565,7 +566,7 @@ body.fs-active{overflow:hidden !important}
   color:inherit;
   line-height:1;
 }
-.map-toolbar-below .tb svg{width:15px;height:15px}
+.map-toolbar-below .tb svg{width:14px;height:14px}
 .map-toolbar-below .tb:hover{border-color:var(--cyan);color:var(--cyan)}
 .map-toolbar-below .tb.active{background:var(--cyan);color:#00121a;border-color:transparent}
    
@@ -666,8 +667,8 @@ body.fs-active{overflow:hidden !important}
   #map{height:70vh}
 }
 @media(max-width:380px){
-  .map-toolbar-below .tb{width:30px;height:30px}
-  .map-toolbar-below .tb svg{width:13px;height:13px}
+  .map-toolbar-below .tb{width:28px;height:24px}
+  .map-toolbar-below .tb svg{width:12px;height:12px}
   .routes-grid{grid-template-columns:repeat(3,1fr)}
    
   .header-brand .brand-txt{font-size:14px}
