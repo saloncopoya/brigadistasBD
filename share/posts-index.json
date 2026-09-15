@@ -1,16 +1,6 @@
 {
   "posts": [
     {
-      "slug": "ruwy1159",
-      "title": "Ruwy1",
-      "description": "Ruta Ruwy1",
-      "image": "",
-      "url": "/share/ruta/ruwy1159",
-      "tipo": "ruta",
-      "timestamp": 1789493123651,
-      "updatedAt": "2026-09-15T17:25:23.651Z"
-    },
-    {
       "slug": "ruta3149",
       "title": "RUTA 3",
       "description": "Ruta RUTA 3",
@@ -241,8 +231,8 @@
       "updatedAt": "2026-09-13T08:52:43.612Z"
     }
   ],
-  "total": 24,
-  "updatedAt": "2026-09-15T17:34:04.055Z",
+  "total": 23,
+  "updatedAt": "2026-09-15T17:34:11.979Z",
   "version": 1,
   "__sha": "d0c5cfad554beb9978cb2df5064c56286a11da34"
 }
