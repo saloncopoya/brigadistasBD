@@ -1,6 +1,68 @@
 {
   "posts": [
     {
+      "slug": "ruta1149",
+      "title": "RUTA 1",
+      "description": "Ruta RUTA 1",
+      "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789462955/u2skfzwxr3f06zytkmb0.png",
+      "url": "/share/ruta/ruta1149",
+      "tipo": "ruta",
+      "timestamp": 1789501631694,
+      "updatedAt": "2026-09-15T19:47:11.694Z",
+      "categoria": "urbana",
+      "tarifa": "",
+      "frecuencia": "",
+      "horarioIni": "",
+      "horarioFin": "",
+      "dias": "todos",
+      "paradas": [],
+      "calles": [
+        "Carretera Panamericana",
+        "Boulevard Belisario Domínguez entre Carretera Panamericana y Boulevard Doctor Belisario Domínguez",
+        "Boulevard Doctor Belisario Domínguez entre Boulevard Belisario Domínguez y Avenida Central Poniente",
+        "Avenida Central Poniente cerca de Boulevard Doctor Belisario Domínguez",
+        "Avenida Central Oriente cerca de Avenida Central Poniente",
+        "Boulevard Ángel Albino Corzo cerca de Avenida Central Oriente",
+        "MEX 190 cerca de Boulevard Ángel Albino Corzo"
+      ],
+      "pois": [
+        "La Carreta Hundida / La Pochota",
+        "CBTIS 233 \"Narciso Mendoza\"",
+        "TAD Pemex",
+        "La Isla Auto Hotel",
+        "Colonia Plan de Ayala (cerca)",
+        "Crucero Juan Crispín",
+        "Bodega Aurrerá Terán",
+        "Tecnológico Nacional de México (Tec Regional)",
+        "Instituto Superior de Estudios de Enfermería del Estado de Chiapas (ISEEECH)",
+        "Escuela Preparatoria No. 7 del Estado (Prepa 7)",
+        "UNACH. Facultad de Contaduría y Administración",
+        "Campus I",
+        "Plaza Crystal / Galerías / Chedraui",
+        "Parque Deportivo Caña Hueca (cerca)",
+        "WalMart (Belisario Domínguez)",
+        "Plaza Bonampak / Cabeza Maya",
+        "Parque Morelos / Parque Bicentenario",
+        "Parque de la Juventud",
+        "Parque de la Marimba",
+        "Bodega Aurrerá Centro",
+        "Parque Central",
+        "Catedral Metropolitana de San Marcos",
+        "Palacio Federal y Estatal de Gobierno",
+        "Parque 5 de Mayo",
+        "Indeporte",
+        "Colonia Bienestar Social",
+        "Bodega Aurrerá Oriente",
+        "Plaza Polifórum",
+        "Plaza Ámbar Fashion Mall",
+        "Parque Chiapasiónate",
+        "Colonia La Misión (cerca)",
+        "Cobach 145 Tuxtla-Sur (cerca)",
+        "Central de Abastos (cerca)",
+        "Escuela de Trabajo Social Jesús Aquino Juan"
+      ]
+    },
+    {
       "slug": "ruta3149",
       "title": "RUTA 3",
       "description": "Ruta RUTA 3",
@@ -108,16 +170,6 @@
       "tipo": "ruta",
       "timestamp": 1789496162299,
       "updatedAt": "2026-09-15T18:16:02.299Z"
-    },
-    {
-      "slug": "ruta1149",
-      "title": "RUTA 1",
-      "description": "Ruta RUTA 1",
-      "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789462955/u2skfzwxr3f06zytkmb0.png",
-      "url": "/share/ruta/ruta1149",
-      "tipo": "ruta",
-      "timestamp": 1789462967081,
-      "updatedAt": "2026-09-15T09:02:47.081Z"
     },
     {
       "slug": "publicacionq149",
@@ -331,7 +383,7 @@
     }
   ],
   "total": 25,
-  "updatedAt": "2026-09-15T19:35:13.827Z",
+  "updatedAt": "2026-09-15T19:47:11.694Z",
   "version": 1,
-  "__sha": "f1a70bd1fcebb2e536af892e2b8f2fe2b7e79165"
+  "__sha": "f8c9eacb086f164daf5a4227221792dbf735fad8"
 }
