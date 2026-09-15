@@ -1953,7 +1953,17 @@ function routesMinDistance(r1, r2) {
                     const res = closestPointsBetweenSegments(a1, a2, b1, b2);
                     if (res.dist > 600) continue;
                     const dToNear = nearPoint ? haversine(res.p1[0], res.p1[1], nearPoint.lat, nearPoint.lng) : 0;
-                    const score = res.dist + dToNear * 2;
+                   // Prioridad ABSOLUTA al cruce real (dist pequeña).
+// Solo si no hay cruce real, se usa la cercanía a `nearPoint` como desempate.
+let score;
+if (res.dist < 10) {
+    // Cruce real: ganan los más cercanos a `nearPoint` (dist casi 0, no importa)
+    score = dToNear;
+} else {
+    // Sin cruce real: penaliza mucho la distancia entre rutas
+    score = res.dist * 20 + dToNear * 0.2;
+}
+                   
                     if (score < best) { best = score; bestP1 = res.p1; bestP2 = res.p2; }
                 }
             }
