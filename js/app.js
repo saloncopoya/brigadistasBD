@@ -1678,45 +1678,13 @@ const url = location.origin + '/share/m/' + id;
     return Math.hypot(px - cx, py - cy);
   }
 
-  // ============================================================
-  //  🎯 INTERSECCIÓN ENTRE 2 SEGMENTOS
-  //  Devuelve el punto exacto donde se cruzan (si se cruzan)
-  // ============================================================
-  function segmentIntersection(a1, a2, b1, b2) {
-    const [ax1, ay1] = a1;
-    const [ax2, ay2] = a2;
-    const [bx1, by1] = b1;
-    const [bx2, by2] = b2;
-    
-    const dx1 = ax2 - ax1, dy1 = ay2 - ay1;
-    const dx2 = bx2 - bx1, dy2 = by2 - by1;
-    
-    const denom = dx1 * dy2 - dy1 * dx2;
-    
-    // Segmentos paralelos → no hay intersección
-    if (Math.abs(denom) < 1e-12) {
-      return { isRealIntersection: false, dist: Infinity };
-    }
-    
-    const ex = bx1 - ax1;
-    const ey = by1 - ay1;
-    
-    const t1 = (ex * dy2 - ey * dx2) / denom;
-    const t2 = (ex * dy1 - ey * dx1) / denom;
-    
-    // 🎯 Si ambos t están dentro de [0, 1], es intersección REAL
-    if (t1 >= 0 && t1 <= 1 && t2 >= 0 && t2 <= 1) {
-      const px = ax1 + t1 * dx1;
-      const py = ay1 + t1 * dy1;
-      
-      return {
-        isRealIntersection: true,
-        mid: [py, px],
-        dist: 0
-      };
-    }
-    
-    return { isRealIntersection: false, dist: Infinity };
+  function haversine(lat1, lng1, lat2, lng2) {
+    const R = 6371000;
+    const φ1 = lat1 * Math.PI / 180, φ2 = lat2 * Math.PI / 180;
+    const Δφ = (lat2 - lat1) * Math.PI / 180;
+    const Δλ = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+    return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
 
   // Devuelve TODAS las polilíneas posibles de una ruta (ida + vuelta)
@@ -1894,150 +1862,29 @@ const url = location.origin + '/share/m/' + id;
         tripRouteLayers.push(lineVuelta);
       }
 
-
-             // 🚶 Si es transbordo, marcar el punto de encuentro con muñequito de frente
-      if (item.transferPoint && Array.isArray(item.transferPoint) && item.transferPoint.length === 2) {
-        const icon = L.divIcon({
-          className: '',
-          html: `
-            <div class="transbordo-marker" title="Transbordo">
-              <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="12" cy="5" r="2.5" />
-                <path d="M12 8.5 C9.5 8.5 7.5 10 7 12 L6 17 L8.5 17 L9.5 13 L9.5 21 L11 21 L11 16 L13 16 L13 21 L14.5 21 L14.5 13 L15.5 17 L18 17 L17 12 C16.5 10 14.5 8.5 12 8.5 Z" />
-              </svg>
-            </div>
-          `,
-          iconSize: [26, 26],
-          iconAnchor: [13, 13],
-          popupAnchor: [0, -13]
-        });
-        const marker = L.marker(item.transferPoint, { icon }).addTo(state.tripMap);
-        marker.bindPopup('🚶 Punto de Transbordo: ' + (item.label || ''));
-        tripRouteLayers.push(marker);
+      // Si es transbordo, marcar el punto de encuentro
+      if (item.transferPoint) {
+        const tp = L.circleMarker(item.transferPoint, {
+          radius: 9, color: '#fff', fillColor: color, fillOpacity: 1, weight: 3
+        }).addTo(state.tripMap).bindPopup('🔄 Transbordo: ' + (item.label || ''));
+        tripRouteLayers.push(tp);
       }
-       
     });
   }
 
-   // ============================================================
-  //  📏 DISTANCIA MÍNIMA ENTRE 2 RUTAS
-  //  ✅ CORREGIDO: busca la INTERSECCIÓN REAL de las 2 polilíneas
-  //     y elige la más cercana a los puntos del usuario
-  // ============================================================
+  // Calcula la distancia mínima entre dos rutas (para transbordos)
   function routesMinDistance(r1, r2) {
     const c1 = getRouteCoords(r1);
     const c2 = getRouteCoords(r2);
-    
-    if (!c1.length || !c2.length) {
-      return { dist: Infinity, mid: null, p1: null, p2: null };
-    }
-    
-    // Puntos del usuario (origen y destino)
-    const userPoints = state.tripPoints.map(p => ({ lat: p.lat, lng: p.lng }));
-    
-    // ============================================================
-    //  PASO 1: Buscar TODAS las intersecciones reales entre segmentos
-    // ============================================================
-    const intersecciones = [];
-    
-    for (let i = 0; i < c1.length - 1; i++) {
-      const a1 = c1[i];
-      const a2 = c1[i + 1];
-      
-      for (let j = 0; j < c2.length - 1; j++) {
-        const b1 = c2[j];
-        const b2 = c2[j + 1];
-        
-        // Calcular intersección de los 2 segmentos
-        const inter = segmentIntersection(a1, a2, b1, b2);
-        
-        if (inter && inter.isRealIntersection) {
-          intersecciones.push({
-            lat: inter.mid[0],
-            lng: inter.mid[1]
-          });
-        }
-      }
-    }
-    
-    // ============================================================
-    //  PASO 2: Si hay intersecciones reales, elegir la más cercana al usuario
-    // ============================================================
-    if (intersecciones.length > 0) {
-      let best = null;
-      let bestScore = Infinity;
-      
-      intersecciones.forEach(inter => {
-        let distToUser = Infinity;
-        if (userPoints.length) {
-          distToUser = Math.min(...userPoints.map(up => 
-            haversine(inter.lat, inter.lng, up.lat, up.lng)
-          ));
-        } else {
-          distToUser = 0;
-        }
-        
-        if (distToUser < bestScore) {
-          bestScore = distToUser;
-          best = inter;
-        }
-      });
-      
-      return {
-        dist: 0,  // Es una intersección real, distancia 0 entre rutas
-        p1: [best.lat, best.lng],
-        p2: [best.lat, best.lng],
-        mid: [best.lat, best.lng]
-      };
-    }
-    
-    // ============================================================
-    //  PASO 3: Si NO hay intersección real, usar el punto más cercano
-    // ============================================================
-    let bestScore = Infinity;
-    let bestPt1 = null;
-    let bestPt2 = null;
-    let bestDist = Infinity;
-    
+    let best = Infinity, bestPt = null, bestPt2 = null;
     c1.forEach(p1 => {
       c2.forEach(p2 => {
-        const distBetween = haversine(p1[0], p1[1], p2[0], p2[1]);
-        
-        if (distBetween > 400) return;
-        
-        const midLat = (p1[0] + p2[0]) / 2;
-        const midLng = (p1[1] + p2[1]) / 2;
-        
-        let distToUser = Infinity;
-        if (userPoints.length) {
-          distToUser = Math.min(...userPoints.map(up => 
-            haversine(midLat, midLng, up.lat, up.lng)
-          ));
-        }
-        
-        const score = distToUser + distBetween * 0.3;
-        
-        if (score < bestScore) {
-          bestScore = score;
-          bestPt1 = p1;
-          bestPt2 = p2;
-          bestDist = distBetween;
-        }
+        const d = haversine(p1[0], p1[1], p2[0], p2[1]);
+        if (d < best) { best = d; bestPt = p1; bestPt2 = p2; }
       });
     });
-    
-    if (!bestPt1 || !bestPt2) {
-      return { dist: Infinity, mid: null, p1: null, p2: null };
-    }
-    
-    return {
-      dist: bestDist,
-      p1: bestPt1,
-      p2: bestPt2,
-      mid: [(bestPt1[0] + bestPt2[0]) / 2, (bestPt1[1] + bestPt2[1]) / 2]
-    };
+    return { dist: best, p1: bestPt, p2: bestPt2, mid: bestPt ? [(bestPt[0]+bestPt2[0])/2, (bestPt[1]+bestPt2[1])/2] : null };
   }
-   
 
   // Verifica si una ruta pasa cerca de un punto
   function routeNearPoint(route, point, radius) {
