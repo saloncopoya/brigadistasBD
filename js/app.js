@@ -2423,17 +2423,30 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
         }
       } catch (e) { console.warn('[App] Error guardando datos inyectados:', e); }
 
-      // Renderizar directamente la página correspondiente
+      // Renderizar directamente SIN cambiar la URL (preserva canonical)
       if (tipo === 'ruta') {
-        navigateTo('route', { ruta: injectedData.id, route: injectedData, replace: true });
+        $$('.page').forEach(p => p.classList.remove('active'));
+        const el = $('#page-route');
+        if (el) el.classList.add('active');
+        state.currentPage = 'route';
+        state.currentRoute = injectedData;
+        $$('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.page === 'routes'));
+        renderRouteDetail(injectedData);
         return;
       } else if (tipo === 'post') {
+        $$('.page').forEach(p => p.classList.remove('active'));
+        const el = $('#page-post');
+        if (el) el.classList.add('active');
+        state.currentPage = 'post';
         state.currentPost = injectedData;
-        navigateTo('post', { post: injectedData.id, postObj: injectedData, replace: true });
         renderSinglePost(injectedData);
         return;
       } else if (tipo === 'market') {
-        navigateTo('market', { replace: true });
+        $$('.page').forEach(p => p.classList.remove('active'));
+        const el = $('#page-market');
+        if (el) el.classList.add('active');
+        state.currentPage = 'market';
+        renderMarket();
         return;
       }
     }
