@@ -1559,17 +1559,14 @@ const url = location.origin + '/share/m/' + id;
     const name = TRIP_DEFAULT_NAMES[idx] || ('PUNTO ' + letter);
     state.tripPoints.push({ lat, lng, letter, color, radius: state.tripRadius, name });
 
-       const icon = L.divIcon({
+             const icon = L.divIcon({
       className: '',
-      html: `<div class="marker-${letter.toLowerCase()}" style="background:${color};position:relative">
+      html: `<div class="marker-${letter.toLowerCase()}" style="background:${color}">
         ${letter}
-        <span style="position:absolute;top:-20px;left:50%;transform:translateX(-50%);
-          background:${color};color:#fff;font-size:9px;font-weight:800;
-          padding:2px 6px;border-radius:6px;white-space:nowrap;
-          box-shadow:0 2px 6px rgba(0,0,0,.4)">${name}</span>
       </div>`,
       iconSize: [26, 26], iconAnchor: [13, 13]
     });
+     
     const marker = L.marker([lat, lng], { icon }).addTo(state.tripMap);
      
     const circle = L.circle([lat, lng], { radius: state.tripRadius, color, fillColor: color, fillOpacity: 0.1, weight: 1.5 }).addTo(state.tripMap);
@@ -1636,17 +1633,14 @@ const url = location.origin + '/share/m/' + id;
         state.tripMarkers.forEach((m, idx) => {
           const pt = state.tripPoints[idx];
           if (!pt) return;
-          const icon = L.divIcon({
+                   const icon = L.divIcon({
             className: '',
-            html: `<div class="marker-${pt.letter.toLowerCase()}" style="background:${pt.color};position:relative">
+            html: `<div class="marker-${pt.letter.toLowerCase()}" style="background:${pt.color}">
               ${pt.letter}
-              <span style="position:absolute;top:-20px;left:50%;transform:translateX(-50%);
-                background:${pt.color};color:#fff;font-size:9px;font-weight:800;
-                padding:2px 6px;border-radius:6px;white-space:nowrap;
-                box-shadow:0 2px 6px rgba(0,0,0,.4)">${pt.name}</span>
             </div>`,
             iconSize: [26, 26], iconAnchor: [13, 13]
           });
+           
           m.setIcon(icon);
         });
         renderTripPointsList();
@@ -2331,12 +2325,8 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
           if (!pt) return;
           const icon = L.divIcon({
             className: '',
-            html: `<div class="marker-${pt.letter.toLowerCase()}" style="background:${pt.color};position:relative">
+            html: `<div class="marker-${pt.letter.toLowerCase()}" style="background:${pt.color}">
               ${pt.letter}
-              <span style="position:absolute;top:-20px;left:50%;transform:translateX(-50%);
-                background:${pt.color};color:#fff;font-size:9px;font-weight:800;
-                padding:2px 6px;border-radius:6px;white-space:nowrap;
-                box-shadow:0 2px 6px rgba(0,0,0,.4)">${pt.name}</span>
             </div>`,
             iconSize: [26, 26], iconAnchor: [13, 13]
           });
