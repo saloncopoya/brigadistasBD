@@ -181,9 +181,7 @@ footer a{color:var(--cyan)}
           opacity: 0.95,
           dashArray: dashed ? '10,6' : null,
           lineJoin: 'round',
-          lineCap: 'round',
-          interactive: false,
-          renderer: L.canvas({ padding: 0.5 })
+          lineCap: 'round'
         }).addTo(map);
         allCoords = allCoords.concat(coords);
         return line;
@@ -237,17 +235,7 @@ footer a{color:var(--cyan)}
           .addTo(map).bindPopup('🔵 Fin REGRESO');
       }
 
-      // POIs
-      if (DATA.puntos && DATA.puntos.length) {
-        DATA.puntos.forEach(function(p){
-          L.circleMarker(p, { radius: 5, color: DATA.colorIda, fillColor: '#fff', fillOpacity: 1, weight: 2 }).addTo(map);
-        });
-      }
-      if (DATA.puntosVuelta && DATA.puntosVuelta.length) {
-        DATA.puntosVuelta.forEach(function(p){
-          L.circleMarker(p, { radius: 5, color: DATA.colorVuelta, fillColor: '#fff', fillOpacity: 1, weight: 2 }).addTo(map);
-        });
-      }
+
 
       // Ajustar zoom
       if (allCoords.length > 1) {
