@@ -1862,59 +1862,152 @@ const url = location.origin + '/share/m/' + id;
         tripRouteLayers.push(lineVuelta);
       }
 
-      // Si es transbordo, marcar el punto de encuentro con ícono de peatón 🚶
+           // Si es transbordo, marcar el punto de encuentro con ícono de persona de pie
       if (item.transferPoint) {
         const pedIcon = L.divIcon({
           className: '',
           html: `
             <div style="
-              width:26px;height:26px;
+              width:28px;height:28px;
               border-radius:50%;
               background:#fff;
               border:3px solid ${color};
               display:grid;place-items:center;
               box-shadow:0 2px 8px rgba(0,0,0,.45);
             ">
-              <svg viewBox="0 0 24 24" width="16" height="16"
-                   fill="none" stroke="${color}" stroke-width="2.2"
+              <svg viewBox="0 0 24 24" width="18" height="18"
+                   fill="none" stroke="${color}" stroke-width="2"
                    stroke-linecap="round" stroke-linejoin="round">
-                <!-- 🚶 Letrero de tránsito de peatón -->
-                <circle cx="13" cy="4" r="1.8" fill="${color}" stroke="none"/>
-                <path d="M13 7l-3 3 1.5 3L10 21"/>
-                <path d="M13 7l3 2 2.5 1"/>
-                <path d="M11.5 13l-4 3"/>
-                <path d="M13.5 13l3.5 3"/>
+                <!-- 🧍 Persona de pie: cabeza, torso, brazos y piernas -->
+                <circle cx="12" cy="4.2" r="2.1" fill="${color}" stroke="none"/>
+                <path d="M12 6.6 L12 14"/>
+                <path d="M12 8.5 L8.5 11.5"/>
+                <path d="M12 8.5 L15.5 11.5"/>
+                <path d="M12 14 L9 20"/>
+                <path d="M12 14 L15 20"/>
               </svg>
             </div>`,
-          iconSize: [26, 26],
-          iconAnchor: [13, 13],
-          popupAnchor: [0, -13]
+          iconSize: [28, 28],
+          iconAnchor: [14, 14],
+          popupAnchor: [0, -14]
         });
         const tp = L.marker(item.transferPoint, { icon: pedIcon, zIndexOffset: 1000 })
           .addTo(state.tripMap)
-          .bindPopup('🚶 Transbordo: ' + (item.label || ''));
+          .bindPopup('🧍 Transbordo: ' + (item.label || ''));
         tripRouteLayers.push(tp);
       }
     });
   }
 
   // Calcula la distancia mínima entre dos rutas (para transbordos)
-  function routesMinDistance(r1, r2) {
-    // Unir IDA + VUELTA de cada ruta para comparar TODAS las combinaciones
-    // (ida↔ida, ida↔vuelta, vuelta↔ida, vuelta↔vuelta)
-    const c1 = [...getRouteCoords(r1), ...getRouteCoordsVuelta(r1)];
-    const c2 = [...getRouteCoords(r2), ...getRouteCoordsVuelta(r2)];
-     
-    let best = Infinity, bestPt = null, bestPt2 = null;
-    c1.forEach(p1 => {
-      c2.forEach(p2 => {
-        const d = haversine(p1[0], p1[1], p2[0], p2[1]);
-        if (d < best) { best = d; bestPt = p1; bestPt2 = p2; }
-      });
-    });
-    return { dist: best, p1: bestPt, p2: bestPt2, mid: bestPt ? [(bestPt[0]+bestPt2[0])/2, (bestPt[1]+bestPt2[1])/2] : null };
-  }
+  // Calcula el punto MÁS CERCANO REAL entre dos rutas (segmento vs segmento)
+// Devuelve { dist, p1, p2, mid } donde:
+//   p1 = punto sobre r1 (sobre un segmento, no solo vértices)
+//   p2 = punto sobre r2
+//   mid = punto medio (o el cruce real si se cruzan)
+function routesMinDistance(r1, r2) {
+    // Reunir todos los segmentos de ambas rutas (ida + vuelta)
+    const segments1 = getRouteAllSegments(r1);
+    const segments2 = getRouteAllSegments(r2);
+    if (!segments1.length || !segments2.length) return { dist: Infinity, p1: null, p2: null, mid: null };
 
+    let best = Infinity, bestP1 = null, bestP2 = null;
+
+    // Para cada par de segmentos (s1 de r1, s2 de r2), calcular el punto más cercano
+    for (const seg1 of segments1) {
+        for (let i = 0; i < seg1.length - 1; i++) {
+            const a1 = seg1[i], a2 = seg1[i + 1];
+            for (const seg2 of segments2) {
+                for (let j = 0; j < seg2.length - 1; j++) {
+                    const b1 = seg2[j], b2 = seg2[j + 1];
+                    const res = closestPointsBetweenSegments(a1, a2, b1, b2);
+                    if (res.dist < best) {
+                        best = res.dist;
+                        bestP1 = res.p1;
+                        bestP2 = res.p2;
+                    }
+                }
+            }
+        }
+    }
+
+    return {
+        dist: best,
+        p1: bestP1,
+        p2: bestP2,
+        mid: bestP1 && bestP2 ? [(bestP1[0] + bestP2[0]) / 2, (bestP1[1] + bestP2[1]) / 2] : null
+    };
+}
+
+// === Utilidades geométricas para punto más cercano entre 2 segmentos ===
+// Convierte lat/lng a metros locales (proyección equirectangular)
+function _toMeters(lat, lng, refLat) {
+    const R = 6371000;
+    const x = (lng * Math.PI / 180) * R * Math.cos(refLat * Math.PI / 180);
+    const y = (lat * Math.PI / 180) * R;
+    return [x, y];
+}
+function _toLatLng(x, y, refLat) {
+    const R = 6371000;
+    const lat = (y / R) * 180 / Math.PI;
+    const lng = (x / (R * Math.cos(refLat * Math.PI / 180))) * 180 / Math.PI;
+    return [lat, lng];
+}
+
+// Punto más cercano entre dos segmentos (en 2D). Devuelve {p1, p2, dist} en lat/lng.
+function closestPointsBetweenSegments(a1, a2, b1, b2) {
+    // Referencia de proyección: promedio de latitudes
+    const refLat = (a1[0] + a2[0] + b1[0] + b2[0]) / 4;
+    const A1 = _toMeters(a1[0], a1[1], refLat);
+    const A2 = _toMeters(a2[0], a2[1], refLat);
+    const B1 = _toMeters(b1[0], b1[1], refLat);
+    const B2 = _toMeters(b2[0], b2[1], refLat);
+
+    // Segmento A: A1 + s*(A2-A1), s en [0,1]
+    // Segmento B: B1 + t*(B2-B1), t en [0,1]
+    const dA = [A2[0] - A1[0], A2[1] - A1[1]];
+    const dB = [B2[0] - B1[0], B2[1] - B1[1]];
+    const r = [A1[0] - B1[0], A1[1] - B1[1]];
+    const a = dA[0]*dA[0] + dA[1]*dA[1]; // |dA|²
+    const e = dB[0]*dB[0] + dB[1]*dB[1]; // |dB|²
+    const f = dB[0]*r[0] + dB[1]*r[1];
+
+    let s, t;
+    if (a <= 1e-9 && e <= 1e-9) {
+        // Ambos segmentos son puntos
+        s = 0; t = 0;
+    } else if (a <= 1e-9) {
+        s = 0;
+        t = Math.max(0, Math.min(1, f / e));
+    } else {
+        const c = dA[0]*r[0] + dA[1]*r[1];
+        if (e <= 1e-9) {
+            t = 0;
+            s = Math.max(0, Math.min(1, -c / a));
+        } else {
+            const b = dA[0]*dB[0] + dA[1]*dB[1];
+            const denom = a*e - b*b;
+            if (denom > 1e-9) {
+                s = Math.max(0, Math.min(1, (b*f - c*e) / denom));
+            } else {
+                s = 0;
+            }
+            t = (b*s + f) / e;
+            if (t < 0) { t = 0; s = Math.max(0, Math.min(1, -c / a)); }
+            else if (t > 1) { t = 1; s = Math.max(0, Math.min(1, (b - c) / a)); }
+        }
+    }
+
+    const P1 = [A1[0] + dA[0]*s, A1[1] + dA[1]*s];
+    const P2 = [B1[0] + dB[0]*t, B1[1] + dB[1]*t];
+    const dist = Math.hypot(P1[0] - P2[0], P1[1] - P2[1]);
+
+    return {
+        p1: _toLatLng(P1[0], P1[1], refLat),
+        p2: _toLatLng(P2[0], P2[1], refLat),
+        dist
+    };
+}
   // Verifica si una ruta pasa cerca de un punto
   function routeNearPoint(route, point, radius) {
     return routeDistanceToPoint(route, point.lat, point.lng) <= radius;
@@ -1939,8 +2032,8 @@ const url = location.origin + '/share/m/' + id;
             chains.push({
               type: 'transfer',
               legs: [r1, r2],
-              transferPoints: [inter.mid],
-              totalDist: routeTotalDistance(r1) + routeTotalDistance(r2),
+transferPoints: [inter.dist < 5 ? inter.mid : inter.p1],
+               totalDist: routeTotalDistance(r1) + routeTotalDistance(r2),
               transfers: 1
             });
           }
