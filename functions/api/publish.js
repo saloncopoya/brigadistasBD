@@ -590,8 +590,8 @@ footer a{color:var(--cyan)}
   <div class="meta">${new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
 
   <!-- 🔒 IMAGEN SEO: oculta visualmente pero indexable por Google -->
-  ${image ? `<img class="seo-hero" src="${safeImage}" alt="${safeTitle}" width="1200" height="630" loading="eager">` : ''}
-
+  ${image ? `<img class="seo-hero" src="${safeImage}" alt="${safeTitle}" title="${safeTitle}" width="1200" height="630" loading="eager">` : ''}
+  
   ${bodyContent}
 
 
