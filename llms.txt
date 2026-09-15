@@ -1,14 +1,44 @@
 # Rutas BGD
 
-> Aplicación web online y offline para consultar, explorar y administrar rutas de colectivos en Tuxtla Gutierrez, Chiapas.
+> Aplicación web PWA online/offline para consultar, explorar y administrar rutas de colectivos en Tuxtla Gutiérrez, Chiapas, México.
+
+Plataforma: PWA instalable
+Idioma: Español (es-MX)
+Ciudad: Tuxtla Gutiérrez, Chiapas, México
+Categorías: Transporte público, rutas de colectivo, marketplace local
 
 ## Páginas principales
 
-- [Inicio](https://brigadistasbd.pages.dev/): Feed de publicaciones recientes.
-- [Rutas](https://brigadistasbd.pages.dev/?tab=routes): Buscador de rutas de colectivos.
-- [Marketplace](https://brigadistasbd.pages.dev/?tab=market): Anuncios clasificados.
-- [Buscar viaje en mapa](https://brigadistasbd.pages.dev/?tab=trip): Búsqueda de rutas en mapa interactivo.
+- [Inicio](https://brigadistasbd.pages.dev/): Feed de publicaciones recientes sobre rutas y novedades.
+- [Rutas](https://brigadistasbd.pages.dev/?tab=routes): Buscador de rutas de colectivos por origen y destino, con soporte para transbordos.
+- [Marketplace](https://brigadistasbd.pages.dev/?tab=market): Anuncios clasificados de autos, terrenos, casas, servicios.
+- [Buscar viaje en mapa](https://brigadistasbd.pages.dev/?tab=trip): Búsqueda interactiva de rutas cercanas a puntos específicos en el mapa.
 
-## Sobre el proyecto
+## Rutas destacadas
 
-Esta aplicación permite a los usuarios encontrar rutas de transporte público, ver sus paradas y planificar viajes con transbordos.
+- [Ruta 1 - Centro](https://brigadistasbd.pages.dev/share/ruta/ruta1149): Recorrido por el centro histórico de Tuxtla.
+- [Ruta Centro - Sur](https://brigadistasbd.pages.dev/share/ruta/rutacentro149): Conexión centro-sur.
+- [Ruta 3 - Copoya](https://brigadistasbd.pages.dev/share/ruta/ruta3copoya139): Ruta hacia Copoya.
+
+## Información del proyecto
+
+Esta aplicación permite a los usuarios:
+- Encontrar rutas de transporte público en Tuxtla Gutiérrez
+- Ver paradas, calles y puntos de interés (POIs) de cada ruta
+- Planificar viajes con transbordos entre múltiples rutas
+- Consultar tarifas, horarios y frecuencia de cada ruta
+- Buscar rutas cercanas en un mapa interactivo (Leaflet + OpenStreetMap)
+- Funcionar sin conexión (PWA con Service Worker)
+- Publicar y compartir rutas con metadatos SEO completos
+
+## Tecnología
+
+- PWA (Progressive Web App)
+- Mapas interactivos con Leaflet
+- Datos en Firebase
+- Índice de rutas en GitHub
+- Imágenes en Cloudinary
+
+## Contacto
+
+Sitio web: https://brigadistasbd.pages.dev
