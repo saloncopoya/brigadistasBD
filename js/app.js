@@ -172,6 +172,7 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
     if (page === 'trip') {
       setTimeout(() => {
         initTripMap();
+        renderTripPointsList();
         // Forzar invalidateSize después de que el DOM esté listo
         if (state.tripMap) {
           setTimeout(() => state.tripMap.invalidateSize(), 300);
@@ -1596,8 +1597,9 @@ const url = location.origin + '/share/m/' + id;
     const el = $('#tripPointsList');
     if (!el) return;
     if (!state.tripPoints.length) {
-      el.innerHTML = '<div class="empty-trip">Toca el mapa para agregar puntos (máx. 5)</div>';
+      el.innerHTML = '<div class="empty-trip"> Toca el mapa para agregar ubicaciones y ver las rutas cercanas. </div>';
       return;
+    }turn;
     }
     el.innerHTML = state.tripPoints.map((p, i) => `
       <div class="trip-point-card">
