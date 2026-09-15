@@ -7,8 +7,8 @@
       "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789463101/qigspxz4quvtrfqiko0c.jpg",
       "url": "/share/ruta/ruta3149",
       "tipo": "ruta",
-      "timestamp": 1789509066375,
-      "updatedAt": "2026-09-15T21:51:06.375Z",
+      "timestamp": 1789513508033,
+      "updatedAt": "2026-09-15T23:05:08.033Z",
       "categoria": "urbana",
       "tarifa": "",
       "frecuencia": "",
@@ -347,7 +347,7 @@
     }
   ],
   "total": 23,
-  "updatedAt": "2026-09-15T21:51:06.375Z",
+  "updatedAt": "2026-09-15T23:05:08.033Z",
   "version": 1,
-  "__sha": "1afac4b050f73b79b2d1dd8fef3ff3880516ee34"
+  "__sha": "8f54d0f0cc3d585a3ffcea07f0bc2490115eedda"
 }
