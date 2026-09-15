@@ -1175,7 +1175,8 @@ body.fs-active{overflow:hidden !important}
       const offsetGeomV = offsetPolyline(geomV, -4);
       state.layers.vuelta = L.polyline(offsetGeomV,{
         color: state.routeDraft.colorVuelta || '#a855f7',
-        weight: 4, opacity: .95
+        weight: 4, opacity: .95,
+                dashArray: '10,6'
       }).addTo(state.map);
     }
   }
@@ -1319,12 +1320,13 @@ body.fs-active{overflow:hidden !important}
             state.routeDraft.geometriaVuelta = r.geometriaVuelta;
             const offsetGeomV = offsetPolyline(r.geometriaVuelta, -4);
             state.layers.vuelta = L.polyline(offsetGeomV, {
-              color: colorVuelta, weight: 4, opacity: .95
+              color: colorVuelta, weight: 4, opacity: .95,
+                dashArray: '10,6'
             }).addTo(state.map);
           } else if (state.routeDraft.puntosVuelta.length > 1) {
             state.layers.vuelta = L.polyline(state.routeDraft.puntosVuelta, {
               color: colorVuelta, weight: 4, opacity: .95,
-              dashArray: '6,6'
+                            dashArray: '10,6'
             }).addTo(state.map);
           }
 
