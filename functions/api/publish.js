@@ -580,24 +580,25 @@ footer a{color:var(--cyan)}
 
   ${bodyContent}
 
-  <div class="cta">
+   <div class="cta">
     <a class="btn btn-primary" href="${baseUrl}/">🚌 Ver todas las rutas</a>
-    <a class="btn btn-ghost" href="${baseUrl}/?tab=market">🛒 Marketplace</a>
+    <a class="btn btn-ghost" href="${baseUrl}/?tab=market" rel="nofollow">🛒 Marketplace</a>
   </div>
+  
   <footer>© ${new Date().getFullYear()} Rutas BGD · <a href="${baseUrl}">${cleanDomain(baseUrl)}</a></footer>
 </div>
 
 <!-- NAV INFERIOR -->
 <nav class="bottom-nav">
-  <a class="nav-item" href="${baseUrl}/?tab=home">
+  <a class="nav-item" href="${baseUrl}/?tab=home" rel="nofollow">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     <span>Inicio</span>
   </a>
-  <a class="nav-item ${tipo === 'ruta' ? 'active' : ''}" href="${baseUrl}/?tab=routes">
+  <a class="nav-item ${tipo === 'ruta' ? 'active' : ''}" href="${baseUrl}/?tab=routes" rel="nofollow">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M6 16V9a4 4 0 0 1 4-4h4"/><path d="M18 8v7a4 4 0 0 1-4 4H9"/></svg>
     <span>Rutas</span>
   </a>
-  <a class="nav-item ${tipo === 'market' ? 'active' : ''}" href="${baseUrl}/?tab=market">
+  <a class="nav-item ${tipo === 'market' ? 'active' : ''}" href="${baseUrl}/?tab=market" rel="nofollow">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
     <span>Market</span>
   </a>
