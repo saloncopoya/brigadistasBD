@@ -304,18 +304,22 @@ let enrichedContent = content || '';
 if (tipo === 'ruta' && extra?.route) {
   const r = extra.route;
   const parts = [];
-  
+
+   if (r.notas) {
+    parts.push(` ${r.notas.slice(0, 80)}`);
+  }
+   
   if (r.paradas?.length) {
-    parts.push(`📍 Paradas: ${r.paradas.slice(0, 5).join(', ')}${r.paradas.length > 5 ? '...' : ''}`);
+    parts.push(`📍 ${r.paradas.slice(0, 5).join(', ')}${r.paradas.length > 5 ? '...' : ''}`);
   }
   if (r.pois?.length) {
-    parts.push(`🏥 POIs: ${r.pois.slice(0, 5).join(', ')}${r.pois.length > 5 ? '...' : ''}`);
+    parts.push(` ${r.pois.slice(0, 5).join(', ')}${r.pois.length > 5 ? '...' : ''}`);
   }
   if (r.calles?.length) {
-    parts.push(`🛣️ Calles: ${r.calles.slice(0, 4).join(', ')}${r.calles.length > 4 ? '...' : ''}`);
+    parts.push(` ${r.calles.slice(0, 4).join(', ')}${r.calles.length > 4 ? '...' : ''}`);
   }
   if (r.tarifa) {
-    parts.push(`💰 Tarifa: ${r.tarifa}`);
+    parts.push(`💰 ${r.tarifa}`);
   }
   if (r.frecuencia) {
     parts.push(`⏱️ ${r.frecuencia}`);
@@ -737,7 +741,13 @@ function renderRouteBody(route) {
   if (route.pois?.length) blocks.push(`<div class="block"><h3>🏥 POIs de Ida</h3><ul>${route.pois.map(p => `<li>${escapeHTML(p)}</li>`).join('')}</ul></div>`);
   if (route.poisVuelta?.length) blocks.push(`<div class="block"><h3>🏥 POIs de Regreso</h3><ul>${route.poisVuelta.map(p => `<li>${escapeHTML(p)}</li>`).join('')}</ul></div>`);
   if (route.calles?.length) blocks.push(`<div class="block"><h3>🛣️ Calles</h3><ul>${route.calles.map(p => `<li>${escapeHTML(p)}</li>`).join('')}</ul></div>`);
-  const info = [];
+ // 📝 Bloque de Notas adicionales (arriba de Información)
+  let notasBlock = '';
+  if (route.notas && String(route.notas).trim()) {
+    notasBlock = `<div class="block"><h3>📝 </h3><div style="font-size:14px;line-height:1.6;color:var(--text-2);white-space:pre-wrap">${escapeHTML(route.notas)}</div></div>`;
+  }
+   
+   const info = [];
   if (route.tarifa) info.push(`<li>💰 Tarifa: ${escapeHTML(route.tarifa)}</li>`);
   if (route.frecuencia) info.push(`<li>⏱️ Frecuencia: ${escapeHTML(route.frecuencia)}</li>`);
   if (route.horarioIni) info.push(`<li>🕐 Horario: ${escapeHTML(route.horarioIni)} - ${escapeHTML(route.horarioFin || '')}</li>`);
