@@ -11,16 +11,6 @@
       "updatedAt": "2026-09-15T02:46:39.642Z"
     },
     {
-      "slug": "2738149",
-      "title": "2738",
-      "description": "Ruta 2738",
-      "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789436660/kahpqar23fnaxgqlnqgk.jpg",
-      "url": "/share/ruta/2738149",
-      "tipo": "ruta",
-      "timestamp": 1789436667467,
-      "updatedAt": "2026-09-15T01:44:27.467Z"
-    },
-    {
       "slug": "ruta3149",
       "title": "RUTA 3",
       "description": "Ruta RUTA 3",
@@ -241,8 +231,8 @@
       "updatedAt": "2026-09-13T08:52:43.612Z"
     }
   ],
-  "total": 24,
-  "updatedAt": "2026-09-15T03:00:37.233Z",
+  "total": 23,
+  "updatedAt": "2026-09-15T03:00:46.756Z",
   "version": 1,
   "__sha": "7c996e04d6c6f27c1ce20419b65b08bf0c804797"
 }
