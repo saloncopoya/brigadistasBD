@@ -1876,7 +1876,7 @@ const url = location.origin + '/share/m/' + id;
               box-shadow:0 2px 8px rgba(0,0,0,.45);
             ">
               <svg viewBox="0 0 24 24" width="18" height="18"
-                   fill="none" stroke="${color}" stroke-width="2"
+                   fill="none" stroke="${color}" stroke-width="1.5"
                    stroke-linecap="round" stroke-linejoin="round">
                 <!-- 🧍 Persona de pie: cabeza, torso, brazos y piernas -->
                 <circle cx="12" cy="4.2" r="2.1" fill="${color}" stroke="none"/>
@@ -1936,6 +1936,35 @@ function routesMinDistance(r1, r2) {
         p1: bestP1,
         p2: bestP2,
         mid: bestP1 && bestP2 ? [(bestP1[0] + bestP2[0]) / 2, (bestP1[1] + bestP2[1]) / 2] : null
+    };
+}
+
+   function routesMinDistanceNearPoint(r1, r2, nearPoint) {
+    const segments1 = getRouteAllSegments(r1);
+    const segments2 = getRouteAllSegments(r2);
+    if (!segments1.length || !segments2.length) return { dist: Infinity, p1: null, p2: null, mid: null };
+    let best = Infinity, bestP1 = null, bestP2 = null;
+    for (const seg1 of segments1) {
+        for (let i = 0; i < seg1.length - 1; i++) {
+            const a1 = seg1[i], a2 = seg1[i + 1];
+            for (const seg2 of segments2) {
+                for (let j = 0; j < seg2.length - 1; j++) {
+                    const b1 = seg2[j], b2 = seg2[j + 1];
+                    const res = closestPointsBetweenSegments(a1, a2, b1, b2);
+                    if (res.dist > 600) continue;
+                    const dToNear = nearPoint ? haversine(res.p1[0], res.p1[1], nearPoint.lat, nearPoint.lng) : 0;
+                    const score = res.dist + dToNear * 2;
+                    if (score < best) { best = score; bestP1 = res.p1; bestP2 = res.p2; }
+                }
+            }
+        }
+    }
+    if (!bestP1) return { dist: Infinity, p1: null, p2: null, mid: null };
+    return {
+        dist: haversine(bestP1[0], bestP1[1], bestP2[0], bestP2[1]),
+        p1: bestP1,
+        p2: bestP2,
+        mid: [(bestP1[0] + bestP2[0]) / 2, (bestP1[1] + bestP2[1]) / 2]
     };
 }
 
@@ -2027,12 +2056,12 @@ function closestPointsBetweenSegments(a1, a2, b1, b2) {
       startRoutes.forEach(r1 => {
         endRoutes.forEach(r2 => {
           if (r1.id === r2.id) return;
-          const inter = routesMinDistance(r1, r2);
-          if (inter.dist <= 600) {
+          const inter = routesMinDistanceNearPoint(r1, r2, startPoint);
+           if (inter.dist <= 600) {
             chains.push({
               type: 'transfer',
               legs: [r1, r2],
-transferPoints: [inter.dist < 5 ? inter.mid : inter.p1],
+transferPoints: [inter.p1],
                totalDist: routeTotalDistance(r1) + routeTotalDistance(r2),
               transfers: 1
             });
@@ -2046,16 +2075,16 @@ transferPoints: [inter.dist < 5 ? inter.mid : inter.p1],
       startRoutes.forEach(r1 => {
         state.routes.forEach(r2 => {
           if (r2.id === r1.id) return;
-          const i12 = routesMinDistance(r1, r2);
+          const i12 = routesMinDistanceNearPoint(r1, r2, startPoint);
           if (i12.dist > 400) return;
           endRoutes.forEach(r3 => {
             if (r3.id === r2.id || r3.id === r1.id) return;
-            const i23 = routesMinDistance(r2, r3);
+            const i23 = routesMinDistanceNearPoint(r2, r3, i12.p1 ? { lat: i12.p1[0], lng: i12.p1[1] } : startPoint);
             if (i23.dist > 400) return;
             chains.push({
               type: 'transfer',
               legs: [r1, r2, r3],
-              transferPoints: [i12.mid, i23.mid],
+                            transferPoints: [i12.p1, i23.p1],
               totalDist: routeTotalDistance(r1) + routeTotalDistance(r2) + routeTotalDistance(r3),
               transfers: 2
             });
@@ -2069,20 +2098,20 @@ transferPoints: [inter.dist < 5 ? inter.mid : inter.p1],
       startRoutes.forEach(r1 => {
         state.routes.forEach(r2 => {
           if (r2.id === r1.id) return;
-          const i12 = routesMinDistance(r1, r2);
+          const i12 = routesMinDistanceNearPoint(r1, r2, startPoint);
           if (i12.dist > 400) return;
           state.routes.forEach(r3 => {
             if (r3.id === r2.id || r3.id === r1.id) return;
-            const i23 = routesMinDistance(r2, r3);
+            const i23 = routesMinDistanceNearPoint(r2, r3, i12.p1 ? { lat: i12.p1[0], lng: i12.p1[1] } : startPoint);
             if (i23.dist > 400) return;
             endRoutes.forEach(r4 => {
               if (r4.id === r3.id || r4.id === r2.id || r4.id === r1.id) return;
-              const i34 = routesMinDistance(r3, r4);
+              const i34 = routesMinDistanceNearPoint(r3, r4, i23.p1 ? { lat: i23.p1[0], lng: i23.p1[1] } : startPoint);
               if (i34.dist > 400) return;
               chains.push({
                 type: 'transfer',
                 legs: [r1, r2, r3, r4],
-                transferPoints: [i12.mid, i23.mid, i34.mid],
+                             transferPoints: [i12.p1, i23.p1, i34.p1],
                 totalDist: routeTotalDistance(r1) + routeTotalDistance(r2) + routeTotalDistance(r3) + routeTotalDistance(r4),
                 transfers: 3
               });
@@ -2097,24 +2126,24 @@ transferPoints: [inter.dist < 5 ? inter.mid : inter.p1],
       startRoutes.forEach(r1 => {
         state.routes.forEach(r2 => {
           if (r2.id === r1.id) return;
-          const i12 = routesMinDistance(r1, r2);
+          const i12 = routesMinDistanceNearPoint(r1, r2, startPoint);
           if (i12.dist > 400) return;
           state.routes.forEach(r3 => {
             if (r3.id === r2.id || r3.id === r1.id) return;
-            const i23 = routesMinDistance(r2, r3);
+            const i23 = routesMinDistanceNearPoint(r2, r3, i12.p1 ? { lat: i12.p1[0], lng: i12.p1[1] } : startPoint);
             if (i23.dist > 400) return;
             state.routes.forEach(r4 => {
               if (r4.id === r3.id || r4.id === r2.id || r4.id === r1.id) return;
-              const i34 = routesMinDistance(r3, r4);
+              const i34 = routesMinDistanceNearPoint(r3, r4, i23.p1 ? { lat: i23.p1[0], lng: i23.p1[1] } : startPoint);
               if (i34.dist > 400) return;
               endRoutes.forEach(r5 => {
                 if (r5.id === r4.id || r5.id === r3.id || r5.id === r2.id || r5.id === r1.id) return;
-                const i45 = routesMinDistance(r4, r5);
+                const i45 = routesMinDistanceNearPoint(r4, r5, i34.p1 ? { lat: i34.p1[0], lng: i34.p1[1] } : startPoint);
                       if (i45.dist > 400) return;
                 chains.push({
                   type: 'transfer',
                   legs: [r1, r2, r3, r4, r5],
-                  transferPoints: [i12.mid, i23.mid, i34.mid, i45.mid],
+                               transferPoints: [i12.p1, i23.p1, i34.p1, i45.p1],
                   totalDist: routeTotalDistance(r1) + routeTotalDistance(r2) + routeTotalDistance(r3) + routeTotalDistance(r4) + routeTotalDistance(r5),
                   transfers: 4
                 });
