@@ -2028,7 +2028,7 @@ function closestPointsBetweenSegments(a1, a2, b1, b2) {
         endRoutes.forEach(r2 => {
           if (r1.id === r2.id) return;
           const inter = routesMinDistance(r1, r2);
-          if (inter.dist <= 400) {
+          if (inter.dist <= 600) {
             chains.push({
               type: 'transfer',
               legs: [r1, r2],
