@@ -130,28 +130,72 @@ button{cursor:pointer;border:none;background:none}
   height:100vh !important;
   width:100vw !important;
 }
-  /* 📄 Pie de página sobre el mapa */
+
+
+  /* 📄 Pie de página sobre el mapa (2 líneas) */
 .map-footer{
   position:absolute;
-  bottom:12px;
-  left:12px;
-  right:70px;  /* deja espacio al botón de pantalla completa */
+  bottom:6px;
+  left:6px;
+  right:64px;  /* deja espacio al botón de pantalla completa */
   z-index:600;
   background:color-mix(in srgb,var(--surface) 96%,transparent);
   border:1px solid var(--border-2);
-  border-radius:12px;
-  padding:8px 14px;
+  border-radius:10px;
+  padding:6px 12px;
   font-size:11.5px;
   font-weight:600;
   color:var(--text-2);
   box-shadow:var(--shadow);
   backdrop-filter:blur(10px);
   -webkit-backdrop-filter:blur(10px);
-  text-align:center;
+  text-align:left;
+  overflow:hidden;
+  pointer-events:auto;
+  line-height:1.35;
+}
+.mf-line1{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:2px;
+}
+.mf-nombre{
+  font-size:13px;
+  font-weight:900;
+  color:var(--text);
+  text-transform:uppercase;
+  letter-spacing:.3px;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
-  pointer-events:auto;
+  max-width:55%;
+}
+.mf-cat{
+  font-size:10.5px;
+  font-weight:700;
+  color:var(--text-2);
+  text-transform:lowercase;
+  background:color-mix(in srgb,var(--cyan) 14%,transparent);
+  border:1px solid color-mix(in srgb,var(--cyan) 30%,transparent);
+  padding:2px 8px;
+  border-radius:99px;
+  white-space:nowrap;
+}
+.mf-fecha{
+  font-size:10.5px;
+  font-weight:600;
+  color:var(--text-3);
+  white-space:nowrap;
+}
+.mf-line2{
+  font-size:10.5px;
+  font-weight:500;
+  color:var(--text-3);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 .map-footer a{
   color:var(--cyan);
@@ -160,6 +204,8 @@ button{cursor:pointer;border:none;background:none}
 .map-footer a:hover{
   text-decoration:underline;
 }
+
+  
   
 body.fs-active{overflow:hidden !important}
   .tb{background:color-mix(in srgb,var(--surface) 94%,transparent);backdrop-filter:blur(10px);border:1px solid var(--border-2);border-radius:10px;padding:8px 11px;font-size:12px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:5px;box-shadow:var(--shadow-sm);transition:var(--transition)}
@@ -592,7 +638,16 @@ body.fs-active{overflow:hidden !important}
             </svg>
           </button>
           <!-- 📄 Pie de página sobre el mapa -->
-          <div class="map-footer">Copyright © 2026 <a>brigadistasbd.pages.dev</a></div>
+          <div class="map-footer" id="mapFooter">
+            <div class="mf-line1" id="mfLine1">
+              <span class="mf-nombre" id="mfNombre">RUTA SIN NOMBRE</span>
+              <span class="mf-cat" id="mfCategoria">urbana</span>
+              <span class="mf-fecha" id="mfFecha"></span>
+            </div>
+            <div class="mf-line2">
+              Copyright © <span id="mfYear"></span> <a href="https://brigadistasbd.pages.dev" target="_blank" rel="noopener">brigadistasbd.pages.dev</a>
+            </div>
+          </div>
           
           <div class="map-toolbar">
 <button class="tb" data-tool="draw-ida">
@@ -935,6 +990,33 @@ body.fs-active{overflow:hidden !important}
     loadPosts();
   };
 
+
+    // 📄 Actualizar el pie de página del mapa (nombre, categoría, fecha)
+  function actualizarMapFooter(){
+    const nombreEl = document.getElementById('mfNombre');
+    const catEl = document.getElementById('mfCategoria');
+    const fechaEl = document.getElementById('mfFecha');
+    const yearEl = document.getElementById('mfYear');
+
+    if (nombreEl) {
+      const nombre = ($('#routeName')?.value || '').trim();
+      nombreEl.textContent = nombre ? nombre.toUpperCase() : 'RUTA SIN NOMBRE';
+    }
+    if (catEl) {
+      const cat = ($('#routeCat')?.value || 'urbana');
+      catEl.textContent = cat;
+    }
+    if (fechaEl) {
+      const hoy = new Date();
+      const opciones = { day: '2-digit', month: 'short', year: 'numeric' };
+      fechaEl.textContent = hoy.toLocaleDateString('es-MX', opciones);
+    }
+    if (yearEl) {
+      yearEl.textContent = new Date().getFullYear();
+    }
+  }
+
+  
   // ================================================================
   //   RUTAS — Wizard de 3 pasos + Mapa
   // ================================================================
@@ -2586,10 +2668,11 @@ if (f.size > 20 * 1024 * 1024) {
     // Quitar cualquier botón de la toolbar activo
     $$('.tb').forEach(x=>x.classList.remove('active'));
 
-    updateEditorStatus();
+       updateEditorStatus();
     $('#routeFormTitle').textContent = 'Registrar nueva ruta';
     initColorSwatches();
     goStep(1);
+    actualizarMapFooter();
   }
 
   async function loadRoutes(){
@@ -2653,7 +2736,8 @@ if (f.size > 20 * 1024 * 1024) {
         $('#routePoisIda').value=(r.pois||[]).join(', ');
         $('#routePoisVuelta').value=(r.poisVuelta||[]).join(', ');
                                 $('#routeCalles').value=(r.calles||[]).join(', ');
-        
+                // 📄 Actualizar el pie de página del mapa
+        actualizarMapFooter();
         // 🖼️ Restaurar vista previa de la imagen existente (pero sin marcarla como "personalizada")
         // Solo se marcará como personalizada si el usuario sube una NUEVA imagen
         state.routeDraft.customImage = '';
@@ -2698,7 +2782,7 @@ if (f.size > 20 * 1024 * 1024) {
         }
         window.scrollTo({top:0,behavior:'smooth'});
         toast('Ruta cargada para edición');
-            
+                    setTimeout(actualizarMapFooter, 100);
       };
       row.querySelector('[data-act="del"]').onclick=async()=>{
         if(!confirm('¿Eliminar esta ruta?')) return;
@@ -2825,6 +2909,7 @@ if (f.size > 20 * 1024 * 1024) {
   };
 
   // ================================================================
+  // ================================================================
   //   INICIALIZACIÓN
   // ================================================================
   (async()=>{
@@ -2833,6 +2918,15 @@ if (f.size > 20 * 1024 * 1024) {
     await loadPosts();
     await loadRoutes();
     await loadMarket();
+
+    // 📄 Inicializar el pie de página del mapa
+    actualizarMapFooter();
+
+    // 🎧 Escuchar cambios en el nombre y categoría para actualizar el pie
+    const nombreInput = document.getElementById('routeName');
+    const catSelect = document.getElementById('routeCat');
+    if (nombreInput) nombreInput.addEventListener('input', actualizarMapFooter);
+    if (catSelect) catSelect.addEventListener('change', actualizarMapFooter);
   })();
 
 })();
