@@ -646,7 +646,7 @@ function renderRouteMapBlock(route) {
       }).addTo(map);
 
       var allCoords = [];
-      function drawLine(coords, color, dashed){
+         function drawLine(coords, color, dashed){
         if (!coords || coords.length < 2) return;
         var line = L.polyline(coords, {
           color: color,
@@ -654,7 +654,9 @@ function renderRouteMapBlock(route) {
           opacity: 0.95,
           dashArray: dashed ? '10,6' : null,
           lineJoin: 'round',
-          lineCap: 'round'
+          lineCap: 'round',
+          interactive: false,
+          renderer: L.canvas({ padding: 0.5 })
         }).addTo(map);
         allCoords = allCoords.concat(coords);
         return line;
