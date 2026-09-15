@@ -1,1 +1,17 @@
 # Reglas específicas para /share/ (sin extensión → con .html)
+# ============================================================
+#  REDIRECTS — Rutas limpias sin extensión
+# ============================================================
+
+# Redirigir .php a .html (o a la raíz si no existe)
+/index.php         /                 301
+/*.php              /                 301
+
+# Redirigir .html a la versión sin extensión
+/share/ruta/*.html /share/ruta/:splat 301
+/share/post/*.html /share/post/:splat 301
+/share/m/*.html    /share/m/:splat    301
+
+# Redirigir /index.html a la raíz
+/index.html        /                 301
+/admin.html        /admin.html       200
