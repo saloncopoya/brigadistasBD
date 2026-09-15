@@ -353,15 +353,7 @@ const safeDesc = escapeHTML(enrichedContent.slice(0, 155));
 // 🐦 Para OG (redes sociales cortan a ~125)
 const safeDescOG = escapeHTML(enrichedContent.slice(0, 125));
    
-     // 🖼️ OG Image: forzar 1200x630 JPG para redes sociales
-  let safeImage = image ? escapeHTML(image) : `${baseUrl}/img.png`;
-  if (safeImage.includes('res.cloudinary.com') && safeImage.includes('/upload/')) {
-    // ✅ c_pad: NO recorta, añade relleno blanco para llegar a 1200x630
-    safeImage = safeImage.replace(
-      /\/upload\/(?:[^\/]*\/)?/,
-      '/upload/c_pad,w_1200,h_630,b_white,q_auto:good,f_jpg/'
-    );
-  }
+   const safeImage = image ? escapeHTML(image) : `${baseUrl}/img.png`;
    
   const typeLabel = tipo === 'ruta' ? 'Ruta' : tipo === 'market' ? 'Anuncio' : 'Publicación';
 
