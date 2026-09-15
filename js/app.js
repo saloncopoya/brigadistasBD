@@ -1956,7 +1956,7 @@ function routesMinDistance(r1, r2) {
                    // Prioridad ABSOLUTA al cruce real (dist pequeña).
 // Solo si no hay cruce real, se usa la cercanía a `nearPoint` como desempate.
 let score;
-if (res.dist < 10) {
+if (res.dist < 15) {
     // Cruce real: ganan los más cercanos a `nearPoint` (dist casi 0, no importa)
     score = dToNear;
 } else {
