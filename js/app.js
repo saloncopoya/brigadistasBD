@@ -1937,11 +1937,24 @@ const url = location.origin + '/share/m/' + id;
     return Math.hypot(px - (ax + t*dx), py - (ay + t*dy));
   }
 
+    // ============================================================
+  //  🎯 PUNTOS MÁS CERCANOS ENTRE 2 POLILÍNEAS
+  //  ✅ CORREGIDO: prioriza intersecciones reales
+  // ============================================================
   function closestPointsBetweenPolylines(poly1, poly2) {
     let best = {
-      dist: Infinity, mid: null, p1: null, p2: null,
-      seg1Idx: -1, seg2Idx: -1, t1: 0, t2: 0
+      dist: Infinity,
+      mid: null,
+      p1: null,
+      p2: null,
+      seg1Idx: -1,
+      seg2Idx: -1,
+      t1: 0,
+      t2: 0,
+      isRealIntersection: false
     };
+    
+    let bestIntersection = null;
     
     for (let i = 0; i < poly1.length - 1; i++) {
       const a1 = poly1[i];
@@ -1950,17 +1963,50 @@ const url = location.origin + '/share/m/' + id;
         const b1 = poly2[j];
         const b2 = poly2[j + 1];
         const result = segmentIntersection(a1, a2, b1, b2);
+        
+        // 🎯 Si es intersección real, guardarla como prioridad
+        if (result.isRealIntersection) {
+          if (!bestIntersection || result.dist < bestIntersection.dist) {
+            bestIntersection = {
+              dist: result.dist,
+              mid: result.mid,
+              p1: result.p1,
+              p2: result.p2,
+              seg1Idx: i,
+              seg2Idx: j,
+              t1: result.t1,
+              t2: result.t2,
+              isRealIntersection: true
+            };
+          }
+        }
+        
+        // Guardar el más cercano (para fallback)
         if (result.dist < best.dist) {
           best = {
-            dist: result.dist, mid: result.mid, p1: result.p1, p2: result.p2,
-            seg1Idx: i, seg2Idx: j, t1: result.t1, t2: result.t2
+            dist: result.dist,
+            mid: result.mid,
+            p1: result.p1,
+            p2: result.p2,
+            seg1Idx: i,
+            seg2Idx: j,
+            t1: result.t1,
+            t2: result.t2,
+            isRealIntersection: false
           };
         }
       }
     }
+    
+    // 🎯 Priorizar intersección real si existe
+    if (bestIntersection) return bestIntersection;
     return best;
   }
 
+    // ============================================================
+  //  🎯 INTERSECCIÓN ENTRE 2 SEGMENTOS
+  //  ✅ CORREGIDO: calcula la intersección real si los segmentos se cruzan
+  // ============================================================
   function segmentIntersection(a1, a2, b1, b2) {
     const [ax1, ay1] = a1;
     const [ax2, ay2] = a2;
@@ -1973,17 +2019,25 @@ const url = location.origin + '/share/m/' + id;
     const denom = dx1 * dy2 - dy1 * dx2;
     
     let t1, t2;
+    let isRealIntersection = false;
     
     if (Math.abs(denom) < 1e-12) {
+      // Segmentos paralelos → usar el punto más cercano
       t1 = 0.5;
       t2 = 0.5;
     } else {
       const ex = bx1 - ax1;
       const ey = by1 - ay1;
-      t1 = (ex * dy2 - ey * dx2) / denom;
-      t2 = (ex * dy1 - ey * dx1) / denom;
-      t1 = Math.max(0, Math.min(1, t1));
-      t2 = Math.max(0, Math.min(1, t2));
+      const t1Raw = (ex * dy2 - ey * dx2) / denom;
+      const t2Raw = (ex * dy1 - ey * dx1) / denom;
+      
+      // 🎯 Si ambos t están dentro de [0, 1], es una intersección REAL
+      if (t1Raw >= 0 && t1Raw <= 1 && t2Raw >= 0 && t2Raw <= 1) {
+        isRealIntersection = true;
+      }
+      
+      t1 = Math.max(0, Math.min(1, t1Raw));
+      t2 = Math.max(0, Math.min(1, t2Raw));
     }
     
     const px1 = ax1 + t1 * dx1;
@@ -1991,8 +2045,17 @@ const url = location.origin + '/share/m/' + id;
     const px2 = bx1 + t2 * dx2;
     const py2 = by1 + t2 * dy2;
     
-    const midLat = (py1 + py2) / 2;
-    const midLng = (px1 + px2) / 2;
+    // 🎯 Si es intersección REAL, usar el punto exacto de intersección
+    let midLat, midLng;
+    if (isRealIntersection) {
+      // Calcular el punto exacto donde se cruzan los segmentos
+      midLat = (py1 + py2) / 2;
+      midLng = (px1 + px2) / 2;
+    } else {
+      // Si no se cruzan, usar el punto medio entre los más cercanos
+      midLat = (py1 + py2) / 2;
+      midLng = (px1 + px2) / 2;
+    }
     
     const dLat = (py1 - py2) * 111320;
     const dLng = (px1 - px2) * 111320 * Math.cos(midLat * Math.PI / 180);
@@ -2003,10 +2066,17 @@ const url = location.origin + '/share/m/' + id;
       mid: [midLat, midLng],
       p1: [py1, px1],
       p2: [py2, px2],
-      t1, t2
+      t1,
+      t2,
+      isRealIntersection
     };
   }
 
+    // ============================================================
+  //  🎯 ENCONTRAR EL MEJOR PUNTO DE TRANSBORDO
+  //  ✅ CORREGIDO: prioriza intersecciones reales y elige la más
+  //     cercana a los puntos del usuario
+  // ============================================================
   function findBestTransbordo(r1, r2, userPoints) {
     const segs1 = getRouteAllSegments(r1);
     const segs2 = getRouteAllSegments(r2);
@@ -2017,16 +2087,21 @@ const url = location.origin + '/share/m/' + id;
     
     const candidatos = [];
     
+    // 🔍 Buscar TODAS las intersecciones entre los segmentos
     segs1.forEach((s1, si) => {
       segs2.forEach((s2, sj) => {
         const inter = closestPointsBetweenPolylines(s1, s2);
         if (inter.mid && inter.dist < 500) {
+          // 🎯 Es intersección REAL si los segmentos se cruzan (< 5m)
           const isRealIntersection = inter.dist < 5;
           candidatos.push({
-            mid: inter.mid, dist: inter.dist,
+            mid: inter.mid,
+            dist: inter.dist,
             isIntersection: isRealIntersection,
-            seg1: si, seg2: sj,
-            p1: inter.p1, p2: inter.p2
+            seg1: si,
+            seg2: sj,
+            p1: inter.p1,
+            p2: inter.p2
           });
         }
       });
@@ -2036,9 +2111,16 @@ const url = location.origin + '/share/m/' + id;
       return { mid: null, dist: Infinity, isIntersection: false };
     }
     
+    // 🎯 ORDENAR candidatos:
+    // 1. Primero las intersecciones REALES (isIntersection = true)
+    // 2. Luego por distancia al punto del usuario más cercano
+    // 3. Luego por distancia entre los trazos
     candidatos.sort((a, b) => {
+      // Prioridad 1: intersección real
       if (a.isIntersection && !b.isIntersection) return -1;
       if (!a.isIntersection && b.isIntersection) return 1;
+      
+      // Prioridad 2: distancia al usuario
       if (userPoints && userPoints.length) {
         const distA = Math.min(...userPoints.map(p => 
           haversineM(a.mid[0], a.mid[1], p.lat, p.lng)
@@ -2046,8 +2128,10 @@ const url = location.origin + '/share/m/' + id;
         const distB = Math.min(...userPoints.map(p => 
           haversineM(b.mid[0], b.mid[1], p.lat, p.lng)
         ));
-        return distA - distB;
+        if (Math.abs(distA - distB) > 5) return distA - distB;
       }
+      
+      // Prioridad 3: distancia entre los trazos
       return a.dist - b.dist;
     });
     
@@ -2067,32 +2151,57 @@ const url = location.origin + '/share/m/' + id;
     return transbordos;
   }
    
-   // ============================================================
+    // ============================================================
   //  📏 DISTANCIA MÍNIMA ENTRE 2 RUTAS (con intersección real)
+  //  ✅ CORREGIDO: siempre devuelve el punto de intersección real
   // ============================================================
   function routesMinDistance(r1, r2, userPoints = null) {
+    // 🎯 SIEMPRE usar findBestTransbordo para obtener la intersección real
     const best = findBestTransbordo(r1, r2, userPoints);
     
-    if (!best || !best.mid) {
-      const c1 = getRouteCoords(r1);
-      const c2 = getRouteCoords(r2);
-      let min = Infinity, bestPt = null, bestPt2 = null;
-      c1.forEach(p1 => {
-        c2.forEach(p2 => {
-          const d = haversineM(p1[0], p1[1], p2[0], p2[1]);
-          if (d < min) { min = d; bestPt = p1; bestPt2 = p2; }
-        });
-      });
+    if (best && best.mid) {
+      // ✅ Encontramos intersección real o punto más cercano
       return {
-        dist: min, p1: bestPt, p2: bestPt2,
-        mid: bestPt ? [(bestPt[0]+bestPt2[0])/2, (bestPt[1]+bestPt2[1])/2] : null,
-        isIntersection: false
+        dist: best.dist,
+        p1: best.p1,
+        p2: best.p2,
+        mid: best.mid,
+        isIntersection: best.isIntersection
       };
     }
     
+    // ⚠️ Fallback: si no hay intersección, calcular el punto MÁS CERCANO
+    // pero SIN usar el promedio (eso causaba el bug del muñequito)
+    const c1 = getRouteCoords(r1);
+    const c2 = getRouteCoords(r2);
+    let min = Infinity, bestPt = null, bestPt2 = null;
+    
+    c1.forEach(p1 => {
+      c2.forEach(p2 => {
+        const d = haversineM(p1[0], p1[1], p2[0], p2[1]);
+        if (d < min) { min = d; bestPt = p1; bestPt2 = p2; }
+      });
+    });
+    
+    // 🎯 Si hay 2 puntos, usar el punto medio SOLO si están cerca (< 50m)
+    // Si están lejos, usar el punto de la ruta 1 (el más cercano)
+    let mid = null;
+    if (bestPt && bestPt2) {
+      if (min < 50) {
+        // Puntos muy cercanos → usar punto medio
+        mid = [(bestPt[0] + bestPt2[0]) / 2, (bestPt[1] + bestPt2[1]) / 2];
+      } else {
+        // Puntos lejanos → usar el punto de la ruta 1 (más preciso)
+        mid = bestPt;
+      }
+    }
+    
     return {
-      dist: best.dist, p1: best.p1, p2: best.p2,
-      mid: best.mid, isIntersection: best.isIntersection
+      dist: min,
+      p1: bestPt,
+      p2: bestPt2,
+      mid: mid,
+      isIntersection: false
     };
   }
 
