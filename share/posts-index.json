@@ -1,6 +1,25 @@
 {
   "posts": [
     {
+      "slug": "uuuui169",
+      "title": "Uuuui",
+      "description": "Ruta Uuuui",
+      "image": "",
+      "url": "/share/ruta/uuuui169",
+      "tipo": "ruta",
+      "timestamp": 1789542247971,
+      "updatedAt": "2026-09-16T07:04:07.971Z",
+      "categoria": "urbana",
+      "tarifa": "",
+      "frecuencia": "",
+      "horarioIni": "",
+      "horarioFin": "",
+      "dias": "todos",
+      "paradas": [],
+      "calles": [],
+      "pois": []
+    },
+    {
       "slug": "255tg169",
       "title": "255TG",
       "description": "Ruta 255TG",
@@ -365,8 +384,8 @@
       "updatedAt": "2026-09-13T08:52:43.612Z"
     }
   ],
-  "total": 24,
-  "updatedAt": "2026-09-16T07:01:24.206Z",
+  "total": 25,
+  "updatedAt": "2026-09-16T07:04:07.971Z",
   "version": 1,
-  "__sha": "8aa1d83510687852c470b7dadbcf4978bf27e50f"
+  "__sha": "d906b9b7696e54f98be5324dfe7d8cea0c1e0c6f"
 }
