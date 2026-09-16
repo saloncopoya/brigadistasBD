@@ -229,23 +229,18 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
     }
   };
 
-  // ==================== CONEXIÓN ====================
+  // ==================== CONEXIÓN (sin UI) ====================
+  // Solo mantiene el estado `state.online` actualizado y sincroniza
   function updateConn() {
     state.online = navigator.onLine;
-    const dot = $('#connDot');
-    if (dot) dot.classList.toggle('off', !state.online);
     if (state.online) {
+      // Al recuperar conexión, sincronizar (silenciosamente)
       syncPendingQueue();
       syncFromFirebase();
-    } else {
-      toast('Sin conexión — modo offline activo', 'err');
     }
   }
   window.addEventListener('online', updateConn);
   window.addEventListener('offline', updateConn);
-  $('#connBtn').onclick = () => {
-    toast(state.online ? 'Conectado ✓' : 'Sin conexión', state.online ? 'ok' : 'err');
-  };
 
   // ==================== PWA INSTALL ====================
   let deferredPrompt = null;
