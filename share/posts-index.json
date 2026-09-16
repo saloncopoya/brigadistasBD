@@ -1,6 +1,25 @@
 {
   "posts": [
     {
+      "slug": "luisesgibwr169",
+      "title": "Luis esgibwr",
+      "description": "Ruta Luis esgibwr",
+      "image": "",
+      "url": "/share/ruta/luisesgibwr169",
+      "tipo": "ruta",
+      "timestamp": 1789546202043,
+      "updatedAt": "2026-09-16T08:10:02.043Z",
+      "categoria": "urbana",
+      "tarifa": "",
+      "frecuencia": "",
+      "horarioIni": "",
+      "horarioFin": "",
+      "dias": "todos",
+      "paradas": [],
+      "calles": [],
+      "pois": []
+    },
+    {
       "slug": "ruta3149",
       "title": "RUTA 3",
       "description": "Ruta RUTA 3",
@@ -455,8 +474,8 @@
       "updatedAt": "2026-09-13T08:52:43.612Z"
     }
   ],
-  "total": 27,
-  "updatedAt": "2026-09-16T08:09:30.695Z",
+  "total": 28,
+  "updatedAt": "2026-09-16T08:10:02.043Z",
   "version": 1,
-  "__sha": "ec689befc1ab8c5a65b8989139c5d70cf41aeae3"
+  "__sha": "fdc2c2ef71d475ef5dc03302e80acd220a0e62bb"
 }
