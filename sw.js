@@ -99,16 +99,18 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 /* SW.JS — v8 · NO intercepta tiles ni APIs externas */
-const VERSION = 'bgd-v3.6';
+const VERSION = 'bgd-v4.0';
 const STATIC_CACHE = `${VERSION}-static`;
 const HTML_CACHE = `${VERSION}-html`;
 
 const PRECACHE = [
-  '/', '/index.html', '/admin.html', '/offline.html',
+  '/', '/index.html', '/admin.html', '/offline.html', 
+   '/404.html',
   '/manifest.json', '/robots.txt', '/sitemap.xml',
   '/assets/icon.svg', '/js/db.js', '/js/publisher.js', '/js/app.js',
   '/vendor/leaflet/leaflet.css',
   '/vendor/leaflet/leaflet.js',
+     '/mapainteractivo.html',
     '/vendor/leaflet/images/marker-icon.png',
   '/vendor/leaflet/images/marker-icon-2x.png',
   '/vendor/leaflet/images/marker-shadow.png',
@@ -142,6 +144,14 @@ self.addEventListener('activate', event => {
   })());
 });
 
+
+
+// 🎯 URLs que NO pasan por el SW → el navegador ve el 301 del servidor
+const SW_BYPASS_PATHS = [
+  /\.html$/,
+  /\.php$/
+];
+
 self.addEventListener('fetch', event => {
   const req = event.request;
   if (req.method !== 'GET') return;
@@ -150,6 +160,11 @@ self.addEventListener('fetch', event => {
   // ⚠️ NO interceptar recursos externos (tiles, firebase, etc.)
   if (url.origin !== self.location.origin) return;
 
+  // 🔥 BYPASS: URLs con .html, .php y /share/* van directo al navegador
+  if (SW_BYPASS_PATHS.some(re => re.test(url.pathname))) {
+    return;
+  }
+
   if (req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html')) {
     event.respondWith(htmlStrategy(req));
     return;
@@ -157,19 +172,53 @@ self.addEventListener('fetch', event => {
   event.respondWith(cacheFirst(req, STATIC_CACHE));
 });
 
+
+
 async function htmlStrategy(req) {
-  const cache = await caches.open(HTML_CACHE);
   try {
-    const fresh = await fetch(req);
-    if (fresh && fresh.ok) { cache.put(req, fresh.clone()); return fresh; }
-    throw new Error('bad');
+    // 1️⃣ Red primero con redirect manual (para poder PROPAGAR 301/302)
+    const fresh = await fetch(req, { redirect: 'manual' });
+
+    // 🔥 301/302/308 → propagar al navegador tal cual
+    if (fresh.status === 301 || fresh.status === 302 || fresh.status === 308) {
+      return fresh;
+    }
+
+    // 200 OK → guardar en caché y devolver
+    if (fresh.ok) {
+      const cache = await caches.open(HTML_CACHE);
+      cache.put(req, fresh.clone());
+      return fresh;
+    }
+
+    // 404 u otro → devolver sin cachear
+    return fresh;
+
   } catch (e) {
-    const cached = await cache.match(req);
-    if (cached) return cached;
-    const offline = await caches.match('/offline.html');
-    return offline || new Response('<h1>Sin conexión</h1>', { status: 503, headers: { 'Content-Type': 'text/html' } });
+  const cache = await caches.open(HTML_CACHE);
+  const cached = await cache.match(req);
+  if (cached) return cached;
+
+  // 🔥 Devolver 404 con el contenido de 404.html
+  const notFound = await caches.match('/404.html');
+  if (notFound) {
+    // Convertir el 200 de caché a 404 real
+    const body = await notFound.text();
+    return new Response(body, {
+      status: 404,
+      headers: { 'Content-Type': 'text/html; charset=utf-8' }
+    });
+  }
+
+  // Sin caché de 404.html → respuesta mínima
+  return new Response('<h1>404 - Sin conexión</h1>', {
+    status: 503,
+    headers: { 'Content-Type': 'text/html' }
+       });
   }
 }
+
+    
 
 async function cacheFirst(req, cacheName) {
   const cache = await caches.open(cacheName);
