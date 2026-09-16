@@ -965,6 +965,27 @@ const url = location.origin + '/share/post/' + post.id;
      // Offset perpendicular a una polyline (separa ida y regreso en la misma calle)
 
    
+     // Offset perpendicular a una polyline (separa ida y regreso en la misma calle)
+  function offsetPolyline(coords, offsetMeters){
+    if(!coords || coords.length < 2) return coords;
+    const out = [];
+    const R = 6371000;
+    for(let i=0;i<coords.length;i++){
+      const p = coords[i];
+      const prev = coords[Math.max(0,i-1)];
+      const next = coords[Math.min(coords.length-1,i+1)];
+      const dLat = next[0]-prev[0];
+      const dLng = next[1]-prev[1];
+      const len = Math.hypot(dLat,dLng) || 1;
+      const perpLat = -dLng/len;
+      const perpLng =  dLat/len;
+      const dLatDeg = (offsetMeters / R) * (180/Math.PI);
+      const dLngDeg = (offsetMeters / (R*Math.cos(p[0]*Math.PI/180))) * (180/Math.PI);
+      out.push([p[0] + perpLat*dLatDeg, p[1] + perpLng*dLngDeg]);
+    }
+    return out;
+  }
+
   function initRouteMap(route) {
     const container = document.getElementById('map');
     if (!container) return;
@@ -1674,81 +1695,75 @@ const url = location.origin + '/share/m/' + id;
     } catch (e) {}
   }
 
-  async function syncFromFirebase() {
-  if (!state.online || !fbDB) return;
-  try {
-    // 🛡️ Recolectar IDs pendientes de subir para NO borrarlos
-    const pendingIds = new Set();
+    async function syncFromFirebase() {
+    if (!state.online || !fbDB) return;
     try {
-      const queue = await DB.getQueue();
-      queue.forEach(item => {
-        const payload = item.payload || item;
-        if (payload && payload.id) pendingIds.add(payload.id);
-      });
-    } catch (e) {}
+      // 🛡️ Recolectar IDs pendientes de subir para NO borrarlos
+      const pendingIds = new Set();
+      try {
+        const queue = await DB.getQueue();
+        queue.forEach(item => {
+          const payload = item.payload || item;
+          if (payload && payload.id) pendingIds.add(payload.id);
+        });
+      } catch (e) {}
 
-    const [postsSnap, routesSnap, marketSnap] = await Promise.all([
-  try {
-    const [postsSnap, routesSnap, marketSnap] = await Promise.all([
-      fbDB.ref('publicaciones').once('value'),
-      fbDB.ref('rutas_colectivos_tgz').once('value'),
-      fbDB.ref('marketplace').once('value')
-    ]);
+      const [postsSnap, routesSnap, marketSnap] = await Promise.all([
+        fbDB.ref('publicaciones').once('value'),
+        fbDB.ref('rutas_colectivos_tgz').once('value'),
+        fbDB.ref('marketplace').once('value')
+      ]);
 
-    // 🛡️ GUARD por nodo: detectar qué colecciones tienen datos en Firebase
-    const hayPosts = postsSnap.exists();
-    const hayRoutes = routesSnap.exists();
-    const hayMarket = marketSnap.exists();
+      // 🛡️ GUARD por nodo
+      const hayPosts = postsSnap.exists();
+      const hayRoutes = routesSnap.exists();
+      const hayMarket = marketSnap.exists();
 
-    // Si NINGÚN nodo existe, no borrar nada
-    if (!hayPosts && !hayRoutes && !hayMarket) {
-      console.warn('[Sync] Firebase no tiene datos remotos. No se borra local por seguridad.');
-      return;
-    }
+      if (!hayPosts && !hayRoutes && !hayMarket) {
+        console.warn('[Sync] Firebase no tiene datos remotos. No se borra local por seguridad.');
+        return;
+      }
 
-    const posts = postsSnap.val() || {};
-    const routes = routesSnap.val() || {};
-    const market = marketSnap.val() || {};
+      const posts = postsSnap.val() || {};
+      const routes = routesSnap.val() || {};
+      const market = marketSnap.val() || {};
 
-    const remotePostIds = new Set(Object.values(posts).filter(p => p && p.id).map(p => p.id));
-    const remoteRouteIds = new Set(Object.values(routes).filter(r => r && r.id).map(r => r.id));
-    const remoteMarketIds = new Set(Object.values(market).filter(m => m && m.id).map(m => m.id));
+      const remotePostIds = new Set(Object.values(posts).filter(p => p && p.id).map(p => p.id));
+      const remoteRouteIds = new Set(Object.values(routes).filter(r => r && r.id).map(r => r.id));
+      const remoteMarketIds = new Set(Object.values(market).filter(m => m && m.id).map(m => m.id));
 
-    const localPosts = await DB.getAll('posts');
-    const localRoutes = await DB.getAll('routes');
-    const localMarket = await DB.getAll('market');
-    const localPostIds = new Set(localPosts.map(p => p.id));
-    const localRouteIds = new Set(localRoutes.map(r => r.id));
-    const localMarketIds = new Set(localMarket.map(m => m.id));
+      const localPosts = await DB.getAll('posts');
+      const localRoutes = await DB.getAll('routes');
+      const localMarket = await DB.getAll('market');
+      const localPostIds = new Set(localPosts.map(p => p.id));
+      const localRouteIds = new Set(localRoutes.map(r => r.id));
+      const localMarketIds = new Set(localMarket.map(m => m.id));
 
-    for (const p of Object.values(posts)) if (p && p.id) await DB.put('posts', p);
-    for (const r of Object.values(routes)) if (r && r.id) await DB.put('routes', r);
-    for (const m of Object.values(market)) if (m && m.id) await DB.put('market', m);
+      for (const p of Object.values(posts)) if (p && p.id) await DB.put('posts', p);
+      for (const r of Object.values(routes)) if (r && r.id) await DB.put('routes', r);
+      for (const m of Object.values(market)) if (m && m.id) await DB.put('market', m);
 
-    // 🧹 BORRAR local lo que ya no está en Firebase
-    // Solo borrar de un tipo si SU nodo remoto existe (evita borrados si Firebase responde parcial)
+      // 🧹 Borrar solo si NO está pendiente de subir
       if (hayPosts) {
-      for (const id of localPostIds) {
-        if (!remotePostIds.has(id) && !pendingIds.has(id)) await DB.delete('posts', id);
+        for (const id of localPostIds) {
+          if (!remotePostIds.has(id) && !pendingIds.has(id)) await DB.delete('posts', id);
+        }
       }
-    }
+      if (hayRoutes) {
+        for (const id of localRouteIds) {
+          if (!remoteRouteIds.has(id) && !pendingIds.has(id)) await DB.delete('routes', id);
+        }
+      }
+      if (hayMarket) {
+        for (const id of localMarketIds) {
+          if (!remoteMarketIds.has(id) && !pendingIds.has(id)) await DB.delete('market', id);
+        }
+      }
 
-    if (hayRoutes) {
-      for (const id of localRouteIds) {
-        if (!remoteRouteIds.has(id) && !pendingIds.has(id)) await DB.delete('routes', id);
-      }
-    }
-
-    if (hayMarket) {
-      for (const id of localMarketIds) {
-        if (!remoteMarketIds.has(id) && !pendingIds.has(id)) await DB.delete('market', id);
-      }
-    }
-     
-    await loadPosts(); await loadRoutes(); await loadMarket();
-    renderFeed(); renderRouteContent(); renderMarket();
-  } catch (e) { console.warn('[Sync]', e); }
-}
+      await loadPosts(); await loadRoutes(); await loadMarket();
+      renderFeed(); renderRouteContent(); renderMarket();
+    } catch (e) { console.warn('[Sync]', e); }
+  }
 
   // ==================== TRIP SEARCH (MAPA) ====================
     function initTripMap() {
@@ -1767,7 +1782,7 @@ const url = location.origin + '/share/m/' + id;
   maxNativeZoom: 16,
   crossOrigin: true,
   attribution: '© OpenStreetMap'
-}).addTo(state.map);   // ← o .addTo(state.tripMap) según el caso
+}).addTo(state.tripMap);
        
     state.tripMap.on('click', e => {
       // Solo agregar si el modo activo es "addpoint"
