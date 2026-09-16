@@ -1,36 +1,14 @@
 {
   "posts": [
     {
-      "slug": "luisesgibwr169",
-      "title": "LUIS ESGIBWR",
-      "description": "Ruta LUIS ESGIBWR",
-      "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789546261/f3incavhcg9wnyls4zwf.jpg",
-      "url": "/share/ruta/luisesgibwr169",
-      "tipo": "ruta",
-      "timestamp": 1789546267377,
-      "updatedAt": "2026-09-16T08:11:07.377Z",
-      "categoria": "urbana",
-      "tarifa": "",
-      "frecuencia": "",
-      "horarioIni": "",
-      "horarioFin": "",
-      "dias": "todos",
-      "paradas": [],
-      "calles": [
-        "Avenida 16a Norte Poniente",
-        "Calle 11a. Oriente Norte"
-      ],
-      "pois": []
-    },
-    {
       "slug": "ruta3149",
       "title": "RUTA 3",
       "description": "Ruta RUTA 3",
       "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789463101/qigspxz4quvtrfqiko0c.jpg",
       "url": "/share/ruta/ruta3149",
       "tipo": "ruta",
-      "timestamp": 1789546170695,
-      "updatedAt": "2026-09-16T08:09:30.695Z",
+      "timestamp": 1789547066602,
+      "updatedAt": "2026-09-16T08:24:26.602Z",
       "categoria": "urbana",
       "tarifa": "",
       "frecuencia": "",
@@ -94,6 +72,28 @@
         "Hospital Regional Dr. Rafael Pascacio Gamboa",
         "Mercado Centro - Mercado Público Municipal Juan Sabines (cerca)"
       ]
+    },
+    {
+      "slug": "luisesgibwr169",
+      "title": "LUIS ESGIBWR",
+      "description": "Ruta LUIS ESGIBWR",
+      "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789546261/f3incavhcg9wnyls4zwf.jpg",
+      "url": "/share/ruta/luisesgibwr169",
+      "tipo": "ruta",
+      "timestamp": 1789546267377,
+      "updatedAt": "2026-09-16T08:11:07.377Z",
+      "categoria": "urbana",
+      "tarifa": "",
+      "frecuencia": "",
+      "horarioIni": "",
+      "horarioFin": "",
+      "dias": "todos",
+      "paradas": [],
+      "calles": [
+        "Avenida 16a Norte Poniente",
+        "Calle 11a. Oriente Norte"
+      ],
+      "pois": []
     },
     {
       "slug": "ruta1149",
@@ -478,7 +478,7 @@
     }
   ],
   "total": 28,
-  "updatedAt": "2026-09-16T08:15:56.447Z",
+  "updatedAt": "2026-09-16T08:24:26.602Z",
   "version": 1,
-  "__sha": "8af546feb1eeecbada40f32ff6d9f285d47fe08a"
+  "__sha": "349afe7b615e36f71c8045ade338adb025a98c05"
 }
