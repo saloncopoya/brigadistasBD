@@ -103,9 +103,22 @@ body.fs-active{overflow:hidden!important}
 .leaflet-control-attribution a{color:var(--cyan)!important}
 .leaflet-control-zoom a{background:var(--surface)!important;color:var(--text)!important;border-color:var(--border)!important}
 
-/* LEYENDA MAPA */
-.map-legend{background:color-mix(in srgb,var(--surface) 92%,transparent)!important;padding:8px 12px;border-radius:10px;font-size:12px;color:var(--text);border:1px solid var(--border);line-height:1.6;backdrop-filter:blur(8px)}
-.map-legend .lg-line{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:6px;border-radius:2px}
+
+/* LEYENDA MAPA (compacta) */
+.map-legend{background:color-mix(in srgb,var(--surface) 92%,transparent)!important;padding:4px 10px;border-radius:8px;font-size:11px;color:var(--text);border:1px solid var(--border);line-height:1.3;backdrop-filter:blur(8px)}
+.map-legend .lg-line{display:inline-block;width:16px;height:5px;vertical-align:middle;margin-right:6px;border-radius:2px}
+
+/* Botón centrado inferior dentro del mapa */
+.map-trip-btn-wrap{pointer-events:auto;padding-bottom:6px;position:absolute!important;left:50%!important;bottom:10px!important;transform:translateX(-50%)!important;z-index:700!important}
+.leaflet-bottom.leaflet-left,.leaflet-bottom.leaflet-right{width:100%;pointer-events:none}
+.leaflet-bottom.leaflet-left>*,.leaflet-bottom.leaflet-right>*{pointer-events:auto}
+
+.map-trip-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 14px;border-radius:12px;background:linear-gradient(135deg,var(--cyan),var(--cyan-d));color:#00121a;font-family:inherit;font-weight:800;font-size:12px;letter-spacing:.2px;border:1px solid transparent;box-shadow:0 6px 18px -6px rgba(0,229,255,.35);cursor:pointer;transition:all .25s cubic-bezier(.4,0,.2,1);text-align:center;white-space:nowrap}
+.map-trip-btn:hover{filter:brightness(1.08);box-shadow:0 8px 22px -6px rgba(0,229,255,.55)}
+.map-trip-btn:active{transform:scale(.96)}
+.map-trip-btn svg{width:14px;height:14px}
+.map-trip-btn span{font-size:11.5px;font-weight:800;line-height:1}
+.map-trip-btn small{font-size:9.5px;font-weight:600;opacity:.75;line-height:1;letter-spacing:.1px}
 
 /* BLOQUES */
 .block{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px}
@@ -164,7 +177,7 @@ footer a{color:var(--cyan)}
   
   <span class="badge badge-urbana">Ruta</span>
   <h1>RUTA 1</h1>
-  <div class="meta">15 de septiembre de 2026</div>
+  <div class="meta">16 de septiembre de 2026</div>
 
   <!-- 🔒 IMAGEN SEO: oculta visualmente pero indexable por Google -->
   <img class="seo-hero" src="https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789508995/c3vghvath2eewvchgl0c.png" alt="RUTA 1" title="RUTA 1" width="1200" height="630" loading="eager">
@@ -189,8 +202,13 @@ footer a{color:var(--cyan)}
       if (typeof L === 'undefined') return;
       var map = L.map('shareMapBig', { zoomControl: true, scrollWheelZoom: false });
       window.__shareMap = map;
+      // Caché de mosaicos compartida (mismo IndexedDB que la app principal)
+      // 🛡️ En páginas publicadas, usar tileLayer estándar.
+      // El SW cachea automáticamente y el navegador cachea HTTP.
+      // NO usar L.tileLayer.offline aquí para evitar dependencias de scripts.
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
+        crossOrigin: true,
         attribution: '© OpenStreetMap'
       }).addTo(map);
 
@@ -268,15 +286,47 @@ footer a{color:var(--cyan)}
         map.setView([16.7530, -93.1150], 13);
       }
 
-      // 🏷️ LEYENDA IDA / REGRESO
+      // 🏷️ LEYENDA IDA / REGRESO (compacta, líneas gruesas) + botón viaje
       var legend = L.control({ position: 'bottomleft' });
       legend.onAdd = function(){
         var div = L.DomUtil.create('div', 'map-legend');
-        div.innerHTML = '<div><span class="lg-line" style="background:' + DATA.colorIda + '"></span> IDA</div>' +
-                        '<div><span class="lg-line" style="background:' + DATA.colorVuelta + '"></span> REGRESO</div>';
+        div.innerHTML =
+          '<div style="background:rgba(20,28,48,.92);padding:4px 10px;border-radius:8px;font-size:11px;color:#e8edf7;border:1px solid #26314f;line-height:1.3;display:flex;flex-direction:column;gap:2px">' +
+            '<div style="display:flex;align-items:center;gap:6px">' +
+              '<span style="display:inline-block;width:16px;height:5px;background:' + DATA.colorIda + ';border-radius:2px"></span>' +
+              '<span>Ida</span>' +
+            '</div>' +
+            '<div style="display:flex;align-items:center;gap:6px">' +
+              '<span style="display:inline-block;width:16px;height:5px;background:' + DATA.colorVuelta + ';border-radius:2px"></span>' +
+              '<span>Regreso</span>' +
+            '</div>' +
+          '</div>';
         return div;
       };
       legend.addTo(map);
+
+      // 🚀 Botón centrado abajo: "Agregar puntos de viaje" → ir a trip
+var tripBtn = L.control({ position: 'bottomleft' });
+tripBtn.onAdd = function(){
+        var div = L.DomUtil.create('div', 'map-trip-btn-wrap');
+        div.innerHTML =
+          '<button class="map-trip-btn" type="button">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="14" height="14">' +
+              '<circle cx="12" cy="12" r="10"/>' +
+              '<line x1="12" y1="8" x2="12" y2="16"/>' +
+              '<line x1="8" y1="12" x2="16" y2="12"/>' +
+            '</svg>' +
+            '<span>Agregar puntos de viaje</span>' +
+            '<small>Rutas relacionadas · Mapa interactivo</small>' +
+          '</button>';
+        var btn = div.querySelector('.map-trip-btn');
+        L.DomEvent.disableClickPropagation(div);
+        btn.addEventListener('click', function(){
+          window.location.href = 'https://brigadistasbd.pages.dev/?tab=trip';
+        });
+        return div;
+      };
+      tripBtn.addTo(map);
     })();
     </script>
   <div class="block"><h3>📝 Notas adicionales</h3><div style="font-size:14px;line-height:1.6;color:var(--text-2);white-space:pre-wrap">Nnnygf</div></div><div class="block"><h3>📊 Resumen del recorrido</h3><p style="font-size:14.5px;line-height:1.75;color:var(--text-2);margin:0">Esta ruta de colectivo cuenta con un total de <strong>7 calles y avenidas, 34 POIs de ida</strong> a lo largo de su recorrido completo. A continuación se detalla cada uno de estos elementos para que los usuarios puedan planificar su viaje con información precisa y actualizada.</p></div><div class="block"><h3>ℹ️ Información</h3><ul><li>📅 Días: todos</li></ul></div><div class="block"><h3>🏥 POIs de Ida</h3><ul><li>La Carreta Hundida / La Pochota</li><li>CBTIS 233 &quot;Narciso Mendoza&quot;</li><li>TAD Pemex</li><li>La Isla Auto Hotel</li><li>Colonia Plan de Ayala (cerca)</li><li>Crucero Juan Crispín</li><li>Bodega Aurrerá Terán</li><li>Tecnológico Nacional de México (Tec Regional)</li><li>Instituto Superior de Estudios de Enfermería del Estado de Chiapas (ISEEECH)</li><li>Escuela Preparatoria No. 7 del Estado (Prepa 7)</li><li>UNACH. Facultad de Contaduría y Administración</li><li>Campus I</li><li>Plaza Crystal / Galerías / Chedraui</li><li>Parque Deportivo Caña Hueca (cerca)</li><li>WalMart (Belisario Domínguez)</li><li>Plaza Bonampak / Cabeza Maya</li><li>Parque Morelos / Parque Bicentenario</li><li>Parque de la Juventud</li><li>Parque de la Marimba</li><li>Bodega Aurrerá Centro</li><li>Parque Central</li><li>Catedral Metropolitana de San Marcos</li><li>Palacio Federal y Estatal de Gobierno</li><li>Parque 5 de Mayo</li><li>Indeporte</li><li>Colonia Bienestar Social</li><li>Bodega Aurrerá Oriente</li><li>Plaza Polifórum</li><li>Plaza Ámbar Fashion Mall</li><li>Parque Chiapasiónate</li><li>Colonia La Misión (cerca)</li><li>Cobach 145 Tuxtla-Sur (cerca)</li><li>Central de Abastos (cerca)</li><li>Escuela de Trabajo Social Jesús Aquino Juan</li></ul></div><div class="block"><h3>🛣️ Calles</h3><ul><li>Carretera Panamericana</li><li>Boulevard Belisario Domínguez entre Carretera Panamericana y Boulevard Doctor Belisario Domínguez</li><li>Boulevard Doctor Belisario Domínguez entre Boulevard Belisario Domínguez y Avenida Central Poniente</li><li>Avenida Central Poniente cerca de Boulevard Doctor Belisario Domínguez</li><li>Avenida Central Oriente cerca de Avenida Central Poniente</li><li>Boulevard Ángel Albino Corzo cerca de Avenida Central Oriente</li><li>MEX 190 cerca de Boulevard Ángel Albino Corzo</li></ul></div>
