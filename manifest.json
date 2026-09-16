@@ -14,6 +14,9 @@
     "categories": ["sports", "entertainment", "productivity"],
     "id": "legado-avicola-main",
     "version": "2.0.0",
+    "gcm_sender_info": {
+    "sender_id": "979482928760"
+},
     
     "icons": [
         {"src": "/img.png", "sizes": "48x48", "type": "image/png", "purpose": "any"},
@@ -63,9 +66,8 @@
         "origin": "https://brigadistasbd.pages.dev",
         "url": "/share/*"
     }
-]
-    
-    "handle_links": "preferred",
+],
+"handle_links": "preferred",
     
     "share_target": {
         "action": "/",
@@ -82,6 +84,12 @@
     "splash_screen": {"background_color": "#8B4513", "image": "https://placehold.co/512x512/8B4513/white?text=🐓", "image_purpose": "any"},
     
     "analytics": {"enabled": false},
-    "features": {"cross_window": true, "fullscreen": true, "picture_in_picture": false, "wake_lock": false},
+"features": {
+    "cross_window": true,
+    "fullscreen": true,
+    "picture_in_picture": false,
+    "wake_lock": false,
+    "push_notifications": true
+},
     "capture_links": "existing-client-event"
 }
