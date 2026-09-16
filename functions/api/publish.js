@@ -526,9 +526,19 @@ body.fs-active{overflow:hidden!important}
 .leaflet-control-attribution a{color:var(--cyan)!important}
 .leaflet-control-zoom a{background:var(--surface)!important;color:var(--text)!important;border-color:var(--border)!important}
 
-/* LEYENDA MAPA */
-.map-legend{background:color-mix(in srgb,var(--surface) 92%,transparent)!important;padding:8px 12px;border-radius:10px;font-size:12px;color:var(--text);border:1px solid var(--border);line-height:1.6;backdrop-filter:blur(8px)}
-.map-legend .lg-line{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:6px;border-radius:2px}
+
+/* LEYENDA MAPA (compacta) */
+.map-legend{background:color-mix(in srgb,var(--surface) 92%,transparent)!important;padding:4px 10px;border-radius:8px;font-size:11px;color:var(--text);border:1px solid var(--border);line-height:1.3;backdrop-filter:blur(8px)}
+.map-legend .lg-line{display:inline-block;width:16px;height:5px;vertical-align:middle;margin-right:6px;border-radius:2px}
+
+/* Botón centrado inferior dentro del mapa */
+.map-trip-btn-wrap{pointer-events:auto;padding-bottom:6px}
+.map-trip-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 14px;border-radius:12px;background:linear-gradient(135deg,var(--cyan),var(--cyan-d));color:#00121a;font-family:inherit;font-weight:800;font-size:12px;letter-spacing:.2px;border:1px solid transparent;box-shadow:0 6px 18px -6px rgba(0,229,255,.35);cursor:pointer;transition:all .25s cubic-bezier(.4,0,.2,1);text-align:center;white-space:nowrap}
+.map-trip-btn:hover{filter:brightness(1.08);box-shadow:0 8px 22px -6px rgba(0,229,255,.55)}
+.map-trip-btn:active{transform:scale(.96)}
+.map-trip-btn svg{width:14px;height:14px}
+.map-trip-btn span{font-size:11.5px;font-weight:800;line-height:1}
+.map-trip-btn small{font-size:9.5px;font-weight:600;opacity:.75;line-height:1;letter-spacing:.1px}
 
 /* BLOQUES */
 .block{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px}
@@ -765,15 +775,47 @@ function renderRouteMapBlock(route) {
         map.setView([16.7530, -93.1150], 13);
       }
 
-      // 🏷️ LEYENDA IDA / REGRESO
+      // 🏷️ LEYENDA IDA / REGRESO (compacta, líneas gruesas) + botón viaje
       var legend = L.control({ position: 'bottomleft' });
       legend.onAdd = function(){
         var div = L.DomUtil.create('div', 'map-legend');
-        div.innerHTML = '<div><span class="lg-line" style="background:' + DATA.colorIda + '"></span> IDA</div>' +
-                        '<div><span class="lg-line" style="background:' + DATA.colorVuelta + '"></span> REGRESO</div>';
+        div.innerHTML =
+          '<div style="background:rgba(20,28,48,.92);padding:4px 10px;border-radius:8px;font-size:11px;color:#e8edf7;border:1px solid #26314f;line-height:1.3;display:flex;flex-direction:column;gap:2px">' +
+            '<div style="display:flex;align-items:center;gap:6px">' +
+              '<span style="display:inline-block;width:16px;height:5px;background:' + DATA.colorIda + ';border-radius:2px"></span>' +
+              '<span>Ida</span>' +
+            '</div>' +
+            '<div style="display:flex;align-items:center;gap:6px">' +
+              '<span style="display:inline-block;width:16px;height:5px;background:' + DATA.colorVuelta + ';border-radius:2px"></span>' +
+              '<span>Regreso</span>' +
+            '</div>' +
+          '</div>';
         return div;
       };
       legend.addTo(map);
+
+      // 🚀 Botón centrado abajo: "Agregar puntos de viaje" → ir a trip
+      var tripBtn = L.control({ position: 'bottomcenter' });
+      tripBtn.onAdd = function(){
+        var div = L.DomUtil.create('div', 'map-trip-btn-wrap');
+        div.innerHTML =
+          '<button class="map-trip-btn" type="button">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="14" height="14">' +
+              '<circle cx="12" cy="12" r="10"/>' +
+              '<line x1="12" y1="8" x2="12" y2="16"/>' +
+              '<line x1="8" y1="12" x2="16" y2="12"/>' +
+            '</svg>' +
+            '<span>Agregar puntos de viaje</span>' +
+            '<small>Rutas relacionadas · Mapa interactivo</small>' +
+          '</button>';
+        var btn = div.querySelector('.map-trip-btn');
+        L.DomEvent.disableClickPropagation(div);
+        btn.addEventListener('click', function(){
+          window.location.href = '${baseUrl}/?tab=trip';
+        });
+        return div;
+      };
+      tripBtn.addTo(map);
     })();
     <\/script>
   `;
