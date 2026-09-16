@@ -596,12 +596,26 @@ const url = location.origin + '/share/post/' + post.id;
     });
   })();
 
-  // ==================== VISOR DE IMAGEN ====================
+   // ==================== VISOR DE IMAGEN ====================
   function openViewer(src, type = 'image') {
     const v = $('#viewer');
     const c = $('#viewerContent');
     c.innerHTML = type === 'video'
-      ? `<video src="${esc(src)}" conasync function loadRoutes() {
+      ? `<video src="${esc(src)}" controls autoplay style="max-width:100%;max-height:100%"></video>`
+      : `<img src="${esc(src)}" alt="">`;
+    v.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    pushURL({ viewer: '1' });
+  }
+  function closeViewer() {
+    $('#viewer').classList.remove('open');
+    $('#viewerContent').innerHTML = '';
+    document.body.style.overflow = '';
+  }
+  $('#viewerClose').onclick = closeViewer;
+  $('#viewer').onclick = (e) => { if (e.target.id === 'viewer') closeViewer(); };
+      
+      async function loadRoutes() {
   // ─────────────────────────────────────────────
   // FASE 1: leer IndexedDB (rápido, ~10-50ms)
   // ─────────────────────────────────────────────
