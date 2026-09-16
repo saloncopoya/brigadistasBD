@@ -1,13 +1,8 @@
 # ============================================================
 #  REDIRECTS — Cloudflare Pages
-#
-#  REGLA DE ORO:
-#   1) URL con .html → 301 a la URL sin extensión
-#   2) URL sin extensión → 200 sirve el .html internamente
-#
-#  ⚠️ Nunca usar /*.html (wildcard global) porque rompe el
-#     rewrite 200 y crea bucle ERR_TOO_MANY_REDIRECTS.
-#     Siempre reglas específicas por carpeta.
+#  Solo redirigimos .html → limpia (301).
+#  Los rewrites 200 los hace Cloudflare Pages automáticamente
+#  (clean URLs nativo).
 # ============================================================
 
 # ─────────────────────────────────────────────────────────────
@@ -25,33 +20,28 @@
 #  3️⃣ ADMIN
 # ─────────────────────────────────────────────────────────────
 /admin.html            /admin                   301
-/admin                 /admin.html              200
 
 # ─────────────────────────────────────────────────────────────
 #  4️⃣ MAPA INTERACTIVO
 # ─────────────────────────────────────────────────────────────
 /mapainteractivo.html  /mapainteractivo         301
-/mapainteractivo       /mapainteractivo.html    200
 
 # ─────────────────────────────────────────────────────────────
 #  5️⃣ SHARE / RUTA
 # ─────────────────────────────────────────────────────────────
 /share/ruta/*.html     /share/ruta/:splat       301
-/share/ruta/:splat     /share/ruta/:splat.html  200
 
 # ─────────────────────────────────────────────────────────────
 #  6️⃣ SHARE / POST
 # ─────────────────────────────────────────────────────────────
 /share/post/*.html     /share/post/:splat       301
-/share/post/:splat     /share/post/:splat.html  200
 
 # ─────────────────────────────────────────────────────────────
 #  7️⃣ SHARE / MARKET
 # ─────────────────────────────────────────────────────────────
 /share/m/*.html        /share/m/:splat          301
-/share/m/:splat        /share/m/:splat.html     200
 
 # ─────────────────────────────────────────────────────────────
-#  8️⃣ FALLBACK 404 (SIEMPRE AL FINAL)
+#  8️⃣ FALLBACK 404
 # ─────────────────────────────────────────────────────────────
 /*                     /404.html                 404
