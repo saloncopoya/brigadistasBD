@@ -250,14 +250,13 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
     if (page === 'route' && opts.route) renderRouteDetail(opts.route);
     if (page === 'post' && opts.postObj) renderSinglePost(opts.postObj);
     if (page === 'trip') {
-      setTimeout(() => {
-        initTripMap();
-        renderTripPointsList();
-        // Forzar invalidateSize después de que el DOM esté listo
-        if (state.tripMap) {
-          setTimeout(() => state.tripMap.invalidateSize(), 300);
-        }
-      }, 200);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          initTripMap();
+          renderTripPointsList();
+          // registerMap() ya se encarga de invalidateSize cuando esté listo
+        });
+      });
     }
      
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -950,8 +949,8 @@ const url = location.origin + '/share/post/' + post.id;
     registerMap(state.map);
 
      
-    // 🖥️ Conectar el botón de pantalla completa con este mapa
-    setTimeout(() => bindFullscreenButton('routeMapFsBtn', 'routeMapWrap'), 50);
+    // 🖥️ Conectar el botón de pantalla completa con este mapa (sin timers)
+    bindFullscreenButton('routeMapFsBtn', 'routeMapWrap');
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '© OpenStreetMap'
@@ -1665,8 +1664,8 @@ const url = location.origin + '/share/m/' + id;
     // ✨ Registrar el mapa para auto-reparación (sin timers)
     registerMap(state.tripMap);
        
-    // 🖥️ Conectar el botón de pantalla completa con este mapa
-    setTimeout(() => bindFullscreenButton('tripMapFsBtn', 'tripMapWrap'), 50);
+    // 🖥️ Conectar el botón de pantalla completa con este mapa (sin timers)
+    bindFullscreenButton('tripMapFsBtn', 'tripMapWrap');
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19, attribution: '© OpenStreetMap'
     }).addTo(state.tripMap);
