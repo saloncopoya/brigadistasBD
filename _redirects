@@ -1,44 +1,57 @@
 # ============================================================
 #  REDIRECTS — Cloudflare Pages
 #
-#  ESTRATEGIA:
-#   - Las URLs limpias funcionan (rewrite 200 → .html)
-#   - Las URLs con .html siguen funcionando (sin redirect)
-#     ⚠️ NO redirigimos .html → limpia porque crea bucle
-#     con los rewrites 200 que sirven el mismo .html
+#  REGLA DE ORO:
+#   1) URL con .html → 301 a la URL sin extensión
+#   2) URL sin extensión → 200 sirve el .html internamente
+#
+#  ⚠️ Nunca usar /*.html (wildcard global) porque rompe el
+#     rewrite 200 y crea bucle ERR_TOO_MANY_REDIRECTS.
+#     Siempre reglas específicas por carpeta.
 # ============================================================
 
 # ─────────────────────────────────────────────────────────────
-#  REWRITES 200: URL limpia → sirve el .html internamente
+#  1️⃣ REDIRIGIR .php
 # ─────────────────────────────────────────────────────────────
-
-# Mapa interactivo
-/mapainteractivo        /mapainteractivo.html   200
-
-# Admin
-/admin                  /admin.html             200
-
-# Share / Ruta
-/share/ruta/:splat      /share/ruta/:splat.html 200
-
-# Share / Post
-/share/post/:splat      /share/post/:splat.html 200
-
-# Share / Market
-/share/m/:splat         /share/m/:splat.html    200
+/index.php             /                        301
+/*.php                 /                        301
 
 # ─────────────────────────────────────────────────────────────
-#  REDIRIGIR .php
+#  2️⃣ /index.html → raíz
 # ─────────────────────────────────────────────────────────────
-/index.php              /                       301
-/*.php                   /                       301
+/index.html            /                        301
 
 # ─────────────────────────────────────────────────────────────
-#  REDIRIGIR /index.html a la raíz
+#  3️⃣ ADMIN
 # ─────────────────────────────────────────────────────────────
-/index.html             /                       301
+/admin.html            /admin                   301
+/admin                 /admin.html              200
 
 # ─────────────────────────────────────────────────────────────
-#  FALLBACK 404 (SIEMPRE AL FINAL)
+#  4️⃣ MAPA INTERACTIVO
 # ─────────────────────────────────────────────────────────────
-/*                      /404.html               404
+/mapainteractivo.html  /mapainteractivo         301
+/mapainteractivo       /mapainteractivo.html    200
+
+# ─────────────────────────────────────────────────────────────
+#  5️⃣ SHARE / RUTA
+# ─────────────────────────────────────────────────────────────
+/share/ruta/*.html     /share/ruta/:splat       301
+/share/ruta/:splat     /share/ruta/:splat.html  200
+
+# ─────────────────────────────────────────────────────────────
+#  6️⃣ SHARE / POST
+# ─────────────────────────────────────────────────────────────
+/share/post/*.html     /share/post/:splat       301
+/share/post/:splat     /share/post/:splat.html  200
+
+# ─────────────────────────────────────────────────────────────
+#  7️⃣ SHARE / MARKET
+# ─────────────────────────────────────────────────────────────
+/share/m/*.html        /share/m/:splat          301
+/share/m/:splat        /share/m/:splat.html     200
+
+# ─────────────────────────────────────────────────────────────
+#  8️⃣ FALLBACK 404 (SIEMPRE AL FINAL)
+# ─────────────────────────────────────────────────────────────
+/*                     /404.html                 404
