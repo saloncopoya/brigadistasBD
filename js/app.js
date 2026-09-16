@@ -1497,26 +1497,69 @@ const url = location.origin + '/share/m/' + id;
     } catch (e) {}
   }
 
-  async function syncFromFirebase() {
-    if (!state.online || !fbDB) return;
-    try {
-      const [postsSnap, routesSnap, marketSnap] = await Promise.all([
-        fbDB.ref('publicaciones').once('value'),
-        fbDB.ref('rutas_colectivos_tgz').once('value'),
-        fbDB.ref('marketplace').once('value')
-      ]);
-      const posts = postsSnap.val() || {};
-      const routes = routesSnap.val() || {};
-      const market = marketSnap.val() || {};
-      // Guardar en IndexedDB
-      for (const p of Object.values(posts)) if (p && p.id) await DB.put('posts', p);
-      for (const r of Object.values(routes)) if (r && r.id) await DB.put('routes', r);
-      for (const m of Object.values(market)) if (m && m.id) await DB.put('market', m);
-      // Recargar
-      await loadPosts(); await loadRoutes(); await loadMarket();
-      renderFeed(); renderRouteContent(); renderMarket();
-    } catch (e) { console.warn('[Sync]', e); }
-  }
+ async function syncFromFirebase() {
+  if (!state.online || !fbDB) return;
+  try {
+    const [postsSnap, routesSnap, marketSnap] = await Promise.all([
+      fbDB.ref('publicaciones').once('value'),
+      fbDB.ref('rutas_colectivos_tgz').once('value'),
+      fbDB.ref('marketplace').once('value')
+    ]);
+
+    // 🛡️ GUARD por nodo: detectar qué colecciones tienen datos en Firebase
+    const hayPosts = postsSnap.exists();
+    const hayRoutes = routesSnap.exists();
+    const hayMarket = marketSnap.exists();
+
+    // Si NINGÚN nodo existe, no borrar nada
+    if (!hayPosts && !hayRoutes && !hayMarket) {
+      console.warn('[Sync] Firebase no tiene datos remotos. No se borra local por seguridad.');
+      return;
+    }
+
+    const posts = postsSnap.val() || {};
+    const routes = routesSnap.val() || {};
+    const market = marketSnap.val() || {};
+
+    const remotePostIds = new Set(Object.values(posts).filter(p => p && p.id).map(p => p.id));
+    const remoteRouteIds = new Set(Object.values(routes).filter(r => r && r.id).map(r => r.id));
+    const remoteMarketIds = new Set(Object.values(market).filter(m => m && m.id).map(m => m.id));
+
+    const localPosts = await DB.getAll('posts');
+    const localRoutes = await DB.getAll('routes');
+    const localMarket = await DB.getAll('market');
+    const localPostIds = new Set(localPosts.map(p => p.id));
+    const localRouteIds = new Set(localRoutes.map(r => r.id));
+    const localMarketIds = new Set(localMarket.map(m => m.id));
+
+    for (const p of Object.values(posts)) if (p && p.id) await DB.put('posts', p);
+    for (const r of Object.values(routes)) if (r && r.id) await DB.put('routes', r);
+    for (const m of Object.values(market)) if (m && m.id) await DB.put('market', m);
+
+    // 🧹 BORRAR local lo que ya no está en Firebase
+    // Solo borrar de un tipo si SU nodo remoto existe (evita borrados si Firebase responde parcial)
+    if (hayPosts) {
+      for (const id of localPostIds) if (!remotePostIds.has(id)) await DB.delete('posts', id);
+    } else {
+      console.warn('[Sync] Nodo "publicaciones" no existe en Firebase. No se borran posts locales.');
+    }
+
+    if (hayRoutes) {
+      for (const id of localRouteIds) if (!remoteRouteIds.has(id)) await DB.delete('routes', id);
+    } else {
+      console.warn('[Sync] Nodo "rutas_colectivos_tgz" no existe en Firebase. No se borran rutas locales.');
+    }
+
+    if (hayMarket) {
+      for (const id of localMarketIds) if (!remoteMarketIds.has(id)) await DB.delete('market', id);
+    } else {
+      console.warn('[Sync] Nodo "marketplace" no existe en Firebase. No se borra market local.');
+    }
+     
+    await loadPosts(); await loadRoutes(); await loadMarket();
+    renderFeed(); renderRouteContent(); renderMarket();
+  } catch (e) { console.warn('[Sync]', e); }
+}
 
   // ==================== TRIP SEARCH (MAPA) ====================
     function initTripMap() {
@@ -2481,11 +2524,8 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
     } else {
       navigateTo(tab, { replace: true });
     }
-    // Estado de conexión
+    // Estado de conexión (ya llama syncFromFirebase internamente si está online)
     updateConn();
-
-    // Cargar Firebase si está disponible
-    if (fbDB) syncFromFirebase();
   }
 
   function renderSinglePost(post) {
