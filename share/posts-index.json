@@ -1,6 +1,33 @@
 {
   "posts": [
     {
+      "slug": "test_1789544802781",
+      "title": "TEST DE VERIFICACIÓN",
+      "description": "Esta es una prueba automática. Puedes borrarla después.",
+      "image": "",
+      "url": "/share/ruta/test_1789544802781",
+      "tipo": "ruta",
+      "timestamp": 1789544803896,
+      "updatedAt": "2026-09-16T07:46:43.896Z",
+      "categoria": "urbana",
+      "tarifa": 10,
+      "frecuencia": "Cada 15 min",
+      "horarioIni": "",
+      "horarioFin": "",
+      "dias": "",
+      "paradas": [
+        "Parada A",
+        "Parada B"
+      ],
+      "calles": [
+        "Calle 1",
+        "Calle 2"
+      ],
+      "pois": [
+        "POI 1"
+      ]
+    },
+    {
       "slug": "test_1789544789397",
       "title": "TEST DE VERIFICACIÓN",
       "description": "Esta es una prueba automática. Puedes borrarla después.",
@@ -401,8 +428,8 @@
       "updatedAt": "2026-09-13T08:52:43.612Z"
     }
   ],
-  "total": 25,
-  "updatedAt": "2026-09-16T07:46:30.616Z",
+  "total": 26,
+  "updatedAt": "2026-09-16T07:46:43.896Z",
   "version": 1,
-  "__sha": "ee294cb3456eab994e9d9a066c50e2eda7f57385"
+  "__sha": "bf7df2cfc9fd0577ed07923f04978615ce4df875"
 }
