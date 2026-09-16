@@ -2,13 +2,13 @@
   "posts": [
     {
       "slug": "255tg169",
-      "title": "255tg",
-      "description": "Ruta 255tg",
+      "title": "255TG",
+      "description": "Ruta 255TG",
       "image": "",
       "url": "/share/ruta/255tg169",
       "tipo": "ruta",
-      "timestamp": 1789541347314,
-      "updatedAt": "2026-09-16T06:49:07.314Z",
+      "timestamp": 1789541364000,
+      "updatedAt": "2026-09-16T06:49:24.000Z",
       "categoria": "urbana",
       "tarifa": "",
       "frecuencia": "",
@@ -366,7 +366,7 @@
     }
   ],
   "total": 24,
-  "updatedAt": "2026-09-16T06:49:07.314Z",
+  "updatedAt": "2026-09-16T06:49:24.000Z",
   "version": 1,
-  "__sha": "50e4a1b6d7d90e4acddb7bb1952341fa2dd9afff"
+  "__sha": "b3b0d0ebb69d6990229a49b1bdbe7ca64c4089bb"
 }
