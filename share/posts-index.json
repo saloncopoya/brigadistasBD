@@ -1,27 +1,6 @@
 {
   "posts": [
     {
-      "slug": "verif_1789546551876",
-      "title": "TEST",
-      "description": "Test",
-      "image": "",
-      "url": "/share/ruta/verif_1789546551876",
-      "tipo": "ruta",
-      "timestamp": 1789546552941,
-      "updatedAt": "2026-09-16T08:15:52.941Z",
-      "categoria": "urbana",
-      "tarifa": "",
-      "frecuencia": "",
-      "horarioIni": "",
-      "horarioFin": "",
-      "dias": "",
-      "paradas": [
-        "A"
-      ],
-      "calles": [],
-      "pois": []
-    },
-    {
       "slug": "luisesgibwr169",
       "title": "LUIS ESGIBWR",
       "description": "Ruta LUIS ESGIBWR",
@@ -498,8 +477,8 @@
       "updatedAt": "2026-09-13T08:52:43.612Z"
     }
   ],
-  "total": 29,
-  "updatedAt": "2026-09-16T08:15:52.941Z",
+  "total": 28,
+  "updatedAt": "2026-09-16T08:15:56.447Z",
   "version": 1,
   "__sha": "8af546feb1eeecbada40f32ff6d9f285d47fe08a"
 }
