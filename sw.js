@@ -184,6 +184,72 @@ async function cacheFirst(req, cacheName) {
 }
 }
 
+/* ============================================================
+   🗺️ CACHÉ DE TILES OSM — capa extra sobre IndexedDB
+   ------------------------------------------------------------
+   ✔ Solo guarda tiles que el usuario VE (no prefetch).
+   ✔ Respeta la política de OSM (caché por uso).
+   ✔ Si el usuario borra IndexedDB, el SW aún tiene los tiles.
+   ============================================================ */
+const TILE_CACHE = 'bgd-tiles-v1';
+const TILE_HOSTS = [
+  'tile.openstreetmap.org',
+  'a.tile.openstreetmap.org',
+  'b.tile.openstreetmap.org',
+  'c.tile.openstreetmap.org'
+];
+const TILE_MAX_ENTRIES = 2000;   // tope duro para no llenar el disco
+
+self.addEventListener('fetch', (event) => {
+  const req = event.request;
+  if (req.method !== 'GET') return;
+
+  let url;
+  try { url = new URL(req.url); } catch (e) { return; }
+  if (!TILE_HOSTS.includes(url.hostname)) return;
+
+  event.respondWith(handleTileRequest(req));
+});
+
+async function handleTileRequest(req) {
+  const cache = await caches.open(TILE_CACHE);
+
+  // 1️⃣ Cache-first (rápido y offline-friendly)
+  const cached = await cache.match(req);
+  if (cached) return cached;
+
+  // 2️⃣ No hay caché → red
+  try {
+    const fresh = await fetch(req, { mode: 'cors', credentials: 'omit' });
+    if (fresh && fresh.ok) {
+      // Guardar copia (sin await para no bloquear la respuesta)
+      cache.put(req, fresh.clone()).then(() => pruneTileCache(cache));
+    }
+    return fresh;
+  } catch (err) {
+    // 3️⃣ Sin red y sin caché → tile vacío (transparente 1x1 PNG)
+    return new Response(
+      Uint8Array.from(atob(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+      ), c => c.charCodeAt(0)),
+      { status: 200, headers: { 'Content-Type': 'image/png' } }
+    );
+  }
+}
+
+// Poda: si superamos N tiles, borramos los más antiguos
+async function pruneTileCache(cache) {
+  try {
+    const keys = await cache.keys();
+    if (keys.length <= TILE_MAX_ENTRIES) return;
+    const toDelete = keys.length - TILE_MAX_ENTRIES;
+    // Las keys vienen en orden de inserción → las primeras son las más viejas
+    for (let i = 0; i < toDelete; i++) {
+      await cache.delete(keys[i]);
+    }
+  } catch (e) {}
+}
+
 self.addEventListener('message', event => {
   if (event.data === 'SKIP_WAITING') self.skipWaiting();
   if (event.data === 'CLEAR_CACHE') {
