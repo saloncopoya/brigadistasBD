@@ -1,6 +1,32 @@
 {
   "posts": [
     {
+      "slug": "esteesunarutanueva169",
+      "title": "2027 ESTE ES UNA RUTA NUEVA",
+      "description": "Ruta 2027 ESTE ES UNA RUTA NUEVA",
+      "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789551753/ujxyfqyesdclwf7pivhl.png",
+      "url": "/share/ruta/esteesunarutanueva169",
+      "tipo": "ruta",
+      "timestamp": 1789579967504,
+      "updatedAt": "2026-09-16T17:32:47.504Z",
+      "categoria": "urbana",
+      "tarifa": "",
+      "frecuencia": "",
+      "horarioIni": "",
+      "horarioFin": "",
+      "dias": "todos",
+      "paradas": [
+        "Parada 1"
+      ],
+      "calles": [
+        "Libramiento Norte",
+        "Boulevard Doctor Belisario Domínguez"
+      ],
+      "pois": [
+        "Hospitak 2027"
+      ]
+    },
+    {
       "slug": "producto169",
       "title": "Producto",
       "description": "Se vende varios",
@@ -35,27 +61,6 @@
       "horarioFin": "",
       "dias": "",
       "paradas": [],
-      "calles": [],
-      "pois": []
-    },
-    {
-      "slug": "esteesunarutanueva169",
-      "title": "Este es una ruta nueva",
-      "description": "Ruta Este es una ruta nueva",
-      "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789551753/ujxyfqyesdclwf7pivhl.png",
-      "url": "/share/ruta/esteesunarutanueva169",
-      "tipo": "ruta",
-      "timestamp": 1789551762542,
-      "updatedAt": "2026-09-16T09:42:42.542Z",
-      "categoria": "urbana",
-      "tarifa": "",
-      "frecuencia": "",
-      "horarioIni": "",
-      "horarioFin": "",
-      "dias": "todos",
-      "paradas": [
-        "Parada 1"
-      ],
       "calles": [],
       "pois": []
     },
@@ -537,7 +542,7 @@
     }
   ],
   "total": 31,
-  "updatedAt": "2026-09-16T10:25:17.950Z",
+  "updatedAt": "2026-09-16T17:32:47.504Z",
   "version": 1,
-  "__sha": "d5be849523f66ac69afb590d49964ee18738c0a2"
+  "__sha": "fb28215860433f49127b90679ca5aa37f094983a"
 }
