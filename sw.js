@@ -99,24 +99,40 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 /* SW.JS — v8 · NO intercepta tiles ni APIs externas */
-const VERSION = 'bgd-v4.1';
+const VERSION = 'bgd-v4.2';
 const STATIC_CACHE = `${VERSION}-static`;
 const HTML_CACHE = `${VERSION}-html`;
 
 const PRECACHE = [
-  '/', '/index.html', '/admin.html', '/offline.html', 
-   '/404.html',
-  '/manifest.json', '/robots.txt', '/sitemap.xml',
-  '/assets/icon.svg', '/js/db.js', '/js/publisher.js', '/js/app.js',
+  // Páginas principales (URLs limpias — el usuario las escribe así)
+  '/',
+  '/admin',
+  '/mapainteractivo',
+  '/offline.html',
+  '/404.html',
+
+  // Metadatos
+  '/manifest.json',
+  '/robots.txt',
+  '/sitemap.xml',
+
+  // Assets de la app
+  '/assets/icon.svg',
+  '/js/db.js',
+  '/js/publisher.js',
+  '/js/app.js',
+
+  // Leaflet
   '/vendor/leaflet/leaflet.css',
   '/vendor/leaflet/leaflet.js',
-     '/mapainteractivo.html',
-    '/vendor/leaflet/images/marker-icon.png',
+  '/vendor/leaflet/images/marker-icon.png',
   '/vendor/leaflet/images/marker-icon-2x.png',
   '/vendor/leaflet/images/marker-shadow.png',
   '/vendor/leaflet/images/layers.png',
   '/vendor/leaflet/images/layers-2x.png',
-   '/vendor/leaflet-image/leaflet-image.js',
+  '/vendor/leaflet-image/leaflet-image.js',
+
+  // IndexedDB / Firebase
   '/vendor/idb/umd.js',
   '/vendor/firebase/firebase-app-compat.js',
   '/vendor/firebase/firebase-database-compat.js',
