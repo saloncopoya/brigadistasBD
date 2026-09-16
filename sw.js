@@ -99,7 +99,7 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 /* SW.JS — v8 · NO intercepta tiles ni APIs externas */
-const VERSION = 'bgd-v1.2.3';
+const VERSION = 'bgd-v1.2.4';
 const STATIC_CACHE = `${VERSION}-static`;
 const HTML_CACHE = `${VERSION}-html`;
 
@@ -109,6 +109,7 @@ const PRECACHE = [
   '/assets/icon.svg', '/js/db.js', '/js/publisher.js', '/js/app.js',
   '/vendor/leaflet/leaflet.css',
   '/vendor/leaflet/leaflet.js',
+   '/vendor/leaflet-image/leaflet-image.js',
   '/vendor/idb/umd.js',
   '/vendor/firebase/firebase-app-compat.js',
   '/vendor/firebase/firebase-database-compat.js',
