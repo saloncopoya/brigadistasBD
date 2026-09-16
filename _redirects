@@ -1,34 +1,22 @@
 # ============================================================
 #  REDIRECTS — Cloudflare Pages
 #
-#  REGLA DE ORO:
-#   - Cualquier URL con .html → 301 a su versión sin extensión
-#   - URL limpia → 200 sirve el .html internamente
-#   - Todo el sitio funciona SIN extensión
+#  ESTRATEGIA:
+#   - Las URLs limpias funcionan (rewrite 200 → .html)
+#   - Las URLs con .html siguen funcionando (sin redirect)
+#     ⚠️ NO redirigimos .html → limpia porque crea bucle
+#     con los rewrites 200 que sirven el mismo .html
 # ============================================================
 
 # ─────────────────────────────────────────────────────────────
-#  1️⃣ CASO ESPECIAL: /index.html → raíz
-#     (va antes que la regla global para que gane)
-# ─────────────────────────────────────────────────────────────
-/index.html             /                       301
-
-# ─────────────────────────────────────────────────────────────
-#  2️⃣ REGLA GLOBAL: cualquier .html → 301 sin extensión
-# ─────────────────────────────────────────────────────────────
-/*.html                 /:splat                301
-
-# ─────────────────────────────────────────────────────────────
-#  3️⃣ REWRITES 200: URL limpia → sirve el .html interno
+#  REWRITES 200: URL limpia → sirve el .html internamente
 # ─────────────────────────────────────────────────────────────
 
 # Mapa interactivo
 /mapainteractivo        /mapainteractivo.html   200
-/mapainteractivo/       /mapainteractivo        301
 
-# Admin (también sin extensión)
+# Admin
 /admin                  /admin.html             200
-/admin/                 /admin               301
 
 # Share / Ruta
 /share/ruta/:splat      /share/ruta/:splat.html 200
@@ -40,12 +28,17 @@
 /share/m/:splat         /share/m/:splat.html    200
 
 # ─────────────────────────────────────────────────────────────
-#  4️⃣ REDIRIGIR .php (por si acaso)
+#  REDIRIGIR .php
 # ─────────────────────────────────────────────────────────────
 /index.php              /                       301
 /*.php                   /                       301
 
 # ─────────────────────────────────────────────────────────────
-#  5️⃣ FALLBACK 404 (SIEMPRE AL FINAL)
+#  REDIRIGIR /index.html a la raíz
+# ─────────────────────────────────────────────────────────────
+/index.html             /                       301
+
+# ─────────────────────────────────────────────────────────────
+#  FALLBACK 404 (SIEMPRE AL FINAL)
 # ─────────────────────────────────────────────────────────────
 /*                      /404.html               404
