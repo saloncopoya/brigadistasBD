@@ -728,10 +728,27 @@ footer a{color:var(--cyan)}
   const CACHE_KEY = 'bgd_mapainteractivo_routes_cache';
   const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
 
+
+
+
+  /* ═══════════════════════════════════════════════════════════════
+   CARGAR RUTAS — Offline-first robusto
+   
+   Orden de prioridad:
+   1. sessionStorage (rápido, TTL 5min)
+   2. IndexedDB     (persistente, funciona offline SIEMPRE)
+   3. Firebase      (si hay red, datos frescos + sync a IndexedDB)
+   
+   CON ESTO: si el usuario visitó / (raíz) online antes, las rutas
+   estarán en IndexedDB y /mapainteractivo funcionará OFFLINE.
+   ═══════════════════════════════════════════════════════════════ */
   async function loadRoutes() {
+    console.log('[loadRoutes] Iniciando...');
     let usedCache = false;
 
-    // 1️⃣ sessionStorage (compartido con index.html)
+    // ─────────────────────────────────────────────
+    // FASE 1: sessionStorage (compartido con index.html)
+    // ─────────────────────────────────────────────
     try {
       const cached = sessionStorage.getItem(CACHE_KEY);
       if (cached) {
@@ -741,34 +758,92 @@ footer a{color:var(--cyan)}
             String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es',
               { numeric: true, sensitivity: 'base' }));
           usedCache = true;
+          console.log('[loadRoutes] ✅ sessionStorage:', state.routes.length);
           if (state.tripPoints.length) performTripSearch();
+          return; // Salir rápido si hay caché fresca
         }
       }
     } catch (e) {}
 
-    // 2️⃣ Si no hay caché, Firebase en background
+    // ─────────────────────────────────────────────
+    // FASE 2: IndexedDB (persistente, offline-first)
+    // ─────────────────────────────────────────────
+    try {
+      if (typeof DB !== 'undefined' && DB.getAll) {
+        const localRoutes = await DB.getAll('routes');
+        if (localRoutes && localRoutes.length > 0) {
+          state.routes = localRoutes.sort((a, b) =>
+            String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es',
+              { numeric: true, sensitivity: 'base' })
+          );
+          usedCache = true;
+          console.log('[loadRoutes] ✅ IndexedDB:', state.routes.length);
+          
+          // Guardar en sessionStorage
+          try {
+            sessionStorage.setItem(CACHE_KEY, JSON.stringify({
+              data: state.routes, ts: Date.now()
+            }));
+          } catch (e) {}
+          
+          if (state.tripPoints.length) performTripSearch();
+        } else {
+          console.log('[loadRoutes] ℹ️ IndexedDB vacía');
+        }
+      } else {
+        console.warn('[loadRoutes] ⚠️ DB no disponible');
+      }
+    } catch (e) {
+      console.warn('[loadRoutes] IndexedDB error:', e);
+    }
+
+    // ─────────────────────────────────────────────
+    // FASE 3: Firebase (si hay red)
+    // ─────────────────────────────────────────────
     if (navigator.onLine && fbDB) {
       (async () => {
         try {
           const snap = await fbDB.ref('rutas_colectivos_tgz').once('value');
           const val = snap.val() || {};
           const arr = Object.values(val).filter(r => r && r.id);
-          state.routes = arr.sort((a, b) =>
+          
+          // Merge: Firebase + IndexedDB
+          const map = new Map(state.routes.map(r => [r.id, r]));
+          arr.forEach(r => map.set(r.id, r));
+          
+          state.routes = Array.from(map.values()).sort((a, b) =>
             String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es',
               { numeric: true, sensitivity: 'base' }));
+          
+          console.log('[loadRoutes] ☁️ Firebase (merge):', state.routes.length);
+          
+          // Guardar en sessionStorage
           try {
             sessionStorage.setItem(CACHE_KEY, JSON.stringify({
-              data: state.routes,
-              ts: Date.now()
+              data: state.routes, ts: Date.now()
             }));
           } catch (e) {}
+          
+          // 🔥 PERSISTIR en IndexedDB (por si acaso)
+          try {
+            if (typeof DB !== 'undefined' && DB.put) {
+              for (const r of arr) {
+                await DB.put('routes', r);
+              }
+              console.log('[loadRoutes] 💾 IndexedDB actualizada:', arr.length);
+            }
+          } catch (e) {}
+          
           if (state.tripPoints.length) performTripSearch();
         } catch (e) {
-          console.warn('[loadRoutes] Firebase falló:', e);
+          console.warn('[loadRoutes] ❌ Firebase falló:', e);
         }
       })();
+    } else {
+      console.log('[loadRoutes] 📴 Sin red — usando datos locales');
     }
   }
+  
 
   // ==================== INICIALIZAR MAPA ====================
   function initTripMap() {
