@@ -241,10 +241,16 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
     pushURL(params, opts.replace);
 
     // Acciones específicas
-    if (page === 'routes') {
-      setTimeout(() => { if (state.map) state.map.invalidateSize(); }, 200);
-      renderRouteContent();
-    }
+   if (page === 'routes') {
+  //  Mostrar "Cargando..." SI las rutas aún no están listas
+  if (!state.routes.length) {
+    renderLoadingState($('#routeContent'), 'Espere, cargando datos...');
+  } else {
+    renderRouteContent();
+  }
+  setTimeout(() => { if (state.map) state.map.invalidateSize(); }, 200);
+}
+     
     if (page === 'market') renderMarket();
     if (page === 'home') renderFeed();
     if (page === 'route' && opts.route) renderRouteDetail(opts.route);
@@ -339,25 +345,33 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
 
   // ==================== POSTS / FEED ====================
   async function loadPosts() {
-    let local = [];
-    try { local = await DB.getAll('posts'); } catch (e) {}
-    local.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-    state.posts = local;
+  let local = [];
+  try { local = await DB.getAll('posts'); } catch (e) {}
+  local.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+  state.posts = local;
 
-    // Intentar complementar con índice remoto
+  // Pintar ya si estamos en home
+  if (state.posts.length && state.currentPage === 'home') {
+    try { renderFeed(); } catch (e) {}
+  }
+
+  // Traer índice en background
+  (async () => {
     try {
       const idx = await Publisher.fetchIndex();
       if (idx && Array.isArray(idx.posts)) {
-        // Fusionar por id
         const map = new Map(state.posts.map(p => [p.id, p]));
         idx.posts.forEach(p => { if (!map.has(p.id)) map.set(p.id, p); });
         state.posts = Array.from(map.values())
           .filter(p => p.tipo === 'post' || !p.tipo)
           .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        if (state.currentPage === 'home') renderFeed();
       }
     } catch (e) {}
-    return state.posts;
-  }
+  })();
+
+  return state.posts;
+}
 
   function renderFeed() {
     const feed = $('#feed');
@@ -592,44 +606,57 @@ const url = location.origin + '/share/post/' + post.id;
     const v = $('#viewer');
     const c = $('#viewerContent');
     c.innerHTML = type === 'video'
-      ? `<video src="${esc(src)}" controls autoplay style="max-width:100%;max-height:100%"></video>`
-      : `<img src="${esc(src)}" alt="">`;
-    v.classList.add('open');
-    document.body.style.overflow = 'hidden';
-    pushURL({ viewer: '1' });
-  }
-  function closeViewer() {
-    $('#viewer').classList.remove('open');
-    $('#viewerContent').innerHTML = '';
-    document.body.style.overflow = '';
-  }
-  $('#viewerClose').onclick = closeViewer;
-  $('#viewer').onclick = (e) => { if (e.target.id === 'viewer') closeViewer(); };
+      ? `<video src="${esc(src)}" conasync function loadRoutes() {
+  // ─────────────────────────────────────────────
+  // FASE 1: leer IndexedDB (rápido, ~10-50ms)
+  // ─────────────────────────────────────────────
+  let local = [];
+  try { local = await DB.getAll('routes'); } catch (e) {}
+  state.routes = local.sort((a, b) =>
+    String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es',
+      { numeric: true, sensitivity: 'base' })
+  );
 
-  // ==================== RUTAS ====================
-  async function loadRoutes() {
-    let local = [];
-    try { local = await DB.getAll('routes'); } catch (e) {}
-    state.routes = local.sort((a, b) =>
-      String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es', { numeric: true, sensitivity: 'base' })
-    );
-     
-    // Complementar con Firebase si online
-    if (state.online && fbDB) {
+  // ⚡ Si ya hay rutas locales, pintarlas YA y devolver el control
+  //    (la app se siente instantánea).
+  if (state.routes.length && state.currentPage === 'routes') {
+    try { renderRouteContent(); } catch (e) {}
+  }
+
+  // ─────────────────────────────────────────────
+  // FASE 2: Firebase en BACKGROUND (no bloquea)
+  // ─────────────────────────────────────────────
+  if (state.online && fbDB) {
+    // No await: dejamos que corra y repinte cuando termine
+    (async () => {
       try {
+        // Solo traer campos que la UI necesita — no la geometría completa.
+        // Firebase no permite "project", así que traemos todo, pero lo
+        // procesamos rápido.
         const snap = await fbDB.ref('rutas_colectivos_tgz').once('value');
         const val = snap.val() || {};
         const map = new Map(state.routes.map(r => [r.id, r]));
         Object.values(val).forEach(r => {
           if (r && r.id && !map.has(r.id)) map.set(r.id, r);
         });
-               state.routes = Array.from(map.values()).sort((a, b) =>
-          String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es', { numeric: true, sensitivity: 'base' })
+
+        state.routes = Array.from(map.values()).sort((a, b) =>
+          String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es',
+            { numeric: true, sensitivity: 'base' })
         );
-      } catch (e) {}
-    }
-    return state.routes;
+
+        // Repintar SOLO si estamos en la pestaña de rutas
+        if (state.currentPage === 'routes') {
+          try { renderRouteContent(); } catch (e) {}
+        }
+      } catch (e) {
+        console.warn('[loadRoutes] Firebase falló:', e);
+      }
+    })();
   }
+
+  return state.routes;
+}
 
   function renderRouteContent() {
     const mode = state.routeMode;
@@ -643,6 +670,20 @@ const url = location.origin + '/share/post/' + post.id;
     bindRouteCardEvents(el);
   }
 
+
+   function renderLoadingState(el, mensaje) {
+  if (!el) return;
+  el.innerHTML = `
+    <div class="empty" style="padding:32px 20px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           style="width:40px;height:40px;margin-bottom:12px;opacity:.6;animation:spin 1s linear infinite">
+        <circle cx="12" cy="12" r="10" stroke-opacity=".25"/>
+        <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/>
+      </svg>
+      <h3>${esc(mensaje)}</h3>
+    </div>`;
+}
+   
   function renderRoutesGrid() {
     if (!state.routes.length) {
       return `<div class="empty">
@@ -1461,20 +1502,31 @@ const url = location.origin + '/share/ruta/' + route.id;
 
   // ==================== MARKETPLACE ====================
   async function loadMarket() {
-    let local = [];
-    try { local = await DB.getAll('market'); } catch (e) {}
-    state.market = local.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-    if (state.online && fbDB) {
+  let local = [];
+  try { local = await DB.getAll('market'); } catch (e) {}
+  state.market = local.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+  if (state.market.length && state.currentPage === 'market') {
+    try { renderMarket(); } catch (e) {}
+  }
+
+  if (state.online && fbDB) {
+    (async () => {
       try {
         const snap = await fbDB.ref('marketplace').once('value');
         const val = snap.val() || {};
         const map = new Map(state.market.map(m => [m.id, m]));
-        Object.values(val).forEach(m => { if (m && m.id && !map.has(m.id)) map.set(m.id, m); });
-        state.market = Array.from(map.values());
+        Object.values(val).forEach(m => {
+          if (m && m.id && !map.has(m.id)) map.set(m.id, m);
+        });
+        state.market = Array.from(map.values())
+          .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        if (state.currentPage === 'market') renderMarket();
       } catch (e) {}
-    }
-    return state.market;
+    })();
   }
+  return state.market;
+}
 
   function renderMarket() {
     const grid = $('#marketGrid');
