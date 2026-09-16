@@ -706,10 +706,27 @@ body.fs-active{overflow:hidden !important}
   pointer-events: none;
 }
 
-/* Botón inferior centrado dentro del mapa: "Agregar puntos de viaje" */
+/* Botón "Agregar puntos de viaje" — centrado real abajo */
 .map-trip-btn-wrap {
   pointer-events: auto;
   padding-bottom: 6px;
+  position: absolute !important;
+  left: 50% !important;
+  bottom: 10px !important;
+  transform: translateX(-50%) !important;
+  z-index: 700 !important;
+}
+
+/* Necesario: el contenedor .leaflet-bottom debe ocupar el 100% del ancho
+   para que el botón se pueda centrar respecto al mapa */
+.leaflet-bottom.leaflet-left,
+.leaflet-bottom.leaflet-right {
+  width: 100%;
+  pointer-events: none;
+}
+.leaflet-bottom.leaflet-left > *,
+.leaflet-bottom.leaflet-right > * {
+  pointer-events: auto;
 }
 .map-trip-btn {
   display: flex;
