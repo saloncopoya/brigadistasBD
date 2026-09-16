@@ -421,7 +421,7 @@ itinerary: toStrArr(r.paradas).map(p => ({ '@type': 'Place', name: p }))
   let bodyContent;
   if (tipo === 'ruta' && extra?.route) {
     // 🗺️ Para rutas: primero el mapa interactivo, luego los datos
-    bodyContent = renderRouteMapBlock(extra.route) + renderRouteBody(extra.route);
+bodyContent = renderRouteMapBlock(extra.route, baseUrl) + renderRouteBody(extra.route, baseUrl);
   } else if (tipo === 'market' && extra?.market) {
     bodyContent = renderMarketBody(extra.market);
   } else {
