@@ -1541,19 +1541,16 @@ const url = location.origin + '/share/m/' + id;
     if (hayPosts) {
       for (const id of localPostIds) if (!remotePostIds.has(id)) await DB.delete('posts', id);
     } else {
-      console.warn('[Sync] Nodo "publicaciones" no existe en Firebase. No se borran posts locales.');
     }
 
     if (hayRoutes) {
       for (const id of localRouteIds) if (!remoteRouteIds.has(id)) await DB.delete('routes', id);
     } else {
-      console.warn('[Sync] Nodo "rutas_colectivos_tgz" no existe en Firebase. No se borran rutas locales.');
     }
 
     if (hayMarket) {
       for (const id of localMarketIds) if (!remoteMarketIds.has(id)) await DB.delete('market', id);
     } else {
-      console.warn('[Sync] Nodo "marketplace" no existe en Firebase. No se borra market local.');
     }
      
     await loadPosts(); await loadRoutes(); await loadMarket();
