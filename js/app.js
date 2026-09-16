@@ -63,6 +63,86 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
     }, 2800);
   }
 
+     // ==================== HELPER PROFESIONAL DE MAPAS ====================
+  // Sin timers, sin sondeo. Usa solo eventos nativos del navegador:
+  //  - ResizeObserver: avisa cuando el contenedor cambia de tamaño
+  //  - IntersectionObserver: avisa cuando el contenedor se hace visible
+  //  - requestAnimationFrame: garantiza que el layout ya está calculado
+  //  - MutationObserver: avisa cuando se abre un modal (.modal.open)
+  //
+  // REGLA DE ORO: el CSS de .page.has-map mantiene el layout de las páginas
+  // con mapa aunque estén ocultas. Así el contenedor NUNCA nace 0x0.
+
+  const registeredMaps = new Set();
+
+  function registerMap(mapInstance) {
+    if (!mapInstance || registeredMaps.has(mapInstance)) return;
+    registeredMaps.add(mapInstance);
+
+    const container = mapInstance.getContainer();
+    if (!container) return;
+
+    // Corrige el tamaño en el siguiente frame de pintado (layout ya calculado)
+    const fix = () => {
+      requestAnimationFrame(() => {
+        try { mapInstance.invalidateSize({ pan: false, animate: false }); } catch (e) {}
+      });
+    };
+
+    // 1) Cuando el contenedor cambia de tamaño
+    if ('ResizeObserver' in window) {
+      const ro = new ResizeObserver(fix);
+      ro.observe(container);
+      mapInstance.__ro = ro;
+    }
+
+    // 2) Cuando el contenedor entra al viewport
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+          if (e.isIntersecting && e.intersectionRatio > 0) fix();
+        });
+      }, { threshold: [0, 0.01, 0.1] });
+      io.observe(container);
+      mapInstance.__io = io;
+    }
+
+    // 3) Cuando un modal (.modal) se abre
+    const modalObserver = new MutationObserver(mutations => {
+      for (const m of mutations) {
+        if (m.type === 'attributes' && m.attributeName === 'class') {
+          const el = m.target;
+          if (el.classList && el.classList.contains('open')) fix();
+        }
+      }
+    });
+    document.querySelectorAll('.modal').forEach(el => {
+      modalObserver.observe(el, { attributes: true, attributeFilter: ['class'] });
+    });
+    mapInstance.__mo = modalObserver;
+
+    // 4) Cuando el documento vuelve a ser visible (cambio de pestaña)
+    if (!mapInstance.__visHandler) {
+      mapInstance.__visHandler = () => { if (!document.hidden) fix(); };
+      document.addEventListener('visibilitychange', mapInstance.__visHandler, { passive: true });
+    }
+
+    // 5) Cuando la ventana cambia de tamaño (rotación de móvil)
+    if (!mapInstance.__winHandler) {
+      mapInstance.__winHandler = () => fix();
+      window.addEventListener('resize', mapInstance.__winHandler, { passive: true });
+    }
+
+    // 6) Una corrección inicial en el siguiente frame
+    fix();
+  }
+
+  function refreshMap(mapInstance) {
+    if (!mapInstance) return;
+    try { mapInstance.invalidateSize({ pan: false, animate: false }); } catch (e) {}
+  }
+
+   
   // ==================== ESTADO GLOBAL ====================
   const state = {
     currentPage: 'routes',
@@ -829,8 +909,14 @@ const url = location.origin + '/share/post/' + post.id;
     const first = panel.querySelector('.route-block');
     if (first) first.classList.add('open');
 
-    // Inicializar mapa
-    setTimeout(() => initRouteMap(route), 200);
+    // Inicializar mapa en el siguiente frame de pintado.
+    // La página ya tiene layout gracias a .page.has-map en el CSS.
+    // No usamos timers: requestAnimationFrame es determinista.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        initRouteMap(route);
+      });
+    });
   }
 
      // Offset perpendicular a una polyline (separa ida y regreso en la misma calle)
@@ -860,7 +946,10 @@ const url = location.origin + '/share/post/' + post.id;
     if (state.map) { state.map.remove(); state.map = null; }
 
     state.map = L.map(container, { zoomControl: true }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+    // ✨ Registrar el mapa para auto-reparación (sin timers)
+    registerMap(state.map);
 
+     
     // 🖥️ Conectar el botón de pantalla completa con este mapa
     setTimeout(() => bindFullscreenButton('routeMapFsBtn', 'routeMapWrap'), 50);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -934,7 +1023,16 @@ const url = location.origin + '/share/post/' + post.id;
     // --- Centrar mapa ---
     const allPts = (route.puntos || []).concat(route.puntosVuelta || []);
     if (allPts.length) {
-      state.map.fitBounds(L.latLngBounds(allPts).pad(0.15));
+      // Refrescamos tamaño ANTES de fitBounds y lo repetimos en los siguientes
+      // frames de pintado, para garantizar que se calcula con el tamaño correcto.
+      refreshMap(state.map);
+      try { state.map.fitBounds(L.latLngBounds(allPts).pad(0.15)); } catch (e) {}
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          refreshMap(state.map);
+          try { state.map.fitBounds(L.latLngBounds(allPts).pad(0.15)); } catch (e) {}
+        });
+      });
     } else if (route.calles && route.calles.length) {
       // Si no hay puntos pero hay calles, mostrar centro por defecto
       state.map.setView(DEFAULT_CENTER, 13);
@@ -1564,7 +1662,9 @@ const url = location.origin + '/share/m/' + id;
     const el = document.getElementById('tripMap');
     if (!el) return;
     state.tripMap = L.map(el, { zoomControl: true }).setView(DEFAULT_CENTER, 13);
-
+    // ✨ Registrar el mapa para auto-reparación (sin timers)
+    registerMap(state.tripMap);
+       
     // 🖥️ Conectar el botón de pantalla completa con este mapa
     setTimeout(() => bindFullscreenButton('tripMapFsBtn', 'tripMapWrap'), 50);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
