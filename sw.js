@@ -99,7 +99,7 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 /* SW.JS — v8 · NO intercepta tiles ni APIs externas */
-const VERSION = 'bgd-v4.0';
+const VERSION = 'bgd-v4.1';
 const STATIC_CACHE = `${VERSION}-static`;
 const HTML_CACHE = `${VERSION}-html`;
 
@@ -148,7 +148,6 @@ self.addEventListener('activate', event => {
 
 // 🎯 URLs que NO pasan por el SW → el navegador ve el 301 del servidor
 const SW_BYPASS_PATHS = [
-  /\.html$/,
   /\.php$/
 ];
 
