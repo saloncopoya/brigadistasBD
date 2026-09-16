@@ -902,15 +902,45 @@ const url = location.origin + '/share/post/' + post.id;
         </button>
       </div>`;
     $('#btnShareRoute').onclick = () => shareRoute(route);
-    $('#btnBackRoute').onclick = () => {
-      // 🎯 Comportarse como el botón físico de retroceder
-      if (state.historyStack.length > 1) {
-        state.historyStack.pop();
-        history.back();
-      } else {
-        navigateTo('routes');
-      }
-    };
+   
+
+     $('#btnBackRoute').onclick = () => {
+  // 🎯 1) Si el usuario navegó DENTRO de la SPA (historyStack tiene entradas)
+  //       usamos history.back() para respetar el flujo interno.
+  if (state.historyStack.length > 1) {
+    state.historyStack.pop();
+    history.back();
+    return;
+  }
+
+  // 🎯 2) Si el usuario VIENE de una página externa (como /mapainteractivo),
+  //       el navegador SÍ tiene historial real. Usamos history.back() para
+  //       que vuelva exactamente a donde estaba.
+  //       Detectamos "página externa" porque document.referrer no es la misma
+  //       URL base que la actual.
+  const currentPath = location.pathname + location.search;
+  let sameOriginReferrer = false;
+  try {
+    if (document.referrer) {
+      const refURL = new URL(document.referrer);
+      const curURL = new URL(location.href);
+      sameOriginReferrer = refURL.origin === curURL.origin &&
+                           refURL.pathname === curURL.pathname;
+    }
+  } catch (e) {}
+
+  if (!sameOriginReferrer && document.referrer) {
+    // Venimos de otra página (ej: /mapainteractivo, /share/ruta/xxx, Google, etc.)
+    // Usamos el historial NATIVO del navegador para volver exactamente ahí.
+    history.back();
+    return;
+  }
+
+  // 🎯 3) Fallback final: si no hay historial, ir a la lista de rutas.
+  navigateTo('routes');
+};
+
+     
      
     // Panel inferior
     const panel = $('#routePanel');
@@ -2543,17 +2573,33 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
   $('#btnTripSearch').onclick = performTripSearch;
 
   // 🎯 Botón Regresar en "Buscar viaje en mapa"
-  const tripBackBtn = document.getElementById('tripBackBtn');
-  if (tripBackBtn) {
-    tripBackBtn.onclick = () => {
-      if (state.historyStack.length > 1) {
-        state.historyStack.pop();
+  
+   const tripBackBtn = document.getElementById('tripBackBtn');
+if (tripBackBtn) {
+  tripBackBtn.onclick = () => {
+    if (state.historyStack.length > 1) {
+      state.historyStack.pop();
+      history.back();
+      return;
+    }
+    if (document.referrer) {
+      try {
+        const refURL = new URL(document.referrer);
+        const curURL = new URL(location.href);
+        if (refURL.origin === curURL.origin && refURL.pathname === curURL.pathname) {
+          navigateTo('routes');
+          return;
+        }
         history.back();
-      } else {
-        navigateTo('routes');
-      }
-    };
-  }
+        return;
+      } catch (e) {}
+    }
+    navigateTo('routes');
+  };
+}
+
+
+   
 
   // 🎯 Botón Compartir en "Buscar viaje en mapa"
   const tripShareBtn = document.getElementById('tripShareBtn');
