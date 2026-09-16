@@ -472,4 +472,42 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.appendChild(fake);
   }
   if (!document.getElementById('page-home')) {
-    const
+    const f2 = document.createElement('section');
+    f2.id = 'page-home'; f2.style.display = 'none';
+    document.body.appendChild(f2);
+  }
+  if (!document.getElementById('page-routes')) {
+    const f3 = document.createElement('section');
+    f3.id = 'page-routes'; f3.style.display = 'none';
+    document.body.appendChild(f3);
+  }
+  if (!document.getElementById('page-market')) {
+    const f4 = document.createElement('section');
+    f4.id = 'page-market'; f4.style.display = 'none';
+    document.body.appendChild(f4);
+  }
+  if (!document.getElementById('page-route')) {
+    const f5 = document.createElement('section');
+    f5.id = 'page-route'; f5.style.display = 'none';
+    document.body.appendChild(f5);
+  }
+  if (!document.getElementById('page-post')) {
+    const f6 = document.createElement('section');
+    f6.id = 'page-post'; f6.style.display = 'none';
+    document.body.appendChild(f6);
+  }
+});
+</script>
+
+<script src="/js/app.js"></script>
+
+<!-- ⚠️ TRUCO: app.js detecta por URLSearchParams. Le pasamos ?tab=trip
+     añadiéndolo a la URL actual si no está. -->
+<script>
+if (!location.search.includes('tab=')) {
+  history.replaceState(null, '', location.pathname + '?tab=trip');
+}
+</script>
+
+</body>
+</html>
