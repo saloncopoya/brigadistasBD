@@ -144,6 +144,25 @@ img{max-width:100%;display:block}
 .app{padding-top:var(--header-h);padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom));min-height:100vh}
 .page{display:none;animation:fadeIn .3s ease}
 .page.active{display:block}
+
+/* Las páginas con mapa tienen layout aunque estén ocultas, para que
+   Leaflet mida bien su contenedor. Esto elimina el problema 0x0 y los
+   parpadeos al entrar a una ruta o al buscador de viajes. */
+.page.has-map{
+  display:block;
+  position:absolute;
+  left:-9999px;
+  top:0;
+  width:100%;
+  visibility:hidden;
+  pointer-events:none;
+}
+.page.has-map.active{
+  position:static;
+  left:auto;
+  visibility:visible;
+  pointer-events:auto;
+}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 
 .container{max-width:1100px;margin:0 auto;padding:14px}
@@ -860,7 +879,7 @@ body.fs-active{overflow:hidden !important}
   </section>
 
   <!-- ===================== PÁGINA: RUTA INDIVIDUAL ===================== -->
-  <section class="page" id="page-route">
+  <section class="page has-map" id="page-route">
     <div class="route-hero" id="routeHero"></div>
     <div class="map-wrap" id="routeMapWrap" style="margin:0 14px">
       <div id="map"></div>
@@ -892,8 +911,8 @@ body.fs-active{overflow:hidden !important}
 
   
   <!-- ===================== PÁGINA: BUSCAR VIAJE MAPA ===================== -->
-  <section class="page" id="page-trip">
-    <div class="container">
+  <section class="page has-map" id="page-trip">
+     <div class="container">
           <div class="share-row" id="tripShareRow" style="display:flex;gap:8px;margin-bottom:10px">
         <button class="btn btn-ghost btn-sm" id="tripBackBtn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
