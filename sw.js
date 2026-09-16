@@ -99,7 +99,7 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 /* SW.JS — v8 · NO intercepta tiles ni APIs externas */
-const VERSION = 'bgd-v4.3';
+const VERSION = 'bgd-v4.4';
 const STATIC_CACHE = `${VERSION}-static`;
 const HTML_CACHE = `${VERSION}-html`;
 
@@ -215,7 +215,7 @@ async function htmlStrategy(req) {
   if (cached) return cached;
 
   // 🔥 Devolver 404 con el contenido de 404.html
-  const notFound = await caches.match('/404.html');
+  const notFound = await caches.match('/offline.html');
   if (notFound) {
     // Convertir el 200 de caché a 404 real
     const body = await notFound.text();
