@@ -1039,18 +1039,47 @@ const url = location.origin + '/share/post/' + post.id;
       state.map.setView(DEFAULT_CENTER, 12);
     }
 
-    // --- Leyenda flotante (opcional pero recomendado) ---
+    // --- Leyenda flotante (compacta, líneas gruesas) + botón centrar viaje ---
     const legend = L.control({ position: 'bottomleft' });
     legend.onAdd = function () {
       const div = L.DomUtil.create('div', 'map-legend');
       div.innerHTML = `
-        <div style="background:rgba(20,28,48,.92);padding:8px 12px;border-radius:10px;font-size:12px;color:#e8edf7;border:1px solid #26314f;line-height:1.6">
-          <div><span style="display:inline-block;width:14px;height:3px;background:${colorIda};vertical-align:middle;margin-right:6px"></span> Ida</div>
-          <div><span style="display:inline-block;width:14px;height:3px;background:${colorVuelta};vertical-align:middle;margin-right:6px"></span> Regreso</div>
+        <div style="background:rgba(20,28,48,.92);padding:4px 10px;border-radius:8px;font-size:11px;color:#e8edf7;border:1px solid #26314f;line-height:1.3;display:flex;flex-direction:column;gap:2px">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="display:inline-block;width:16px;height:5px;background:${colorIda};border-radius:2px"></span>
+            <span>Ida</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="display:inline-block;width:16px;height:5px;background:${colorVuelta};border-radius:2px"></span>
+            <span>Regreso</span>
+          </div>
         </div>`;
       return div;
     };
     legend.addTo(state.map);
+
+    // --- Botón inferior centrado: "Agregar ubicación" → ir a trip ---
+    const tripBtn = L.control({ position: 'bottomcenter' });
+    tripBtn.onAdd = function () {
+      const div = L.DomUtil.create('div', 'map-trip-btn-wrap');
+      div.innerHTML = `
+        <button class="map-trip-btn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="14" height="14">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="16"/>
+            <line x1="8" y1="12" x2="16" y2="12"/>
+          </svg>
+          <span>Agregar puntos de viaje</span>
+          <small>Rutas relacionadas · Mapa interactivo</small>
+        </button>`;
+      const btn = div.querySelector('.map-trip-btn');
+      L.DomEvent.disableClickPropagation(div);
+      btn.addEventListener('click', () => {
+        navigateTo('trip');
+      });
+      return div;
+    };
+    tripBtn.addTo(state.map);
 
     state.mapLayers = { route: layers };
   }
