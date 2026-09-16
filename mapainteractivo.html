@@ -765,38 +765,125 @@ footer a{color:var(--cyan)}
       }
     } catch (e) {}
 
+       // ─────────────────────────────────────────────
+    // FASE 1.5: Cache Storage (snapshot del SW)
+    // Fallback por si IndexedDB está vacía o fue borrada.
+    // ✅ Va ANTES de IndexedDB para rehidratar si hace falta.
     // ─────────────────────────────────────────────
-    // FASE 2: IndexedDB (persistente, offline-first)
-    // ─────────────────────────────────────────────
-    try {
-      if (typeof DB !== 'undefined' && DB.getAll) {
-        const localRoutes = await DB.getAll('routes');
-        if (localRoutes && localRoutes.length > 0) {
-          state.routes = localRoutes.sort((a, b) =>
-            String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es',
-              { numeric: true, sensitivity: 'base' })
-          );
-          usedCache = true;
-          console.log('[loadRoutes] ✅ IndexedDB:', state.routes.length);
-          
-          // Guardar en sessionStorage
-          try {
-            sessionStorage.setItem(CACHE_KEY, JSON.stringify({
-              data: state.routes, ts: Date.now()
-            }));
-          } catch (e) {}
-          
-          if (state.tripPoints.length) performTripSearch();
-        } else {
-          console.log('[loadRoutes] ℹ️ IndexedDB vacía');
+    if (!usedCache) {
+      try {
+        const routeCache = await caches.open('bgd-routes-v1');
+        const snap = await routeCache.match('/__routes_snapshot__.json');
+        if (snap) {
+          const arr = await snap.json();
+          if (Array.isArray(arr) && arr.length) {
+            state.routes = arr.sort((a, b) =>
+              String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es',
+                { numeric: true, sensitivity: 'base' }));
+            usedCache = true;
+            console.log('[loadRoutes] ✅ Cache Storage snapshot:', state.routes.length);
+
+            // Rehidratar IndexedDB (sin bloquear el flujo)
+            try {
+              if (typeof DB !== 'undefined' && DB.put) {
+                for (const r of arr) await DB.put('routes', r);
+                console.log('[loadRoutes] 💾 IndexedDB rehidratada desde snapshot');
+              }
+            } catch (e) {}
+
+            // Guardar en sessionStorage
+            try {
+              sessionStorage.setItem(CACHE_KEY, JSON.stringify({
+                data: state.routes, ts: Date.now()
+              }));
+            } catch (e) {}
+          }
         }
-      } else {
-        console.warn('[loadRoutes] ⚠️ DB no disponible');
+      } catch (e) {
+        console.warn('[loadRoutes] Cache Storage error:', e);
       }
-    } catch (e) {
-      console.warn('[loadRoutes] IndexedDB error:', e);
     }
 
+    // ─────────────────────────────────────────────
+    // FASE 2: IndexedDB (persistente, offline-first)
+    // Solo si no se resolvió con sessionStorage o Cache Storage.
+    // ─────────────────────────────────────────────
+    if (!usedCache) {
+      try {
+        if (typeof DB !== 'undefined' && DB.getAll) {
+          const localRoutes = await DB.getAll('routes');
+          if (localRoutes && localRoutes.length > 0) {
+            state.routes = localRoutes.sort((a, b) =>
+              String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es',
+                { numeric: true, sensitivity: 'base' })
+            );
+            usedCache = true;
+            console.log('[loadRoutes] ✅ IndexedDB:', state.routes.length);
+
+            // Guardar en sessionStorage
+            try {
+              sessionStorage.setItem(CACHE_KEY, JSON.stringify({
+                data: state.routes, ts: Date.now()
+              }));
+            } catch (e) {}
+
+            if (state.tripPoints.length) performTripSearch();
+          } else {
+            console.log('[loadRoutes] ℹ️ IndexedDB vacía');
+          }
+        } else {
+          console.warn('[loadRoutes] ⚠️ DB no disponible');
+        }
+      } catch (e) {
+        console.warn('[loadRoutes] IndexedDB error:', e);
+      }
+    }
+
+
+
+        // ─────────────────────────────────────────────
+    // ✅ EARLY RETURN: si ya tenemos rutas cacheadas
+    // (sessionStorage / Cache Storage / IndexedDB),
+    // no bloqueamos al usuario esperando Firebase.
+    // Refrescamos en background de forma silenciosa.
+    // ─────────────────────────────────────────────
+    if (usedCache && state.routes.length) {
+      if (navigator.onLine && fbDB) {
+        // Refresco en background (sin await)
+        (async () => {
+          try {
+            const snap = await fbDB.ref('rutas_colectivos_tgz').once('value');
+            const val = snap.val() || {};
+            const arr = Object.values(val).filter(r => r && r.id);
+            if (!arr.length) return;
+
+            const map = new Map(state.routes.map(r => [r.id, r]));
+            arr.forEach(r => map.set(r.id, r));
+            state.routes = Array.from(map.values()).sort((a, b) =>
+              String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es',
+                { numeric: true, sensitivity: 'base' }));
+
+            // Persistir en sessionStorage + IndexedDB
+            try {
+              sessionStorage.setItem(CACHE_KEY, JSON.stringify({
+                data: state.routes, ts: Date.now()
+              }));
+            } catch (e) {}
+
+            if (typeof DB !== 'undefined' && DB.put) {
+              for (const r of arr) await DB.put('routes', r);
+            }
+
+            console.log('[loadRoutes] 🔄 Refresco en background OK:', state.routes.length);
+          } catch (e) {
+            console.warn('[loadRoutes] Refresco silencioso falló:', e);
+          }
+        })();
+      }
+      return; // ⬅️ SALIR: ya tenemos rutas
+    }
+
+    
     // ─────────────────────────────────────────────
     // FASE 3: Firebase (si hay red)
     // ─────────────────────────────────────────────
