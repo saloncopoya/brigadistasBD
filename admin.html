@@ -1109,9 +1109,11 @@ body.fs-active{overflow:hidden !important}
     state.map = L.map('editorMap',{zoomControl:true}).setView([16.7530,-93.1150],13);
         // ✨ Registrar el mapa para auto-reparación (sin timers)
     registerMap(state.map);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-      maxZoom:19, attribution:'© OpenStreetMap'
-    }).addTo(state.map);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+  maxZoom:19, 
+  crossOrigin:true,                        
+  attribution:'© OpenStreetMap'
+}).addTo(state.map);
 
    // 🖥️ Conectar botón de pantalla completa (sin timers)
     {
