@@ -2618,9 +2618,12 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
     const marketParam = params.get('market');
 
     // Cargar datos
-    await loadPosts();
-    await loadRoutes();
-    await loadMarket();
+ //  Cargar las 3 en paralelo (mucho más rápido)
+await Promise.all([
+  loadPosts(),
+  loadRoutes(),
+  loadMarket()
+]);
 
     // Renderizar según URL
     if (postParam) {
