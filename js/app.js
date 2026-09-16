@@ -963,44 +963,39 @@ const url = location.origin + '/share/post/' + post.id;
   }
 
      // Offset perpendicular a una polyline (separa ida y regreso en la misma calle)
-  function offsetPolyline(coords, offsetMeters){
-    if(!coords || coords.length < 2) return coords;
-    const out = [];
-    const R = 6371000;
-    for(let i=0;i<coords.length;i++){
-      const p = coords[i];
-      const prev = coords[Math.max(0,i-1)];
-      const next = coords[Math.min(coords.length-1,i+1)];
-      const dLat = next[0]-prev[0];
-      const dLng = next[1]-prev[1];
-      const len = Math.hypot(dLat,dLng) || 1;
-      const perpLat = -dLng/len;
-      const perpLng =  dLat/len;
-      const dLatDeg = (offsetMeters / R) * (180/Math.PI);
-      const dLngDeg = (offsetMeters / (R*Math.cos(p[0]*Math.PI/180))) * (180/Math.PI);
-      out.push([p[0] + perpLat*dLatDeg, p[1] + perpLng*dLngDeg]);
-    }
-    return out;
-  }
+
    
   function initRouteMap(route) {
     const container = document.getElementById('map');
     if (!container) return;
-    if (state.map) { state.map.remove(); state.map = null; }
-
-    state.map = L.map(container, { zoomControl: true }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
-    // ✨ Registrar el mapa para auto-reparación (sin timers)
+    if (state.map) {
+      try { state.map.remove(); } catch (e) {}
+      state.map = null;
+      const cont = document.getElementById('map');
+      if (cont && cont._leaflet_id) delete cont._leaflet_id;
+    }
+     
+    state.map = L.map(container, {
+      zoomControl: true,
+      minZoom: 11,
+      maxZoom: 17
+    }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+     // ✨ Registrar el mapa para auto-reparación (sin timers)
     registerMap(state.map);
 
      
     // 🖥️ Conectar el botón de pantalla completa con este mapa (sin timers)
     bindFullscreenButton('routeMapFsBtn', 'routeMapWrap');
-    L.tileLayer.offline('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 19,
+   
+
+     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  minZoom: 11,
+  maxZoom: 17,
+  maxNativeZoom: 16,
   crossOrigin: true,
   attribution: '© OpenStreetMap'
-}).addTo(state.map);
-
+}).addTo(state.map);   // ← o .addTo(state.tripMap) según el caso
+     
     const layers = [];
     const colorIda = route.colorIda || '#00e5ff';
     const colorVuelta = route.colorVuelta || '#a855f7';
@@ -1679,8 +1674,20 @@ const url = location.origin + '/share/m/' + id;
     } catch (e) {}
   }
 
- async function syncFromFirebase() {
+  async function syncFromFirebase() {
   if (!state.online || !fbDB) return;
+  try {
+    // 🛡️ Recolectar IDs pendientes de subir para NO borrarlos
+    const pendingIds = new Set();
+    try {
+      const queue = await DB.getQueue();
+      queue.forEach(item => {
+        const payload = item.payload || item;
+        if (payload && payload.id) pendingIds.add(payload.id);
+      });
+    } catch (e) {}
+
+    const [postsSnap, routesSnap, marketSnap] = await Promise.all([
   try {
     const [postsSnap, routesSnap, marketSnap] = await Promise.all([
       fbDB.ref('publicaciones').once('value'),
@@ -1720,19 +1727,22 @@ const url = location.origin + '/share/m/' + id;
 
     // 🧹 BORRAR local lo que ya no está en Firebase
     // Solo borrar de un tipo si SU nodo remoto existe (evita borrados si Firebase responde parcial)
-    if (hayPosts) {
-      for (const id of localPostIds) if (!remotePostIds.has(id)) await DB.delete('posts', id);
-    } else {
+      if (hayPosts) {
+      for (const id of localPostIds) {
+        if (!remotePostIds.has(id) && !pendingIds.has(id)) await DB.delete('posts', id);
+      }
     }
 
     if (hayRoutes) {
-      for (const id of localRouteIds) if (!remoteRouteIds.has(id)) await DB.delete('routes', id);
-    } else {
+      for (const id of localRouteIds) {
+        if (!remoteRouteIds.has(id) && !pendingIds.has(id)) await DB.delete('routes', id);
+      }
     }
 
     if (hayMarket) {
-      for (const id of localMarketIds) if (!remoteMarketIds.has(id)) await DB.delete('market', id);
-    } else {
+      for (const id of localMarketIds) {
+        if (!remoteMarketIds.has(id) && !pendingIds.has(id)) await DB.delete('market', id);
+      }
     }
      
     await loadPosts(); await loadRoutes(); await loadMarket();
@@ -1745,15 +1755,19 @@ const url = location.origin + '/share/m/' + id;
     if (state.tripMap) { state.tripMap.invalidateSize(); return; }
     const el = document.getElementById('tripMap');
     if (!el) return;
-    state.tripMap = L.map(el, { zoomControl: true }).setView(DEFAULT_CENTER, 13);
+    state.tripMap = L.map(el, {       zoomControl: true,       minZoom: 11,       maxZoom: 17     }).setView(DEFAULT_CENTER, 13);
     // ✨ Registrar el mapa para auto-reparación (sin timers)
     registerMap(state.tripMap);
        
     // 🖥️ Conectar el botón de pantalla completa con este mapa (sin timers)
     bindFullscreenButton('tripMapFsBtn', 'tripMapWrap');
-    L.tileLayer.offline('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 19, crossOrigin: true, attribution: '© OpenStreetMap'
-}).addTo(state.tripMap);
+ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  minZoom: 11,
+  maxZoom: 17,
+  maxNativeZoom: 16,
+  crossOrigin: true,
+  attribution: '© OpenStreetMap'
+}).addTo(state.map);   // ← o .addTo(state.tripMap) según el caso
        
     state.tripMap.on('click', e => {
       // Solo agregar si el modo activo es "addpoint"
@@ -2267,7 +2281,7 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
       // ¿Existe una ruta directa que pase por TODOS los puntos?
       const start = state.tripPoints[0];
       const end   = state.tripPoints[state.tripPoints.length - 1];
-      const middle = state.tripPoints.slice(1, -1);
+   
 
       state.routes.forEach(r => {
         const touchesAll = state.tripPoints.every(p => routeNearPoint(r, p, p.radius));
