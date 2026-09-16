@@ -2,20 +2,23 @@
 <html lang="es" data-theme="dark">
 <head>
 <meta charset="UTF-8">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
 <meta name="theme-color" content="#0a0e1a">
-<meta name="referrer" content="strict-origin-when-cross-origin">
 <title>Mapa Interactivo · Buscar Viaje · Rutas BGD Tuxtla Gutiérrez</title>
 <meta name="description" content="Busca rutas de colectivo cercanas a tu ubicación en el mapa interactivo de Tuxtla Gutiérrez, Chiapas. Encuentra transbordos y planifica tu viaje en transporte público.">
-<meta name="keywords" content="rutas colectivo Tuxtla Gutiérrez, mapa interactivo, buscar viaje, transbordos, transporte público Chiapas, rutas cercanas">
+<meta name="keywords" content="rutas colectivo Tuxtla Gutiérrez, mapa interactivo, buscar viaje, transbordos, transporte público Chiapas, rutas cercanas, GPS rutas">
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
 <meta name="author" content="Rutas BGD">
 <meta name="geo.region" content="MX-CHP">
 <meta name="geo.placename" content="Tuxtla Gutiérrez">
+<meta name="geo.position" content="16.7530;-93.1150">
+<meta name="ICBM" content="16.7530, -93.1150">
 <link rel="canonical" href="https://brigadistasbd.pages.dev/mapainteractivo">
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" type="image/svg+xml" href="/assets/icon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="/img.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/img.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/img.png">
 <meta name="format-detection" content="telephone=no">
 <meta name="mobile-web-app-capable" content="yes">
@@ -26,7 +29,7 @@
 <!-- Open Graph -->
 <meta property="og:type" content="website">
 <meta property="og:title" content="Mapa Interactivo · Buscar Viaje · Rutas BGD">
-<meta property="og:description" content="Encuentra rutas de colectivo cercanas a tu ubicación en Tuxtla Gutiérrez, Chiapas. Planifica tu viaje con transbordos.">
+<meta property="og:description" content="Encuentra rutas de colectivo cercanas a tu ubicación en Tuxtla Gutiérrez, Chiapas. Planifica tu viaje con transbordos en el mapa interactivo.">
 <meta property="og:image" content="https://brigadistasbd.pages.dev/img.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -76,251 +79,508 @@
 <link rel="preconnect" href="https://tile.openstreetmap.org">
 <link rel="preconnect" href="https://router.project-osrm.org">
 <link rel="preconnect" href="https://www.gstatic.com">
+<link rel="preconnect" href="https://aplicacion-2c1c8.firebaseio.com">
 
 <style>
+/* ============================================================
+   VARIABLES Y TEMAS
+   ============================================================ */
 :root{
-  --cyan:#00e5ff;--cyan-d:#00b8cc;--cyan-glow:rgba(0,229,255,.35);
-  --purple:#a855f7;--green:#10b981;--amber:#f59e0b;--red:#ef4444;
-  --radius:14px;--radius-sm:10px;--radius-lg:22px;
-  --shadow:0 10px 30px rgba(0,0,0,.35);--shadow-sm:0 4px 12px rgba(0,0,0,.25);
+  --cyan:#00e5ff;
+  --cyan-d:#00b8cc;
+  --cyan-glow:rgba(0,229,255,.35);
+  --purple:#a855f7;
+  --green:#10b981;
+  --amber:#f59e0b;
+  --red:#ef4444;
+  --pink:#ec4899;
+  --radius:14px;
+  --radius-sm:10px;
+  --radius-lg:22px;
+  --shadow:0 10px 30px rgba(0,0,0,.35);
+  --shadow-sm:0 4px 12px rgba(0,0,0,.25);
   --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-  --header-h:58px;--nav-h:64px;--transition:.25s cubic-bezier(.4,0,.2,1);
+  --nav-h:64px;
+  --header-h:58px;
+  --transition:.25s cubic-bezier(.4,0,.2,1);
 }
-[data-theme="dark"]{--bg:#0a0e1a;--bg-2:#0f1526;--bg-3:#161e33;--surface:#141c30;--surface-2:#1c2540;--surface-3:#242f4d;--border:#26314f;--border-2:#334066;--text:#e8edf7;--text-2:#a9b4cc;--text-3:#6b7793;--input-bg:#0f1626}
-[data-theme="light"]{--bg:#f4f6fb;--bg-2:#fff;--bg-3:#eef1f8;--surface:#fff;--surface-2:#f4f6fb;--surface-3:#e8ecf5;--border:#dde3ee;--border-2:#c5cfe2;--text:#0c1322;--text-2:#4a5773;--text-3:#8a95ad;--input-bg:#f8fafd}
+[data-theme="dark"]{
+  --bg:#0a0e1a; --bg-2:#0f1526; --bg-3:#161e33;
+  --surface:#141c30; --surface-2:#1c2540; --surface-3:#242f4d;
+  --border:#26314f; --border-2:#334066;
+  --text:#e8edf7; --text-2:#a9b4cc; --text-3:#6b7793;
+  --input-bg:#0f1626; --overlay:rgba(5,8,16,.85); --map-filter:none;
+}
+[data-theme="light"]{
+  --bg:#f4f6fb; --bg-2:#ffffff; --bg-3:#eef1f8;
+  --surface:#ffffff; --surface-2:#f4f6fb; --surface-3:#e8ecf5;
+  --border:#dde3ee; --border-2:#c5cfe2;
+  --text:#0c1322; --text-2:#4a5773; --text-3:#8a95ad;
+  --input-bg:#f8fafd; --overlay:rgba(15,20,35,.55); --map-filter:none;
+}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
-body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.6;padding-top:var(--header-h);padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom));overflow-x:hidden}
-button,input,select{font-family:inherit;font-size:inherit;color:inherit}
+body{
+  font-family:var(--font); background:var(--bg); color:var(--text);
+  overflow-x:hidden; overscroll-behavior-y:none;
+  transition:background var(--transition),color var(--transition);
+  -webkit-font-smoothing:antialiased;
+}
+button,input,textarea,select{font-family:inherit;font-size:inherit;color:inherit}
 button{cursor:pointer;border:none;background:none}
 a{color:var(--cyan);text-decoration:none}
+img{max-width:100%;display:block}
+.hidden{display:none!important}
+::selection{background:var(--cyan);color:#00121a}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:8px}
+::-webkit-scrollbar-thumb:hover{background:var(--cyan-d)}
 
 /* HEADER */
-.header{position:fixed;top:0;left:0;right:0;height:var(--header-h);background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 14px;z-index:1000}
-.header-brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px;letter-spacing:-.3px;color:var(--text);text-decoration:none}
-.header-brand .logo{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--cyan),var(--cyan-d));display:grid;place-items:center;color:#00121a;box-shadow:0 0 18px var(--cyan-glow)}
+.header{
+  position:fixed;top:0;left:0;right:0;height:var(--header-h);
+  background:color-mix(in srgb,var(--surface) 92%,transparent);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 14px;z-index:1000;
+}
+.header-brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px;letter-spacing:-.3px}
+.header-brand .logo{
+  width:32px;height:32px;border-radius:9px;
+  background:linear-gradient(135deg,var(--cyan),var(--cyan-d));
+  display:grid;place-items:center;color:#00121a;font-size:17px;
+  box-shadow:0 0 18px var(--cyan-glow);
+}
 .header-brand .logo svg{width:20px;height:20px}
 .header-brand .brand-txt{background:linear-gradient(90deg,var(--cyan),#7dd3fc);-webkit-background-clip:text;background-clip:text;color:transparent}
 .header-actions{display:flex;align-items:center;gap:6px}
-.icon-btn{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;color:var(--text-2);transition:var(--transition);text-decoration:none}
+.icon-btn{
+  width:40px;height:40px;border-radius:11px;display:grid;place-items:center;
+  color:var(--text-2);transition:var(--transition);position:relative;
+}
 .icon-btn:hover{background:var(--surface-2);color:var(--cyan)}
+.icon-btn:active{transform:scale(.92)}
 .icon-btn svg{width:20px;height:20px}
 
-/* NAV INFERIOR */
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav-h) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:color-mix(in srgb,var(--surface) 96%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(3,1fr);z-index:1000}
-.nav-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--text-3);font-size:11px;font-weight:600;transition:var(--transition);text-decoration:none;position:relative}
-.nav-item svg{width:23px;height:23px}
+/* APP LAYOUT */
+.app{padding-top:var(--header-h);padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom));min-height:100vh}
+.container{max-width:1100px;margin:0 auto;padding:14px}
+
+/* BOTTOM NAV */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;
+  height:calc(var(--nav-h) + env(safe-area-inset-bottom));
+  padding-bottom:env(safe-area-inset-bottom);
+  background:color-mix(in srgb,var(--surface) 96%,transparent);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border-top:1px solid var(--border);
+  display:grid;grid-template-columns:repeat(3,1fr);z-index:1000;
+}
+.nav-item{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;color:var(--text-3);font-size:11px;font-weight:600;
+  transition:var(--transition);position:relative;text-decoration:none;
+}
+.nav-item svg{width:23px;height:23px;transition:var(--transition)}
 .nav-item.active{color:var(--cyan)}
-.nav-item.active::before{content:"";position:absolute;top:6px;width:44px;height:3px;border-radius:0 0 4px 4px;background:var(--cyan);box-shadow:0 0 14px var(--cyan-glow)}
+.nav-item.active svg{transform:translateY(-2px) scale(1.08)}
+.nav-item.active::before{
+  content:"";position:absolute;top:6px;width:44px;height:3px;
+  border-radius:0 0 4px 4px;background:var(--cyan);
+  box-shadow:0 0 14px var(--cyan-glow);
+}
+.nav-item:active{transform:scale(.94)}
 
-/* CONTENIDO */
-.wrap{max-width:1100px;margin:0 auto;padding:14px}
-h1{font-size:22px;font-weight:900;letter-spacing:-.3px;margin-bottom:6px;line-height:1.2}
-.meta{color:var(--text-2);font-size:13px;margin-bottom:14px}
+/* CARDS / UI */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;transition:var(--transition)}
+.card:hover{border-color:var(--border-2)}
+.section-title{
+  font-size:15px;font-weight:800;letter-spacing:.3px;margin:18px 0 10px;
+  display:flex;align-items:center;gap:8px;color:var(--text);
+}
+.section-title svg{width:18px;height:18px;color:var(--cyan)}
+.muted{color:var(--text-2);font-size:13px}
+.tiny{color:var(--text-3);font-size:11.5px}
 
-/* TRIP CONTROLS */
-.trip-controls{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px;margin-bottom:10px;display:flex;flex-direction:column;gap:8px}
-.trip-controls-row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
-.trip-controls-row .trip-radius-box{flex:2;min-width:140px}
-.trip-controls-row .trip-transfers-box{flex:1;min-width:110px}
-.trip-controls-row label{font-size:11px;font-weight:700;color:var(--text-2);display:block;margin-bottom:3px}
-.trip-controls-row input[type="range"]{width:100%;accent-color:var(--cyan)}
-.trip-controls-row .select{padding:7px 28px 7px 10px;font-size:12px;width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:8px;color:var(--text);appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7793' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;background-size:14px}
-.trip-points-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.trip-points-grid .trip-point-card{background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:6px 8px;display:flex;align-items:center;gap:6px;font-size:11px;min-width:0}
-.trip-points-grid .trip-point-card .tpc-letter{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:12px;flex-shrink:0}
-.trip-points-grid .trip-point-card .tpc-coords{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);font-size:12px;font-weight:800}
-.trip-points-grid .trip-point-card .tpc-actions{display:flex;gap:2px;flex-shrink:0}
-.trip-points-grid .trip-point-card .tpc-actions button{width:20px;height:20px;border-radius:5px;background:var(--surface-3);display:grid;place-items:center;color:var(--text-2);font-size:11px}
-.trip-points-grid .trip-point-card .tpc-actions button:hover{color:var(--red)}
-.trip-points-grid .empty-trip{grid-column:1/-1;text-align:center;padding:14px 10px;font-size:12.5px;color:var(--text-2);font-weight:600;line-height:1.5;border:1px dashed var(--border-2);border-radius:10px;background:var(--surface-2)}
-
-/* MAPA */
-.map-wrap{position:relative;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);background:var(--surface-2)}
-#tripMap{width:100%;height:40vh;min-height:260px;z-index:1}
-.map-toolbar-below{position:absolute;left:12px;bottom:12px;z-index:600;display:flex;gap:5px;padding:4px;background:color-mix(in srgb,var(--surface) 96%,transparent);border:1px solid var(--border-2);border-radius:10px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:var(--shadow)}
-.map-toolbar-below .tb{width:34px;height:28px;justify-content:center;align-items:center;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;color:var(--text);display:flex;transition:var(--transition);padding:0}
-.map-toolbar-below .tb.tb-text{width:auto;padding:0 10px;gap:5px}
-.map-toolbar-below .tb.tb-text span{font-size:10.5px;font-weight:800;letter-spacing:.3px;color:inherit;line-height:1}
-.map-toolbar-below .tb svg{width:14px;height:14px}
-.map-toolbar-below .tb:hover{border-color:var(--cyan);color:var(--cyan)}
-.map-toolbar-below .tb.active{background:var(--cyan);color:#00121a;border-color:transparent}
-.map-fs-btn{position:absolute;bottom:12px;right:12px;z-index:600;background:color-mix(in srgb,var(--surface) 96%,transparent);border:1px solid var(--border-2);border-radius:12px;width:42px;height:42px;display:grid;place-items:center;color:var(--text);box-shadow:var(--shadow);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:var(--transition);cursor:pointer}
-.map-fs-btn:hover{background:var(--surface-3);border-color:var(--cyan);color:var(--cyan)}
-.map-fs-btn svg{width:20px;height:20px}
-.map-wrap.is-fullscreen{position:fixed!important;inset:0!important;z-index:9500!important;margin:0!important;border-radius:0!important;border:none!important}
-.map-wrap.is-fullscreen #tripMap{height:100vh!important;width:100vw!important}
-body.fs-active{overflow:hidden!important}
-.leaflet-container{background:var(--bg-2)!important;font-family:var(--font)!important}
-.leaflet-control-zoom a{background:var(--surface)!important;color:var(--text)!important;border-color:var(--border)!important}
-.leaflet-control-attribution{background:color-mix(in srgb,var(--surface) 88%,transparent)!important;color:var(--text-2)!important;font-size:10px!important}
-.leaflet-control-attribution a{color:var(--cyan)!important}
-.leaflet-popup-content-wrapper{background:var(--surface-3)!important;color:var(--text)!important;border-radius:12px!important;border:1px solid var(--border-2)!important}
-.leaflet-popup-tip{background:var(--surface-3)!important}
-.leaflet-interactive:focus,.leaflet-interactive:focus-visible{outline:none!important;box-shadow:none!important}
-.marker-a,.marker-b,.marker-c,.marker-d,.marker-e{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:12px;color:#fff;border:2.5px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.5)}
-.marker-a{background:#10b981}.marker-b{background:#ef4444}.marker-c{background:#f59e0b}.marker-d{background:#3b82f6}.marker-e{background:#a855f7}
-
-/* RESULTADOS */
-.result-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px;transition:var(--transition)}
-.result-card:hover{border-color:var(--cyan);box-shadow:var(--shadow-sm)}
-.result-card.directa{border-left:3px solid var(--green)}
-.result-card.transbordo{border-left:3px solid var(--amber)}
-.result-card .rc-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.result-card .rc-head .rc-icon{width:36px;height:36px;border-radius:9px;background:var(--surface-2);display:grid;place-items:center;color:var(--cyan);flex-shrink:0}
-.result-card .rc-head .rc-icon svg{width:20px;height:20px}
-.result-card .rc-route{font-weight:800;font-size:14px;text-transform:uppercase}
-.result-card .rc-sub{font-size:11.5px;color:var(--text-3)}
-.section-title{font-size:15px;font-weight:800;letter-spacing:.3px;margin:18px 0 10px;display:flex;align-items:center;gap:8px;color:var(--text)}
-.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;font-size:10.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase}
-.badge-green{background:color-mix(in srgb,var(--green) 16%,transparent);color:var(--green);border:1px solid color-mix(in srgb,var(--green) 30%,transparent)}
-.badge-amber{background:color-mix(in srgb,var(--amber) 18%,transparent);color:var(--amber);border:1px solid color-mix(in srgb,var(--amber) 32%,transparent)}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 16px;border-radius:var(--radius-sm);font-weight:700;font-size:13.5px;transition:var(--transition);border:1px solid transparent;text-decoration:none}
+/* BUTTONS */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:11px 16px;border-radius:var(--radius-sm);font-weight:700;font-size:13.5px;
+  transition:var(--transition);border:1px solid transparent;text-decoration:none;
+}
 .btn svg{width:17px;height:17px}
 .btn:active{transform:scale(.96)}
 .btn-primary{background:linear-gradient(135deg,var(--cyan),var(--cyan-d));color:#00121a;box-shadow:0 6px 18px -6px var(--cyan-glow)}
 .btn-primary:hover{filter:brightness(1.08)}
 .btn-ghost{background:var(--surface-2);color:var(--text);border-color:var(--border)}
-.btn-ghost:hover{background:var(--surface-3)}
+.btn-ghost:hover{background:var(--surface-3);border-color:var(--border-2)}
 .btn-sm{padding:8px 12px;font-size:12.5px}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;font-size:10.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase}
+.badge-green{background:color-mix(in srgb,var(--green) 16%,transparent);color:var(--green);border:1px solid color-mix(in srgb,var(--green) 30%,transparent)}
+.badge-amber{background:color-mix(in srgb,var(--amber) 18%,transparent);color:var(--amber);border:1px solid color-mix(in srgb,var(--amber) 32%,transparent)}
+.badge-urbana{background:color-mix(in srgb,var(--cyan) 16%,transparent);color:var(--cyan);border:1px solid color-mix(in srgb,var(--cyan) 30%,transparent)}
+
+/* TOAST */
+.toast-wrap{
+  position:fixed;top:calc(var(--header-h) + 10px);left:50%;transform:translateX(-50%);
+  z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;
+  width:calc(100% - 24px);max-width:400px;
+}
+.toast{
+  background:var(--surface-3);color:var(--text);padding:12px 16px;
+  border-radius:var(--radius-sm);border:1px solid var(--border-2);
+  box-shadow:var(--shadow);font-size:13.5px;font-weight:600;
+  display:flex;align-items:center;gap:10px;pointer-events:auto;
+  animation:toastIn .3s cubic-bezier(.4,0,.2,1);
+}
+.toast.ok{border-color:color-mix(in srgb,var(--green) 50%,transparent)}
+.toast.err{border-color:color-mix(in srgb,var(--red) 50%,transparent)}
+.toast svg{width:18px;height:18px;flex-shrink:0}
+.toast.ok svg{color:var(--green)}
+.toast.err svg{color:var(--red)}
+@keyframes toastIn{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:none}}
+
+/* TRIP SEARCH */
+.trip-controls{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:10px;margin-bottom:10px;display:flex;flex-direction:column;gap:8px;
+}
+.trip-controls-row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+.trip-controls-row .trip-radius-box{flex:2;min-width:140px}
+.trip-controls-row .trip-transfers-box{flex:1;min-width:110px}
+.trip-controls-row label{font-size:11px;font-weight:700;color:var(--text-2);display:block;margin-bottom:3px}
+.trip-controls-row input[type="range"]{width:100%;accent-color:var(--cyan)}
+.trip-controls-row .select{
+  padding:7px 28px 7px 10px;font-size:12px;width:100%;
+  background:var(--input-bg);border:1px solid var(--border);border-radius:8px;
+  color:var(--text);appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7793' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 8px center;background-size:14px;
+}
+.trip-points-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.trip-points-grid .trip-point-card{
+  background:var(--surface-2);border:1px solid var(--border);border-radius:8px;
+  padding:6px 8px;display:flex;align-items:center;gap:6px;font-size:11px;min-width:0;
+}
+.trip-points-grid .trip-point-card .tpc-letter{
+  width:24px;height:24px;border-radius:50%;display:grid;place-items:center;
+  color:#fff;font-weight:800;font-size:12px;flex-shrink:0;
+}
+.trip-points-grid .trip-point-card .tpc-coords{
+  flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  color:var(--text);font-size:12px;font-weight:800;letter-spacing:.2px;
+}
+.trip-points-grid .trip-point-card .tpc-actions{display:flex;gap:2px;flex-shrink:0}
+.trip-points-grid .trip-point-card .tpc-actions button{
+  width:20px;height:20px;border-radius:5px;background:var(--surface-3);
+  display:grid;place-items:center;color:var(--text-2);font-size:11px;
+}
+.trip-points-grid .trip-point-card .tpc-actions button:hover{color:var(--red)}
+.trip-points-grid .empty-trip{
+  grid-column:1/-1;text-align:center;padding:14px 10px;font-size:12.5px;
+  color:var(--text-2);font-weight:600;line-height:1.5;
+  border:1px dashed var(--border-2);border-radius:10px;background:var(--surface-2);
+}
+
+/* MAP */
+.map-wrap{position:relative;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);background:var(--surface-2)}
+#tripMap{width:100%;height:40vh;min-height:260px;z-index:1}
+.map-toolbar-below{
+  position:absolute;left:12px;bottom:12px;z-index:600;
+  display:flex;gap:5px;padding:4px;
+  background:color-mix(in srgb,var(--surface) 96%,transparent);
+  border:1px solid var(--border-2);border-radius:10px;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  box-shadow:var(--shadow);
+}
+.map-toolbar-below .tb{
+  width:34px;height:28px;justify-content:center;align-items:center;
+  background:var(--surface-2);border:1px solid var(--border);border-radius:8px;
+  color:var(--text);display:flex;transition:var(--transition);padding:0;
+}
+.map-toolbar-below .tb.tb-text{width:auto;padding:0 10px;gap:5px}
+.map-toolbar-below .tb.tb-text span{
+  font-size:10.5px;font-weight:800;letter-spacing:.3px;color:inherit;line-height:1;
+}
+.map-toolbar-below .tb svg{width:14px;height:14px}
+.map-toolbar-below .tb:hover{border-color:var(--cyan);color:var(--cyan)}
+.map-toolbar-below .tb.active{background:var(--cyan);color:#00121a;border-color:transparent}
+
+.map-fs-btn{
+  position:absolute;bottom:12px;right:12px;z-index:600;
+  background:color-mix(in srgb,var(--surface) 96%,transparent);
+  border:1px solid var(--border-2);border-radius:12px;
+  width:42px;height:42px;display:grid;place-items:center;
+  color:var(--text);box-shadow:var(--shadow);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  transition:var(--transition);cursor:pointer;
+}
+.map-fs-btn:hover{background:var(--surface-3);border-color:var(--cyan);color:var(--cyan)}
+.map-fs-btn svg{width:20px;height:20px}
+.map-wrap.is-fullscreen{
+  position:fixed !important;inset:0 !important;z-index:9500 !important;
+  margin:0 !important;border-radius:0 !important;border:none !important;
+}
+.map-wrap.is-fullscreen #tripMap{height:100vh !important;width:100vw !important}
+body.fs-active{overflow:hidden !important}
+
+.leaflet-container{background:var(--bg-2)!important;font-family:var(--font)!important}
+.leaflet-control-zoom a{background:var(--surface)!important;color:var(--text)!important;border-color:var(--border)!important}
+.leaflet-control-attribution{
+  background:color-mix(in srgb,var(--surface) 88%,transparent)!important;
+  color:var(--text-2)!important;font-size:10px!important;
+}
+.leaflet-control-attribution a{color:var(--cyan)!important}
+.leaflet-popup-content-wrapper{
+  background:var(--surface-3)!important;color:var(--text)!important;
+  border-radius:12px!important;border:1px solid var(--border-2)!important;
+}
+.leaflet-popup-tip{background:var(--surface-3)!important}
+
+.leaflet-interactive:focus,
+.leaflet-interactive:focus-visible,
+.leaflet-interactive:active{
+  outline:none!important;outline-width:0!important;outline-offset:0!important;
+  box-shadow:none!important;-webkit-tap-highlight-color:transparent!important;
+}
+.leaflet-container svg:focus,
+.leaflet-container svg:focus-visible,
+.leaflet-container svg path:focus,
+.leaflet-container svg path:focus-visible{
+  outline:none!important;outline-width:0!important;
+  -webkit-tap-highlight-color:transparent!important;
+}
+
+.marker-a,.marker-b,.marker-c,.marker-d,.marker-e{
+  width:26px;height:26px;border-radius:50%;display:grid;place-items:center;
+  font-weight:800;font-size:12px;color:#fff;border:2.5px solid #fff;
+  box-shadow:0 2px 10px rgba(0,0,0,.5);
+}
+.marker-a{background:#10b981}
+.marker-b{background:#ef4444}
+.marker-c{background:#f59e0b}
+.marker-d{background:#3b82f6}
+.marker-e{background:#a855f7}
+
+/* RESULTADOS */
+.result-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px;margin-bottom:10px;transition:var(--transition);
+}
+.result-card:hover{border-color:var(--cyan);box-shadow:var(--shadow-sm)}
+.result-card.directa{border-left:3px solid var(--green)}
+.result-card.transbordo{border-left:3px solid var(--amber)}
+.result-card .rc-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.result-card .rc-head .rc-icon{
+  width:36px;height:36px;border-radius:9px;background:var(--surface-2);
+  display:grid;place-items:center;color:var(--cyan);flex-shrink:0;
+}
+.result-card .rc-head .rc-icon svg{width:20px;height:20px}
+.result-card .rc-route{font-weight:800;font-size:14px;text-transform:uppercase}
+.result-card .rc-sub{font-size:11.5px;color:var(--text-3)}
+
 .trip-result-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
 .trip-result-actions .btn{padding:6px 10px;font-size:11.5px}
-.trip-badge-route{display:inline-block;padding:2px 7px;border-radius:99px;font-size:10px;font-weight:800;color:#fff;margin-right:4px}
+.trip-badge-route{
+  display:inline-block;padding:2px 7px;border-radius:99px;font-size:10px;
+  font-weight:800;color:#fff;margin-right:4px;
+}
 .trip-chain{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin-bottom:4px}
-.trip-chain-item{display:inline-flex;align-items:center;gap:6px;padding:4px 8px 4px 4px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px}
-.trip-chain-chip{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:11px;flex-shrink:0}
-.trip-chain-name{font-size:12.5px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.2px;white-space:nowrap}
+.trip-chain-item{
+  display:inline-flex;align-items:center;gap:6px;padding:4px 8px 4px 4px;
+  background:var(--surface-2);border:1px solid var(--border);border-radius:10px;
+}
+.trip-chain-chip{
+  width:22px;height:22px;border-radius:6px;display:grid;place-items:center;
+  color:#fff;font-weight:800;font-size:11px;flex-shrink:0;
+  box-shadow:0 2px 6px rgba(0,0,0,.25);
+}
+.trip-chain-name{
+  font-size:12.5px;font-weight:700;color:var(--text);
+  text-transform:uppercase;letter-spacing:.2px;white-space:nowrap;
+}
 .trip-chain-sep{color:var(--text-3);font-weight:800;font-size:16px;margin:0 2px;line-height:1}
 .empty{text-align:center;padding:40px 20px;color:var(--text-3)}
 .empty h3{font-size:15px;margin-bottom:6px;color:var(--text-2)}
 .empty p{font-size:13px;max-width:300px;margin:0 auto}
 
-/* INFO SEO */
-.info-seo{margin-top:30px;padding:20px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)}
-.info-seo h2{font-size:18px;font-weight:800;color:var(--cyan);margin-bottom:10px}
-.info-seo p{font-size:14px;line-height:1.7;color:var(--text-2);margin-bottom:10px;text-align:justify}
-.info-seo ul{padding-left:20px;margin-bottom:10px}
-.info-seo li{font-size:14px;line-height:1.7;color:var(--text-2);margin-bottom:4px}
+/* SEO CONTENT */
+.info-seo{
+  margin-top:40px;padding:24px;background:var(--surface);
+  border:1px solid var(--border);border-radius:var(--radius);
+}
+.info-seo h2{
+  font-size:18px;font-weight:800;color:var(--cyan);
+  margin-bottom:10px;margin-top:20px;
+}
+.info-seo h2:first-child{margin-top:0}
+.info-seo p{
+  font-size:14.5px;line-height:1.75;color:var(--text-2);
+  margin-bottom:12px;text-align:justify;
+}
+.info-seo ul{padding-left:22px;margin-bottom:14px}
+.info-seo li{
+  font-size:14.5px;line-height:1.75;color:var(--text-2);margin-bottom:5px;
+}
 
-footer{margin-top:30px;padding-top:20px;border-top:1px solid var(--border);color:var(--text-2);font-size:12px;text-align:center}
+footer{
+  margin-top:30px;padding-top:20px;border-top:1px solid var(--border);
+  color:var(--text-2);font-size:12px;text-align:center;
+}
 footer a{color:var(--cyan)}
 
-@media(min-width:720px){.wrap{max-width:900px}}
-@media(min-width:1000px){.wrap{max-width:1200px}.bottom-nav{max-width:560px;left:50%;transform:translateX(-50%);border-radius:18px 18px 0 0;border-left:1px solid var(--border);border-right:1px solid var(--border)}#tripMap{height:60vh}}
-@media(max-width:380px){.map-toolbar-below .tb{width:28px;height:24px}.map-toolbar-below .tb svg{width:12px;height:12px}.trip-points-grid{grid-template-columns:1fr}}
+@media(min-width:720px){
+  .container{max-width:900px}
+}
+@media(min-width:1000px){
+  .container{max-width:1200px}
+  .bottom-nav{
+    max-width:560px;left:50%;transform:translateX(-50%);
+    border-radius:18px 18px 0 0;
+    border-left:1px solid var(--border);border-right:1px solid var(--border);
+  }
+  #tripMap{height:60vh}
+}
+@media(max-width:380px){
+  .map-toolbar-below .tb{width:28px;height:24px}
+  .map-toolbar-below .tb svg{width:12px;height:12px}
+  .trip-points-grid{grid-template-columns:1fr}
+  .header-brand .brand-txt{font-size:14px}
+}
 </style>
 </head>
 <body>
 
+<!-- ============================ HEADER ============================ -->
 <header class="header">
-  <a class="header-brand" href="/">
+  <a class="header-brand" href="/" style="color:var(--text);text-decoration:none">
     <div class="logo">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
         <circle cx="12" cy="10" r="3"/>
       </svg>
     </div>
-    <span class="brand-txt">TUXRUTAS</span>
+    <span class="brand-txt">Rutas BGD</span>
   </a>
   <div class="header-actions">
+    <button class="icon-btn" id="themeBtn" title="Cambiar tema">
+      <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
     <a class="icon-btn" href="/" title="Ir al inicio">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     </a>
   </div>
 </header>
 
-<div class="wrap">
+<!-- ============================ APP ============================ -->
+<main class="app">
+  <div class="container">
 
-  <h1>🗺️ Buscar Viaje en Mapa</h1>
-  <div class="meta">Encuentra rutas de colectivo cercanas a tu ubicación en Tuxtla Gutiérrez, Chiapas</div>
-
-  <div style="display:flex;gap:8px;margin-bottom:10px">
-    <button class="btn btn-primary btn-sm" id="tripShareBtn">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="14" height="14"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-      Compartir viaje
-    </button>
-  </div>
-
-  <div class="trip-controls">
-    <div class="trip-controls-row">
-      <div class="trip-radius-box">
-        <label>Radio de búsqueda: <span id="tripRadiusVal">300</span>m</label>
-        <input type="range" id="tripRadius" min="10" max="2000" value="300" step="10">
-      </div>
-      <div class="trip-transfers-box">
-        <label>Máx. transbordos:</label>
-        <select class="select" id="tripMaxTransfers">
-          <option value="1" selected>1 transbordo</option>
-          <option value="2">2 transbordos</option>
-          <option value="3">3 transbordos</option>
-          <option value="4">4 transbordos</option>
-        </select>
-      </div>
-      <button class="btn btn-primary btn-sm" id="btnTripSearch">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="14" height="14"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        Buscar
+    <div class="share-row" id="tripShareRow" style="display:flex;gap:8px;margin-bottom:10px">
+      <a class="btn btn-ghost btn-sm" href="/">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Regresar
+      </a>
+      <button class="btn btn-primary btn-sm" id="tripShareBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        Compartir viaje
       </button>
     </div>
-    <div id="tripPointsList" class="trip-points-grid"></div>
-  </div>
 
-  <div class="map-wrap" id="tripMapWrap">
-    <div id="tripMap"></div>
-    <div class="map-toolbar-below" id="tripToolbar">
-      <button class="tb tb-text" data-tool="undo" title="Deshacer">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
-        <span>DESHACER</span>
-      </button>
-      <button class="tb active" data-tool="addpoint" title="Agregar punto">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      </button>
-      <button class="tb" data-tool="locate" title="Mi ubicación">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
-      </button>
-      <button class="tb tb-text" data-tool="clear" title="Limpiar todo">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        <span>LIMPIAR MAPA</span>
+    <!-- Controles del buscador -->
+    <div class="trip-controls">
+      <div class="trip-controls-row">
+        <div class="trip-radius-box">
+          <label>Radio de busqueda: <span id="tripRadiusVal">300</span>m</label>
+          <input type="range" id="tripRadius" min="10" max="2000" value="300" step="10">
+        </div>
+        <div class="trip-transfers-box">
+          <label>Máx. transbordos:</label>
+          <select class="select" id="tripMaxTransfers">
+            <option value="1" selected>1 transbordo</option>
+            <option value="2">2 transbordos</option>
+            <option value="3">3 transbordos</option>
+            <option value="4">4 transbordos</option>
+          </select>
+        </div>
+        <button class="btn btn-primary btn-sm" id="btnTripSearch">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Buscar
+        </button>
+      </div>
+      <div id="tripPointsList" class="trip-points-grid"></div>
+    </div>
+
+    <!-- Mapa + toolbar -->
+    <div class="map-wrap" id="tripMapWrap">
+      <div id="tripMap" style="width:100%;height:40vh;min-height:260px;z-index:1"></div>
+
+      <div class="map-toolbar-below" id="tripToolbar">
+        <button class="tb tb-text" data-tool="undo" title="Deshacer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+          <span>DESHACER</span>
+        </button>
+        <button class="tb active" data-tool="addpoint" title="Agregar punto">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <button class="tb" data-tool="locate" title="Mi ubicación">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+        </button>
+        <button class="tb tb-text" data-tool="clear" title="Limpiar todo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          <span>LIMPIAR MAPA</span>
+        </button>
+      </div>
+
+      <button class="map-fs-btn" id="tripMapFsBtn" title="Pantalla completa">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
       </button>
     </div>
-    <button class="map-fs-btn" id="tripMapFsBtn" title="Pantalla completa">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
-    </button>
+
+    <!-- Resultados -->
+    <div id="tripResults" style="margin-top:14px"></div>
+
+    <!-- ============================================================ -->
+    <!-- CONTENIDO SEO VISIBLE (Google)                               -->
+    <!-- ============================================================ -->
+    <section class="info-seo">
+      <h2>¿Cómo buscar tu viaje en el mapa interactivo?</h2>
+      <p>Esta herramienta te permite encontrar las rutas de colectivo más cercanas a cualquier punto de Tuxtla Gutiérrez. Simplemente toca el mapa para colocar tu ubicación de origen y, si lo deseas, tu destino. El sistema calculará automáticamente qué rutas pasan cerca de esos puntos, incluyendo opciones con transbordos entre múltiples rutas.</p>
+
+      <h2>Características del buscador de viajes</h2>
+      <ul>
+        <li>Búsqueda por radio configurable (desde 10 metros hasta 2 kilómetros)</li>
+        <li>Detección de rutas directas que pasan por tus puntos</li>
+        <li>Cálculo de transbordos de 1 a 4 saltos entre rutas</li>
+        <li>Visualización de trazos de ida y regreso en el mapa</li>
+        <li>Marcadores de inicio y fin de cada ruta</li>
+        <li>Colores únicos por ruta para distinguir múltiples resultados</li>
+        <li>Detección automática de tu ubicación con GPS</li>
+        <li>Modo pantalla completa para una mejor experiencia</li>
+      </ul>
+
+      <h2>¿Cómo funciona el cálculo de transbordos?</h2>
+      <p>El sistema analiza la geometría de cada ruta y calcula la distancia mínima entre pares de rutas. Si dos rutas tienen un punto en común (a menos de 400 metros de distancia), se considera que puedes hacer transbordo. Luego ordena los resultados por número de transbordos y distancia total, para que elijas la opción más conveniente.</p>
+
+      <h2>Rutas de colectivo en Tuxtla Gutiérrez</h2>
+      <p>Tuxtla Gutiérrez cuenta con una extensa red de rutas de colectivo que conectan el centro histórico con colonias, fraccionamientos y zonas industriales. Las rutas urbanas operan dentro de la ciudad, mientras que las foráneas conectan con municipios cercanos. Esta herramienta te ayuda a identificar cuál es la mejor opción para llegar a tu destino.</p>
+
+      <h2>Planifica tu viaje en transporte público</h2>
+      <p>Ya sea que necesites ir al trabajo, a la escuela, al mercado o a visitar a un familiar, esta herramienta te muestra las rutas disponibles cerca de ti. Combínala con la información detallada de cada ruta (paradas, calles, POIs, tarifas y horarios) para planificar tu viaje completo.</p>
+
+      <h2>Tuxtla Gutiérrez, Chiapas, México</h2>
+      <p>Tuxtla Gutiérrez es la capital del estado de Chiapas y su principal centro urbano. Cuenta con una población superior a los 600,000 habitantes y un sistema de transporte público basado principalmente en rutas de colectivo. Conocer las rutas disponibles y sus recorridos es esencial para moverte eficientemente por la ciudad.</p>
+    </section>
+
+    <footer>© <span id="yr"></span> Rutas BGD · <a href="/">brigadistasbd.pages.dev</a></footer>
   </div>
+</main>
 
-  <div id="tripResults" style="margin-top:14px"></div>
-
-  <!-- ============================================================ -->
-  <!-- CONTENIDO SEO (para Google, invisible al usuario)             -->
-  <!-- ============================================================ -->
-  <div class="info-seo">
-    <h2>¿Cómo buscar tu viaje en el mapa interactivo?</h2>
-    <p>Esta herramienta te permite encontrar las rutas de colectivo más cercanas a cualquier punto de Tuxtla Gutiérrez. Simplemente toca el mapa para colocar tu ubicación de origen y, si lo deseas, tu destino. El sistema calculará automáticamente qué rutas pasan cerca de esos puntos, incluyendo opciones con transbordos entre múltiples rutas.</p>
-
-    <h2>Características</h2>
-    <ul>
-      <li>Búsqueda por radio configurable (desde 10 metros hasta 2 kilómetros)</li>
-      <li>Detección de rutas directas que pasan por tus puntos</li>
-      <li>Cálculo de transbordos de 1 a 4 saltos entre rutas</li>
-      <li>Visualización de trazos de ida y regreso en el mapa</li>
-      <li>Marcadores de inicio y fin de cada ruta</li>
-      <li>Colores únicos por ruta para distinguir múltiples resultados</li>
-      <li>Detección automática de tu ubicación con GPS</li>
-      <li>Modo pantalla completa para una mejor experiencia</li>
-    </ul>
-
-    <h2>¿Cómo funciona el cálculo de transbordos?</h2>
-    <p>El sistema analiza la geometría de cada ruta y calcula la distancia mínima entre pares de rutas. Si dos rutas tienen un punto en común (a menos de 400 metros de distancia), se considera que puedes hacer transbordo. Luego ordena los resultados por número de transbordos y distancia total, para que elijas la opción más conveniente.</p>
-
-    <h2>Rutas de colectivo en Tuxtla Gutiérrez</h2>
-    <p>Tuxtla Gutiérrez cuenta con una extensa red de rutas de colectivo que conectan el centro histórico con colonias, fraccionamientos y zonas industriales. Las rutas urbanas operan dentro de la ciudad, mientras que las foráneas conectan con municipios cercanos. Esta herramienta te ayuda a identificar cuál es la mejor opción para llegar a tu destino.</p>
-
-    <h2>Planifica tu viaje en transporte público</h2>
-    <p>Ya sea que necesites ir al trabajo, a la escuela, al mercado o a visitar a un familiar, esta herramienta te muestra las rutas disponibles cerca de ti. Combínala con la información detallada de cada ruta (paradas, calles, POIs, tarifas y horarios) para planificar tu viaje completo.</p>
-  </div>
-
-  <footer>© <span id="yr"></span> Rutas BGD · <a href="/">brigadistasbd.pages.dev</a></footer>
-</div>
-
+<!-- ============================ NAV INFERIOR ============================ -->
 <nav class="bottom-nav">
   <a class="nav-item" href="/?tab=home">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -336,20 +596,26 @@ footer a{color:var(--cyan)}
   </a>
 </nav>
 
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- ============================ SCRIPTS ============================ -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
 <script>
 /* ==========================================================================
    MAPA INTERACTIVO — Autocontenido
-   Carga rutas desde Firebase en tiempo de ejecución.
-   NO depende de app.js ni de la SPA principal.
+   - Motor de búsqueda de viajes idéntico al de app.js
+   - Firebase SINGLETON (no duplica initializeApp)
+   - NO depende de app.js ni de la SPA principal
    ========================================================================== */
 (function(global){
   'use strict';
 
   document.getElementById('yr').textContent = new Date().getFullYear();
 
+  // ==================== CONFIGURACIÓN ====================
   const FIREBASE_CONFIG = {
     apiKey: "AIzaSyAiojpfnGUPhaoQkpAh1Yey3fp6uWU-iFQ",
     authDomain: "aplicacion-2c1c8.firebaseapp.com",
@@ -357,28 +623,73 @@ footer a{color:var(--cyan)}
     projectId: "aplicacion-2c1c8",
     storageBucket: "aplicacion-2c1c8.firebasestorage.app",
     messagingSenderId: "837629411067",
-    appId: "1:837629411067:web:6c96cfcd7490b049787a5e"
+    appId: "1:837629411067:web:6c96cfcd7490b049787a5e",
+    measurementId: "G-SFP1SEY20W"
   };
   const DEFAULT_CENTER = [16.7530, -93.1150];
   const DEFAULT_ZOOM = 13;
-  const CACHE_KEY = 'bgd_mapainteractivo_routes_cache';
-  const CACHE_TTL = 5 * 60 * 1000;
 
-  const $ = (s,r=document)=>r.querySelector(s);
-  const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
-  const esc = s => String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  // ==================== UTILIDADES ====================
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const esc = s => String(s == null ? '' : s)
+    .replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-  function toast(msg){
-    const w = document.createElement('div');
-    w.style.cssText = 'position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:9999;pointer-events:none;width:calc(100% - 24px);max-width:400px';
+  function toast(msg, type = 'ok') {
+    const w = $('#toastWrap');
+    if (!w) return;
     const t = document.createElement('div');
-    t.style.cssText = 'background:var(--surface-3);color:var(--text);padding:12px 16px;border-radius:10px;border:1px solid var(--border-2);box-shadow:0 10px 30px rgba(0,0,0,.35);font-size:13.5px;font-weight:600;pointer-events:auto;text-align:center';
-    t.textContent = msg;
+    t.className = 'toast ' + type;
+    const icon = type === 'ok'
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+    t.innerHTML = icon + '<span>' + esc(msg) + '</span>';
     w.appendChild(t);
-    document.body.appendChild(w);
-    setTimeout(()=>{t.style.opacity='0';t.style.transition='all .3s';setTimeout(()=>w.remove(),300)},2800);
+    setTimeout(() => {
+      t.style.opacity = '0';
+      t.style.transform = 'translateY(-10px)';
+      t.style.transition = 'all .3s';
+      setTimeout(() => t.remove(), 300);
+    }, 2800);
   }
 
+  // ==================== HELPER PROFESIONAL DE MAPAS ====================
+  const registeredMaps = new Set();
+  function registerMap(mapInstance) {
+    if (!mapInstance || registeredMaps.has(mapInstance)) return;
+    registeredMaps.add(mapInstance);
+    const container = mapInstance.getContainer();
+    if (!container) return;
+
+    const fix = () => {
+      requestAnimationFrame(() => {
+        try { mapInstance.invalidateSize({ pan: false, animate: false }); } catch (e) {}
+      });
+    };
+    if ('ResizeObserver' in window) {
+      const ro = new ResizeObserver(fix);
+      ro.observe(container);
+      mapInstance.__ro = ro;
+    }
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver(entries => {
+        entries.forEach(e => { if (e.isIntersecting && e.intersectionRatio > 0) fix(); });
+      }, { threshold: [0, 0.01, 0.1] });
+      io.observe(container);
+      mapInstance.__io = io;
+    }
+    if (!mapInstance.__visHandler) {
+      mapInstance.__visHandler = () => { if (!document.hidden) fix(); };
+      document.addEventListener('visibilitychange', mapInstance.__visHandler, { passive: true });
+    }
+    if (!mapInstance.__winHandler) {
+      mapInstance.__winHandler = () => fix();
+      window.addEventListener('resize', mapInstance.__winHandler, { passive: true });
+    }
+    fix();
+  }
+
+  // ==================== ESTADO ====================
   const state = {
     tripMap: null,
     tripPoints: [],
@@ -387,190 +698,218 @@ footer a{color:var(--cyan)}
     tripRadius: 300,
     userReactivated: false,
     routes: [],
-    fbDB: null
+    fbDB: null,
+    online: navigator.onLine
   };
 
-  // ── Firebase singleton ──
+  // ==================== FIREBASE SINGLETON ====================
+  // 🔒 REGLA DE ORO: initializeApp() SOLO se llama UNA vez por contexto
+  //    de navegador. Si el usuario viene de index.html (que ya inicializó
+  //    Firebase), reutilizamos esa instancia. Si entra directo a esta
+  //    página, la inicializamos aquí.
+  let fbDB = null;
   try {
     if (typeof firebase !== 'undefined') {
-      if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-      state.fbDB = firebase.database();
+      if (!firebase.apps.length) {
+        firebase.initializeApp(FIREBASE_CONFIG);
+      }
+      fbDB = firebase.database();
+      state.fbDB = fbDB;
     }
-  } catch(e){ console.warn('[Firebase]', e); }
-
-  // ── Helper de mapas (sin timers, con observers nativos) ──
-  const registeredMaps = new Set();
-  function registerMap(mapInstance){
-    if(!mapInstance || registeredMaps.has(mapInstance)) return;
-    registeredMaps.add(mapInstance);
-    const container = mapInstance.getContainer();
-    if(!container) return;
-    const fix = () => requestAnimationFrame(()=>{
-      try{ mapInstance.invalidateSize({pan:false,animate:false}); }catch(e){}
-    });
-    if('ResizeObserver' in window){ const ro = new ResizeObserver(fix); ro.observe(container); mapInstance.__ro = ro; }
-    if('IntersectionObserver' in window){
-      const io = new IntersectionObserver(entries=>{
-        entries.forEach(e=>{ if(e.isIntersecting && e.intersectionRatio>0) fix(); });
-      },{threshold:[0,0.01,0.1]});
-      io.observe(container); mapInstance.__io = io;
-    }
-    fix();
+  } catch (e) {
+    console.warn('[Firebase] No inicializado:', e);
   }
 
-  // ── Cargar rutas: cache-first + Firebase en background ──
-  async function loadRoutes(){
+  // ==================== CARGA DE RUTAS ====================
+  // Cache-first con sessionStorage + Firebase en background.
+  // Se comparte con index.html si el usuario navega entre ambos.
+  const CACHE_KEY = 'bgd_mapainteractivo_routes_cache';
+  const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
+
+  async function loadRoutes() {
     let usedCache = false;
+
+    // 1️⃣ sessionStorage (compartido con index.html)
     try {
       const cached = sessionStorage.getItem(CACHE_KEY);
-      if(cached){
+      if (cached) {
         const { data, ts } = JSON.parse(cached);
-        if(Date.now() - ts < CACHE_TTL && Array.isArray(data) && data.length){
-          state.routes = data;
+        if (Date.now() - ts < CACHE_TTL && Array.isArray(data) && data.length) {
+          state.routes = data.sort((a, b) =>
+            String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es',
+              { numeric: true, sensitivity: 'base' }));
           usedCache = true;
-          if(state.tripPoints.length) performTripSearch();
+          if (state.tripPoints.length) performTripSearch();
         }
       }
-    } catch(e){}
+    } catch (e) {}
 
-    if(navigator.onLine && state.fbDB){
+    // 2️⃣ Si no hay caché, Firebase en background
+    if (navigator.onLine && fbDB) {
       (async () => {
         try {
-          const snap = await state.fbDB.ref('rutas_colectivos_tgz').once('value');
+          const snap = await fbDB.ref('rutas_colectivos_tgz').once('value');
           const val = snap.val() || {};
           const arr = Object.values(val).filter(r => r && r.id);
-          state.routes = arr.sort((a,b)=>
-            String(a.nombre||'').localeCompare(String(b.nombre||''),'es',{numeric:true,sensitivity:'base'})
-          );
+          state.routes = arr.sort((a, b) =>
+            String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es',
+              { numeric: true, sensitivity: 'base' }));
           try {
-            sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data: state.routes, ts: Date.now() }));
-          } catch(e){}
-          if(state.tripPoints.length) performTripSearch();
-        } catch(e){ console.warn('[loadRoutes]', e); }
+            sessionStorage.setItem(CACHE_KEY, JSON.stringify({
+              data: state.routes,
+              ts: Date.now()
+            }));
+          } catch (e) {}
+          if (state.tripPoints.length) performTripSearch();
+        } catch (e) {
+          console.warn('[loadRoutes] Firebase falló:', e);
+        }
       })();
     }
   }
 
-  // ── Inicializar mapa ──
-  function initTripMap(){
-    if(state.tripMap){ state.tripMap.invalidateSize(); return; }
+  // ==================== INICIALIZAR MAPA ====================
+  function initTripMap() {
+    if (state.tripMap) { state.tripMap.invalidateSize(); return; }
     const el = document.getElementById('tripMap');
-    if(!el) return;
-    state.tripMap = L.map(el,{zoomControl:true}).setView(DEFAULT_CENTER,DEFAULT_ZOOM);
+    if (!el) return;
+    state.tripMap = L.map(el, { zoomControl: true }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
     registerMap(state.tripMap);
 
     // Botón pantalla completa
     const fsBtn = document.getElementById('tripMapFsBtn');
     const wrap = document.getElementById('tripMapWrap');
-    if(fsBtn && wrap){
+    if (fsBtn && wrap) {
       const HTML_ENTER = fsBtn.innerHTML;
       const HTML_EXIT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 3v3a2 2 0 0 1-2 2H4"/><path d="M21 9h-3a2 2 0 0 0-2 2v3"/><path d="M3 15h3a2 2 0 0 1 2 2v3"/><path d="M15 21v-3a2 2 0 0 1 2-2h3"/></svg>';
       fsBtn.onclick = () => {
         const isFs = wrap.classList.toggle('is-fullscreen');
         document.body.classList.toggle('fs-active', isFs);
         fsBtn.innerHTML = isFs ? HTML_EXIT : HTML_ENTER;
-        setTimeout(()=> state.tripMap && state.tripMap.invalidateSize(), 250);
+        setTimeout(() => state.tripMap && state.tripMap.invalidateSize(), 250);
       };
     }
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-      maxZoom:19, crossOrigin:true, attribution:'© OpenStreetMap'
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      crossOrigin: true,
+      attribution: '© OpenStreetMap'
     }).addTo(state.tripMap);
 
     state.tripMap.on('click', e => {
       const activeBtn = document.querySelector('#tripToolbar .tb.active');
       const mode = activeBtn ? activeBtn.dataset.tool : 'addpoint';
-      if(mode !== 'addpoint') return;
-      if(state.tripPoints.length >= 5){ toast('Máximo 5 puntos'); return; }
-      if(state.tripPoints.length >= 2 && !state.userReactivated){
+      if (mode !== 'addpoint') return;
+
+      if (state.tripPoints.length >= 5) {
+        toast('Máximo 5 puntos', 'err');
+        return;
+      }
+
+      if (state.tripPoints.length >= 2 && !state.userReactivated) {
         const addBtn = document.querySelector('#tripToolbar .tb[data-tool="addpoint"]');
-        if(addBtn) addBtn.classList.remove('active');
+        if (addBtn) addBtn.classList.remove('active');
         toast('Máx. 2 puntos. Pulsa +Agregar para añadir más.');
         return;
       }
+
       addTripPoint(e.latlng.lat, e.latlng.lng);
-      if(state.tripPoints.length >= 2){
+
+      if (state.tripPoints.length >= 2) {
         state.userReactivated = false;
         const addBtn = document.querySelector('#tripToolbar .tb[data-tool="addpoint"]');
-        if(addBtn) addBtn.classList.remove('active');
+        if (addBtn) addBtn.classList.remove('active');
       }
     });
   }
 
-  const TRIP_DEFAULT_NAMES = ['ESTOY AQUÍ','LLEGARÉ AQUÍ','PASO POR','DESVÍO A','DESTINO'];
+  // ==================== PUNTOS DEL VIAJE ====================
+  const TRIP_DEFAULT_NAMES = ['ESTOY AQUÍ', 'LLEGARÉ AQUÍ', 'PASO POR', 'DESVÍO A', 'DESTINO'];
 
-  function addTripPoint(lat,lng){
+  function addTripPoint(lat, lng) {
     const idx = state.tripPoints.length;
-    const letter = String.fromCharCode(65+idx);
-    const color = ['#10b981','#ef4444','#f59e0b','#3b82f6','#a855f7'][idx] || '#00e5ff';
-    const name = TRIP_DEFAULT_NAMES[idx] || ('PUNTO '+letter);
-    state.tripPoints.push({lat,lng,letter,color,radius:state.tripRadius,name});
+    const letter = String.fromCharCode(65 + idx);
+    const color = ['#10b981', '#ef4444', '#f59e0b', '#3b82f6', '#a855f7'][idx] || '#00e5ff';
+    const name = TRIP_DEFAULT_NAMES[idx] || ('PUNTO ' + letter);
+    state.tripPoints.push({ lat, lng, letter, color, radius: state.tripRadius, name });
+
     const icon = L.divIcon({
-      className:'',
-      html:`<div class="marker-${letter.toLowerCase()}" style="background:${color}">${letter}</div>`,
-      iconSize:[26,26], iconAnchor:[13,13]
+      className: '',
+      html: `<div class="marker-${letter.toLowerCase()}" style="background:${color}">${letter}</div>`,
+      iconSize: [26, 26], iconAnchor: [13, 13]
     });
-    const marker = L.marker([lat,lng],{icon}).addTo(state.tripMap);
-    const circle = L.circle([lat,lng],{radius:state.tripRadius,color,fillColor:color,fillOpacity:0.1,weight:1.5}).addTo(state.tripMap);
+    const marker = L.marker([lat, lng], { icon }).addTo(state.tripMap);
+    const circle = L.circle([lat, lng], { radius: state.tripRadius, color, fillColor: color, fillOpacity: 0.1, weight: 1.5 }).addTo(state.tripMap);
     state.tripMarkers.push(marker);
     state.tripCircles.push(circle);
-    if(state.tripPoints.length === 1){
+
+    // 📜 Scroll automático al primer punto
+    if (state.tripPoints.length === 1) {
       const mapWrap = document.querySelector('#tripMapWrap');
-      if(mapWrap){
-        setTimeout(()=>{
+      if (mapWrap) {
+        setTimeout(() => {
           const headerH = 58;
           const rect = mapWrap.getBoundingClientRect();
           const targetY = window.scrollY + rect.top - headerH - 8;
-          window.scrollTo({top:targetY,behavior:'smooth'});
-        },100);
+          window.scrollTo({ top: targetY, behavior: 'smooth' });
+        }, 100);
       }
     }
+
     renderTripPointsList();
     performTripSearch();
   }
 
-  function renderTripPointsList(){
+  function renderTripPointsList() {
     const el = $('#tripPointsList');
-    if(!el) return;
-    if(!state.tripPoints.length){
+    if (!el) return;
+    if (!state.tripPoints.length) {
       el.innerHTML = '<div class="empty-trip">Toca el mapa para agregar ubicaciones y ver las rutas cercanas.</div>';
       return;
     }
-    el.innerHTML = state.tripPoints.map((p,i)=>`
+    el.innerHTML = state.tripPoints.map((p, i) => `
       <div class="trip-point-card">
         <div class="tpc-letter" style="background:${p.color}">${p.letter}</div>
-        <span class="tpc-coords">${esc(p.name||('Punto '+p.letter))}</span>
-        <div class="tpc-actions"><button data-trip-del="${i}">✕</button></div>
+        <span class="tpc-coords">${esc(p.name || ('Punto ' + p.letter))}</span>
+        <div class="tpc-actions">
+          <button data-trip-del="${i}" title="Eliminar">✕</button>
+        </div>
       </div>`).join('');
-    el.querySelectorAll('[data-trip-del]').forEach(b=>{
+
+    el.querySelectorAll('[data-trip-del]').forEach(b => {
       b.onclick = () => {
         const i = +b.dataset.tripDel;
         state.tripMap.removeLayer(state.tripMarkers[i]);
         state.tripMap.removeLayer(state.tripCircles[i]);
-        state.tripMarkers.splice(i,1);
-        state.tripCircles.splice(i,1);
-        state.tripPoints.splice(i,1);
-        state.tripPoints.forEach((p,idx)=>{
-          p.letter = String.fromCharCode(65+idx);
-          p.color = ['#10b981','#ef4444','#f59e0b','#3b82f6','#a855f7'][idx] || '#00e5ff';
-          const isDefault = TRIP_DEFAULT_NAMES.includes(p.name) || /^PUNTO [A-E]$/.test(p.name);
-          if(isDefault) p.name = TRIP_DEFAULT_NAMES[idx] || ('PUNTO '+p.letter);
+        state.tripMarkers.splice(i, 1);
+        state.tripCircles.splice(i, 1);
+        state.tripPoints.splice(i, 1);
+        state.tripPoints.forEach((p, idx) => {
+          p.letter = String.fromCharCode(65 + idx);
+          p.color = ['#10b981', '#ef4444', '#f59e0b', '#3b82f6', '#a855f7'][idx] || '#00e5ff';
+          if (!p.name) p.name = TRIP_DEFAULT_NAMES[idx] || ('PUNTO ' + p.letter);
         });
-        state.tripMarkers.forEach((m,idx)=>{
-          const pt = state.tripPoints[idx]; if(!pt) return;
-          m.setIcon(L.divIcon({
-            className:'',
-            html:`<div class="marker-${pt.letter.toLowerCase()}" style="background:${pt.color}">${pt.letter}</div>`,
-            iconSize:[26,26], iconAnchor:[13,13]
-          }));
+        state.tripPoints.forEach((p, idx) => {
+          const isDefault = TRIP_DEFAULT_NAMES.includes(p.name) || /^PUNTO [A-E]$/.test(p.name);
+          if (isDefault) p.name = TRIP_DEFAULT_NAMES[idx] || ('PUNTO ' + p.letter);
+        });
+        state.tripMarkers.forEach((m, idx) => {
+          const pt = state.tripPoints[idx];
+          if (!pt) return;
+          const icon = L.divIcon({
+            className: '',
+            html: `<div class="marker-${pt.letter.toLowerCase()}" style="background:${pt.color}">${pt.letter}</div>`,
+            iconSize: [26, 26], iconAnchor: [13, 13]
+          });
+          m.setIcon(icon);
         });
         renderTripPointsList();
         performTripSearch();
         state.userReactivated = false;
-        if(state.tripPoints.length <= 1){
+        if (state.tripPoints.length <= 1) {
           const addBtn = document.querySelector('#tripToolbar .tb[data-tool="addpoint"]');
-          if(addBtn && !addBtn.classList.contains('active')){
-            $$('#tripToolbar .tb').forEach(x=>x.classList.remove('active'));
+          if (addBtn && !addBtn.classList.contains('active')) {
+            $$('#tripToolbar .tb').forEach(x => x.classList.remove('active'));
             addBtn.classList.add('active');
           }
         }
@@ -578,455 +917,662 @@ footer a{color:var(--cyan)}
     });
   }
 
-  // ── Geometría ──
-  function pointToSegmentDistance(p,a,b){
-    const [px,py]=p,[ax,ay]=a,[bx,by]=b;
-    const dx=bx-ax, dy=by-ay, len2=dx*dx+dy*dy;
-    if(len2===0) return Math.hypot(px-ax,py-ay);
-    let t = ((px-ax)*dx+(py-ay)*dy)/len2;
-    t = Math.max(0,Math.min(1,t));
-    return Math.hypot(px-(ax+t*dx), py-(ay+t*dy));
+  // ==================== GEOMETRÍA ====================
+  function pointToSegmentDistance(p, a, b) {
+    const [px, py] = p, [ax, ay] = a, [bx, by] = b;
+    const dx = bx - ax, dy = by - ay;
+    const len2 = dx * dx + dy * dy;
+    if (len2 === 0) return Math.hypot(px - ax, py - ay);
+    let t = ((px - ax) * dx + (py - ay) * dy) / len2;
+    t = Math.max(0, Math.min(1, t));
+    const cx = ax + t * dx, cy = ay + t * dy;
+    return Math.hypot(px - cx, py - cy);
   }
-  function haversine(lat1,lng1,lat2,lng2){
-    const R=6371000;
-    const φ1=lat1*Math.PI/180, φ2=lat2*Math.PI/180;
-    const Δφ=(lat2-lat1)*Math.PI/180, Δλ=(lng2-lng1)*Math.PI/180;
-    const a = Math.sin(Δφ/2)**2 + Math.cos(φ1)*Math.cos(φ2)*Math.sin(Δλ/2)**2;
-    return 2*R*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+
+  function haversine(lat1, lng1, lat2, lng2) {
+    const R = 6371000;
+    const φ1 = lat1 * Math.PI / 180, φ2 = lat2 * Math.PI / 180;
+    const Δφ = (lat2 - lat1) * Math.PI / 180;
+    const Δλ = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+    return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
-  function getRouteAllSegments(route){
-    const segs = [];
-    const ida = (route.geometriaIda && route.geometriaIda.length>1) ? route.geometriaIda : (route.puntos||[]);
-    const vuelta = (route.geometriaVuelta && route.geometriaVuelta.length>1) ? route.geometriaVuelta : (route.puntosVuelta||[]);
-    if(ida.length>1) segs.push(ida);
-    if(vuelta.length>1) segs.push(vuelta);
-    return segs;
+
+  function getRouteAllSegments(route) {
+    const segments = [];
+    const ida = (route.geometriaIda && route.geometriaIda.length > 1)
+      ? route.geometriaIda : (route.puntos || []);
+    const vuelta = (route.geometriaVuelta && route.geometriaVuelta.length > 1)
+      ? route.geometriaVuelta : (route.puntosVuelta || []);
+    if (ida.length > 1) segments.push(ida);
+    if (vuelta.length > 1) segments.push(vuelta);
+    return segments;
   }
-  function routeDistanceToPoint(route,lat,lng){
-    const segs = getRouteAllSegments(route);
-    if(!segs.length) return Infinity;
+
+  function routeDistanceToPoint(route, lat, lng) {
+    const segments = getRouteAllSegments(route);
+    if (!segments.length) return Infinity;
     let min = Infinity;
-    for(const pts of segs){
-      for(let i=0;i<pts.length-1;i++){
-        const midLat = (pts[i][0]+pts[i+1][0])/2;
-        const mPerLat = 111320, mPerLng = 111320*Math.cos(midLat*Math.PI/180);
-        const seg = [[pts[i][0]*mPerLat,pts[i][1]*mPerLng],[pts[i+1][0]*mPerLat,pts[i+1][1]*mPerLng]];
-        const p = [lat*mPerLat, lng*mPerLng];
-        const d = pointToSegmentDistance(p,seg[0],seg[1]);
-        if(d<min) min = d;
+    for (const pts of segments) {
+      for (let i = 0; i < pts.length - 1; i++) {
+        const midLat = (pts[i][0] + pts[i + 1][0]) / 2;
+        const metersPerDegLat = 111320;
+        const metersPerDegLng = 111320 * Math.cos(midLat * Math.PI / 180);
+        const seg = [
+          [pts[i][0] * metersPerDegLat, pts[i][1] * metersPerDegLng],
+          [pts[i + 1][0] * metersPerDegLat, pts[i + 1][1] * metersPerDegLng]
+        ];
+        const p = [lat * metersPerDegLat, lng * metersPerDegLng];
+        const dMeters = pointToSegmentDistance(p, seg[0], seg[1]);
+        if (dMeters < min) min = dMeters;
       }
     }
     return min;
   }
 
-  // ── Motor de búsqueda ──
-  const TRIP_COLORS = ['#00e5ff','#a855f7','#10b981','#f59e0b','#ef4444','#ec4899','#3b82f6','#84cc16','#f97316','#14b8a6','#8b5cf6','#eab308'];
+  // ==================== MOTOR DE BÚSQUEDA ====================
+  const TRIP_COLORS = ['#00e5ff', '#a855f7', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#3b82f6', '#84cc16', '#f97316', '#14b8a6', '#8b5cf6', '#eab308'];
   let tripRouteLayers = [];
-  function clearTripRouteLayers(){
-    tripRouteLayers.forEach(l=>{ try{ state.tripMap.removeLayer(l); }catch(e){} });
+
+  function clearTripRouteLayers() {
+    tripRouteLayers.forEach(l => { try { state.tripMap.removeLayer(l); } catch (e) {} });
     tripRouteLayers = [];
   }
-  function getRouteCoords(route){
-    if(route.geometriaIda && route.geometriaIda.length>1) return route.geometriaIda.map(c=>[c[0],c[1]]);
-    return (route.puntos||[]).map(c=>[c[0],c[1]]);
+
+  function getRouteCoords(route) {
+    if (route.geometriaIda && route.geometriaIda.length > 1) {
+      return route.geometriaIda.map(c => [c[0], c[1]]);
+    }
+    return (route.puntos || []).map(c => [c[0], c[1]]);
   }
-  function getRouteCoordsVuelta(route){
-    if(route.geometriaVuelta && route.geometriaVuelta.length>1) return route.geometriaVuelta.map(c=>[c[0],c[1]]);
-    return (route.puntosVuelta||[]).map(c=>[c[0],c[1]]);
+
+  function getRouteCoordsVuelta(route) {
+    if (route.geometriaVuelta && route.geometriaVuelta.length > 1) {
+      return route.geometriaVuelta.map(c => [c[0], c[1]]);
+    }
+    return (route.puntosVuelta || []).map(c => [c[0], c[1]]);
   }
-  function routeTotalDistance(route){
+
+  function routeTotalDistance(route) {
     const coords = getRouteCoords(route);
-    if(coords.length<2) return 0;
+    if (coords.length < 2) return 0;
     let total = 0;
-    for(let i=0;i<coords.length-1;i++) total += haversine(coords[i][0],coords[i][1],coords[i+1][0],coords[i+1][1]);
+    for (let i = 0; i < coords.length - 1; i++) {
+      total += haversine(coords[i][0], coords[i][1], coords[i + 1][0], coords[i + 1][1]);
+    }
     return total;
   }
-  function offsetPolyline(coords, offsetMeters){
-    if(!coords || coords.length<2) return coords;
+
+  function offsetPolyline(coords, offsetMeters) {
+    if (!coords || coords.length < 2) return coords;
     const out = [];
     const R = 6371000;
-    for(let i=0;i<coords.length;i++){
+    for (let i = 0; i < coords.length; i++) {
       const p = coords[i];
-      const prev = coords[Math.max(0,i-1)];
-      const next = coords[Math.min(coords.length-1,i+1)];
-      const dLat = next[0]-prev[0], dLng = next[1]-prev[1];
-      const len = Math.hypot(dLat,dLng)||1;
-      const perpLat = -dLng/len, perpLng = dLat/len;
-      const dLatDeg = (offsetMeters/R)*(180/Math.PI);
-      const dLngDeg = (offsetMeters/(R*Math.cos(p[0]*Math.PI/180)))*(180/Math.PI);
-      out.push([p[0]+perpLat*dLatDeg, p[1]+perpLng*dLngDeg]);
+      const prev = coords[Math.max(0, i - 1)];
+      const next = coords[Math.min(coords.length - 1, i + 1)];
+      const dLat = next[0] - prev[0];
+      const dLng = next[1] - prev[1];
+      const len = Math.hypot(dLat, dLng) || 1;
+      const perpLat = -dLng / len;
+      const perpLng = dLat / len;
+      const dLatDeg = (offsetMeters / R) * (180 / Math.PI);
+      const dLngDeg = (offsetMeters / (R * Math.cos(p[0] * Math.PI / 180))) * (180 / Math.PI);
+      out.push([p[0] + perpLat * dLatDeg, p[1] + perpLng * dLngDeg]);
     }
     return out;
   }
-  function drawTripRoutesOnMap(routeList, highlightIdx=null){
+
+  function drawTripRoutesOnMap(routeList, highlightIdx = null) {
     clearTripRouteLayers();
-    if(!state.tripMap) return;
+    if (!state.tripMap) return;
     const total = routeList.length;
-    routeList.forEach((item,idx)=>{
+    routeList.forEach((item, idx) => {
       const route = item.route || item;
       const coordsIda = getRouteCoords(route);
       const coordsVuelta = getRouteCoordsVuelta(route);
       const color = TRIP_COLORS[idx % TRIP_COLORS.length];
-      const isHl = highlightIdx===null || highlightIdx===idx;
-      if(coordsIda.length>1){
+      const isHl = highlightIdx === null || highlightIdx === idx;
+
+      if (coordsIda.length > 1) {
         let idaDraw = coordsIda;
-        if(total>1){
-          const offset = (idx-(total-1)/2)*4;
+        if (total > 1) {
+          const offset = (idx - (total - 1) / 2) * 4;
           idaDraw = offsetPolyline(coordsIda, offset);
         }
-        const lineIda = L.polyline(idaDraw,{
-          color, weight: item.type==='transfer'?(isHl?5:3):(isHl?6:4),
-          opacity: isHl?0.95:0.5, lineJoin:'round', lineCap:'round'
+        const lineIda = L.polyline(idaDraw, {
+          color,
+          weight: item.type === 'transfer' ? (isHl ? 5 : 3) : (isHl ? 6 : 4),
+          opacity: isHl ? 0.95 : 0.5,
+          lineJoin: 'round', lineCap: 'round', dashArray: null
         }).addTo(state.tripMap);
+        lineIda.bindTooltip(
+          (item.label || route.nombre || 'Ruta') + ' · IDA' +
+          ` <span style="color:${color}">●</span>`,
+          { sticky: true }
+        );
         tripRouteLayers.push(lineIda);
       }
-      if(coordsVuelta.length>1){
-        let vDraw = coordsVuelta;
-        if(total>1){
-          const offset = (idx-(total-1)/2)*4;
-          vDraw = offsetPolyline(coordsVuelta, -offset);
+
+      if (coordsVuelta.length > 1) {
+        let vueltaDraw = coordsVuelta;
+        if (total > 1) {
+          const offset = (idx - (total - 1) / 2) * 4;
+          vueltaDraw = offsetPolyline(coordsVuelta, -offset);
         }
-        const lineV = L.polyline(vDraw,{
-          color, weight: isHl?4:2, opacity: isHl?0.85:0.4,
-          lineJoin:'round', lineCap:'round', dashArray:'10,6'
+        const lineVuelta = L.polyline(vueltaDraw, {
+          color,
+          weight: isHl ? 4 : 2,
+          opacity: isHl ? 0.85 : 0.4,
+          lineJoin: 'round', lineCap: 'round', dashArray: '10,6'
         }).addTo(state.tripMap);
-        tripRouteLayers.push(lineV);
+        lineVuelta.bindTooltip(
+          (item.label || route.nombre || 'Ruta') + ' · REGRESO' +
+          ` <span style="color:${color}">●</span>`,
+          { sticky: true }
+        );
+        tripRouteLayers.push(lineVuelta);
       }
-      if(item.transferPoint){
-        const tp = L.circleMarker(item.transferPoint,{radius:9,color:'#fff',fillColor:color,fillOpacity:1,weight:3}).addTo(state.tripMap);
+
+      if (item.transferPoint) {
+        const tp = L.circleMarker(item.transferPoint, {
+          radius: 9, color: '#fff', fillColor: color, fillOpacity: 1, weight: 3
+        }).addTo(state.tripMap).bindPopup('🔄 Transbordo: ' + (item.label || ''));
         tripRouteLayers.push(tp);
       }
     });
   }
-  function routesMinDistance(r1,r2){
-    const c1 = getRouteCoords(r1), c2 = getRouteCoords(r2);
-    let best = Infinity, bp = null, bp2 = null;
-    c1.forEach(p1=>c2.forEach(p2=>{
-      const d = haversine(p1[0],p1[1],p2[0],p2[1]);
-      if(d<best){ best=d; bp=p1; bp2=p2; }
-    }));
-    return { dist:best, mid: bp?[(bp[0]+bp2[0])/2,(bp[1]+bp2[1])/2]:null };
+
+  function routesMinDistance(r1, r2) {
+    const c1 = getRouteCoords(r1);
+    const c2 = getRouteCoords(r2);
+    let best = Infinity, bestPt = null, bestPt2 = null;
+    c1.forEach(p1 => {
+      c2.forEach(p2 => {
+        const d = haversine(p1[0], p1[1], p2[0], p2[1]);
+        if (d < best) { best = d; bestPt = p1; bestPt2 = p2; }
+      });
+    });
+    return { dist: best, p1: bestPt, p2: bestPt2, mid: bestPt ? [(bestPt[0] + bestPt2[0]) / 2, (bestPt[1] + bestPt2[1]) / 2] : null };
   }
-  function routeNearPoint(route, point, radius){
+
+  function routeNearPoint(route, point, radius) {
     return routeDistanceToPoint(route, point.lat, point.lng) <= radius;
   }
-  function findTransferChains(startPoint, endPoint, maxTransfers){
-    maxTransfers = Math.max(1, +maxTransfers||1);
-    const chains = [];
-    const startRoutes = state.routes.filter(r=>routeNearPoint(r,startPoint,startPoint.radius));
-    const endRoutes = state.routes.filter(r=>routeNearPoint(r,endPoint,endPoint.radius));
-    if(!startRoutes.length || !endRoutes.length) return chains;
 
-    if(maxTransfers>=1){
-      startRoutes.forEach(r1=>endRoutes.forEach(r2=>{
-        if(r1.id===r2.id) return;
-        const inter = routesMinDistance(r1,r2);
-        if(inter.dist<=400) chains.push({
-          type:'transfer', legs:[r1,r2], transferPoints:[inter.mid],
-          totalDist: routeTotalDistance(r1)+routeTotalDistance(r2), transfers:1
+  function findTransferChains(startPoint, endPoint, maxTransfers) {
+    maxTransfers = Math.max(1, +maxTransfers || 1);
+    const chains = [];
+    const startRoutes = state.routes.filter(r => routeNearPoint(r, startPoint, startPoint.radius));
+    const endRoutes = state.routes.filter(r => routeNearPoint(r, endPoint, endPoint.radius));
+    if (!startRoutes.length || !endRoutes.length) return chains;
+
+    // 1 transbordo
+    if (maxTransfers >= 1) {
+      startRoutes.forEach(r1 => {
+        endRoutes.forEach(r2 => {
+          if (r1.id === r2.id) return;
+          const inter = routesMinDistance(r1, r2);
+          if (inter.dist <= 400) {
+            chains.push({
+              type: 'transfer', legs: [r1, r2], transferPoints: [inter.mid],
+              totalDist: routeTotalDistance(r1) + routeTotalDistance(r2), transfers: 1
+            });
+          }
         });
-      }));
+      });
     }
-    if(maxTransfers>=2){
-      startRoutes.forEach(r1=>state.routes.forEach(r2=>{
-        if(r2.id===r1.id) return;
-        const i12 = routesMinDistance(r1,r2);
-        if(i12.dist>400) return;
-        endRoutes.forEach(r3=>{
-          if(r3.id===r2.id||r3.id===r1.id) return;
-          const i23 = routesMinDistance(r2,r3);
-          if(i23.dist>400) return;
-          chains.push({type:'transfer',legs:[r1,r2,r3],transferPoints:[i12.mid,i23.mid],
-            totalDist:routeTotalDistance(r1)+routeTotalDistance(r2)+routeTotalDistance(r3),transfers:2});
-        });
-      }));
-    }
-    if(maxTransfers>=3){
-      startRoutes.forEach(r1=>state.routes.forEach(r2=>{
-        if(r2.id===r1.id) return;
-        const i12 = routesMinDistance(r1,r2);
-        if(i12.dist>400) return;
-        state.routes.forEach(r3=>{
-          if(r3.id===r2.id||r3.id===r1.id) return;
-          const i23 = routesMinDistance(r2,r3);
-          if(i23.dist>400) return;
-          endRoutes.forEach(r4=>{
-            if(r4.id===r3.id||r4.id===r2.id||r4.id===r1.id) return;
-            const i34 = routesMinDistance(r3,r4);
-            if(i34.dist>400) return;
-            chains.push({type:'transfer',legs:[r1,r2,r3,r4],transferPoints:[i12.mid,i23.mid,i34.mid],
-              totalDist:routeTotalDistance(r1)+routeTotalDistance(r2)+routeTotalDistance(r3)+routeTotalDistance(r4),transfers:3});
-          });
-        });
-      }));
-    }
-    if(maxTransfers>=4){
-      startRoutes.forEach(r1=>state.routes.forEach(r2=>{
-        if(r2.id===r1.id) return;
-        const i12 = routesMinDistance(r1,r2);
-        if(i12.dist>400) return;
-        state.routes.forEach(r3=>{
-          if(r3.id===r2.id||r3.id===r1.id) return;
-          const i23 = routesMinDistance(r2,r3);
-          if(i23.dist>400) return;
-          state.routes.forEach(r4=>{
-            if(r4.id===r3.id||r4.id===r2.id||r4.id===r1.id) return;
-            const i34 = routesMinDistance(r3,r4);
-            if(i34.dist>400) return;
-            endRoutes.forEach(r5=>{
-              if(r5.id===r4.id||r5.id===r3.id||r5.id===r2.id||r5.id===r1.id) return;
-              const i45 = routesMinDistance(r4,r5);
-              if(i45.dist>400) return;
-              chains.push({type:'transfer',legs:[r1,r2,r3,r4,r5],transferPoints:[i12.mid,i23.mid,i34.mid,i45.mid],
-                totalDist:routeTotalDistance(r1)+routeTotalDistance(r2)+routeTotalDistance(r3)+routeTotalDistance(r4)+routeTotalDistance(r5),transfers:4});
+
+    // 2 transbordos
+    if (maxTransfers >= 2) {
+      startRoutes.forEach(r1 => {
+        state.routes.forEach(r2 => {
+          if (r2.id === r1.id) return;
+          const i12 = routesMinDistance(r1, r2);
+          if (i12.dist > 400) return;
+          endRoutes.forEach(r3 => {
+            if (r3.id === r2.id || r3.id === r1.id) return;
+            const i23 = routesMinDistance(r2, r3);
+            if (i23.dist > 400) return;
+            chains.push({
+              type: 'transfer', legs: [r1, r2, r3], transferPoints: [i12.mid, i23.mid],
+              totalDist: routeTotalDistance(r1) + routeTotalDistance(r2) + routeTotalDistance(r3), transfers: 2
             });
           });
         });
-      }));
+      });
     }
+
+    // 3 transbordos
+    if (maxTransfers >= 3) {
+      startRoutes.forEach(r1 => {
+        state.routes.forEach(r2 => {
+          if (r2.id === r1.id) return;
+          const i12 = routesMinDistance(r1, r2);
+          if (i12.dist > 400) return;
+          state.routes.forEach(r3 => {
+            if (r3.id === r2.id || r3.id === r1.id) return;
+            const i23 = routesMinDistance(r2, r3);
+            if (i23.dist > 400) return;
+            endRoutes.forEach(r4 => {
+              if (r4.id === r3.id || r4.id === r2.id || r4.id === r1.id) return;
+              const i34 = routesMinDistance(r3, r4);
+              if (i34.dist > 400) return;
+              chains.push({
+                type: 'transfer', legs: [r1, r2, r3, r4], transferPoints: [i12.mid, i23.mid, i34.mid],
+                totalDist: routeTotalDistance(r1) + routeTotalDistance(r2) + routeTotalDistance(r3) + routeTotalDistance(r4), transfers: 3
+              });
+            });
+          });
+        });
+      });
+    }
+
+    // 4 transbordos
+    if (maxTransfers >= 4) {
+      startRoutes.forEach(r1 => {
+        state.routes.forEach(r2 => {
+          if (r2.id === r1.id) return;
+          const i12 = routesMinDistance(r1, r2);
+          if (i12.dist > 400) return;
+          state.routes.forEach(r3 => {
+            if (r3.id === r2.id || r3.id === r1.id) return;
+            const i23 = routesMinDistance(r2, r3);
+            if (i23.dist > 400) return;
+            state.routes.forEach(r4 => {
+              if (r4.id === r3.id || r4.id === r2.id || r4.id === r1.id) return;
+              const i34 = routesMinDistance(r3, r4);
+              if (i34.dist > 400) return;
+              endRoutes.forEach(r5 => {
+                if (r5.id === r4.id || r5.id === r3.id || r5.id === r2.id || r5.id === r1.id) return;
+                const i45 = routesMinDistance(r4, r5);
+                if (i45.dist > 400) return;
+                chains.push({
+                  type: 'transfer', legs: [r1, r2, r3, r4, r5],
+                  transferPoints: [i12.mid, i23.mid, i34.mid, i45.mid],
+                  totalDist: routeTotalDistance(r1) + routeTotalDistance(r2) + routeTotalDistance(r3) + routeTotalDistance(r4) + routeTotalDistance(r5), transfers: 4
+                });
+              });
+            });
+          });
+        });
+      });
+    }
+
     const seen = new Set();
-    return chains.filter(c=>{
-      const key = c.legs.map(l=>l.id).join('>');
-      if(seen.has(key)) return false;
+    return chains.filter(c => {
+      const key = c.legs.map(l => l.id).join('>');
+      if (seen.has(key)) return false;
       seen.add(key);
       return true;
     });
   }
 
-  function performTripSearch(){
+  function performTripSearch() {
     const el = $('#tripResults');
-    if(!el) return;
+    if (!el) return;
     clearTripRouteLayers();
-    if(state.tripPoints.length<1){ el.innerHTML=''; return; }
-    const maxTransfers = +($('#tripMaxTransfers')?.value||2);
-    const results = { direct:[], transfers:[] };
+    if (state.tripPoints.length < 1) { el.innerHTML = ''; return; }
 
-    if(state.tripPoints.length===1){
+    const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
+    const results = { direct: [], transfers: [] };
+
+    if (state.tripPoints.length === 1) {
       const p = state.tripPoints[0];
-      state.routes.forEach(r=>{
-        const d = routeDistanceToPoint(r,p.lat,p.lng);
-        if(d<=p.radius) results.direct.push({route:r,dist:d,type:'direct'});
+      state.routes.forEach(r => {
+        const d = routeDistanceToPoint(r, p.lat, p.lng);
+        if (d <= p.radius) results.direct.push({ route: r, dist: d, type: 'direct' });
       });
     } else {
       const start = state.tripPoints[0];
-      const end = state.tripPoints[state.tripPoints.length-1];
-      state.routes.forEach(r=>{
-        const touchesAll = state.tripPoints.every(p=>routeNearPoint(r,p,p.radius));
-        if(touchesAll) results.direct.push({route:r,type:'direct',label:r.nombre});
+      const end = state.tripPoints[state.tripPoints.length - 1];
+
+      state.routes.forEach(r => {
+        const touchesAll = state.tripPoints.every(p => routeNearPoint(r, p, p.radius));
+        if (touchesAll) {
+          results.direct.push({ route: r, type: 'direct', label: r.nombre });
+        }
       });
-      if(!results.direct.length || maxTransfers>=1){
-        if(state.tripPoints.length===2){
-          const chains = findTransferChains(start,end,maxTransfers);
-          chains.sort((a,b)=>a.transfers-b.transfers||a.totalDist-b.totalDist);
-          results.transfers = chains.slice(0,20);
+
+      if (!results.direct.length || maxTransfers >= 1) {
+        if (state.tripPoints.length === 2) {
+          const chains = findTransferChains(start, end, maxTransfers);
+          chains.sort((a, b) => a.transfers - b.transfers || a.totalDist - b.totalDist);
+          results.transfers = chains.slice(0, 20);
         } else {
           const pairs = [];
-          for(let i=0;i<state.tripPoints.length-1;i++){
-            const chains = findTransferChains(state.tripPoints[i],state.tripPoints[i+1],maxTransfers);
-            if(chains.length) pairs.push(chains[0]);
+          for (let i = 0; i < state.tripPoints.length - 1; i++) {
+            const a = state.tripPoints[i];
+            const b = state.tripPoints[i + 1];
+            const chains = findTransferChains(a, b, maxTransfers);
+            if (chains.length) pairs.push(chains[0]);
           }
-          if(pairs.length){
-            const allLegs = [], allPts = [];
-            pairs.forEach(pair=>{
-              pair.legs.forEach(l=>{ if(!allLegs.find(x=>x.id===l.id)) allLegs.push(l); });
-              allPts.push(...(pair.transferPoints||[]));
+          if (pairs.length) {
+            const allLegs = [];
+            const allTransferPts = [];
+            pairs.forEach(pair => {
+              pair.legs.forEach(l => { if (!allLegs.find(x => x.id === l.id)) allLegs.push(l); });
+              allTransferPts.push(...(pair.transferPoints || []));
             });
-            results.transfers.push({type:'transfer',legs:allLegs,transferPoints:allPts,
-              totalDist:pairs.reduce((s,p)=>s+p.totalDist,0),transfers:allLegs.length-1});
+            results.transfers.push({
+              type: 'transfer', legs: allLegs, transferPoints: allTransferPts,
+              totalDist: pairs.reduce((s, p) => s + p.totalDist, 0), transfers: allLegs.length - 1
+            });
           }
         }
       }
     }
 
-    if(results.direct.length){
-      drawTripRoutesOnMap(results.direct.map(d=>({route:d.route,label:d.route.nombre,type:'direct'})),null);
-    } else if(results.transfers.length){
+    if (results.direct.length) {
+      drawTripRoutesOnMap(
+        results.direct.map(d => ({ route: d.route, label: d.route.nombre, type: 'direct' })), null
+      );
+    } else if (results.transfers.length) {
       const t0 = results.transfers[0];
-      drawTripRoutesOnMap(t0.legs.map((l,li)=>({
-        route:l,label:l.nombre,type:'transfer',
-        transferPoint: li===0?t0.transferPoints[0]:(t0.transferPoints[li-1]||null)
-      })));
+      drawTripRoutesOnMap(
+        t0.legs.map((l, li) => ({
+          route: l, label: l.nombre, type: 'transfer',
+          transferPoint: li === 0 ? t0.transferPoints[0] : (t0.transferPoints[li - 1] || null)
+        }))
+      );
     }
 
     let html = '';
-    if(results.direct.length){
+
+    if (results.direct.length) {
       html += `<div class="section-title">✅ Rutas directas (${results.direct.length})</div>`;
-      html += results.direct.map((r,idx)=>`
-        <div class="result-card directa">
+      html += results.direct.map((r, idx) => `
+        <div class="result-card directa" data-result-idx="${idx}" data-result-type="direct">
           <div class="rc-head">
-            <div class="rc-icon" style="background:${TRIP_COLORS[idx%TRIP_COLORS.length]}20;color:${TRIP_COLORS[idx%TRIP_COLORS.length]}">
+            <div class="rc-icon" style="background:${TRIP_COLORS[idx % TRIP_COLORS.length]}20;color:${TRIP_COLORS[idx % TRIP_COLORS.length]}">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="M3 11h18"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
             </div>
             <div style="flex:1">
-              <div class="rc-route"><span class="trip-badge-route" style="background:${TRIP_COLORS[idx%TRIP_COLORS.length]}">${idx+1}</span>${esc(r.route.nombre)}</div>
-              <div class="rc-sub">${esc(r.route.categoria||'urbana')}${r.dist?' · '+Math.round(r.dist)+'m del punto':''}</div>
+              <div class="rc-route">
+                <span class="trip-badge-route" style="background:${TRIP_COLORS[idx % TRIP_COLORS.length]}">${idx + 1}</span>
+                ${esc(r.route.nombre)}
+              </div>
+              <div class="rc-sub">${esc(r.route.categoria || 'urbana')}${r.dist ? ' · ' + Math.round(r.dist) + 'm del punto' : ''}</div>
             </div>
             <span class="badge badge-green">Directa</span>
           </div>
           <div class="trip-result-actions">
             <button class="btn btn-primary btn-sm" data-trip-show-direct="${idx}">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="14" height="14"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/></svg>
-              Ver trazos
+              Ver trazos en mapa
             </button>
             <a class="btn btn-ghost btn-sm" href="/?tab=ruta&ruta=${esc(r.route.id)}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="14" height="14"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
               Abrir ruta
             </a>
           </div>
         </div>`).join('');
     }
-    if(results.transfers.length){
+
+    if (results.transfers.length) {
       html += `<div class="section-title">🔄 Transbordos (${results.transfers.length})</div>`;
-      html += results.transfers.map((t,idx)=>{
-        const cOff = results.direct.length;
-        const color = TRIP_COLORS[(cOff+idx)%TRIP_COLORS.length];
-        const chips = t.legs.map((leg,li)=>`
-          <div class="trip-chain-item">
-            <div class="trip-chain-chip" style="background:${TRIP_COLORS[(cOff+li)%TRIP_COLORS.length]}">${li+1}</div>
-            <span class="trip-chain-name">${esc(leg.nombre)}</span>
-          </div>`).join('<span class="trip-chain-sep">›</span>');
-        const btns = t.legs.map((leg,li)=>`
-          <a class="btn btn-ghost btn-sm" href="/?tab=ruta&ruta=${esc(leg.id)}">Abrir ${li+1}ª</a>`).join('');
+      html += results.transfers.map((t, idx) => {
+        const colorOffset = results.direct.length;
+        const color = TRIP_COLORS[(colorOffset + idx) % TRIP_COLORS.length];
+        const chipsHtml = t.legs.map((leg, li) => {
+          const legColor = TRIP_COLORS[(colorOffset + li) % TRIP_COLORS.length];
+          return `
+            <div class="trip-chain-item">
+              <div class="trip-chain-chip" style="background:${legColor}">${li + 1}</div>
+              <span class="trip-chain-name">${esc(leg.nombre)}</span>
+            </div>`;
+        }).join('<span class="trip-chain-sep">›</span>');
+
+        const buttonsHtml = t.legs.map((leg, li) => `
+          <a class="btn btn-ghost btn-sm" href="/?tab=ruta&ruta=${esc(leg.id)}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="14" height="14"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+            Abrir ${li + 1}ª ruta
+          </a>`).join('');
+
         return `
-        <div class="result-card transbordo">
+        <div class="result-card transbordo" data-result-idx="${idx}" data-result-type="transfer">
           <div class="rc-head">
             <div class="rc-icon" style="background:${color}20;color:${color}">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/></svg>
             </div>
             <div style="flex:1">
-              <div class="trip-chain">${chips}</div>
-              <div class="rc-sub">${t.transfers} transbordo(s) · ~${Math.round(t.totalDist)}m</div>
+              <div class="trip-chain">${chipsHtml}</div>
+              <div class="rc-sub">${t.transfers} transbordo(s) · ~${Math.round(t.totalDist)}m totales</div>
             </div>
             <span class="badge badge-amber">${t.transfers}T</span>
           </div>
           <div class="trip-result-actions">
-            ${btns}
+            ${buttonsHtml}
             <button class="btn btn-primary btn-sm" data-trip-show="${idx}">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="14" height="14"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/></svg>
-              Ver trazos
+              Ver trazos en mapa
             </button>
           </div>
         </div>`;
       }).join('');
     }
-    if(!results.direct.length && !results.transfers.length){
-      html = `<div class="result-card" style="text-align:center;padding:20px">
-        <div class="empty" style="padding:0"><h3>Sin resultados</h3><p>Aumenta el radio o el máximo de transbordos.</p></div>
+
+    if (!results.direct.length && !results.transfers.length) {
+      html = `<div class="card" style="text-align:center;padding:20px">
+        <div class="empty" style="padding:0">
+          <h3>Sin resultados</h3>
+          <p>No se encontraron rutas. Prueba aumentar el radio o el máximo de transbordos.</p>
+        </div>
       </div>`;
     }
+
     el.innerHTML = html;
 
-    el.querySelectorAll('[data-trip-show-direct]').forEach(b=>{
-      b.onclick = (e)=>{
+    // Eventos
+    el.querySelectorAll('[data-trip-show-direct]').forEach(b => {
+      b.onclick = (e) => {
         e.preventDefault();
         const idx = +b.dataset.tripShowDirect;
-        const r = results.direct[idx]; if(!r) return;
-        drawTripRoutesOnMap([{route:r.route,label:r.route.nombre,type:'direct'}]);
-        const all = [...getRouteCoords(r.route),...getRouteCoordsVuelta(r.route)];
-        if(all.length){ try{ state.tripMap.fitBounds(L.latLngBounds(all).pad(0.15)); }catch(e){} }
+        const r = results.direct[idx];
+        if (!r) return;
+        drawTripRoutesOnMap([{ route: r.route, label: r.route.nombre, type: 'direct' }]);
+        const allCoords = [...getRouteCoords(r.route), ...getRouteCoordsVuelta(r.route)];
+        if (allCoords.length) {
+          try { state.tripMap.fitBounds(L.latLngBounds(allCoords).pad(0.15)); } catch (e) {}
+        }
+        const mapWrap = document.querySelector('#tripMapWrap');
+        if (mapWrap) {
+          const headerH = 58;
+          const rect = mapWrap.getBoundingClientRect();
+          window.scrollTo({ top: window.scrollY + rect.top - headerH - 8, behavior: 'smooth' });
+        }
+        toast('Mostrando trazo de: ' + r.route.nombre);
       };
     });
-    el.querySelectorAll('[data-trip-show]').forEach(b=>{
-      b.onclick = (e)=>{
+
+    el.querySelectorAll('[data-trip-show]').forEach(b => {
+      b.onclick = (e) => {
         e.preventDefault();
         const idx = +b.dataset.tripShow;
-        const t = results.transfers[idx]; if(!t) return;
-        drawTripRoutesOnMap(t.legs.map((l,li)=>({
-          route:l,label:l.nombre,type:'transfer',
-          transferPoint: li===0?t.transferPoints[0]:(t.transferPoints[li-1]||null)
+        const t = results.transfers[idx];
+        if (!t) return;
+        drawTripRoutesOnMap(t.legs.map((l, li) => ({
+          route: l, label: l.nombre, type: 'transfer',
+          transferPoint: li === 0 ? t.transferPoints[0] : (t.transferPoints[li - 1] || null)
         })));
-        const all = [];
-        t.legs.forEach(l=>{ all.push(...getRouteCoords(l)); all.push(...getRouteCoordsVuelta(l)); });
-        t.transferPoints.forEach(tp=>{ if(tp) all.push(tp); });
-        if(all.length){ try{ state.tripMap.fitBounds(L.latLngBounds(all).pad(0.15)); }catch(e){} }
+        const allCoords = [];
+        t.legs.forEach(l => {
+          allCoords.push(...getRouteCoords(l));
+          allCoords.push(...getRouteCoordsVuelta(l));
+        });
+        t.transferPoints.forEach(tp => { if (tp) allCoords.push(tp); });
+        if (allCoords.length) {
+          try { state.tripMap.fitBounds(L.latLngBounds(allCoords).pad(0.15)); } catch (e) {}
+        }
+        const mapWrap = document.querySelector('#tripMapWrap');
+        if (mapWrap) {
+          const headerH = 58;
+          const rect = mapWrap.getBoundingClientRect();
+          window.scrollTo({ top: window.scrollY + rect.top - headerH - 8, behavior: 'smooth' });
+        }
+        toast('Mostrando ' + t.legs.length + ' trazos del transbordo');
       };
     });
   }
 
-  // ── Controles ──
-  document.addEventListener('DOMContentLoaded', ()=>{
-    $('#tripRadius').oninput = e=>{
-      state.tripRadius = +e.target.value;
-      $('#tripRadiusVal').textContent = e.target.value;
-    };
-    $('#tripMaxTransfers')?.addEventListener('change', ()=>{
-      if(state.tripPoints.length) performTripSearch();
-    });
-    $('#btnTripSearch').onclick = performTripSearch;
-    $('#tripShareBtn')?.addEventListener('click', async ()=>{
-      const url = location.href;
-      if(navigator.share){
-        try{ await navigator.share({title:document.title, url}); }
-        catch(e){}
-      } else {
-        try{ await navigator.clipboard.writeText(url); toast('Enlace copiado ✓'); }
-        catch(e){ toast('No se pudo copiar'); }
-      }
-    });
-    $$('#tripToolbar .tb').forEach(b=>{
-      b.onclick = ()=>{
-        const tool = b.dataset.tool;
-        if(tool==='undo'){
-          if(!state.tripPoints.length){ toast('No hay puntos'); return; }
-          const i = state.tripPoints.length-1;
-          if(state.tripMarkers[i]) state.tripMap.removeLayer(state.tripMarkers[i]);
-          if(state.tripCircles[i]) state.tripMap.removeLayer(state.tripCircles[i]);
-          state.tripMarkers.splice(i,1);
-          state.tripCircles.splice(i,1);
-          state.tripPoints.splice(i,1);
-          state.tripPoints.forEach((p,idx)=>{
-            p.letter = String.fromCharCode(65+idx);
-            p.color = ['#10b981','#ef4444','#f59e0b','#3b82f6','#a855f7'][idx]||'#00e5ff';
-            const isDefault = TRIP_DEFAULT_NAMES.includes(p.name) || /^PUNTO [A-E]$/.test(p.name);
-            if(isDefault) p.name = TRIP_DEFAULT_NAMES[idx]||('PUNTO '+p.letter);
-          });
-          state.tripMarkers.forEach((m,idx)=>{
-            const pt = state.tripPoints[idx]; if(!pt) return;
-            m.setIcon(L.divIcon({className:'',html:`<div class="marker-${pt.letter.toLowerCase()}" style="background:${pt.color}">${pt.letter}</div>`,iconSize:[26,26],iconAnchor:[13,13]}));
-          });
-          renderTripPointsList(); performTripSearch();
-          state.userReactivated = false;
-          if(state.tripPoints.length<=1){
-            const addBtn = document.querySelector('#tripToolbar .tb[data-tool="addpoint"]');
-            if(addBtn){ $$('#tripToolbar .tb').forEach(x=>x.classList.remove('active')); addBtn.classList.add('active'); }
-          }
-          return;
-        }
-        if(tool==='clear'){
-          state.tripMarkers.forEach(m=>state.tripMap.removeLayer(m));
-          state.tripCircles.forEach(c=>state.tripMap.removeLayer(c));
-          state.tripMarkers=[]; state.tripCircles=[]; state.tripPoints=[];
-          clearTripRouteLayers();
-          renderTripPointsList(); performTripSearch();
-          state.userReactivated = false;
-          const addBtn = document.querySelector('#tripToolbar .tb[data-tool="addpoint"]');
-          if(addBtn){ $$('#tripToolbar .tb').forEach(x=>x.classList.remove('active')); addBtn.classList.add('active'); }
-          return;
-        }
-        if(tool==='locate'){
-          if(!navigator.geolocation){ toast('GPS no disponible'); return; }
-          navigator.geolocation.getCurrentPosition(pos=>{
-            const {latitude:lat,longitude:lng} = pos.coords;
-            if(state.tripMap) state.tripMap.setView([lat,lng],15);
-            addTripPoint(lat,lng);
-          }, err=>toast('GPS: '+err.message), {enableHighAccuracy:true});
-          return;
-        }
-        $$('#tripToolbar .tb').forEach(x=>x.classList.remove('active'));
-        b.classList.add('active');
-        if(tool==='addpoint') state.userReactivated = true;
-        else state.userReactivated = false;
-      };
-    });
+  // ==================== CONTROLES ====================
+  $('#tripRadius').oninput = e => {
+    state.tripRadius = +e.target.value;
+    $('#tripRadiusVal').textContent = e.target.value;
+  };
+  $('#tripMaxTransfers')?.addEventListener('change', () => {
+    if (state.tripPoints.length) performTripSearch();
+  });
+  $('#btnTripSearch').onclick = performTripSearch;
 
-    // ── INIT ──
-    (async ()=>{
-      await loadRoutes();
-      requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  $('#tripShareBtn')?.addEventListener('click', async () => {
+    const url = location.origin + '/mapainteractivo';
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Buscar viaje en mapa · Rutas BGD',
+          text: 'Encuentra rutas cercanas a tu ubicación en el mapa',
+          url
+        });
+      } catch (e) {}
+    } else {
+      try {
+        await navigator.clipboard.writeText(url);
+        toast('Enlace copiado ✓');
+      } catch (e) {
+        toast('No se pudo copiar', 'err');
+      }
+    }
+  });
+
+  // Toolbar del mapa
+  $$('#tripToolbar .tb').forEach(b => {
+    b.onclick = () => {
+      const tool = b.dataset.tool;
+      if (tool === 'undo') {
+        if (!state.tripPoints.length) { toast('No hay puntos para deshacer', 'err'); return; }
+        const lastIdx = state.tripPoints.length - 1;
+        if (state.tripMarkers[lastIdx]) state.tripMap.removeLayer(state.tripMarkers[lastIdx]);
+        if (state.tripCircles[lastIdx]) state.tripMap.removeLayer(state.tripCircles[lastIdx]);
+        state.tripMarkers.splice(lastIdx, 1);
+        state.tripCircles.splice(lastIdx, 1);
+        state.tripPoints.splice(lastIdx, 1);
+        state.tripPoints.forEach((p, idx) => {
+          p.letter = String.fromCharCode(65 + idx);
+          p.color = ['#10b981', '#ef4444', '#f59e0b', '#3b82f6', '#a855f7'][idx] || '#00e5ff';
+          const isDefault = TRIP_DEFAULT_NAMES.includes(p.name) || /^PUNTO [A-E]$/.test(p.name);
+          if (isDefault) p.name = TRIP_DEFAULT_NAMES[idx] || ('PUNTO ' + p.letter);
+        });
+        state.tripMarkers.forEach((m, idx) => {
+          const pt = state.tripPoints[idx];
+          if (!pt) return;
+          const icon = L.divIcon({
+            className: '',
+            html: `<div class="marker-${pt.letter.toLowerCase()}" style="background:${pt.color}">${pt.letter}</div>`,
+            iconSize: [26, 26], iconAnchor: [13, 13]
+          });
+          m.setIcon(icon);
+        });
+        renderTripPointsList();
+        performTripSearch();
+        state.userReactivated = false;
+        if (state.tripPoints.length <= 1) {
+          const addBtn = document.querySelector('#tripToolbar .tb[data-tool="addpoint"]');
+          if (addBtn) {
+            $$('#tripToolbar .tb').forEach(x => x.classList.remove('active'));
+            addBtn.classList.add('active');
+          }
+        }
+        toast('Punto eliminado');
+        return;
+      }
+      if (tool === 'clear') {
+        state.tripMarkers.forEach(m => state.tripMap.removeLayer(m));
+        state.tripCircles.forEach(c => state.tripMap.removeLayer(c));
+        state.tripMarkers = []; state.tripCircles = []; state.tripPoints = [];
+        clearTripRouteLayers();
+        renderTripPointsList();
+        performTripSearch();
+        state.userReactivated = false;
+        const addBtn = document.querySelector('#tripToolbar .tb[data-tool="addpoint"]');
+        if (addBtn) {
+          $$('#tripToolbar .tb').forEach(x => x.classList.remove('active'));
+          addBtn.classList.add('active');
+        }
+        toast('Puntos limpiados');
+        return;
+      }
+      if (tool === 'locate') {
+        if (!navigator.geolocation) { toast('GPS no disponible', 'err'); return; }
+        navigator.geolocation.getCurrentPosition(pos => {
+          const { latitude: lat, longitude: lng } = pos.coords;
+          if (state.tripMap) state.tripMap.setView([lat, lng], 15);
+          addTripPoint(lat, lng);
+        }, err => toast('GPS: ' + err.message, 'err'), { enableHighAccuracy: true });
+        return;
+      }
+      $$('#tripToolbar .tb').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      if (tool === 'addpoint') {
+        state.userReactivated = true;
+      } else {
+        state.userReactivated = false;
+      }
+    };
+  });
+
+  // ==================== TEMA ====================
+  const savedTheme = localStorage.getItem('tgz_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  updateThemeIcon();
+
+  function updateThemeIcon() {
+    const t = document.documentElement.getAttribute('data-theme');
+    const icon = $('#themeIcon');
+    if (!icon) return;
+    icon.innerHTML = t === 'dark'
+      ? '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'
+      : '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+  }
+
+  $('#themeBtn').onclick = () => {
+    const cur = document.documentElement.getAttribute('data-theme');
+    const next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('tgz_theme', next);
+    updateThemeIcon();
+    if (state.tripMap) {
+      state.tripMap.eachLayer(l => { if (l instanceof L.TileLayer) l.redraw(); });
+    }
+  };
+
+  // ==================== INIT ====================
+  async function init() {
+    if ('serviceWorker' in navigator) {
+      try { await navigator.serviceWorker.register('/sw.js', { scope: '/' }); } catch (e) {}
+    }
+    await loadRoutes();
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
         initTripMap();
         renderTripPointsList();
-      }));
-    })();
-  });
+      });
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  // API pública
+  global.MapaInteractivo = {
+    state,
+    performTripSearch,
+    addTripPoint,
+    renderTripPointsList
+  };
 
 })(window);
 </script>
