@@ -167,7 +167,9 @@ async function cacheFirst(req, cacheName) {
     const fresh = await fetch(req);
     if (fresh && fresh.ok) cache.put(req, fresh.clone());
     return fresh;
-  } catch (e) { return cached || Response.error(); }
+  } catch (e) {
+  return cached || new Response('', { status: 503, statusText: 'Offline' });
+}
 }
 
 self.addEventListener('message', event => {
