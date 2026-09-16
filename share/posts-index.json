@@ -1,25 +1,6 @@
 {
   "posts": [
     {
-      "slug": "luisescobar169",
-      "title": "Luis escobar",
-      "description": "Ruta Luis escobar",
-      "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789546111/k1ttbkh8crysad1cqhlo.jpg",
-      "url": "/share/ruta/luisescobar169",
-      "tipo": "ruta",
-      "timestamp": 1789546117168,
-      "updatedAt": "2026-09-16T08:08:37.168Z",
-      "categoria": "urbana",
-      "tarifa": "",
-      "frecuencia": "",
-      "horarioIni": "",
-      "horarioFin": "",
-      "dias": "todos",
-      "paradas": [],
-      "calles": [],
-      "pois": []
-    },
-    {
       "slug": "test_1789544868352",
       "title": "TEST DE VERIFICACIÓN",
       "description": "Esta es una prueba automática. Puedes borrarla después.",
@@ -474,8 +455,8 @@
       "updatedAt": "2026-09-13T08:52:43.612Z"
     }
   ],
-  "total": 28,
-  "updatedAt": "2026-09-16T08:08:57.166Z",
+  "total": 27,
+  "updatedAt": "2026-09-16T08:09:06.560Z",
   "version": 1,
   "__sha": "c77fd26bcddcbfbb9b26226fa63874d9fbe100f7"
 }
