@@ -1,37 +1,51 @@
 # ============================================================
-#  REDIRECTS — Rutas limpias sin extensión
+#  REDIRECTS — Cloudflare Pages
+#
+#  REGLA DE ORO:
+#   - Cualquier URL con .html → 301 a su versión sin extensión
+#   - URL limpia → 200 sirve el .html internamente
+#   - Todo el sitio funciona SIN extensión
 # ============================================================
 
-# 1️⃣ MAPA INTERACTIVO
-# -------------------
-# Primero redirigimos .html → /mapainteractivo (URL canónica)
-/mapainteractivo.html   /mapainteractivo     301
-# Luego servimos el HTML internamente cuando piden la URL limpia
+# ─────────────────────────────────────────────────────────────
+#  1️⃣ CASO ESPECIAL: /index.html → raíz
+#     (va antes que la regla global para que gane)
+# ─────────────────────────────────────────────────────────────
+/index.html             /                       301
+
+# ─────────────────────────────────────────────────────────────
+#  2️⃣ REGLA GLOBAL: cualquier .html → 301 sin extensión
+# ─────────────────────────────────────────────────────────────
+/*.html                 /:splat                301
+
+# ─────────────────────────────────────────────────────────────
+#  3️⃣ REWRITES 200: URL limpia → sirve el .html interno
+# ─────────────────────────────────────────────────────────────
+
+# Mapa interactivo
 /mapainteractivo        /mapainteractivo.html   200
-# Por si ponen barra al final
-/mapainteractivo/       /mapainteractivo     301
+/mapainteractivo/       /mapainteractivo        301
 
+# Admin (también sin extensión)
+/admin                  /admin.html             200
+/admin/                 /admin               301
 
-# 2️⃣ REDIRIGIR .php a la raíz
-# ---------------------------
-/index.php         /                 301
-/*.php             /                 301
+# Share / Ruta
+/share/ruta/:splat      /share/ruta/:splat.html 200
 
+# Share / Post
+/share/post/:splat      /share/post/:splat.html 200
 
-# 3️⃣ REDIRIGIR .html de share a la versión sin extensión
-# -------------------------------------------------------
-/share/ruta/*.html /share/ruta/:splat 301
-/share/post/*.html /share/post/:splat 301
-/share/m/*.html    /share/m/:splat    301
+# Share / Market
+/share/m/:splat         /share/m/:splat.html    200
 
+# ─────────────────────────────────────────────────────────────
+#  4️⃣ REDIRIGIR .php (por si acaso)
+# ─────────────────────────────────────────────────────────────
+/index.php              /                       301
+/*.php                   /                       301
 
-# 4️⃣ REDIRIGIR /index.html a la raíz
-# ----------------------------------
-/index.html        /                 301
-/admin.html        /admin.html       200
-
-
-# 5️⃣ FALLBACK 404 (SIEMPRE AL FINAL)
-# ----------------------------------
-# Si nada de arriba matchea, servimos 404.html con status 404
-/*  /404.html  404
+# ─────────────────────────────────────────────────────────────
+#  5️⃣ FALLBACK 404 (SIEMPRE AL FINAL)
+# ─────────────────────────────────────────────────────────────
+/*                      /404.html               404
