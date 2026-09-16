@@ -99,7 +99,7 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 /* SW.JS — v8 · NO intercepta tiles ni APIs externas */
-const VERSION = 'bgd-v1.2.9';
+const VERSION = 'bgd-v2';
 const STATIC_CACHE = `${VERSION}-static`;
 const HTML_CACHE = `${VERSION}-html`;
 
