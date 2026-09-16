@@ -1334,8 +1334,11 @@ const url = location.origin + '/share/ruta/' + route.id;
     renderRouteContent();
   };
 
-  $('#btnMapSearch').onclick = () => navigateTo('trip');
+  $('#btnMapSearch').onclick = () => {
+  window.location.href = '/mapainteractivo';
+};
 
+   
   // ============================================================
   //  🖥️ BOTÓN DE PANTALLA COMPLETA PARA LOS MAPAS
   // ============================================================
