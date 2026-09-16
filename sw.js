@@ -99,14 +99,20 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 /* SW.JS — v8 · NO intercepta tiles ni APIs externas */
-const VERSION = 'bgd-v1.2.2';
+const VERSION = 'bgd-v1.2.3';
 const STATIC_CACHE = `${VERSION}-static`;
 const HTML_CACHE = `${VERSION}-html`;
 
 const PRECACHE = [
   '/', '/index.html', '/admin.html', '/offline.html',
   '/manifest.json', '/robots.txt', '/sitemap.xml',
-  '/assets/icon.svg', '/js/db.js', '/js/publisher.js', '/js/app.js'
+  '/assets/icon.svg', '/js/db.js', '/js/publisher.js', '/js/app.js',
+  '/vendor/leaflet/leaflet.css',
+  '/vendor/leaflet/leaflet.js',
+  '/vendor/idb/umd.js',
+  '/vendor/firebase/firebase-app-compat.js',
+  '/vendor/firebase/firebase-database-compat.js',
+  '/vendor/firebase/firebase-messaging-compat.js'
 ];
 
 self.addEventListener('install', event => {
