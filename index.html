@@ -1162,110 +1162,71 @@ body.fs-active{overflow:hidden !important}
     return id;
   }
 
-async function activarNotificacionesPush(forzar = false) {
-  if (!('Notification' in window)) {
-    console.log('[FCM] Navegador sin soporte de notificaciones');
-    return;
-  }
-
-  // 🚫 Si NO hay conexión, salir silenciosamente SIN mostrar alert
-  if (!navigator.onLine) {
-    console.log('[FCM] Offline: se omite la solicitud de token');
-    if (!window.__FCM_ONLINE_HOOK__) {
-      window.__FCM_ONLINE_HOOK__ = true;
-      window.addEventListener('online', () => {
-        window.__FCM_ONLINE_HOOK__ = false;
-        if (Notification.permission === 'granted') {
-          activarNotificacionesPush(false);
-        }
-      }, { once: true });
+  async function activarNotificacionesPush(forzar = false) {
+     if (!('Notification' in window)) {
+      alert('Tu navegador no soporta notificaciones');
+      return;
     }
-    return;
-  }
 
-  // Pedir permiso (solo si el usuario pulsó el botón explícitamente)
-  let permission = Notification.permission;
-  if (permission === 'default' && forzar) {
-    permission = await Notification.requestPermission();
-  }
-  if (permission !== 'granted') {
-    if (forzar) {
+    // Pedir permiso
+    let permission = Notification.permission;
+    if (permission === 'default') {
+      permission = await Notification.requestPermission();
+    }
+    if (permission !== 'granted') {
       alert('Debes permitir las notificaciones para activarlas');
-    }
-    return;
-  }
-
-  try {
-    if (typeof firebase === 'undefined' || !firebase.messaging) {
-      if (forzar) alert('Firebase Messaging no está cargado');
       return;
     }
 
-    const registration = await navigator.serviceWorker.ready;
-    const messaging = firebase.messaging();
-    const token = await messaging.getToken({
-      vapidKey: VAPID_KEY,
-      serviceWorkerRegistration: registration
-    });
-
-    if (!token) {
-      if (forzar) alert('No se pudo obtener el token de notificaciones');
-      return;
-    }
-
-    const tokenGuardado = localStorage.getItem('fcm_token');
-    if (!forzar && tokenGuardado === token) {
-      console.log('[FCM] Token sin cambios, no se reescribe la DB');
-      return;
-    }
-
-    localStorage.setItem('fcm_token', token);
-
-    // ✅ GUARDAR EN FIREBASE (objeto completo, NO { ... })
-    const deviceId = getDeviceId();
-    await firebase.database().ref('pushTokens/' + deviceId).set({
-      token: token,
-      deviceId: deviceId,
-      fecha: Date.now(),
-      dispositivo: navigator.userAgent,
-      plataforma: navigator.platform || 'desconocida',
-      idioma: navigator.language || 'es'
-    });
-
-    if (window.App && App.toast) App.toast('✅ Notificaciones activadas', 'ok');
-    else if (forzar) alert('✅ Notificaciones activadas correctamente');
-
-  } catch (err) {
-    // 🚫 SILENCIAR errores de offline específicamente
-    const msg = String(err?.message || err?.code || err || '');
-    if (
-      msg.includes('app-offline') ||
-      msg.includes('installations') ||
-      msg.includes('application offline') ||
-      msg.includes('offline') ||
-      !navigator.onLine
-    ) {
-      console.log('[FCM] Sin conexión — se reintentará cuando vuelva la red');
-      if (!window.__FCM_ONLINE_HOOK__) {
-        window.__FCM_ONLINE_HOOK__ = true;
-        window.addEventListener('online', () => {
-          window.__FCM_ONLINE_HOOK__ = false;
-          if (Notification.permission === 'granted') {
-            activarNotificacionesPush(false);
-          }
-        }, { once: true });
+    try {
+      // Asegurar que firebase esté listo
+      if (typeof firebase === 'undefined' || !firebase.messaging) {
+        alert('Firebase Messaging no está cargado');
+        return;
       }
-      return;
-    }
 
-    console.error('[FCM] Error real:', err);
-    if (forzar) {
-      alert('Error al activar notificaciones: ' + (err?.message || 'desconocido'));
+      // Registrar/obtener SW
+      const registration = await navigator.serviceWorker.ready;
+
+      const messaging = firebase.messaging();
+      const token = await messaging.getToken({
+        vapidKey: VAPID_KEY,
+        serviceWorkerRegistration: registration
+      });
+
+            if (!token) {
+        alert('No se pudo obtener el token de notificaciones');
+        return;
+      }
+
+      // 🎯 Si el token no cambió y NO se fuerza, no tocamos la DB
+      const tokenGuardado = localStorage.getItem('fcm_token');
+      if (!forzar && tokenGuardado === token) {
+        console.log('[FCM] Token sin cambios, no se reescribe la DB');
+        return;
+      }
+
+      localStorage.setItem('fcm_token', token);
+
+      // Guardar en Realtime Database
+      const deviceId = getDeviceId();
+      await firebase.database().ref('pushTokens/' + deviceId).set({
+        token: token,
+        deviceId: deviceId,
+        fecha: Date.now(),
+        dispositivo: navigator.userAgent,
+        plataforma: navigator.platform || 'desconocida',
+        idioma: navigator.language || 'es'
+      });
+
+      if (window.App && App.toast) App.toast('✅ Notificaciones activadas', 'ok');
+      else alert('✅ Notificaciones activadas correctamente');
+
+    } catch (err) {
+      console.error('[FCM] Error:', err);
+      alert('Error al activar notificaciones: ' + err.message);
     }
   }
-}
-
-   
 
   // Conectar el botón
   const btn = document.getElementById('notifBtn');
