@@ -684,12 +684,17 @@ const url = location.origin + '/share/post/' + post.id;
    
   function renderRoutesGrid() {
     if (!state.routes.length) {
-      return `<div class="empty">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M6 16V9a4 4 0 0 1 4-4h4"/></svg>
-        <h3>Sin rutas registradas</h3>
-        <p>${state.isAdmin ? 'Usa el botón + para agregar la primera ruta.' : 'Vuelve más tarde.'}</p>
-      </div>`;
-    }
+  return `<div class="empty" style="padding:32px 20px">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+         style="width:40px;height:40px;margin-bottom:12px;opacity:.6;animation:spin 1s linear infinite">
+      <circle cx="12" cy="12" r="10" stroke-opacity=".25"/>
+      <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/>
+    </svg>
+    <h3>Espere, cargando datos…</h3>
+    <p style="margin-top:8px">Si esto tarda demasiado, recargue la pagina y revise su conexión.</p>
+  </div>`;
+}
+     
     const rutasOrdenadas = [...state.routes].sort((a, b) =>
       String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es', { numeric: true, sensitivity: 'base' })
     );
