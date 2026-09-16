@@ -2,13 +2,13 @@
   "posts": [
     {
       "slug": "luisesgibwr169",
-      "title": "Luis esgibwr",
-      "description": "Ruta Luis esgibwr",
-      "image": "",
+      "title": "LUIS ESGIBWR",
+      "description": "Ruta LUIS ESGIBWR",
+      "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789546261/f3incavhcg9wnyls4zwf.jpg",
       "url": "/share/ruta/luisesgibwr169",
       "tipo": "ruta",
-      "timestamp": 1789546202043,
-      "updatedAt": "2026-09-16T08:10:02.043Z",
+      "timestamp": 1789546267377,
+      "updatedAt": "2026-09-16T08:11:07.377Z",
       "categoria": "urbana",
       "tarifa": "",
       "frecuencia": "",
@@ -16,7 +16,10 @@
       "horarioFin": "",
       "dias": "todos",
       "paradas": [],
-      "calles": [],
+      "calles": [
+        "Avenida 16a Norte Poniente",
+        "Calle 11a. Oriente Norte"
+      ],
       "pois": []
     },
     {
@@ -475,7 +478,7 @@
     }
   ],
   "total": 28,
-  "updatedAt": "2026-09-16T08:10:02.043Z",
+  "updatedAt": "2026-09-16T08:11:07.377Z",
   "version": 1,
-  "__sha": "fdc2c2ef71d475ef5dc03302e80acd220a0e62bb"
+  "__sha": "35cacb63c4a2bf4ac10ffc5af4c5aa7d4d9a955d"
 }
