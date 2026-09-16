@@ -615,105 +615,57 @@ const url = location.origin + '/share/post/' + post.id;
   $('#viewerClose').onclick = closeViewer;
   $('#viewer').onclick = (e) => { if (e.target.id === 'viewer') closeViewer(); };
       
+      async function loadRoutes() {
+  // ─────────────────────────────────────────────
+  // FASE 1: leer IndexedDB (rápido, ~10-50ms)
+  // ─────────────────────────────────────────────
+  let local = [];
+  try { local = await DB.getAll('routes'); } catch (e) {}
+  state.routes = local.sort((a, b) =>
+    String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es',
+      { numeric: true, sensitivity: 'base' })
+  );
 
-
-   /* ═══════════════════════════════════════════════════════════════
-   CARGAR RUTAS — Estrategia OFFLINE-FIRST (versión mejorada)
-   
-   1. IndexedDB     → carga inmediata (persistente, offline-first)
-   2. sessionStorage → comparte con /mapainteractivo
-   3. Firebase      → actualiza datos frescos y PERSISTE en IndexedDB
-   
-   GARANTIZA:
-   - Con red:    rutas frescas desde Firebase
-   - Sin red:    rutas desde IndexedDB (si ya visitó antes)
-   - Comparte con /mapainteractivo via sessionStorage
-   ═══════════════════════════════════════════════════════════════ */
-  async function loadRoutes() {
-    const CACHE_KEY = 'bgd_mapainteractivo_routes_cache';
-
-    // ─────────────────────────────────────────────
-    // FASE 1: leer IndexedDB (rápido, ~10-50ms)
-    // ─────────────────────────────────────────────
-    let local = [];
-    try { local = await DB.getAll('routes'); } catch (e) {}
-    state.routes = local.sort((a, b) =>
-      String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es',
-        { numeric: true, sensitivity: 'base' })
-    );
-
-    console.log('[loadRoutes] 📦 Rutas desde IndexedDB:', state.routes.length);
-
-    // ⚡ Si ya hay rutas locales, pintarlas YA (app instantánea)
-    if (state.routes.length && state.currentPage === 'routes') {
-      try { renderRouteContent(); } catch (e) {}
-    }
-
-    // 🔥 NUEVO: Compartir rutas con /mapainteractivo vía sessionStorage
-    try {
-      sessionStorage.setItem(CACHE_KEY, JSON.stringify({
-        data: state.routes,
-        ts: Date.now()
-      }));
-    } catch (e) {}
-
-    // ─────────────────────────────────────────────
-    // FASE 2: Firebase en BACKGROUND (no bloquea)
-    // ─────────────────────────────────────────────
-    if (state.online && fbDB) {
-      (async () => {
-        try {
-          const snap = await fbDB.ref('rutas_colectivos_tgz').once('value');
-          const val = snap.val() || {};
-          const map = new Map(state.routes.map(r => [r.id, r]));
-          Object.values(val).forEach(r => {
-            if (r && r.id && !map.has(r.id)) map.set(r.id, r);
-          });
-
-          state.routes = Array.from(map.values()).sort((a, b) =>
-            String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es',
-              { numeric: true, sensitivity: 'base' })
-          );
-
-          console.log('[loadRoutes] ☁️ Rutas desde Firebase:', state.routes.length);
-
-          // 🔥🔥 CLAVE: PERSISTIR en IndexedDB las rutas de Firebase
-          // Esto hace que las rutas estén disponibles OFFLINE aunque el
-          // usuario solo visite la raíz.
-          try {
-            if (typeof DB !== 'undefined' && DB.put) {
-              const freshRoutes = Object.values(val).filter(r => r && r.id);
-              for (const r of freshRoutes) {
-                await DB.put('routes', r);
-              }
-              console.log('[loadRoutes] 💾 IndexedDB actualizada:', freshRoutes.length, 'rutas');
-            }
-          } catch (e) {
-            console.warn('[loadRoutes] Error guardando en IndexedDB:', e);
-          }
-
-          // 🔥 Actualizar sessionStorage con datos frescos
-          try {
-            sessionStorage.setItem(CACHE_KEY, JSON.stringify({
-              data: state.routes,
-              ts: Date.now()
-            }));
-          } catch (e) {}
-
-          // Repintar SOLO si estamos en la pestaña de rutas
-          if (state.currentPage === 'routes') {
-            try { renderRouteContent(); } catch (e) {}
-          }
-        } catch (e) {
-          console.warn('[loadRoutes] Firebase falló:', e);
-        }
-      })();
-    }
-
-    return state.routes;
+  // ⚡ Si ya hay rutas locales, pintarlas YA y devolver el control
+  //    (la app se siente instantánea).
+  if (state.routes.length && state.currentPage === 'routes') {
+    try { renderRouteContent(); } catch (e) {}
   }
 
-   
+  // ─────────────────────────────────────────────
+  // FASE 2: Firebase en BACKGROUND (no bloquea)
+  // ─────────────────────────────────────────────
+  if (state.online && fbDB) {
+    // No await: dejamos que corra y repinte cuando termine
+    (async () => {
+      try {
+        // Solo traer campos que la UI necesita — no la geometría completa.
+        // Firebase no permite "project", así que traemos todo, pero lo
+        // procesamos rápido.
+        const snap = await fbDB.ref('rutas_colectivos_tgz').once('value');
+        const val = snap.val() || {};
+        const map = new Map(state.routes.map(r => [r.id, r]));
+        Object.values(val).forEach(r => {
+          if (r && r.id && !map.has(r.id)) map.set(r.id, r);
+        });
+
+        state.routes = Array.from(map.values()).sort((a, b) =>
+          String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es',
+            { numeric: true, sensitivity: 'base' })
+        );
+
+        // Repintar SOLO si estamos en la pestaña de rutas
+        if (state.currentPage === 'routes') {
+          try { renderRouteContent(); } catch (e) {}
+        }
+      } catch (e) {
+        console.warn('[loadRoutes] Firebase falló:', e);
+      }
+    })();
+  }
+
+  return state.routes;
+}
 
   function renderRouteContent() {
     const mode = state.routeMode;
@@ -950,45 +902,15 @@ const url = location.origin + '/share/post/' + post.id;
         </button>
       </div>`;
     $('#btnShareRoute').onclick = () => shareRoute(route);
-   
-
-     $('#btnBackRoute').onclick = () => {
-  // 🎯 1) Si el usuario navegó DENTRO de la SPA (historyStack tiene entradas)
-  //       usamos history.back() para respetar el flujo interno.
-  if (state.historyStack.length > 1) {
-    state.historyStack.pop();
-    history.back();
-    return;
-  }
-
-  // 🎯 2) Si el usuario VIENE de una página externa (como /mapainteractivo),
-  //       el navegador SÍ tiene historial real. Usamos history.back() para
-  //       que vuelva exactamente a donde estaba.
-  //       Detectamos "página externa" porque document.referrer no es la misma
-  //       URL base que la actual.
-  const currentPath = location.pathname + location.search;
-  let sameOriginReferrer = false;
-  try {
-    if (document.referrer) {
-      const refURL = new URL(document.referrer);
-      const curURL = new URL(location.href);
-      sameOriginReferrer = refURL.origin === curURL.origin &&
-                           refURL.pathname === curURL.pathname;
-    }
-  } catch (e) {}
-
-  if (!sameOriginReferrer && document.referrer) {
-    // Venimos de otra página (ej: /mapainteractivo, /share/ruta/xxx, Google, etc.)
-    // Usamos el historial NATIVO del navegador para volver exactamente ahí.
-    history.back();
-    return;
-  }
-
-  // 🎯 3) Fallback final: si no hay historial, ir a la lista de rutas.
-  navigateTo('routes');
-};
-
-     
+    $('#btnBackRoute').onclick = () => {
+      // 🎯 Comportarse como el botón físico de retroceder
+      if (state.historyStack.length > 1) {
+        state.historyStack.pop();
+        history.back();
+      } else {
+        navigateTo('routes');
+      }
+    };
      
     // Panel inferior
     const panel = $('#routePanel');
@@ -1197,9 +1119,9 @@ const tripBtn = L.control({ position: 'bottomleft' });
         </button>`;
       const btn = div.querySelector('.map-trip-btn');
       L.DomEvent.disableClickPropagation(div);
-        btn.addEventListener('click', () => {
-  window.location.href = '/mapainteractivo';
-});
+      btn.addEventListener('click', () => {
+        navigateTo('trip');
+      });
       return div;
     };
     tripBtn.addTo(state.map);
@@ -1412,11 +1334,8 @@ const url = location.origin + '/share/ruta/' + route.id;
     renderRouteContent();
   };
 
-  $('#btnMapSearch').onclick = () => {
-  window.location.href = '/mapainteractivo';
-};
+  $('#btnMapSearch').onclick = () => navigateTo('trip');
 
-   
   // ============================================================
   //  🖥️ BOTÓN DE PANTALLA COMPLETA PARA LOS MAPAS
   // ============================================================
@@ -2621,33 +2540,17 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
   $('#btnTripSearch').onclick = performTripSearch;
 
   // 🎯 Botón Regresar en "Buscar viaje en mapa"
-  
-   const tripBackBtn = document.getElementById('tripBackBtn');
-if (tripBackBtn) {
-  tripBackBtn.onclick = () => {
-    if (state.historyStack.length > 1) {
-      state.historyStack.pop();
-      history.back();
-      return;
-    }
-    if (document.referrer) {
-      try {
-        const refURL = new URL(document.referrer);
-        const curURL = new URL(location.href);
-        if (refURL.origin === curURL.origin && refURL.pathname === curURL.pathname) {
-          navigateTo('routes');
-          return;
-        }
+  const tripBackBtn = document.getElementById('tripBackBtn');
+  if (tripBackBtn) {
+    tripBackBtn.onclick = () => {
+      if (state.historyStack.length > 1) {
+        state.historyStack.pop();
         history.back();
-        return;
-      } catch (e) {}
-    }
-    navigateTo('routes');
-  };
-}
-
-
-   
+      } else {
+        navigateTo('routes');
+      }
+    };
+  }
 
   // 🎯 Botón Compartir en "Buscar viaje en mapa"
   const tripShareBtn = document.getElementById('tripShareBtn');
