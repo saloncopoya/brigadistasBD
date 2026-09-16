@@ -995,10 +995,11 @@ const url = location.origin + '/share/post/' + post.id;
      
     // 🖥️ Conectar el botón de pantalla completa con este mapa (sin timers)
     bindFullscreenButton('routeMapFsBtn', 'routeMapWrap');
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '© OpenStreetMap'
-    }).addTo(state.map);
+    L.tileLayer.offline('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19,
+  crossOrigin: true,
+  attribution: '© OpenStreetMap'
+}).addTo(state.map);
 
     const layers = [];
     const colorIda = route.colorIda || '#00e5ff';
@@ -1750,9 +1751,10 @@ const url = location.origin + '/share/m/' + id;
        
     // 🖥️ Conectar el botón de pantalla completa con este mapa (sin timers)
     bindFullscreenButton('tripMapFsBtn', 'tripMapWrap');
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19, attribution: '© OpenStreetMap'
-    }).addTo(state.tripMap);
+    L.tileLayer.offline('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19, crossOrigin: true, attribution: '© OpenStreetMap'
+}).addTo(state.tripMap);
+       
     state.tripMap.on('click', e => {
       // Solo agregar si el modo activo es "addpoint"
       const activeBtn = document.querySelector('#tripToolbar .tb.active');
