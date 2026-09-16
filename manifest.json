@@ -54,8 +54,7 @@
     ],
 
 "launch_handler": {
-    "client_mode": "new-client",
-    "route_to": "new-client"
+    "client_mode": "navigate-new"
 },
     
     "edge_side_panel": {
