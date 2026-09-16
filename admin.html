@@ -1113,8 +1113,8 @@ body.fs-active{overflow:hidden !important}
       maxZoom:19, attribution:'© OpenStreetMap'
     }).addTo(state.map);
 
-    // 🖥️ Conectar botón de pantalla completa
-    setTimeout(() => {
+   // 🖥️ Conectar botón de pantalla completa (sin timers)
+    {
       const btn = document.getElementById('editorMapFsBtn');
       const wrap = document.getElementById('editorMapWrap');
       if (btn && wrap) {
