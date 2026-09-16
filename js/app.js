@@ -242,13 +242,8 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
 
     // Acciones específicas
    if (page === 'routes') {
-  //  Mostrar "Cargando..." SI las rutas aún no están listas
-  if (!state.routes.length) {
-    renderLoadingState($('#routeContent'), 'Espere, cargando datos...');
-  } else {
-    renderRouteContent();
-  }
   setTimeout(() => { if (state.map) state.map.invalidateSize(); }, 200);
+  renderRouteContent();
 }
      
     if (page === 'market') renderMarket();
@@ -671,18 +666,7 @@ const url = location.origin + '/share/post/' + post.id;
   }
 
 
-   function renderLoadingState(el, mensaje) {
-  if (!el) return;
-  el.innerHTML = `
-    <div class="empty" style="padding:32px 20px">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-           style="width:40px;height:40px;margin-bottom:12px;opacity:.6;animation:spin 1s linear infinite">
-        <circle cx="12" cy="12" r="10" stroke-opacity=".25"/>
-        <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/>
-      </svg>
-      <h3>${esc(mensaje)}</h3>
-    </div>`;
-}
+   
    
   function renderRoutesGrid() {
     if (!state.routes.length) {
