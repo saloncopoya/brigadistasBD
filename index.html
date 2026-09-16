@@ -131,11 +131,7 @@ img{max-width:100%;display:block}
 .icon-btn:hover{background:var(--surface-2);color:var(--cyan)}
 .icon-btn:active{transform:scale(.92)}
 .icon-btn svg{width:20px;height:20px}
-.conn-dot{
-  position:absolute;bottom:6px;right:6px;width:8px;height:8px;border-radius:50%;
-  background:var(--green);border:2px solid var(--surface);transition:var(--transition);
-}
-.conn-dot.off{background:var(--red)}
+
 .install-btn{
   display:none;align-items:center;gap:6px;padding:8px 12px;border-radius:10px;
   background:linear-gradient(135deg,var(--cyan),var(--cyan-d));color:#00121a;
@@ -722,10 +718,7 @@ body.fs-active{overflow:hidden !important}
     <button class="icon-btn" id="themeBtn" title="Cambiar tema">
       <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
     </button>
-    <button class="icon-btn" id="connBtn" title="Estado de conexión">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
-      <span class="conn-dot" id="connDot"></span>
-    </button>
+
   </div>
 </header>
 
@@ -1149,11 +1142,24 @@ body.fs-active{overflow:hidden !important}
   if (btn) btn.addEventListener('click', () => activarNotificacionesPush(true));
    
   // Auto-activar SOLO si ya dio permiso antes (no molestar)
+  // + avisar si las notificaciones están bloqueadas
   window.addEventListener('load', () => {
+    // A) Si están bloqueadas, avisar al usuario
+    if (Notification.permission === 'denied') {
+      setTimeout(() => {
+        if (window.App && App.toast) {
+          App.toast('🔔 Notificaciones bloqueadas. Pulsa el candado 🔒 → Notificaciones → Permitir', 'err');
+        }
+      }, 3000);
+      return;
+    }
+
+    // B) Si ya dio permiso, auto-registrar
     if (Notification.permission === 'granted') {
       setTimeout(() => activarNotificacionesPush(false), 2000);
     }
   });
+   
 
    // Exponer global
   window.activarNotificacionesPush = activarNotificacionesPush;
