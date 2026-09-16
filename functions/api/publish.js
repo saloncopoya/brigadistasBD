@@ -667,7 +667,8 @@ function cleanDomain(baseUrl) {
 // ============================================================
 //  🗺️  BLOQUE DE MAPA INTERACTIVO PARA RUTAS COMPARTIDAS
 // ============================================================
-function renderRouteMapBlock(route) {
+function renderRouteMapBlock(route, baseUrl) {
+  baseUrl = baseUrl || 'https://brigadistasbd.pages.dev';
   if (!route) return '';
   const puntos       = route.puntos || [];
   const puntosVuelta = route.puntosVuelta || [];
@@ -886,7 +887,8 @@ function introParagraph(route, title, baseUrl) {
   return `<div class="intro-paragraphs">${p1}${p2}${p3}${p4}${p5}${p6}${p7}${p8}</div>`;
 }
 
-function renderRouteBody(route) {
+function renderRouteBody(route, baseUrl) {
+  baseUrl = baseUrl || 'https://brigadistasbd.pages.dev';
   const blocks = [];
 
   // 📝 NOTAS primero (arriba de todo)
