@@ -1273,60 +1273,78 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
   //  🗺️  CAPTURAR EL MAPA COMO IMAGEN Y SUBIRLA A CLOUDINARY
   // ================================================================
   async function captureAndUploadMap(){
-    if(!state.map) throw new Error('Mapa no inicializado');
-    if(!state.routeDraft.puntos.length && !state.routeDraft.puntosVuelta.length){
-      throw new Error('No hay trazado para capturar');
-    }
-
-    // 1️⃣ Ajustar el mapa para que se vea TODA la ruta antes de capturar
-    const allCoords = [];
-    if(state.routeDraft.puntos) allCoords.push(...state.routeDraft.puntos);
-    if(state.routeDraft.puntosVuelta) allCoords.push(...state.routeDraft.puntosVuelta);
-    if(state.routeDraft.geometriaIda) allCoords.push(...state.routeDraft.geometriaIda);
-    if(state.routeDraft.geometriaVuelta) allCoords.push(...state.routeDraft.geometriaVuelta);
-    if(allCoords.length > 1){
-      try{ state.map.fitBounds(L.latLngBounds(allCoords).pad(0.15)); }catch(e){}
-    }
-
-    // 2️⃣ Esperar a que los tiles terminen de cargar
-    // Esperar a que TODOS los tiles terminen de cargar
-await new Promise((resolve) => {
-  let pending = 0;
-  const done = () => { if (pending === 0) resolve(); };
-  
-  state.map.eachLayer(layer => {
-    if (layer instanceof L.TileLayer) {
-      layer.on('loading', () => { pending++; });
-      layer.on('load',    () => { pending--; done(); });
-    }
-  });
-  
-  // Dar 100ms para que se disparen los eventos 'loading'
-  setTimeout(() => { if (pending === 0) resolve(); }, 100);
-  
-  // Fallback: resolver en 4s máximo
-  setTimeout(resolve, 4000);
-});
-
-    // 3️⃣ Capturar el canvas del mapa
-    const canvas = await new Promise((resolve, reject) => {
-      try{
-        leafletImage(state.map, (err, canvas) => {
-          if(err) return reject(err);
-          resolve(canvas);
-        });
-      }catch(e){ reject(e); }
-    });
-
-    // 4️⃣ Convertir canvas a Blob → File
-    const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.9));
-    if(!blob) throw new Error('No se pudo generar la imagen');
-    const file = new File([blob], 'ruta_' + Date.now() + '.jpg', { type: 'image/jpeg' });
-
-    // 5️⃣ Subir a Cloudinary
-    const url = await Publisher.uploadToCloudinary(file);
-    return url;
+  if(!state.map) throw new Error('Mapa no inicializado');
+  if(!state.routeDraft.puntos.length && !state.routeDraft.puntosVuelta.length){
+    throw new Error('No hay trazado para capturar');
   }
+
+  // 1️⃣ Ajustar el mapa para que se vea TODA la ruta antes de capturar
+  const allCoords = [];
+  if(state.routeDraft.puntos) allCoords.push(...state.routeDraft.puntos);
+  if(state.routeDraft.puntosVuelta) allCoords.push(...state.routeDraft.puntosVuelta);
+  if(state.routeDraft.geometriaIda) allCoords.push(...state.routeDraft.geometriaIda);
+  if(state.routeDraft.geometriaVuelta) allCoords.push(...state.routeDraft.geometriaVuelta);
+  if(allCoords.length > 1){
+    try{ state.map.fitBounds(L.latLngBounds(allCoords).pad(0.15)); }catch(e){}
+  }
+
+  // 2️⃣ Esperar a que TODOS los tiles terminen de cargar de verdad
+  //    (verifica img.complete de cada tile, no solo eventos)
+  await new Promise((resolve) => {
+    const MAX_WAIT = 8000;
+    const started = Date.now();
+    
+    const checkTiles = () => {
+      const tiles = Array.from(document.querySelectorAll('#editorMap img.leaflet-tile'));
+      const allDone = tiles.length > 0 && tiles.every(img => img.complete && img.naturalWidth > 0);
+      
+      if (allDone) {
+        // Esperar 2 frames para que se pinten
+        requestAnimationFrame(() => requestAnimationFrame(resolve));
+        return;
+      }
+      
+      if (Date.now() - started > MAX_WAIT) {
+        console.warn('[captureMap] Timeout esperando tiles, capturando de todos modos');
+        resolve();
+        return;
+      }
+      
+      setTimeout(checkTiles, 150);
+    };
+    
+    // Dar un tick inicial para que Leaflet cree las <img>
+    setTimeout(checkTiles, 300);
+  });
+
+  // 3️⃣ Esperar un poco más (por si hay tiles en tránsito)
+  await new Promise(r => setTimeout(r, 500));
+
+  // 4️⃣ Capturar el canvas
+  const canvas = await new Promise((resolve, reject) => {
+    try{
+      if (typeof leafletImage !== 'function') {
+        return reject(new Error('leaflet-image no está cargado'));
+      }
+      leafletImage(state.map, (err, canvas) => {
+        if(err) return reject(err);
+        if (!canvas || !canvas.width || !canvas.height) {
+          return reject(new Error('Canvas vacío'));
+        }
+        resolve(canvas);
+      });
+    }catch(e){ reject(e); }
+  });
+
+  // 5️⃣ Convertir canvas a Blob → File
+  const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.9));
+  if(!blob) throw new Error('No se pudo generar la imagen');
+  const file = new File([blob], 'ruta_' + Date.now() + '.jpg', { type: 'image/jpeg' });
+
+  // 6️⃣ Subir a Cloudinary
+  const url = await Publisher.uploadToCloudinary(file);
+  return url;
+}
 
   $$('.route-step').forEach((s,i)=>{});
   function goStep(n){
