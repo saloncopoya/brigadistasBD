@@ -443,6 +443,7 @@ const safeDescOG = escapeHTML(enrichedContent.slice(0, 125));
 <meta name="apple-mobile-web-app-title" content="Rutas BGD">
 <link rel="preconnect" href="https://unpkg.com">
 <link rel="preconnect" href="https://tile.openstreetmap.org">
+<script src="/js/tile-cache.js"></script>
 
 <!-- Open Graph -->
 <meta property="og:type" content="${tipo === 'post' ? 'article' : 'website'}">
@@ -699,10 +700,12 @@ function renderRouteMapBlock(route) {
       if (typeof L === 'undefined') return;
       var map = L.map('shareMapBig', { zoomControl: true, scrollWheelZoom: false });
       window.__shareMap = map;
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '© OpenStreetMap'
-      }).addTo(map);
+      // Caché de mosaicos compartida (mismo IndexedDB que la app principal)
+L.tileLayer.offline('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19,
+  crossOrigin: true,
+  attribution: '© OpenStreetMap'
+}).addTo(map);
 
       var allCoords = [];
          function drawLine(coords, color, dashed){
