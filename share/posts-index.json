@@ -4,11 +4,11 @@
       "slug": "72727272169",
       "title": "72727272",
       "description": "Ruta 72727272",
-      "image": "",
+      "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789541695/nfn4wadnah9s9ytcmypa.png",
       "url": "/share/ruta/72727272169",
       "tipo": "ruta",
-      "timestamp": 1789541530004,
-      "updatedAt": "2026-09-16T06:52:10.004Z",
+      "timestamp": 1789541705480,
+      "updatedAt": "2026-09-16T06:55:05.480Z",
       "categoria": "urbana",
       "tarifa": "",
       "frecuencia": "",
@@ -385,7 +385,7 @@
     }
   ],
   "total": 25,
-  "updatedAt": "2026-09-16T06:52:10.004Z",
+  "updatedAt": "2026-09-16T06:55:05.480Z",
   "version": 1,
-  "__sha": "5bba2ec80ecb1b954f091f3b4360e558bf4b328b"
+  "__sha": "5d8067b013b35518db83364a35e9af75385b01fa"
 }
