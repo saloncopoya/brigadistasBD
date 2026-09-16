@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0e1a">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Uejej · Blog Rutas BGD</title>
+<meta name="description" content="Uejej">
+<link rel="canonical" href="https://brigadistasbd.pages.dev/share/post/uejej169">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" type="image/svg+xml" href="/assets/icon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/icon.svg">
+<link rel="apple-touch-icon" sizes="152x152" href="/assets/icon.svg">
+<link rel="apple-touch-icon" sizes="120x120" href="/assets/icon.svg">
+<meta name="format-detection" content="telephone=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rutas BGD">
+<link rel="preconnect" href="https://unpkg.com">
+<link rel="preconnect" href="https://tile.openstreetmap.org">
+<script src="/js/tile-cache.js"></script>
+
+<!-- Open Graph -->
+<meta property="og:type" content="article">
+<meta property="og:title" content="Uejej · Blog Rutas BGD">
+<meta property="og:description" content="Uejej">
+<meta property="og:image" content="https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789543370/qemih139mvyfvkc2nirw.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:url" content="https://brigadistasbd.pages.dev/share/post/uejej169">
+<meta property="og:site_name" content="Rutas BGD">
+<meta property="og:locale" content="es_MX">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Uejej · Blog Rutas BGD">
+<meta name="twitter:description" content="Uejej">
+<meta name="twitter:image" content="https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789543370/qemih139mvyfvkc2nirw.jpg">
+
+<!-- Schema.org -->
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"Uejej","description":"Uejej","image":"https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789543370/qemih139mvyfvkc2nirw.jpg","url":"https://brigadistasbd.pages.dev/share/post/uejej169","datePublished":"2026-09-16T07:22:56.458Z","author":{"@type":"Organization","name":"Rutas BGD"},"publisher":{"@type":"Organization","name":"Rutas BGD","logo":{"@type":"ImageObject","url":"https://brigadistasbd.pages.dev/assets/icon.svg"}}}</script>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+
+<style>
+:root{
+  --cyan:#00e5ff;--cyan-d:#00b8cc;--cyan-glow:rgba(0,229,255,.35);
+  --purple:#a855f7;--green:#10b981;--amber:#f59e0b;--red:#ef4444;
+  --radius:14px;--radius-sm:10px;--radius-lg:22px;
+  --shadow:0 10px 30px rgba(0,0,0,.35);--shadow-sm:0 4px 12px rgba(0,0,0,.25);
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --header-h:58px;--nav-h:64px;--transition:.25s cubic-bezier(.4,0,.2,1);
+}
+[data-theme="dark"]{--bg:#0a0e1a;--bg-2:#0f1526;--surface:#141c30;--surface-2:#1c2540;--surface-3:#242f4d;--border:#26314f;--border-2:#334066;--text:#e8edf7;--text-2:#a9b4cc;--text-3:#6b7793;--input-bg:#0f1626}
+[data-theme="light"]{--bg:#f4f6fb;--bg-2:#fff;--surface:#fff;--surface-2:#f4f6fb;--surface-3:#e8ecf5;--border:#dde3ee;--border-2:#c5cfe2;--text:#0c1322;--text-2:#4a5773;--text-3:#8a95ad;--input-bg:#f8fafd}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.6;padding:0;padding-top:var(--header-h);padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom))}
+
+/* HEADER */
+.header{position:fixed;top:0;left:0;right:0;height:var(--header-h);background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 14px;z-index:1000}
+.header-brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px;letter-spacing:-.3px;color:var(--text);text-decoration:none}
+.header-brand .logo{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--cyan),var(--cyan-d));display:grid;place-items:center;color:#00121a;box-shadow:0 0 18px var(--cyan-glow)}
+.header-brand .logo svg{width:20px;height:20px}
+.header-brand .brand-txt{background:linear-gradient(90deg,var(--cyan),#7dd3fc);-webkit-background-clip:text;background-clip:text;color:transparent}
+.header-actions{display:flex;align-items:center;gap:6px}
+.icon-btn{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;color:var(--text-2);transition:var(--transition);text-decoration:none}
+.icon-btn:hover{background:var(--surface-2);color:var(--cyan)}
+.icon-btn svg{width:20px;height:20px}
+
+/* NAV INFERIOR */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav-h) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:color-mix(in srgb,var(--surface) 96%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(3,1fr);z-index:1000}
+.nav-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--text-3);font-size:11px;font-weight:600;transition:var(--transition);text-decoration:none;position:relative}
+.nav-item svg{width:23px;height:23px}
+.nav-item.active{color:var(--cyan)}
+.nav-item.active::before{content:"";position:absolute;top:6px;width:44px;height:3px;border-radius:0 0 4px 4px;background:var(--cyan);box-shadow:0 0 14px var(--cyan-glow)}
+
+/* CONTENIDO */
+.wrap{max-width:760px;margin:0 auto;padding:20px}
+.back{display:inline-flex;align-items:center;gap:6px;color:var(--cyan);text-decoration:none;font-size:13px;font-weight:700;margin-bottom:16px}
+h1{font-size:26px;font-weight:900;letter-spacing:-.4px;margin-bottom:8px;line-height:1.2}
+.meta{color:var(--text-2);font-size:13px;margin-bottom:20px}
+
+/* 🔒 IMAGEN SEO: oculta visualmente pero presente para crawlers */
+.seo-hero{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* MAPA GRANDE */
+.route-map-hero{
+  width:100%;height:50vh;min-height:340px;
+  border-radius:var(--radius);overflow:hidden;
+  border:1px solid var(--border);background:var(--surface-2);
+  position:relative;margin-bottom:20px;
+}
+#shareMapBig{width:100%;height:100%;z-index:1}
+.map-fs-btn{position:absolute;bottom:12px;right:12px;z-index:600;background:color-mix(in srgb,var(--surface) 96%,transparent);border:1px solid var(--border-2);border-radius:12px;width:42px;height:42px;display:grid;place-items:center;color:var(--text);box-shadow:var(--shadow);backdrop-filter:blur(10px);cursor:pointer}
+.map-fs-btn svg{width:20px;height:20px}
+.map-wrap.is-fullscreen{position:fixed!important;inset:0!important;z-index:9500!important;margin:0!important;border-radius:0!important;border:none!important;height:100vh!important}
+.map-wrap.is-fullscreen #shareMapBig{height:100vh!important;width:100vw!important}
+body.fs-active{overflow:hidden!important}
+.leaflet-container{background:var(--bg-2)!important;font-family:var(--font)!important}
+.leaflet-control-attribution{background:color-mix(in srgb,var(--surface) 88%,transparent)!important;color:var(--text-2)!important;font-size:10px!important}
+.leaflet-control-attribution a{color:var(--cyan)!important}
+.leaflet-control-zoom a{background:var(--surface)!important;color:var(--text)!important;border-color:var(--border)!important}
+
+
+/* LEYENDA MAPA (compacta) */
+.map-legend{background:color-mix(in srgb,var(--surface) 92%,transparent)!important;padding:4px 10px;border-radius:8px;font-size:11px;color:var(--text);border:1px solid var(--border);line-height:1.3;backdrop-filter:blur(8px)}
+.map-legend .lg-line{display:inline-block;width:16px;height:5px;vertical-align:middle;margin-right:6px;border-radius:2px}
+
+/* Botón centrado inferior dentro del mapa */
+.map-trip-btn-wrap{pointer-events:auto;padding-bottom:6px;position:absolute!important;left:50%!important;bottom:10px!important;transform:translateX(-50%)!important;z-index:700!important}
+.leaflet-bottom.leaflet-left,.leaflet-bottom.leaflet-right{width:100%;pointer-events:none}
+.leaflet-bottom.leaflet-left>*,.leaflet-bottom.leaflet-right>*{pointer-events:auto}
+
+.map-trip-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 14px;border-radius:12px;background:linear-gradient(135deg,var(--cyan),var(--cyan-d));color:#00121a;font-family:inherit;font-weight:800;font-size:12px;letter-spacing:.2px;border:1px solid transparent;box-shadow:0 6px 18px -6px rgba(0,229,255,.35);cursor:pointer;transition:all .25s cubic-bezier(.4,0,.2,1);text-align:center;white-space:nowrap}
+.map-trip-btn:hover{filter:brightness(1.08);box-shadow:0 8px 22px -6px rgba(0,229,255,.55)}
+.map-trip-btn:active{transform:scale(.96)}
+.map-trip-btn svg{width:14px;height:14px}
+.map-trip-btn span{font-size:11.5px;font-weight:800;line-height:1}
+.map-trip-btn small{font-size:9.5px;font-weight:600;opacity:.75;line-height:1;letter-spacing:.1px}
+
+/* BLOQUES */
+.block{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px}
+.block h3{font-size:14px;font-weight:800;margin-bottom:10px;color:var(--cyan);display:flex;align-items:center;gap:6px}
+.block ul{list-style:none;padding:0}
+.block li{padding:7px 0;border-bottom:1px solid var(--border);font-size:14px}
+.block li:last-child{border-bottom:none}
+.post-content{font-size:15.5px;line-height:1.7;color:var(--text);background:var(--surface);padding:18px;border-radius:var(--radius);border:1px solid var(--border);margin-bottom:20px}
+.badge{display:inline-block;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin-bottom:12px}
+.badge-urbana{background:rgba(0,229,255,.16);color:var(--cyan)}
+.badge-foranea{background:rgba(168,85,247,.18);color:var(--purple)}
+.badge-green{background:rgba(16,185,129,.16);color:var(--green)}
+.price{font-size:22px;font-weight:900;color:var(--green);margin:10px 0}
+.cta{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:11px 18px;border-radius:10px;font-weight:700;font-size:13.5px;text-decoration:none;border:none;cursor:pointer;font-family:inherit}
+.btn-primary{background:linear-gradient(135deg,var(--cyan),#00b8cc);color:#00121a}
+.btn-ghost{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+/* 📝 PÁRRAFOS INTRODUCTORIOS (SEO) */
+.intro-paragraphs{margin:20px 0}
+.intro-paragraphs p{font-size:14.5px;line-height:1.75;color:var(--text-2);margin-bottom:14px;text-align:justify}
+.intro-paragraphs p strong{color:var(--text);font-weight:700}
+.intro-paragraphs p a{color:var(--cyan);text-decoration:none}
+.intro-paragraphs p a:hover{text-decoration:underline}
+
+footer{margin-top:30px;padding-top:20px;border-top:1px solid var(--border);color:var(--text-2);font-size:12px;text-align:center}
+footer a{color:var(--cyan)}
+</style>
+</head>
+<body data-theme="dark">
+
+<!-- HEADER -->
+<header class="header">
+  <a class="header-brand" href="https://brigadistasbd.pages.dev/">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+        <circle cx="12" cy="10" r="3"/>
+      </svg>
+    </div>
+    <span class="brand-txt">TUXRUTAS</span>
+    </a>
+  <div class="header-actions">
+    <a class="icon-btn" href="https://brigadistasbd.pages.dev/" title="Ir al inicio">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </a>
+  </div>
+</header>
+
+<div class="wrap">
+
+ <div class="cta">
+    <a class="btn btn-primary" href="https://brigadistasbd.pages.dev/">🚌 Ver todas las rutas</a>
+    <a class="btn btn-ghost" href="https://brigadistasbd.pages.dev/?tab=market" rel="nofollow">🛒 Marketplace</a>
+  </div>
+
+  
+  <span class="badge badge-urbana">Publicación</span>
+  <h1>Uejej</h1>
+  <div class="meta">16 de septiembre de 2026</div>
+
+  <!-- 🔒 IMAGEN SEO: oculta visualmente pero indexable por Google -->
+  <img class="seo-hero" src="https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789543370/qemih139mvyfvkc2nirw.jpg" alt="Uejej" title="Uejej" width="1200" height="630" loading="eager">
+  
+  <div class="post-content">Uejej</div>
+
+
+  
+
+
+  
+  
+  <footer>© 2026 Rutas BGD · <a href="https://brigadistasbd.pages.dev">brigadistasbd.pages.dev</a></footer>
+</div>
+
+<!-- NAV INFERIOR -->
+<nav class="bottom-nav">
+  <a class="nav-item" href="https://brigadistasbd.pages.dev/?tab=home" rel="nofollow">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>Inicio</span>
+  </a>
+  <a class="nav-item " href="https://brigadistasbd.pages.dev/?tab=routes" rel="nofollow">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M6 16V9a4 4 0 0 1 4-4h4"/><path d="M18 8v7a4 4 0 0 1-4 4H9"/></svg>
+    <span>Rutas</span>
+  </a>
+  <a class="nav-item " href="https://brigadistasbd.pages.dev/?tab=market" rel="nofollow">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+    <span>Market</span>
+  </a>
+</nav>
+
+<script>
+// 🖥️ Botón pantalla completa del mapa
+(function(){
+  var btn = document.getElementById('mapFsBtn');
+  var wrap = document.getElementById('mapWrapHero');
+  if(!btn || !wrap) return;
+  var ENTER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>';
+  var EXIT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 3v3a2 2 0 0 1-2 2H4"/><path d="M21 9h-3a2 2 0 0 0-2 2v3"/><path d="M3 15h3a2 2 0 0 1 2 2v3"/><path d="M15 21v-3a2 2 0 0 1 2-2h3"/></svg>';
+  btn.innerHTML = ENTER;
+  btn.onclick = function(){
+    var isFs = wrap.classList.toggle('is-fullscreen');
+    document.body.classList.toggle('fs-active', isFs);
+    btn.innerHTML = isFs ? EXIT : ENTER;
+    setTimeout(function(){ if(window.__shareMap) window.__shareMap.invalidateSize(); }, 250);
+  };
+})();
+</script>
+</body>
+</html>
