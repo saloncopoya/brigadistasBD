@@ -380,7 +380,7 @@ const TILE_HOSTS = [
   'b.tile.openstreetmap.org',
   'c.tile.openstreetmap.org'
 ];
-const TILE_MAX_ENTRIES = 2000;   // tope duro para no llenar el disco
+const TILE_MAX_ENTRIES = 1000;   // tope duro para no llenar el disco
 
 self.addEventListener('fetch', (event) => {
   const req = event.request;
