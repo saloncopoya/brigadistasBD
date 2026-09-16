@@ -937,13 +937,8 @@ body.fs-active{overflow:hidden !important}
         <div id="tripMap" style="width:100%;height:40vh;min-height:260px;z-index:1"></div>
 
         <div class="map-toolbar-below" id="tripToolbar">
-          <button class="tb active" data-tool="addpoint" title="Agregar punto">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          </button>
-          <button class="tb" data-tool="locate" title="Mi ubicación">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
-          </button>
-          <button class="tb tb-text" data-tool="undo" title="Deshacer">
+
+             <button class="tb tb-text" data-tool="undo" title="Deshacer">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="9 14 4 9 9 4"/>
             <path d="M20 20v-7a4 4 0 0 0-4-4H4"/>
@@ -951,10 +946,17 @@ body.fs-active{overflow:hidden !important}
                          <span>DESHACER</span>
 
         </button>
+           
+          <button class="tb active" data-tool="addpoint" title="Agregar punto">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+          <button class="tb" data-tool="locate" title="Mi ubicación">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+          </button>
+        
           <button class="tb tb-text" data-tool="clear" title="Limpiar todo">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                                <span>LIMPIAR</span>
-
+           <span>LIMPIAR MAPA</span>
           </button>
 
         </div>
