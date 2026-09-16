@@ -1145,9 +1145,9 @@ body.fs-active{overflow:hidden !important}
           btn.innerHTML = isFs ? HTML_EXIT : HTML_ENTER;
           btn.title = isFs ? 'Salir de pantalla completa' : 'Pantalla completa';
           setTimeout(() => state.map && state.map.invalidateSize(), 250);
-        };
+            };
       }
-    }, 50);
+    }
      state.map.on('click', async e=>{
   if(!state.drawing) return;
   const snapped = await snapToRoad(e.latlng.lat, e.latlng.lng);
