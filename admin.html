@@ -9,8 +9,7 @@
 <title>Admin · Rutas BGD</title>
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" type="image/svg+xml" href="/assets/icon.svg">
-<link rel="preconnect" href="https://unpkg.com">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
 <style>
 :root{
   --cyan:#00e5ff;--cyan-d:#00b8cc;--cyan-glow:rgba(0,229,255,.35);
@@ -784,12 +783,14 @@ body.fs-active{overflow:hidden !important}
 
 <div class="toast-wrap" id="toastWrap"></div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-<script src="https://unpkg.com/leaflet-image@0.4.0/leaflet-image.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/idb@8/build/umd.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-<script src="/js/db.js"></script>
+<script src="/vendor/leaflet/leaflet.js"></script>
+<script src="/vendor/leaflet-image/leaflet-image.js"></script>
+<script src="/vendor/idb/umd.js"></script>
+<script src="/vendor/firebase/firebase-app-compat.js"></script>
+<script src="/vendor/firebase/firebase-database-compat.js"></script>
+<script src="/vendor/firebase/firebase-messaging-compat.js"></script>
+  
+  <script src="/js/db.js"></script>
 <script src="/js/publisher.js"></script>
 <script>
 /* ========================================================================
