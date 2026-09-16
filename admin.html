@@ -831,6 +831,68 @@ body.fs-active{overflow:hidden !important}
   let fbDB = null;
   try { firebase.initializeApp(FIREBASE_CONFIG); fbDB = firebase.database(); } catch(e){ console.warn('FB init:', e); }
 
+    // ==================== HELPER PROFESIONAL DE MAPAS ====================
+  // Sin timers, sin sondeo. Solo eventos nativos del navegador.
+  const registeredMaps = new Set();
+
+  function registerMap(mapInstance) {
+    if (!mapInstance || registeredMaps.has(mapInstance)) return;
+    registeredMaps.add(mapInstance);
+
+    const container = mapInstance.getContainer();
+    if (!container) return;
+
+    const fix = () => {
+      requestAnimationFrame(() => {
+        try { mapInstance.invalidateSize({ pan: false, animate: false }); } catch (e) {}
+      });
+    };
+
+    if ('ResizeObserver' in window) {
+      const ro = new ResizeObserver(fix);
+      ro.observe(container);
+      mapInstance.__ro = ro;
+    }
+
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver(entries => {
+        entries.forEach(e => { if (e.isIntersecting) fix(); });
+      }, { threshold: [0, 0.01, 0.1] });
+      io.observe(container);
+      mapInstance.__io = io;
+    }
+
+    const modalObserver = new MutationObserver(mutations => {
+      for (const m of mutations) {
+        if (m.type === 'attributes' && m.attributeName === 'class') {
+          const el = m.target;
+          if (el.classList && el.classList.contains('open')) fix();
+        }
+      }
+    });
+    document.querySelectorAll('.modal').forEach(el => {
+      modalObserver.observe(el, { attributes: true, attributeFilter: ['class'] });
+    });
+    mapInstance.__mo = modalObserver;
+
+    if (!mapInstance.__visHandler) {
+      mapInstance.__visHandler = () => { if (!document.hidden) fix(); };
+      document.addEventListener('visibilitychange', mapInstance.__visHandler, { passive: true });
+    }
+    if (!mapInstance.__winHandler) {
+      mapInstance.__winHandler = () => fix();
+      window.addEventListener('resize', mapInstance.__winHandler, { passive: true });
+    }
+
+    fix();
+  }
+
+  function refreshMap(mapInstance) {
+    if (!mapInstance) return;
+    try { mapInstance.invalidateSize({ pan: false, animate: false }); } catch (e) {}
+  }
+
+  
   // ---------- Utilidades ----------
   const $ = (s,r=document)=>r.querySelector(s);
   const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
@@ -1045,6 +1107,8 @@ body.fs-active{overflow:hidden !important}
   function initEditorMap(){
     if(state.map) return;
     state.map = L.map('editorMap',{zoomControl:true}).setView([16.7530,-93.1150],13);
+        // ✨ Registrar el mapa para auto-reparación (sin timers)
+    registerMap(state.map);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
       maxZoom:19, attribution:'© OpenStreetMap'
     }).addTo(state.map);
@@ -1258,7 +1322,8 @@ body.fs-active{overflow:hidden !important}
     $('#routeNext').classList.toggle('hidden', n===3);
     $('#routeSave').classList.toggle('hidden', n!==3);
     if(n===3){
-      setTimeout(()=>{
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
         initEditorMap();
         if(state.map){
           state.map.invalidateSize();
@@ -1334,25 +1399,29 @@ body.fs-active{overflow:hidden !important}
           // 🔍 FORZAR el zoom para que se vea toda la ruta (geometría + puntos)
           // Esto soluciona el problema de "no veo el trazado" porque
           // fitBounds se hace sobre TODA la geometría, no solo los puntos crudos.
-          setTimeout(() => {
+          const doFitBounds = () => {
+            if (!state.map) return;
+            refreshMap(state.map);
             const allCoords = [];
             if (state.routeDraft.puntos) allCoords.push(...state.routeDraft.puntos);
             if (state.routeDraft.puntosVuelta) allCoords.push(...state.routeDraft.puntosVuelta);
             if (state.routeDraft.geometriaIda) allCoords.push(...state.routeDraft.geometriaIda);
             if (state.routeDraft.geometriaVuelta) allCoords.push(...state.routeDraft.geometriaVuelta);
             if (allCoords.length > 1) {
-              try {
-                state.map.fitBounds(L.latLngBounds(allCoords).pad(0.15));
-              } catch(e) { /* ignorar */ }
+              try { state.map.fitBounds(L.latLngBounds(allCoords).pad(0.15)); } catch(e) {}
             }
-          }, 300);
+          };
+          requestAnimationFrame(() => {
+            requestAnimationFrame(doFitBounds);
+          });
 
           // Si NO es edición, refrescamos por si acaso
           if (!isEdit) redrawLines();
 
           updateEditorStatus();
         }
-      },200);
+            });
+      });
     }
   }
   $('#routePrev').onclick = ()=>goStep(Math.max(1,state.routeStep-1));
