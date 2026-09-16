@@ -701,7 +701,12 @@ function renderRouteMapBlock(route) {
       var map = L.map('shareMapBig', { zoomControl: true, scrollWheelZoom: false });
       window.__shareMap = map;
       // Caché de mosaicos compartida (mismo IndexedDB que la app principal)
-L.tileLayer.offline('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+// 🛡️ Usar .offline si existe, si no, tileLayer normal (con crossOrigin)
+var tileFn = (typeof L.tileLayer.offline === 'function') 
+  ? L.tileLayer.offline.bind(L.tileLayer)
+  : L.tileLayer.bind(L.tileLayer);
+
+tileFn('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 19,
   crossOrigin: true,
   attribution: '© OpenStreetMap'
