@@ -1,6 +1,25 @@
 {
   "posts": [
     {
+      "slug": "test_1789545534135_3kra",
+      "title": "TEST POST AUTO",
+      "description": "Contenido de prueba generado automáticamente",
+      "image": "",
+      "url": "/share/post/test_1789545534135_3kra",
+      "tipo": "post",
+      "timestamp": 1789545535225,
+      "updatedAt": "2026-09-16T07:58:55.225Z",
+      "categoria": "",
+      "tarifa": "",
+      "frecuencia": "",
+      "horarioIni": "",
+      "horarioFin": "",
+      "dias": "",
+      "paradas": [],
+      "calles": [],
+      "pois": []
+    },
+    {
       "slug": "test_1789544868352",
       "title": "TEST DE VERIFICACIÓN",
       "description": "Esta es una prueba automática. Puedes borrarla después.",
@@ -455,8 +474,8 @@
       "updatedAt": "2026-09-13T08:52:43.612Z"
     }
   ],
-  "total": 27,
-  "updatedAt": "2026-09-16T07:57:37.345Z",
+  "total": 28,
+  "updatedAt": "2026-09-16T07:58:55.225Z",
   "version": 1,
-  "__sha": "2c29487e293d62fc24e8f2afb3b29e6156cc93b3"
+  "__sha": "6628d5d15c1bf55157bbaba6c64a6c2896085b27"
 }
