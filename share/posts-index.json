@@ -1,6 +1,25 @@
 {
   "posts": [
     {
+      "slug": "test_1789545537166_931r",
+      "title": "TEST ANUNCIO AUTO",
+      "description": "Anuncio de prueba generado automáticamente",
+      "image": "",
+      "url": "/share/m/test_1789545537166_931r",
+      "tipo": "market",
+      "timestamp": 1789545538130,
+      "updatedAt": "2026-09-16T07:58:58.130Z",
+      "categoria": "",
+      "tarifa": "",
+      "frecuencia": "",
+      "horarioIni": "",
+      "horarioFin": "",
+      "dias": "",
+      "paradas": [],
+      "calles": [],
+      "pois": []
+    },
+    {
       "slug": "test_1789545534135_3kra",
       "title": "TEST POST AUTO",
       "description": "Contenido de prueba generado automáticamente",
@@ -474,8 +493,8 @@
       "updatedAt": "2026-09-13T08:52:43.612Z"
     }
   ],
-  "total": 28,
-  "updatedAt": "2026-09-16T07:58:55.225Z",
+  "total": 29,
+  "updatedAt": "2026-09-16T07:58:58.130Z",
   "version": 1,
-  "__sha": "6628d5d15c1bf55157bbaba6c64a6c2896085b27"
+  "__sha": "60cc11193aca8ad97a0e4c07804bdb83e1783717"
 }
