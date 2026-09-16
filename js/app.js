@@ -1119,9 +1119,9 @@ const tripBtn = L.control({ position: 'bottomleft' });
         </button>`;
       const btn = div.querySelector('.map-trip-btn');
       L.DomEvent.disableClickPropagation(div);
-      btn.addEventListener('click', () => {
-        navigateTo('trip');
-      });
+        btn.addEventListener('click', () => {
+  window.location.href = '/mapainteractivo';
+});
       return div;
     };
     tripBtn.addTo(state.map);
