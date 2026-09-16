@@ -1072,8 +1072,8 @@ body.fs-active{overflow:hidden !important}
     return id;
   }
 
-  async function activarNotificacionesPush() {
-    if (!('Notification' in window)) {
+  async function activarNotificacionesPush(forzar = false) {
+     if (!('Notification' in window)) {
       alert('Tu navegador no soporta notificaciones');
       return;
     }
@@ -1104,8 +1104,15 @@ body.fs-active{overflow:hidden !important}
         serviceWorkerRegistration: registration
       });
 
-      if (!token) {
+            if (!token) {
         alert('No se pudo obtener el token de notificaciones');
+        return;
+      }
+
+      // 🎯 Si el token no cambió y NO se fuerza, no tocamos la DB
+      const tokenGuardado = localStorage.getItem('fcm_token');
+      if (!forzar && tokenGuardado === token) {
+        console.log('[FCM] Token sin cambios, no se reescribe la DB');
         return;
       }
 
@@ -1133,17 +1140,24 @@ body.fs-active{overflow:hidden !important}
 
   // Conectar el botón
   const btn = document.getElementById('notifBtn');
-  if (btn) btn.addEventListener('click', activarNotificacionesPush);
-
+  if (btn) btn.addEventListener('click', () => activarNotificacionesPush(true));
+   
   // Auto-activar SOLO si ya dio permiso antes (no molestar)
   window.addEventListener('load', () => {
     if (Notification.permission === 'granted') {
-      setTimeout(() => activarNotificacionesPush(), 2000);
+      setTimeout(() => activarNotificacionesPush(false), 2000);
     }
   });
 
-  // Exponer global
+   // Exponer global
   window.activarNotificacionesPush = activarNotificacionesPush;
+
+  // 🔄 Re-verificar token cuando vuelve la conexión (por si cambió mientras estaba offline)
+  window.addEventListener('online', () => {
+    if (Notification.permission === 'granted') {
+      activarNotificacionesPush(false);
+    }
+  });
 })();
 </script>
    
