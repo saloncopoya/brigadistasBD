@@ -1,6 +1,25 @@
 {
   "posts": [
     {
+      "slug": "72727272169",
+      "title": "72727272",
+      "description": "Ruta 72727272",
+      "image": "",
+      "url": "/share/ruta/72727272169",
+      "tipo": "ruta",
+      "timestamp": 1789541530004,
+      "updatedAt": "2026-09-16T06:52:10.004Z",
+      "categoria": "urbana",
+      "tarifa": "",
+      "frecuencia": "",
+      "horarioIni": "",
+      "horarioFin": "",
+      "dias": "todos",
+      "paradas": [],
+      "calles": [],
+      "pois": []
+    },
+    {
       "slug": "255tg169",
       "title": "255TG",
       "description": "Ruta 255TG",
@@ -365,8 +384,8 @@
       "updatedAt": "2026-09-13T08:52:43.612Z"
     }
   ],
-  "total": 24,
-  "updatedAt": "2026-09-16T06:50:08.959Z",
+  "total": 25,
+  "updatedAt": "2026-09-16T06:52:10.004Z",
   "version": 1,
-  "__sha": "f075c6943a85b230137fd62542e5eacdf518295a"
+  "__sha": "5bba2ec80ecb1b954f091f3b4360e558bf4b328b"
 }
