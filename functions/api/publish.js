@@ -795,8 +795,8 @@ function renderRouteMapBlock(route) {
       legend.addTo(map);
 
       // 🚀 Botón centrado abajo: "Agregar puntos de viaje" → ir a trip
-      var tripBtn = L.control({ position: 'bottomcenter' });
-      tripBtn.onAdd = function(){
+var tripBtn = L.control({ position: 'bottomleft' });
+tripBtn.onAdd = function(){
         var div = L.DomUtil.create('div', 'map-trip-btn-wrap');
         div.innerHTML =
           '<button class="map-trip-btn" type="button">' +
