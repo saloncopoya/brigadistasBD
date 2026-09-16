@@ -784,7 +784,15 @@ const url = location.origin + '/share/post/' + post.id;
         </button>
       </div>`;
     $('#btnShareRoute').onclick = () => shareRoute(route);
-    $('#btnBackRoute').onclick = () => navigateTo('routes');
+    $('#btnBackRoute').onclick = () => {
+      // 🎯 Comportarse como el botón físico de retroceder
+      if (state.historyStack.length > 1) {
+        state.historyStack.pop();
+        history.back();
+      } else {
+        navigateTo('routes');
+      }
+    };
      
     // Panel inferior
     const panel = $('#routePanel');
@@ -2311,6 +2319,32 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
   });
   $('#btnTripSearch').onclick = performTripSearch;
 
+  // 🎯 Botón Regresar en "Buscar viaje en mapa"
+  const tripBackBtn = document.getElementById('tripBackBtn');
+  if (tripBackBtn) {
+    tripBackBtn.onclick = () => {
+      if (state.historyStack.length > 1) {
+        state.historyStack.pop();
+        history.back();
+      } else {
+        navigateTo('routes');
+      }
+    };
+  }
+
+  // 🎯 Botón Compartir en "Buscar viaje en mapa"
+  const tripShareBtn = document.getElementById('tripShareBtn');
+  if (tripShareBtn) {
+    tripShareBtn.onclick = async () => {
+      const url = location.origin + '/?tab=trip';
+      const res = await Publisher.share({
+        title: 'Buscar viaje en mapa · Rutas BGD',
+        text: 'Encuentra rutas cercanas a tu ubicación en el mapa',
+        url
+      });
+      if (res.method === 'clipboard') toast('Enlace copiado ✓');
+    };
+  }
   // Toolbar trip
   $$('#tripToolbar .tb').forEach(b => {
     b.onclick = () => {
@@ -2466,8 +2500,15 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
     bindPostEvents(el);
   }
 
-  $('#postBack').onclick = () => navigateTo('home');
-
+  $('#postBack').onclick = () => {
+    if (state.historyStack.length > 1) {
+      state.historyStack.pop();
+      history.back();
+    } else {
+      navigateTo('home');
+    }
+  };
+   
   // Manejar clics en enlaces de botón atrás del navegador dentro de la app
   window.addEventListener('load', () => {
     // Detectar si hay que abrir admin
