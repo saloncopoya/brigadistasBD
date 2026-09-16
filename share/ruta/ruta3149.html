@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0a0e1a">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>RUTA 3 - urbana · Tuxtla Gutiérrez Chiapas</title>
-<meta name="description" content=" Ruta de Tuxtla Gutiérrez Chiapas ·  Colonia Terán, Módulo II, Fraccionamiento Los Olivos II, Panteón de Terán, Colonia Ampliación Terán... ·  Calle 1a Ori">
+<meta name="description" content=" Ruta de Tuxtla Gutiérrez Chiapasj ·  Colonia Terán, Módulo II, Fraccionamiento Los Olivos II, Panteón de Terán, Colonia Ampliación Terán... ·  Calle 1a Or">
 <link rel="canonical" href="https://brigadistasbd.pages.dev/share/ruta/ruta3149">
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" type="image/svg+xml" href="/assets/icon.svg">
@@ -24,7 +24,7 @@
 <!-- Open Graph -->
 <meta property="og:type" content="website">
 <meta property="og:title" content="RUTA 3 - urbana · Tuxtla Gutiérrez Chiapas">
-<meta property="og:description" content=" Ruta de Tuxtla Gutiérrez Chiapas ·  Colonia Terán, Módulo II, Fraccionamiento Los Olivos II, Panteón de Terán, Colonia Ampli">
+<meta property="og:description" content=" Ruta de Tuxtla Gutiérrez Chiapasj ·  Colonia Terán, Módulo II, Fraccionamiento Los Olivos II, Panteón de Terán, Colonia Ampl">
 <meta property="og:image" content="https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789463101/qigspxz4quvtrfqiko0c.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -36,11 +36,11 @@
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="RUTA 3 - urbana · Tuxtla Gutiérrez Chiapas">
-<meta name="twitter:description" content=" Ruta de Tuxtla Gutiérrez Chiapas ·  Colonia Terán, Módulo II, Fraccionamiento Los Olivos II, Panteón de Terán, Colonia Ampli">
+<meta name="twitter:description" content=" Ruta de Tuxtla Gutiérrez Chiapasj ·  Colonia Terán, Módulo II, Fraccionamiento Los Olivos II, Panteón de Terán, Colonia Ampl">
 <meta name="twitter:image" content="https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789463101/qigspxz4quvtrfqiko0c.jpg">
 
 <!-- Schema.org -->
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"BusTrip","name":"RUTA 3","description":" Ruta de Tuxtla Gutiérrez Chiapas ·  Colonia Terán, Módulo II, Fraccionamiento Los Olivos II, Panteón de Terán, Colonia Ampliación Terán... ·  Calle 1a Oriente ","url":"https://brigadistasbd.pages.dev/share/ruta/ruta3149","image":"https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789463101/qigspxz4quvtrfqiko0c.jpg","provider":{"@type":"Organization","name":"Rutas BGD","url":"https://brigadistasbd.pages.dev"},"itinerary":[]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BusTrip","name":"RUTA 3","description":" Ruta de Tuxtla Gutiérrez Chiapasj ·  Colonia Terán, Módulo II, Fraccionamiento Los Olivos II, Panteón de Terán, Colonia Ampliación Terán... ·  Calle 1a Oriente","url":"https://brigadistasbd.pages.dev/share/ruta/ruta3149","image":"https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789463101/qigspxz4quvtrfqiko0c.jpg","provider":{"@type":"Organization","name":"Rutas BGD","url":"https://brigadistasbd.pages.dev"},"itinerary":[]}</script>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
 
@@ -103,9 +103,22 @@ body.fs-active{overflow:hidden!important}
 .leaflet-control-attribution a{color:var(--cyan)!important}
 .leaflet-control-zoom a{background:var(--surface)!important;color:var(--text)!important;border-color:var(--border)!important}
 
-/* LEYENDA MAPA */
-.map-legend{background:color-mix(in srgb,var(--surface) 92%,transparent)!important;padding:8px 12px;border-radius:10px;font-size:12px;color:var(--text);border:1px solid var(--border);line-height:1.6;backdrop-filter:blur(8px)}
-.map-legend .lg-line{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:6px;border-radius:2px}
+
+/* LEYENDA MAPA (compacta) */
+.map-legend{background:color-mix(in srgb,var(--surface) 92%,transparent)!important;padding:4px 10px;border-radius:8px;font-size:11px;color:var(--text);border:1px solid var(--border);line-height:1.3;backdrop-filter:blur(8px)}
+.map-legend .lg-line{display:inline-block;width:16px;height:5px;vertical-align:middle;margin-right:6px;border-radius:2px}
+
+/* Botón centrado inferior dentro del mapa */
+.map-trip-btn-wrap{pointer-events:auto;padding-bottom:6px;position:absolute!important;left:50%!important;bottom:10px!important;transform:translateX(-50%)!important;z-index:700!important}
+.leaflet-bottom.leaflet-left,.leaflet-bottom.leaflet-right{width:100%;pointer-events:none}
+.leaflet-bottom.leaflet-left>*,.leaflet-bottom.leaflet-right>*{pointer-events:auto}
+
+.map-trip-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 14px;border-radius:12px;background:linear-gradient(135deg,var(--cyan),var(--cyan-d));color:#00121a;font-family:inherit;font-weight:800;font-size:12px;letter-spacing:.2px;border:1px solid transparent;box-shadow:0 6px 18px -6px rgba(0,229,255,.35);cursor:pointer;transition:all .25s cubic-bezier(.4,0,.2,1);text-align:center;white-space:nowrap}
+.map-trip-btn:hover{filter:brightness(1.08);box-shadow:0 8px 22px -6px rgba(0,229,255,.55)}
+.map-trip-btn:active{transform:scale(.96)}
+.map-trip-btn svg{width:14px;height:14px}
+.map-trip-btn span{font-size:11.5px;font-weight:800;line-height:1}
+.map-trip-btn small{font-size:9.5px;font-weight:600;opacity:.75;line-height:1;letter-spacing:.1px}
 
 /* BLOQUES */
 .block{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px}
@@ -164,7 +177,7 @@ footer a{color:var(--cyan)}
   
   <span class="badge badge-urbana">Ruta</span>
   <h1>RUTA 3</h1>
-  <div class="meta">15 de septiembre de 2026</div>
+  <div class="meta">16 de septiembre de 2026</div>
 
   <!-- 🔒 IMAGEN SEO: oculta visualmente pero indexable por Google -->
   <img class="seo-hero" src="https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789463101/qigspxz4quvtrfqiko0c.jpg" alt="RUTA 3" title="RUTA 3" width="1200" height="630" loading="eager">
@@ -189,8 +202,13 @@ footer a{color:var(--cyan)}
       if (typeof L === 'undefined') return;
       var map = L.map('shareMapBig', { zoomControl: true, scrollWheelZoom: false });
       window.__shareMap = map;
+      // Caché de mosaicos compartida (mismo IndexedDB que la app principal)
+      // 🛡️ En páginas publicadas, usar tileLayer estándar.
+      // El SW cachea automáticamente y el navegador cachea HTTP.
+      // NO usar L.tileLayer.offline aquí para evitar dependencias de scripts.
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
+        crossOrigin: true,
         attribution: '© OpenStreetMap'
       }).addTo(map);
 
@@ -268,21 +286,53 @@ footer a{color:var(--cyan)}
         map.setView([16.7530, -93.1150], 13);
       }
 
-      // 🏷️ LEYENDA IDA / REGRESO
+      // 🏷️ LEYENDA IDA / REGRESO (compacta, líneas gruesas) + botón viaje
       var legend = L.control({ position: 'bottomleft' });
       legend.onAdd = function(){
         var div = L.DomUtil.create('div', 'map-legend');
-        div.innerHTML = '<div><span class="lg-line" style="background:' + DATA.colorIda + '"></span> IDA</div>' +
-                        '<div><span class="lg-line" style="background:' + DATA.colorVuelta + '"></span> REGRESO</div>';
+        div.innerHTML =
+          '<div style="background:rgba(20,28,48,.92);padding:4px 10px;border-radius:8px;font-size:11px;color:#e8edf7;border:1px solid #26314f;line-height:1.3;display:flex;flex-direction:column;gap:2px">' +
+            '<div style="display:flex;align-items:center;gap:6px">' +
+              '<span style="display:inline-block;width:16px;height:5px;background:' + DATA.colorIda + ';border-radius:2px"></span>' +
+              '<span>Ida</span>' +
+            '</div>' +
+            '<div style="display:flex;align-items:center;gap:6px">' +
+              '<span style="display:inline-block;width:16px;height:5px;background:' + DATA.colorVuelta + ';border-radius:2px"></span>' +
+              '<span>Regreso</span>' +
+            '</div>' +
+          '</div>';
         return div;
       };
       legend.addTo(map);
+
+      // 🚀 Botón centrado abajo: "Agregar puntos de viaje" → ir a trip
+var tripBtn = L.control({ position: 'bottomleft' });
+tripBtn.onAdd = function(){
+        var div = L.DomUtil.create('div', 'map-trip-btn-wrap');
+        div.innerHTML =
+          '<button class="map-trip-btn" type="button">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="14" height="14">' +
+              '<circle cx="12" cy="12" r="10"/>' +
+              '<line x1="12" y1="8" x2="12" y2="16"/>' +
+              '<line x1="8" y1="12" x2="16" y2="12"/>' +
+            '</svg>' +
+            '<span>Agregar puntos de viaje</span>' +
+            '<small>Rutas relacionadas · Mapa interactivo</small>' +
+          '</button>';
+        var btn = div.querySelector('.map-trip-btn');
+        L.DomEvent.disableClickPropagation(div);
+        btn.addEventListener('click', function(){
+          window.location.href = 'https://brigadistasbd.pages.dev/?tab=trip';
+        });
+        return div;
+      };
+      tripBtn.addTo(map);
     })();
     </script>
-  <div class="block"><h3>📝 Notas adicionales</h3><div style="font-size:14px;line-height:1.6;color:var(--text-2);white-space:pre-wrap">Ruta de Tuxtla Gutiérrez Chiapas</div></div><div class="block"><h3>📊 Resumen del recorrido</h3><p style="font-size:14.5px;line-height:1.75;color:var(--text-2);margin:0">Esta ruta de colectivo cuenta con un total de <strong>18 calles y avenidas, 34 POIs de ida</strong> a lo largo de su recorrido completo. A continuación se detalla cada uno de estos elementos para que los usuarios puedan planificar su viaje con información precisa y actualizada.</p></div><div class="block"><h3>ℹ️ Información</h3><ul><li>📅 Días: todos</li></ul></div><div class="block"><h3>🏥 POIs de Ida</h3><ul><li>Colonia Terán</li><li>Módulo II</li><li>Fraccionamiento Los Olivos II</li><li>Panteón de Terán</li><li>Colonia Ampliación Terán</li><li>Cobach 01 Plantel Tuxtla Terán</li><li>UNACH. Facultad de Humanidades</li><li>Escuela Preparatoria No. 7 del Estado</li><li>Escuela Preparatoria No. 2 del Estado (cerca)</li><li>UNACH. Facultad de de Contaduría y Administración</li><li>Campus I</li><li>Plaza Crystal / Galerías / Chedraui</li><li>Sam&#39;s Club</li><li>Parque Caña Hueca</li><li>Parque Tuchtlán</li><li>Parque Joyyo Mayu</li><li>Plaza de las Américas / Plaza Sol / Terminal OCC</li><li>CAT Telcel 5a Norte</li><li>Fraccionamiento Arboledas (cerca)</li><li>Cruz Roja 5a Norte</li><li>Colonia El Magueyito</li><li>Estación de Bomberos 5a Norte</li><li>Jardín Botánico Faustino Miranda</li><li>Teatro de la ciudad Emilio Rabasa</li><li>Centro de Convivencia infantil</li><li>Estadio Víctor Manuel Reyna</li><li>Parque del Oriente</li><li>Colonia El Vergel</li><li>Colonia El Brasilito (cerca)</li><li>Parque 5 de mayo</li><li>Mercado de los Ancianos</li><li>Panteón Municipal</li><li>Hospital Regional Dr. Rafael Pascacio Gamboa</li><li>Mercado Centro - Mercado Público Municipal Juan Sabines (cerca)</li></ul></div><div class="block"><h3>🛣️ Calles</h3><ul><li>Calle 1a Oriente Sur</li><li>Avenida 9a Sur Oriente cerca de Calle 1a Oriente Sur</li><li>Calle Décima Tercera Oriente Sur entre Avenida 9a Sur Oriente y Avenida 4a Norte Oriente</li><li>Avenida 4a Norte Oriente entre Calle Décima Tercera Oriente Sur y Calle Décima Sexta Oriente Norte</li><li>Calle Décima Sexta Oriente Norte entre Avenida 4a Norte Oriente y Calzada Ignacio Zaragoza</li><li>Calzada Ignacio Zaragoza entre Calle Décima Sexta Oriente Norte y Avenida Laurel</li><li>Avenida Laurel entre Calzada Ignacio Zaragoza y Avenida Rosa del Poniente</li><li>Avenida Rosa del Poniente entre Avenida Laurel y Calzada de las Culturas</li><li>Calzada de las Culturas entre Avenida Rosa del Poniente y Calzada al Sumidero</li><li>Calzada al Sumidero entre Calzada de las Culturas y Avenida 5a. Norte Oriente</li><li>Avenida 5a. Norte Oriente entre Calzada al Sumidero y Prolongacion 5a Norte Poniente</li><li>Prolongacion 5a Norte Poniente entre Avenida 5a. Norte Oriente y Boulevard Doctor Belisario Domínguez</li><li>Boulevard Doctor Belisario Domínguez cerca de Prolongacion 5a Norte Poniente</li><li>Avenida Quetzales entre Boulevard Doctor Belisario Domínguez y Avenida 2a Sur Oriente</li><li>Avenida 2a Sur Oriente entre Avenida Quetzales y Calzada Emiliano Zapata</li><li>Calzada Emiliano Zapata entre Avenida 2a Sur Oriente y Avenida de los Gardenias</li><li>Avenida de los Gardenias entre Calzada Emiliano Zapata y Calle de los Tulipanes</li><li>Calle de los Tulipanes</li></ul></div>
+  <div class="block"><h3>📝 Notas adicionales</h3><div style="font-size:14px;line-height:1.6;color:var(--text-2);white-space:pre-wrap">Ruta de Tuxtla Gutiérrez Chiapasj</div></div><div class="block"><h3>📊 Resumen del recorrido</h3><p style="font-size:14.5px;line-height:1.75;color:var(--text-2);margin:0">Esta ruta de colectivo cuenta con un total de <strong>18 calles y avenidas, 34 POIs de ida</strong> a lo largo de su recorrido completo. A continuación se detalla cada uno de estos elementos para que los usuarios puedan planificar su viaje con información precisa y actualizada.</p></div><div class="block"><h3>ℹ️ Información</h3><ul><li>📅 Días: todos</li></ul></div><div class="block"><h3>🏥 POIs de Ida</h3><ul><li>Colonia Terán</li><li>Módulo II</li><li>Fraccionamiento Los Olivos II</li><li>Panteón de Terán</li><li>Colonia Ampliación Terán</li><li>Cobach 01 Plantel Tuxtla Terán</li><li>UNACH. Facultad de Humanidades</li><li>Escuela Preparatoria No. 7 del Estado</li><li>Escuela Preparatoria No. 2 del Estado (cerca)</li><li>UNACH. Facultad de de Contaduría y Administración</li><li>Campus I</li><li>Plaza Crystal / Galerías / Chedraui</li><li>Sam&#39;s Club</li><li>Parque Caña Hueca</li><li>Parque Tuchtlán</li><li>Parque Joyyo Mayu</li><li>Plaza de las Américas / Plaza Sol / Terminal OCC</li><li>CAT Telcel 5a Norte</li><li>Fraccionamiento Arboledas (cerca)</li><li>Cruz Roja 5a Norte</li><li>Colonia El Magueyito</li><li>Estación de Bomberos 5a Norte</li><li>Jardín Botánico Faustino Miranda</li><li>Teatro de la ciudad Emilio Rabasa</li><li>Centro de Convivencia infantil</li><li>Estadio Víctor Manuel Reyna</li><li>Parque del Oriente</li><li>Colonia El Vergel</li><li>Colonia El Brasilito (cerca)</li><li>Parque 5 de mayo</li><li>Mercado de los Ancianos</li><li>Panteón Municipal</li><li>Hospital Regional Dr. Rafael Pascacio Gamboa</li><li>Mercado Centro - Mercado Público Municipal Juan Sabines (cerca)</li></ul></div><div class="block"><h3>🛣️ Calles</h3><ul><li>Calle 1a Oriente Sur</li><li>Avenida 9a Sur Oriente cerca de Calle 1a Oriente Sur</li><li>Calle Décima Tercera Oriente Sur entre Avenida 9a Sur Oriente y Avenida 4a Norte Oriente</li><li>Avenida 4a Norte Oriente entre Calle Décima Tercera Oriente Sur y Calle Décima Sexta Oriente Norte</li><li>Calle Décima Sexta Oriente Norte entre Avenida 4a Norte Oriente y Calzada Ignacio Zaragoza</li><li>Calzada Ignacio Zaragoza entre Calle Décima Sexta Oriente Norte y Avenida Laurel</li><li>Avenida Laurel entre Calzada Ignacio Zaragoza y Avenida Rosa del Poniente</li><li>Avenida Rosa del Poniente entre Avenida Laurel y Calzada de las Culturas</li><li>Calzada de las Culturas entre Avenida Rosa del Poniente y Calzada al Sumidero</li><li>Calzada al Sumidero entre Calzada de las Culturas y Avenida 5a. Norte Oriente</li><li>Avenida 5a. Norte Oriente entre Calzada al Sumidero y Prolongacion 5a Norte Poniente</li><li>Prolongacion 5a Norte Poniente entre Avenida 5a. Norte Oriente y Boulevard Doctor Belisario Domínguez</li><li>Boulevard Doctor Belisario Domínguez cerca de Prolongacion 5a Norte Poniente</li><li>Avenida Quetzales entre Boulevard Doctor Belisario Domínguez y Avenida 2a Sur Oriente</li><li>Avenida 2a Sur Oriente entre Avenida Quetzales y Calzada Emiliano Zapata</li><li>Calzada Emiliano Zapata entre Avenida 2a Sur Oriente y Avenida de los Gardenias</li><li>Avenida de los Gardenias entre Calzada Emiliano Zapata y Calle de los Tulipanes</li><li>Calle de los Tulipanes</li></ul></div>
 
 
-  <div class="intro-paragraphs"><p>La <strong>RUTA 3</strong> es una ruta de colectivo de categoría <strong>urbana</strong> que opera en la ciudad de Tuxtla Gutiérrez, Chiapas, México.    Los días de operación son <strong>todos</strong>.</p><p>El recorrido de la ruta atraviesa las siguientes vialidades principales de Tuxtla Gutiérrez: Calle 1a Oriente Sur, Avenida 9a Sur Oriente cerca de Calle 1a Oriente Sur, Calle Décima Tercera Oriente Sur entre Avenida 9a Sur Oriente y Avenida 4a Norte Oriente, Avenida 4a Norte Oriente entre Calle Décima Tercera Oriente Sur y Calle Décima Sexta Oriente Norte, Calle Décima Sexta Oriente Norte entre Avenida 4a Norte Oriente y Calzada Ignacio Zaragoza, Calzada Ignacio Zaragoza entre Calle Décima Sexta Oriente Norte y Avenida Laurel, Avenida Laurel entre Calzada Ignacio Zaragoza y Avenida Rosa del Poniente, Avenida Rosa del Poniente entre Avenida Laurel y Calzada de las Culturas, Calzada de las Culturas entre Avenida Rosa del Poniente y Calzada al Sumidero, Calzada al Sumidero entre Calzada de las Culturas y Avenida 5a. Norte Oriente, Avenida 5a. Norte Oriente entre Calzada al Sumidero y Prolongacion 5a Norte Poniente, Prolongacion 5a Norte Poniente entre Avenida 5a. Norte Oriente y Boulevard Doctor Belisario Domínguez, entre otras calles y avenidas. Este trayecto conecta zonas clave de la ciudad y facilita el transporte de miles de pasajeros diariamente.</p><p>A lo largo de su trayecto, esta ruta pasa cerca de importantes puntos de interés (POIs) como: Colonia Terán, Módulo II, Fraccionamiento Los Olivos II, Panteón de Terán, Colonia Ampliación Terán, Cobach 01 Plantel Tuxtla Terán, UNACH. Facultad de Humanidades, Escuela Preparatoria No. 7 del Estado, Escuela Preparatoria No. 2 del Estado (cerca), UNACH. Facultad de de Contaduría y Administración, entre otros lugares de interés. Estos puntos de referencia son de gran utilidad para los usuarios que necesitan ubicarse dentro de la ciudad o identificar su parada más cercana.</p><p><strong>Notas adicionales:</strong> Ruta de Tuxtla Gutiérrez Chiapas</p><p>Si necesitas planificar tu viaje en transporte público dentro de Tuxtla Gutiérrez, esta ruta de colectivo es una excelente opción. Puedes consultar más detalles, ver el mapa interactivo del trazado completo, las paradas oficiales y los puntos de interés cercanos directamente en esta página. Además, puedes compartir esta información con otros usuarios para que también puedan aprovecharla.</p><p>La información aquí presentada se actualiza periódicamente para asegurar que los usuarios cuenten con los datos más precisos sobre tarifas, horarios, recorridos y paradas. Si detectas alguna inconsistencia o deseas sugerir una mejora, puedes contactarnos a través del sitio principal <a href="https://brigadistasbd.pages.dev/">brigadistasbd.pages.dev</a>.</p></div>
+  <div class="intro-paragraphs"><p>La <strong>RUTA 3</strong> es una ruta de colectivo de categoría <strong>urbana</strong> que opera en la ciudad de Tuxtla Gutiérrez, Chiapas, México.    Los días de operación son <strong>todos</strong>.</p><p>El recorrido de la ruta atraviesa las siguientes vialidades principales de Tuxtla Gutiérrez: Calle 1a Oriente Sur, Avenida 9a Sur Oriente cerca de Calle 1a Oriente Sur, Calle Décima Tercera Oriente Sur entre Avenida 9a Sur Oriente y Avenida 4a Norte Oriente, Avenida 4a Norte Oriente entre Calle Décima Tercera Oriente Sur y Calle Décima Sexta Oriente Norte, Calle Décima Sexta Oriente Norte entre Avenida 4a Norte Oriente y Calzada Ignacio Zaragoza, Calzada Ignacio Zaragoza entre Calle Décima Sexta Oriente Norte y Avenida Laurel, Avenida Laurel entre Calzada Ignacio Zaragoza y Avenida Rosa del Poniente, Avenida Rosa del Poniente entre Avenida Laurel y Calzada de las Culturas, Calzada de las Culturas entre Avenida Rosa del Poniente y Calzada al Sumidero, Calzada al Sumidero entre Calzada de las Culturas y Avenida 5a. Norte Oriente, Avenida 5a. Norte Oriente entre Calzada al Sumidero y Prolongacion 5a Norte Poniente, Prolongacion 5a Norte Poniente entre Avenida 5a. Norte Oriente y Boulevard Doctor Belisario Domínguez, entre otras calles y avenidas. Este trayecto conecta zonas clave de la ciudad y facilita el transporte de miles de pasajeros diariamente.</p><p>A lo largo de su trayecto, esta ruta pasa cerca de importantes puntos de interés (POIs) como: Colonia Terán, Módulo II, Fraccionamiento Los Olivos II, Panteón de Terán, Colonia Ampliación Terán, Cobach 01 Plantel Tuxtla Terán, UNACH. Facultad de Humanidades, Escuela Preparatoria No. 7 del Estado, Escuela Preparatoria No. 2 del Estado (cerca), UNACH. Facultad de de Contaduría y Administración, entre otros lugares de interés. Estos puntos de referencia son de gran utilidad para los usuarios que necesitan ubicarse dentro de la ciudad o identificar su parada más cercana.</p><p><strong>Notas adicionales:</strong> Ruta de Tuxtla Gutiérrez Chiapasj</p><p>Si necesitas planificar tu viaje en transporte público dentro de Tuxtla Gutiérrez, esta ruta de colectivo es una excelente opción. Puedes consultar más detalles, ver el mapa interactivo del trazado completo, las paradas oficiales y los puntos de interés cercanos directamente en esta página. Además, puedes compartir esta información con otros usuarios para que también puedan aprovecharla.</p><p>La información aquí presentada se actualiza periódicamente para asegurar que los usuarios cuenten con los datos más precisos sobre tarifas, horarios, recorridos y paradas. Si detectas alguna inconsistencia o deseas sugerir una mejora, puedes contactarnos a través del sitio principal <a href="https://brigadistasbd.pages.dev/">brigadistasbd.pages.dev</a>.</p></div>
 
 
   
