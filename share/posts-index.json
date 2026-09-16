@@ -2,13 +2,13 @@
   "posts": [
     {
       "slug": "uuuui169",
-      "title": "Uuuui",
-      "description": "Ruta Uuuui",
+      "title": "UUUUI",
+      "description": "Ruta UUUUI",
       "image": "",
       "url": "/share/ruta/uuuui169",
       "tipo": "ruta",
-      "timestamp": 1789542247971,
-      "updatedAt": "2026-09-16T07:04:07.971Z",
+      "timestamp": 1789542602440,
+      "updatedAt": "2026-09-16T07:10:02.440Z",
       "categoria": "urbana",
       "tarifa": "",
       "frecuencia": "",
@@ -385,7 +385,7 @@
     }
   ],
   "total": 25,
-  "updatedAt": "2026-09-16T07:04:07.971Z",
+  "updatedAt": "2026-09-16T07:10:02.440Z",
   "version": 1,
-  "__sha": "d906b9b7696e54f98be5324dfe7d8cea0c1e0c6f"
+  "__sha": "e772229d318609ae99a15aa85ddad865ad14f75c"
 }
