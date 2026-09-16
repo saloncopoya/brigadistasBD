@@ -701,9 +701,59 @@ body.fs-active{overflow:hidden !important}
   .route-card .route-actions .icon-btn{width:26px;height:26px}
   .route-card .edit-del .icon-btn{width:24px;height:24px}
 }
-   /* Leyenda del mapa */
+/* Leyenda del mapa (compacta) */
 .map-legend {
   pointer-events: none;
+}
+
+/* Botón inferior centrado dentro del mapa: "Agregar puntos de viaje" */
+.map-trip-btn-wrap {
+  pointer-events: auto;
+  padding-bottom: 6px;
+}
+.map-trip-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--cyan), var(--cyan-d));
+  color: #00121a;
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: .2px;
+  border: 1px solid transparent;
+  box-shadow: 0 6px 18px -6px var(--cyan-glow);
+  cursor: pointer;
+  transition: var(--transition);
+  text-align: center;
+  white-space: nowrap;
+}
+.map-trip-btn:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 8px 22px -6px var(--cyan-glow);
+}
+.map-trip-btn:active {
+  transform: scale(.96);
+}
+.map-trip-btn svg {
+  width: 14px;
+  height: 14px;
+}
+.map-trip-btn span {
+  font-size: 11.5px;
+  font-weight: 800;
+  line-height: 1;
+}
+.map-trip-btn small {
+  font-size: 9.5px;
+  font-weight: 600;
+  opacity: .75;
+  line-height: 1;
+  letter-spacing: .1px;
 }
 </style>
 </head>
