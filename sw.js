@@ -18,7 +18,6 @@ firebase.initializeApp({
   measurementId: "G-SFP1SEY20W"
 });
 
-const messaging = firebase.messaging();
 
 // Notificaciones push en segundo plano
 self.addEventListener('push', (event) => {
@@ -100,7 +99,7 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 /* SW.JS — v8 · NO intercepta tiles ni APIs externas */
-const VERSION = 'bgd-v47';
+const VERSION = 'bgd-v1.0.1';
 const STATIC_CACHE = `${VERSION}-static`;
 const HTML_CACHE = `${VERSION}-html`;
 
