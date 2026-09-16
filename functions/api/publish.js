@@ -317,37 +317,44 @@ function generateHTML({ tipo, title, content, image, slug, pageUrl, baseUrl, ext
   const safeSeoTitle = escapeHTML(seoTitle); // título SEO (para <title> y og:title)
 
    
- // Construir descripción enriquecida según el tipo
-let enrichedContent = content || '';
+ 
+// 🛡️ Helpers anti-crash
+const toStr = (v) => (v == null ? '' : String(v));
+const toStrArr = (v) => Array.isArray(v) ? v.filter(Boolean).map(toStr) : [];
+
+// Construir descripción enriquecida según el tipo
+let enrichedContent = toStr(content);
 if (tipo === 'ruta' && extra?.route) {
   const r = extra.route;
   const parts = [];
 
-   if (r.notas) {
-    parts.push(` ${r.notas.slice(0, 80)}`);
+  if (r.notas) {
+    parts.push(` ${toStr(r.notas).slice(0, 80)}`);
   }
-   
-  if (r.paradas?.length) {
-    parts.push(`📍 ${r.paradas.slice(0, 5).join(', ')}${r.paradas.length > 5 ? '...' : ''}`);
+
+  const paradas = toStrArr(r.paradas);
+  if (paradas.length) {
+    parts.push(`📍 ${paradas.slice(0, 5).join(', ')}${paradas.length > 5 ? '...' : ''}`);
   }
-  if (r.pois?.length) {
-    parts.push(` ${r.pois.slice(0, 5).join(', ')}${r.pois.length > 5 ? '...' : ''}`);
+
+  const pois = toStrArr(r.pois);
+  if (pois.length) {
+    parts.push(` ${pois.slice(0, 5).join(', ')}${pois.length > 5 ? '...' : ''}`);
   }
-  if (r.calles?.length) {
-    parts.push(` ${r.calles.slice(0, 4).join(', ')}${r.calles.length > 4 ? '...' : ''}`);
+
+  const calles = toStrArr(r.calles);
+  if (calles.length) {
+    parts.push(` ${calles.slice(0, 4).join(', ')}${calles.length > 4 ? '...' : ''}`);
   }
-  if (r.tarifa) {
-    parts.push(`💰 ${r.tarifa}`);
-  }
-  if (r.frecuencia) {
-    parts.push(`⏱️ ${r.frecuencia}`);
-  }
-  
+
+  if (r.tarifa) parts.push(`💰 ${toStr(r.tarifa)}`);
+  if (r.frecuencia) parts.push(`⏱️ ${toStr(r.frecuencia)}`);
+
   if (parts.length) {
     enrichedContent = parts.join(' · ');
   }
 }
-
+   
 // 📝 Descripción: 155 caracteres para meta description (Google corta a ~160)
 const safeDesc = escapeHTML(enrichedContent.slice(0, 155));
 // 🐦 Para OG (redes sociales cortan a ~125)
@@ -376,7 +383,7 @@ const safeDescOG = escapeHTML(enrichedContent.slice(0, 125));
         price: String(r.tarifa).replace(/[^0-9.]/g, '') || '0',
         priceCurrency: 'MXN'
       } : undefined,
-      itinerary: (r.paradas || []).map(p => ({ '@type': 'Place', name: p }))
+itinerary: toStrArr(r.paradas).map(p => ({ '@type': 'Place', name: p }))
     };
   } else if (tipo === 'market') {
     schema = {
