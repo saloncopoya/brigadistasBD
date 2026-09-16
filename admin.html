@@ -1331,16 +1331,55 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
         if (!canvas || !canvas.width || !canvas.height) {
           return reject(new Error('Canvas vacío'));
         }
+        
+        // 🛡️ VALIDACIÓN: comprobar que el canvas tiene contenido real
+        try {
+          const ctx = canvas.getContext('2d');
+          const sample = ctx.getImageData(
+            0, 0,
+            Math.min(50, canvas.width),
+            Math.min(50, canvas.height)
+          ).data;
+          let nonWhite = 0;
+          for (let i = 0; i < sample.length; i += 4) {
+            if (sample[i] < 240 || sample[i+1] < 240 || sample[i+2] < 240) nonWhite++;
+          }
+          const ratio = nonWhite / (sample.length / 4);
+          if (ratio < 0.01) {
+            console.warn('[captureMap] Canvas casi vacío, abortando');
+            return reject(new Error('El canvas está vacío (tiles no cargaron)'));
+          }
+          console.log(`[captureMap] Contenido en canvas: ${(ratio*100).toFixed(1)}%`);
+        } catch (e) {
+          console.warn('[captureMap] No se pudo validar el canvas (tainted?):', e.message);
+          // Continuar de todos modos
+        }
+        
         resolve(canvas);
       });
     }catch(e){ reject(e); }
   });
 
   // 5️⃣ Convertir canvas a Blob → File
-  const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.9));
+  // 🛡️ Limitar a JPEG de calidad media para evitar blobs gigantes
+  const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.75));
   if(!blob) throw new Error('No se pudo generar la imagen');
+  
+  // 🛡️ Comprobar tamaño (máx 800 KB para evitar problemas)
+  if (blob.size > 800 * 1024) {
+    console.warn(`[captureMap] Blob muy pesado: ${(blob.size/1024).toFixed(0)} KB. Reintentando...`);
+    // Reintentar con calidad más baja
+    const blob2 = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.55));
+    if (blob2 && blob2.size < blob.size) {
+      const file2 = new File([blob2], 'ruta_' + Date.now() + '.jpg', { type: 'image/jpeg' });
+      const url2 = await Publisher.uploadToCloudinary(file2);
+      console.log(`[captureMap] Imagen subida (comprimida ${(blob2.size/1024).toFixed(0)} KB)`);
+      return url2;
+    }
+  }
+  
   const file = new File([blob], 'ruta_' + Date.now() + '.jpg', { type: 'image/jpeg' });
-
+    
   // 6️⃣ Subir a Cloudinary
   const url = await Publisher.uploadToCloudinary(file);
   return url;
@@ -2664,17 +2703,27 @@ if (f.size > 20 * 1024 * 1024) {
         mapImage = state.editingRoute.mapImage;
         console.log('[Ruta] Conservando imagen previa (NO se regenera):', mapImage);
         toast('Imagen existente conservada ✓');
-      } else {
+         } else {
         // 🗺️ Caso 3: Ruta nueva o sin imagen → generar desde el mapa
-        try {
-          btn.innerHTML = '⏳ Generando imagen del mapa...';
-          mapImage = await captureAndUploadMap();
-          toast('Imagen del mapa generada ✓');
-          console.log('[Ruta] Imagen generada desde mapa:', mapImage);
-        } catch(e) {
-          console.warn('No se pudo capturar el mapa:', e);
-          toast('No se pudo generar imagen del mapa', 'err');
-          mapImage = ''; // Sin imagen, se usará el default
+        // ⚠️ Si NO hay puntos trazados, no intentamos capturar (es normal)
+        const hayTrazado = (state.routeDraft.puntos?.length || 0) + 
+                           (state.routeDraft.puntosVuelta?.length || 0) > 0;
+        
+        if (!hayTrazado) {
+          console.log('[Ruta] Sin trazado, se omite generación de imagen');
+          mapImage = '';
+          // NO mostrar toast de error, es normal
+        } else {
+          try {
+            btn.innerHTML = '⏳ Generando imagen del mapa...';
+            mapImage = await captureAndUploadMap();
+            toast('Imagen del mapa generada ✓');
+            console.log('[Ruta] Imagen generada desde mapa:', mapImage);
+          } catch(e) {
+            console.warn('No se pudo capturar el mapa:', e);
+            toast('No se pudo generar imagen del mapa', 'err');
+            mapImage = '';
+          }
         }
       }
 
