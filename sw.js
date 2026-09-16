@@ -333,7 +333,7 @@ async function htmlStrategy(req) {
   if (cached) return cached;
 
   // 🔥 Devolver 404 con el contenido de 404.html
-  const notFound = await caches.match('/offline.html');
+  const notFound = await caches.match('/?tab=routes');
   if (notFound) {
     // Convertir el 200 de caché a 404 real
     const body = await notFound.text();
