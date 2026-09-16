@@ -20,25 +20,6 @@
       "pois": []
     },
     {
-      "slug": "jejwj169",
-      "title": "Jejwj",
-      "description": "Ruta Jejwj",
-      "image": "",
-      "url": "/share/ruta/jejwj169",
-      "tipo": "ruta",
-      "timestamp": 1789545725429,
-      "updatedAt": "2026-09-16T08:02:05.429Z",
-      "categoria": "urbana",
-      "tarifa": "",
-      "frecuencia": "",
-      "horarioIni": "",
-      "horarioFin": "",
-      "dias": "todos",
-      "paradas": [],
-      "calles": [],
-      "pois": []
-    },
-    {
       "slug": "test_1789544868352",
       "title": "TEST DE VERIFICACIÓN",
       "description": "Esta es una prueba automática. Puedes borrarla después.",
@@ -493,8 +474,8 @@
       "updatedAt": "2026-09-13T08:52:43.612Z"
     }
   ],
-  "total": 29,
-  "updatedAt": "2026-09-16T08:08:49.039Z",
+  "total": 28,
+  "updatedAt": "2026-09-16T08:08:57.166Z",
   "version": 1,
   "__sha": "c77fd26bcddcbfbb9b26226fa63874d9fbe100f7"
 }
