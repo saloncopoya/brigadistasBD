@@ -2457,7 +2457,18 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
           const legColor = TRIP_COLORS[(colorOffset + li) % TRIP_COLORS.length];
           return `
             <button class="trip-chain-item" type="button" data-trip-focus="${esc(leg.id)}" title="Abrir ruta ${esc(leg.nombre)}">
-              <div class="trip-chain-chip" style="background:${legColor}">${li + 1}</div>
+
+                            <div class="trip-chain-chip">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="4" width="18" height="13" rx="2"/>
+                  <line x1="3" y1="11" x2="21" y2="11"/>
+                  <circle cx="7.5" cy="18.5" r="1.6"/>
+                  <circle cx="16.5" cy="18.5" r="1.6"/>
+                  <path d="M7 8h3"/>
+                  <path d="M14 8h3"/>
+                </svg>
+              </div>
+              
               <span class="trip-chain-name">${esc(leg.nombre)}</span>
             </button>`;
         }).join('<span class="trip-chain-sep">›</span>');
