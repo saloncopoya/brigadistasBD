@@ -115,7 +115,8 @@ const PRECACHE = [
   '/manifest.json',
   '/robots.txt',
   '/sitemap.xml',
-
+'/js/tile-cache.js',
+   
   // Assets de la app
   '/assets/icon.svg',
   '/js/db.js',
