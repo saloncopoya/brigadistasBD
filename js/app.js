@@ -711,7 +711,7 @@ const url = location.origin + '/share/post/' + post.id;
           <button class="icon-btn" data-act="edit" title="Editar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
           <button class="icon-btn" data-act="del" title="Eliminar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
         </div>` : ''}
-        <div class="route-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="M3 11h18"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg></div>
+        <div class="route-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="2" y1="12" x2="22" y2="12"/><circle cx="7" cy="18" r="1.7"/><circle cx="17" cy="18" r="1.7"/><path d="M6 9h4"/><path d="M14 9h4"/></svg></div>
         <div class="route-name">${esc(r.nombre || 'RUTA')}</div>
         <span class="badge ${r.categoria === 'foranea' ? 'badge-foranea' : 'badge-urbana'}">${esc(r.categoria || 'urbana')}</span>
         <div class="route-actions">
@@ -868,8 +868,9 @@ const url = location.origin + '/share/post/' + post.id;
           originInput.value = valor;
         }
 
-        // 3. Auto-buscar si ambos campos tienen valor
-        if (originInput.value.trim() && destInput.value.trim()) {
+              // 3. Auto-buscar si el origen tiene valor
+        // (con o sin destino). Consistente con bindSuggest().
+        if (originInput.value.trim()) {
           setTimeout(() => {
             const btnSearch = $('#btnSearch');
             if (btnSearch) btnSearch.click();
@@ -1192,7 +1193,21 @@ const url = location.origin + '/share/ruta/' + route.id;
         </div>`).join('');
       sug.classList.remove('hidden');
       sug.querySelectorAll('.suggestion').forEach(s => {
-        s.onclick = () => { input.value = s.dataset.val; sug.classList.add('hidden'); };
+
+         
+        s.onclick = () => {
+          input.value = s.dataset.val;
+          sug.classList.add('hidden');
+          // 🔎 Auto-buscar si el campo de origen ya tiene valor
+          // (con o sin destino). Si solo hay origen, muestra las rutas
+          // que pasan por ahí; si hay ambos, hace la búsqueda completa.
+          const o = $('#originInput')?.value.trim();
+          if (o) {
+            setTimeout(() => { $('#btnSearch')?.click(); }, 80);
+          }
+        };
+
+         
       });
     });
     input.addEventListener('blur', () => setTimeout(() => sug.classList.add('hidden'), 200));
@@ -1271,6 +1286,7 @@ const url = location.origin + '/share/ruta/' + route.id;
             <span class="badge badge-green">Pasa por aquí</span>
           </div>
         </div>`).join('');
+       
       el.innerHTML = html;
 
       el.querySelectorAll('.result-card').forEach(c => {
@@ -1323,26 +1339,44 @@ const url = location.origin + '/share/ruta/' + route.id;
     if (res.transfer.length) {
       html += `<div class="section-title">Transbordos (${res.transfer.length})</div>`;
       html += res.transfer.slice(0, 6).map(t => `
-        <div class="result-card transbordo" data-route-id="${esc(t.r1.id)}">
+        <div class="result-card transbordo">
           <div class="rc-head">
             <div class="rc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></div>
             <div style="flex:1">
               <div class="rc-route">${esc(t.r1.nombre)} → ${esc(t.r2.nombre)}</div>
-              <div class="rc-sub">Transbordo en: ${esc(t.transfer)}</div>
             </div>
             <span class="badge badge-amber">Transbordo</span>
           </div>
           <div class="rc-steps">
-            <div class="rc-step"><div class="step-num">1</div><div>Toma la ruta <b>${esc(t.r1.nombre)}</b></div></div>
-            <div class="rc-step"><div class="step-num">2</div><div>Baja en <b>${esc(t.transfer)}</b></div></div>
-            <div class="rc-step"><div class="step-num">3</div><div>Sube a la ruta <b>${esc(t.r2.nombre)}</b></div></div>
+            <div class="rc-step" data-open-route="${esc(t.r1.id)}" style="cursor:pointer">
+              <div class="step-num">1</div>
+              <div>Toma la ruta <b>${esc(t.r1.nombre)}</b></div>
+            </div>
+            <div class="rc-step" data-open-route="${esc(t.r2.id)}" style="cursor:pointer">
+              <div class="step-num">2</div>
+              <div>Sube a la ruta <b>${esc(t.r2.nombre)}</b></div>
+            </div>
           </div>
         </div>`).join('');
     }
+
+     
     el.innerHTML = html;
-    el.querySelectorAll('.result-card').forEach(c => {
-      c.onclick = () => {
+
+    // Click en la tarjeta completa (rutas directas con data-route-id)
+    el.querySelectorAll('.result-card[data-route-id]').forEach(c => {
+      c.onclick = (e) => {
+        if (e.target.closest('[data-open-route]')) return;
         const r = state.routes.find(x => x.id === c.dataset.routeId);
+        if (r) openRouteDetail(r);
+      };
+    });
+
+    // 🎯 Click en los pasos "Toma la ruta" / "Sube a la ruta" (transbordos)
+    el.querySelectorAll('[data-open-route]').forEach(step => {
+      step.onclick = (e) => {
+        e.stopPropagation();
+        const r = state.routes.find(x => x.id === step.dataset.openRoute);
         if (r) openRouteDetail(r);
       };
     });
