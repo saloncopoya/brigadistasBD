@@ -1120,7 +1120,7 @@ const url = location.origin + '/share/post/' + post.id;
     legend.addTo(state.map);
 
     // --- Botón inferior centrado: "Agregar ubicación" → ir a trip ---
-const tripBtn = L.control({ position: 'bottomleft' });
+const tripBtn = L.control({ position: 'topleft' });
      tripBtn.onAdd = function () {
       const div = L.DomUtil.create('div', 'map-trip-btn-wrap');
       div.innerHTML = `
