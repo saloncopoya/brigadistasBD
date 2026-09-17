@@ -147,7 +147,7 @@ const FIREBASE_REST_URL =
 
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
-    // 1) Precargar HTML/JS/CSS como antes
+    // 1) Precargar SOLO HTML/JS/CSS — install rápido
     const cache = await caches.open(STATIC_CACHE);
     await Promise.all(PRECACHE.map(async url => {
       try {
@@ -156,12 +156,8 @@ self.addEventListener('install', event => {
       } catch (e) {}
     }));
 
-    // 2) 🔥 NUEVO: descargar rutas de Firebase y guardarlas en IndexedDB
-    try {
-      await precacheRoutesToIndexedDB();
-    } catch (e) {
-      console.warn('[SW] No se pudieron precachear rutas:', e);
-    }
+    // 2) NO descargar rutas aquí. Se hará en background por mensaje.
+    //    (evita timeout de instalación del SW en Android)
 
     await self.skipWaiting();
   })());
@@ -436,5 +432,9 @@ self.addEventListener('message', event => {
   if (event.data === 'SKIP_WAITING') self.skipWaiting();
   if (event.data === 'CLEAR_CACHE') {
     event.waitUntil(caches.keys().then(ks => Promise.all(ks.map(k => caches.delete(k)))));
+  }
+  // 🔥 NUEVO: el precache de rutas se dispara desde la app, no en install
+  if (event.data === 'PRECACHE_ROUTES') {
+    event.waitUntil(precacheRoutesToIndexedDB().catch(e => console.warn('[SW] precacheRoutes:', e)));
   }
 });
