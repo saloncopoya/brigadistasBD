@@ -1012,7 +1012,7 @@ const url = location.origin + '/share/post/' + post.id;
      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   minZoom: 13,
   maxZoom: 17,
-  maxNativeZoom: 16,
+  maxNativeZoom: 17,
   crossOrigin: true,
   attribution: '© OpenStreetMap'
 }).addTo(state.map);   // ← o .addTo(state.tripMap) según el caso
@@ -1779,7 +1779,7 @@ const url = location.origin + '/share/m/' + id;
  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   minZoom: 13,
   maxZoom: 17,
-  maxNativeZoom: 16,
+  maxNativeZoom: 17,
   crossOrigin: true,
   attribution: '© OpenStreetMap'
 }).addTo(state.tripMap);
