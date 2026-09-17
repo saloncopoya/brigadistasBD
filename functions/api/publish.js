@@ -43,7 +43,7 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ ok: true }), { headers });
     }
 
-    // ============================================================
+     // ============================================================
     //  🗑️ MODO ELIMINAR: borra el HTML, del índice y del sitemap
     // ============================================================
     if (body.__delete) {
@@ -51,10 +51,7 @@ export async function onRequest(context) {
         return new Response(JSON.stringify({ error: 'Faltan slug o tipo para eliminar' }), { status: 400, headers });
       }
 
-      const {
-        GITHUB_TOKEN: T, REPO_OWNER: O, REPO_NAME: N, SITE_DOMAIN: D
-      } = env;
-
+      const { GITHUB_TOKEN: T, REPO_OWNER: O, REPO_NAME: N, SITE_DOMAIN: D } = env;
       if (!T || !O || !N) {
         return new Response(JSON.stringify({ error: 'Configuración de GitHub incompleta' }), { status: 500, headers });
       }
@@ -62,7 +59,6 @@ export async function onRequest(context) {
       const domain = (D || 'brigadistasbd.pages.dev').replace(/^https?:\/\//, '').replace(/\/$/, '');
       const baseUrl = `https://${domain}`;
 
-      // Carpeta según tipo
       let folder = 'share/post';
       if (tipo === 'ruta') folder = 'share/ruta';
       else if (tipo === 'market') folder = 'share/m';
@@ -78,8 +74,9 @@ export async function onRequest(context) {
       };
       const apiBase = `https://api.github.com/repos/${O}/${N}/contents`;
 
-      // 1️⃣ Obtener SHA del HTML y borrarlo
       let deletedHtml = false;
+
+      // 1️⃣ Borrar el HTML
       try {
         const checkRes = await fetch(`${apiBase}/${htmlPath}?ref=main`, { headers: ghHeaders });
         if (checkRes.ok) {
@@ -95,52 +92,76 @@ export async function onRequest(context) {
           });
           deletedHtml = delRes.ok;
         }
-      } catch (e) {}
+      } catch (e) {
+        console.warn('[delete] Error borrando HTML:', e);
+      }
 
-      // 2️⃣ Quitar del índice posts-index.json
+      // 2️⃣ Leer índice, quitar entrada, y GUARDAR
       const indexPath = 'share/posts-index.json';
+      let index = { posts: [], total: 0, updatedAt: null };
+      let indexSha = null;
+
       try {
         const idxRes = await fetch(`${apiBase}/${indexPath}?ref=main`, { headers: ghHeaders });
         if (idxRes.ok) {
           const idxJson = await idxRes.json();
+          indexSha = idxJson.sha;
           const decoded = decodeURIComponent(escape(atob(idxJson.content.replace(/\n/g, ''))));
-          const index = JSON.parse(decoded);
-          index.posts = (index.posts || []).filter(p => p.slug !== safeSlug);
-          index.total = index.posts.length;
-          index.updatedAt = new Date().toISOString();
+          index = JSON.parse(decoded);
+        }
+      } catch (e) {
+        console.warn('[delete] Error leyendo índice:', e);
+      }
 
-          await fetch(`${apiBase}/${indexPath}`, {
+      const before = (index.posts || []).length;
+      index.posts = (index.posts || []).filter(p => {
+        if (p.slug === safeSlug) return false;
+        const pUrl = String(p.url || '').replace(/\.html$/, '').split('?')[0];
+        if (pUrl.endsWith('/' + safeSlug)) return false;
+        return true;
+      });
+      const removed = before - index.posts.length;
+      index.total = index.posts.length;
+      index.updatedAt = new Date().toISOString();
+
+      if (indexSha) {
+        try {
+          const putRes = await fetch(`${apiBase}/${indexPath}`, {
             method: 'PUT',
             headers: ghHeaders,
             body: JSON.stringify({
               message: `actualizar índice (eliminar ${safeSlug})`,
               content: b64EncodeUnicode(JSON.stringify(index, null, 2)),
-              sha: idxJson.sha,
+              sha: indexSha,
               branch: 'main'
             })
           });
+          if (!putRes.ok) {
+            const errTxt = await putRes.text();
+            console.error('[delete] Error guardando índice:', errTxt);
+          }
+        } catch (e) {
+          console.error('[delete] Error guardando índice:', e);
         }
-      } catch (e) {}
+      }
 
-      // 3️⃣ Regenerar sitemap sin la entrada borrada
+      // 3️⃣ Regenerar sitemap con el índice YA actualizado
       try {
-        // Leer el índice actualizado
-        const idxRes2 = await fetch(`${apiBase}/${indexPath}?ref=main`, { headers: ghHeaders });
-        if (idxRes2.ok) {
-          const idxJson2 = await idxRes2.json();
-          const decoded2 = decodeURIComponent(escape(atob(idxJson2.content.replace(/\n/g, ''))));
-          const index2 = JSON.parse(decoded2);
-          await regenerateSitemap(env, ghHeaders, baseUrl, index2);
-        }
-      } catch (e) {}
+        await regenerateSitemap(env, ghHeaders, baseUrl, index);
+      } catch (e) {
+        console.error('[delete] Error regenerando sitemap:', e);
+      }
 
       return new Response(JSON.stringify({
         ok: true,
         deleted: true,
         slug: safeSlug,
-        htmlDeleted: deletedHtml
+        htmlDeleted: deletedHtml,
+        removedFromIndex: removed,
+        totalInIndex: index.posts.length
       }), { headers });
     }
+     
 
     // ---------- Si no es eliminar, es crear/actualizar ----------
     if (!slug || !title) {
@@ -360,7 +381,9 @@ const safeDesc = escapeHTML(enrichedContent.slice(0, 155));
 // 🐦 Para OG (redes sociales cortan a ~125)
 const safeDescOG = escapeHTML(enrichedContent.slice(0, 125));
    
-   const safeImage = image ? escapeHTML(image) : `${baseUrl}/img.png`;
+   const safeImage = (image && typeof image === 'string' && image.trim().startsWith('http'))
+     ? escapeHTML(image.trim())
+     : `${baseUrl}/img.png`;
    
   const typeLabel = tipo === 'ruta' ? 'Ruta' : tipo === 'market' ? 'Anuncio' : 'Publicación';
 
@@ -942,21 +965,21 @@ function renderMarketBody(market) {
   `;
 }
 
-// ==========================================================================
-//  Regenerar sitemap.xml
-// ==========================================================================
+
 async function regenerateSitemap(env, ghHeaders, baseUrl, index) {
-  const { REPO_OWNER, REPO_NAME, GITHUB_TOKEN } = env;
+  const { REPO_OWNER, REPO_NAME } = env;
   const apiBase = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents`;
 
   const today = new Date().toISOString().split('T')[0];
 
-  // ✅ Solo URLs limpias (sin ?tab=, sin .html)
-  const urls = [
-    { loc: baseUrl + '/', priority: '1.0', changefreq: 'daily' }
-  ];
+  const safeLastmod = (val) => {
+    if (!val) return today;
+    const s = String(val).trim();
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z?$/.test(s)) return s;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+    return today;
+  };
 
-  // Escapar XML y limpiar URLs
   const escapeXml = (str) => String(str || '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -964,53 +987,78 @@ async function regenerateSitemap(env, ghHeaders, baseUrl, index) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&apos;');
 
-  (index.posts || []).forEach(p => {
-    let cleanUrl = String(p.url || '');
-
-    // 1️⃣ Quitar .html si lo tiene
+  const buildFullUrl = (relativeUrl) => {
+    let cleanUrl = String(relativeUrl || '').trim();
     cleanUrl = cleanUrl.replace(/\.html$/i, '');
-
-    // 2️⃣ Quitar query strings (?tab=...)
     cleanUrl = cleanUrl.split('?')[0];
-
-    // 3️⃣ Asegurar que empiece con /
+    cleanUrl = cleanUrl.split('#')[0];
     if (!cleanUrl.startsWith('/')) cleanUrl = '/' + cleanUrl;
-
-    // 4️⃣ Quitar slash final (excepto si es solo /)
     if (cleanUrl.length > 1 && cleanUrl.endsWith('/')) {
       cleanUrl = cleanUrl.slice(0, -1);
     }
+    const parts = cleanUrl.split('/').map(part => {
+      try {
+        return encodeURIComponent(decodeURIComponent(part));
+      } catch (e) {
+        return encodeURIComponent(part);
+      }
+    });
+    return baseUrl + parts.join('/');
+  };
 
-    // 5️⃣ Codificar caracteres especiales (+ → %2B, espacios → %20, etc.)
-    //    IMPORTANTE: solo codificamos la parte de la URL, no el dominio
-    const parts = cleanUrl.split('/');
-    const encodedParts = parts.map(part => encodeURIComponent(part));
-    const encodedUrl = encodedParts.join('/');
+  const urls = [
+    { loc: baseUrl + '/', priority: '1.0', changefreq: 'daily', lastmod: today }
+  ];
 
-    const fullUrl = baseUrl + encodedUrl;
+  (index.posts || []).forEach(p => {
+    if (!p.url) return;
+
+    const fullUrl = buildFullUrl(p.url);
+
+    try {
+      new URL(fullUrl);
+    } catch (e) {
+      console.warn('[sitemap] URL inválida, se omite:', fullUrl);
+      return;
+    }
 
     urls.push({
       loc: fullUrl,
       priority: '0.8',
       changefreq: 'weekly',
-      image: p.image ? escapeXml(p.image) : null,
-      lastmod: p.updatedAt || today
+      lastmod: safeLastmod(p.updatedAt || p.timestamp),
+      image: p.image && String(p.image).startsWith('http') ? escapeXml(p.image) : null
     });
   });
-  // ✅ Generar XML con TODAS las URLs escapadas
+
+  const xmlEntries = urls.map(u => {
+    const lines = [
+      '  <url>',
+      `    <loc>${escapeXml(u.loc)}</loc>`,
+      `    <lastmod>${u.lastmod}</lastmod>`,
+      `    <changefreq>${u.changefreq}</changefreq>`,
+      `    <priority>${u.priority}</priority>`
+    ];
+    if (u.image) {
+      lines.push(`    <image:image>`);
+      lines.push(`      <image:loc>${u.image}</image:loc>`);
+      lines.push(`    </image:image>`);
+    }
+    lines.push('  </url>');
+    return lines.join('\n');
+  }).join('\n');
+
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
-${urls.map(u => `  <url>
-    <loc>${escapeXml(u.loc)}</loc>
-    <lastmod>${u.lastmod || today}</lastmod>
-    <changefreq>${u.changefreq}</changefreq>
-    <priority>${u.priority}</priority>${u.image ? `
-    <image:image><image:loc>${u.image}</image:loc></image:image>` : ''}
-  </url>`).join('\n')}
+${xmlEntries}
 </urlset>`;
 
-  // Obtener SHA si existe
+  if (!xml.startsWith('<?xml') || !xml.trim().endsWith('</urlset>')) {
+    console.error('[sitemap] XML mal formado, se aborta');
+    return;
+  }
+
   let sha = null;
   try {
     const res = await fetch(`${apiBase}/sitemap.xml?ref=main`, { headers: ghHeaders });
@@ -1024,9 +1072,16 @@ ${urls.map(u => `  <url>
   };
   if (sha) body.sha = sha;
 
-  await fetch(`${apiBase}/sitemap.xml`, {
-    method: 'PUT',
-    headers: ghHeaders,
-    body: JSON.stringify(body)
-  }).catch(() => {});
+  try {
+    const putRes = await fetch(`${apiBase}/sitemap.xml`, {
+      method: 'PUT',
+      headers: ghHeaders,
+      body: JSON.stringify(body)
+    });
+    if (!putRes.ok) {
+      console.error('[sitemap] Error al subir:', await putRes.text());
+    }
+  } catch (e) {
+    console.error('[sitemap] Error al subir:', e);
+  }
 }
