@@ -128,8 +128,10 @@ img{max-width:100%;display:block}
   color:var(--text-2);transition:var(--transition);position:relative;
 }
 
-/* 🔴 Puntito rojo para el botón de notificaciones */
-#notifBtn::after{
+/* 🔴 Puntito rojo para el botón de notificaciones
+   Solo aparece cuando las notificaciones NO están activadas.
+   Se controla con la clase `notif-pending` en <body>. */
+body.notif-pending #notifBtn::after{
   content:"";
   position:absolute;
   top:8px;
@@ -1289,10 +1291,35 @@ body.fs-active{overflow:hidden !important}
     }
   }
 
-  // Conectar el botón
+ 
+  function actualizarPuntitoNotif() {
+    if (!('Notification' in window)) return;
+    const pendiente = Notification.permission !== 'granted';
+    document.body.classList.toggle('notif-pending', pendiente);
+  }
+
+  // 1) Al cargar la página — una sola vez
+  actualizarPuntitoNotif();
+
+  // 2) Cuando el usuario hace click en la campanita
   const btn = document.getElementById('notifBtn');
-  if (btn) btn.addEventListener('click', () => activarNotificacionesPush(true));
-   
+  if (btn) {
+    btn.addEventListener('click', async () => {
+      await activarNotificacionesPush(true);
+      actualizarPuntitoNotif();   // ← refresca el puntito tras el intento
+    });
+  }
+
+  // 3) Cuando el permiso cambia (el usuario va al candado del navegador)
+  if ('permissions' in navigator) {
+    navigator.permissions.query({ name: 'notifications' })
+      .then(perm => {
+        // El evento se dispara solo cuando cambia el permiso
+        perm.addEventListener('change', actualizarPuntitoNotif);
+      })
+      .catch(() => {});
+  }
+
   // Auto-activar SOLO si ya dio permiso antes (no molestar)
   // + avisar si las notificaciones están bloqueadas
   window.addEventListener('load', () => {
