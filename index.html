@@ -1231,13 +1231,29 @@ body.fs-active{overflow:hidden !important}
       return;
     }
 
-    // Pedir permiso
+        // Pedir permiso
     let permission = Notification.permission;
     if (permission === 'default') {
       permission = await Notification.requestPermission();
     }
+
+    // 🚫 Si están BLOQUEADAS → mensaje específico con instrucciones
+    if (permission === 'denied') {
+      if (window.App && App.toast) {
+        App.toast('🔒 Notificaciones bloqueadas. Pulsa el candado 🔒 en la barra del navegador → Notificaciones → Permitir', 'err');
+      } else {
+        alert('🔒 Notificaciones bloqueadas.\n\nPara activarlas:\n1. Pulsa el candado 🔒 junto a la URL\n2. Busca "Notificaciones"\n3. Cambia a "Permitir"\n4. Recarga la página');
+      }
+      return;
+    }
+
+    // ⚠️ Si aún no decidió (raro llegar aquí, pero por si acaso)
     if (permission !== 'granted') {
-      alert('Debes permitir las notificaciones para activarlas');
+      if (window.App && App.toast) {
+        App.toast('Necesitas permitir las notificaciones para activarlas', 'err');
+      } else {
+        alert('Necesitas permitir las notificaciones para activarlas');
+      }
       return;
     }
 
