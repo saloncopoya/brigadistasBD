@@ -127,44 +127,15 @@ img{max-width:100%;display:block}
   width:40px;height:40px;border-radius:11px;display:grid;place-items:center;
   color:var(--text-2);transition:var(--transition);position:relative;
 }
-
-/* 🔴 Puntito rojo para el botón de notificaciones
-   Solo aparece cuando las notificaciones NO están activadas.
-   Se controla con la clase `notif-pending` en <body>. */
-body.notif-pending #notifBtn::after{
-  content:"";
-  position:absolute;
-  top:8px;
-  right:8px;
-  width:9px;
-  height:9px;
-  border-radius:50%;
-  background:#ef4444;
-  border:2px solid var(--surface);
-  box-shadow:0 0 8px rgba(239,68,68,.7);
-  pointer-events:none;
-}
-
-   
 .icon-btn:hover{background:var(--surface-2);color:var(--cyan)}
 .icon-btn:active{transform:scale(.92)}
 .icon-btn svg{width:20px;height:20px}
 
 .install-btn{
   display:none;align-items:center;gap:6px;padding:8px 12px;border-radius:10px;
-  background:linear-gradient(135deg,#facc15,#eab308);color:#422006;
+  background:linear-gradient(135deg,var(--cyan),var(--cyan-d));color:#00121a;
   font-weight:700;font-size:12.5px;
-  box-shadow:0 6px 18px -6px rgba(250,204,21,.55);
 }
-.install-btn:hover{
-  filter:brightness(1.06);
-  box-shadow:0 8px 22px -6px rgba(250,204,21,.6);
-}
-.install-btn svg{
-  color:#422006;
-}
-
-   
 .install-btn.show{display:flex}
 
 /* ============================================================
@@ -571,13 +542,12 @@ body.fs-active{overflow:hidden !important}
   background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
   padding:10px;margin-bottom:10px;display:flex;flex-direction:column;gap:8px;
 }
-/* Toolbar DENTRO del mapa (centrada arriba) */
-.map-toolbar-above{
+
+/* Toolbar DENTRO del mapa (esquina inferior izquierda) */
+.map-toolbar-below{
   position:absolute;
-  left:50%;
-  top:12px;
-  bottom:auto;
-  transform:translateX(-50%);
+  left:12px;
+  bottom:12px;
   z-index:600;
   display:flex;
   gap:5px;
@@ -589,10 +559,8 @@ body.fs-active{overflow:hidden !important}
   -webkit-backdrop-filter:blur(10px);
   box-shadow:var(--shadow);
 }
-
    
-   
-.map-toolbar-above .tb{
+.map-toolbar-below .tb{
   width:34px;height:28px;
   justify-content:center;align-items:center;
   background:var(--surface-2);
@@ -604,21 +572,21 @@ body.fs-active{overflow:hidden !important}
   padding:0;
 }
 
-   .map-toolbar-above .tb.tb-text{
+   .map-toolbar-below .tb.tb-text{
   width:auto;
   padding:0 10px;
   gap:5px;
 }
-.map-toolbar-above .tb.tb-text span{
+.map-toolbar-below .tb.tb-text span{
   font-size:10.5px;
   font-weight:800;
   letter-spacing:.3px;
   color:inherit;
   line-height:1;
 }
-.map-toolbar-above .tb svg{width:14px;height:14px}
-.map-toolbar-above .tb:hover{border-color:var(--cyan);color:var(--cyan)}
-.map-toolbar-above .tb.active{background:var(--cyan);color:#00121a;border-color:transparent}
+.map-toolbar-below .tb svg{width:14px;height:14px}
+.map-toolbar-below .tb:hover{border-color:var(--cyan);color:var(--cyan)}
+.map-toolbar-below .tb.active{background:var(--cyan);color:#00121a;border-color:transparent}
    
 .trip-controls-row{
   display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;
@@ -721,8 +689,8 @@ body.fs-active{overflow:hidden !important}
   #map{height:70vh}
 }
 @media(max-width:380px){
-  .map-toolbar-above .tb{width:28px;height:24px}
-  .map-toolbar-above .tb svg{width:12px;height:12px}
+  .map-toolbar-below .tb{width:28px;height:24px}
+  .map-toolbar-below .tb svg{width:12px;height:12px}
   .routes-grid{grid-template-columns:repeat(3,1fr)}
    
   .header-brand .brand-txt{font-size:14px}
@@ -738,33 +706,28 @@ body.fs-active{overflow:hidden !important}
   pointer-events: none;
 }
 
-/* Botón "Agregar puntos de viaje" — centrado arriba */
+/* Botón "Agregar puntos de viaje" — centrado real abajo */
 .map-trip-btn-wrap {
   pointer-events: auto;
+  padding-bottom: 1px;
   position: absolute !important;
   left: 50% !important;
-  top: 10px !important;
-  bottom: auto !important;
+  bottom: 1px !important;
   transform: translateX(-50%) !important;
   z-index: 700 !important;
 }
 
-/* Necesario: los contenedores top/bottom de Leaflet deben ocupar el 100%
-   del ancho para que el botón "Agregar puntos de viaje" se pueda centrar */
-.leaflet-top.leaflet-left,
-.leaflet-top.leaflet-right,
+/* Necesario: el contenedor .leaflet-bottom debe ocupar el 100% del ancho
+   para que el botón se pueda centrar respecto al mapa */
 .leaflet-bottom.leaflet-left,
 .leaflet-bottom.leaflet-right {
   width: 100%;
   pointer-events: none;
 }
-.leaflet-top.leaflet-left > *,
-.leaflet-top.leaflet-right > *,
 .leaflet-bottom.leaflet-left > *,
 .leaflet-bottom.leaflet-right > * {
   pointer-events: auto;
 }
-   
 .map-trip-btn {
   display: flex;
   flex-direction: column;
@@ -810,32 +773,6 @@ body.fs-active{overflow:hidden !important}
   letter-spacing: .1px;
 }
 
-
-   /* ============================================================
-   🎨 BOTONES COMPARTIR
-   ============================================================ */
-.btn-share {
-  background: linear-gradient(135deg, #1877F2, #166FE5) !important;
-  color: #ffffff !important;
-  border-color: transparent !important;
-  box-shadow: 0 6px 18px -6px rgba(24, 119, 242, .55) !important;
-}
-.btn-share:hover {
-  filter: brightness(1.08);
-  box-shadow: 0 8px 22px -6px rgba(24, 119, 242, .55) !important;
-}
-.btn-share svg {
-  color: #ffffff !important;
-}
-
-   .post-share.liked svg,
-.post-action.post-share {
-  color: inherit;
-}
-.post-action.post-share:hover {
-  color: #1877F2;
-}
-   
 </style>
 </head>
 <body>
@@ -1049,8 +986,8 @@ body.fs-active{overflow:hidden !important}
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
           Regresar
         </button>
-<button class="btn btn-share btn-sm" id="tripShareBtn">
-   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        <button class="btn btn-primary btn-sm" id="tripShareBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
           Compartir viaje
         </button>
       </div>
@@ -1085,7 +1022,7 @@ body.fs-active{overflow:hidden !important}
       <div class="map-wrap" id="tripMapWrap">
         <div id="tripMap" style="width:100%;height:40vh;min-height:260px;z-index:1"></div>
 
-        <div class="map-toolbar-above" id="tripToolbar">
+        <div class="map-toolbar-below" id="tripToolbar">
 
              <button class="tb tb-text" data-tool="undo" title="Deshacer">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
@@ -1231,29 +1168,13 @@ body.fs-active{overflow:hidden !important}
       return;
     }
 
-        // Pedir permiso
+    // Pedir permiso
     let permission = Notification.permission;
     if (permission === 'default') {
       permission = await Notification.requestPermission();
     }
-
-    // 🚫 Si están BLOQUEADAS → mensaje específico con instrucciones
-    if (permission === 'denied') {
-      if (window.App && App.toast) {
-        App.toast('🔒 Notificaciones bloqueadas. Pulsa el candado 🔒 en la barra del navegador → Notificaciones → Permitir', 'err');
-      } else {
-        alert('🔒 Notificaciones bloqueadas.\n\nPara activarlas:\n1. Pulsa el candado 🔒 junto a la URL\n2. Busca "Notificaciones"\n3. Cambia a "Permitir"\n4. Recarga la página');
-      }
-      return;
-    }
-
-    // ⚠️ Si aún no decidió (raro llegar aquí, pero por si acaso)
     if (permission !== 'granted') {
-      if (window.App && App.toast) {
-        App.toast('Necesitas permitir las notificaciones para activarlas', 'err');
-      } else {
-        alert('Necesitas permitir las notificaciones para activarlas');
-      }
+      alert('Debes permitir las notificaciones para activarlas');
       return;
     }
 
@@ -1307,35 +1228,10 @@ body.fs-active{overflow:hidden !important}
     }
   }
 
- 
-  function actualizarPuntitoNotif() {
-    if (!('Notification' in window)) return;
-    const pendiente = Notification.permission !== 'granted';
-    document.body.classList.toggle('notif-pending', pendiente);
-  }
-
-  // 1) Al cargar la página — una sola vez
-  actualizarPuntitoNotif();
-
-  // 2) Cuando el usuario hace click en la campanita
+  // Conectar el botón
   const btn = document.getElementById('notifBtn');
-  if (btn) {
-    btn.addEventListener('click', async () => {
-      await activarNotificacionesPush(true);
-      actualizarPuntitoNotif();   // ← refresca el puntito tras el intento
-    });
-  }
-
-  // 3) Cuando el permiso cambia (el usuario va al candado del navegador)
-  if ('permissions' in navigator) {
-    navigator.permissions.query({ name: 'notifications' })
-      .then(perm => {
-        // El evento se dispara solo cuando cambia el permiso
-        perm.addEventListener('change', actualizarPuntitoNotif);
-      })
-      .catch(() => {});
-  }
-
+  if (btn) btn.addEventListener('click', () => activarNotificacionesPush(true));
+   
   // Auto-activar SOLO si ya dio permiso antes (no molestar)
   // + avisar si las notificaciones están bloqueadas
   window.addEventListener('load', () => {
