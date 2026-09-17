@@ -142,20 +142,10 @@ self.addEventListener('activate', event => {
   })());
 });
 
-self.addEventListener('fetch', event => {
-  const req = event.request;
-  if (req.method !== 'GET') return;
-  const url = new URL(req.url);
 
-  // ⚠️ NO interceptar recursos externos (tiles, firebase, etc.)
-  if (url.origin !== self.location.origin) return;
 
-  if (req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html')) {
-    event.respondWith(htmlStrategy(req));
-    return;
-  }
-  event.respondWith(cacheFirst(req, STATIC_CACHE));
-});
+
+
 
 async function htmlStrategy(req) {
   const cache = await caches.open(HTML_CACHE);
@@ -198,18 +188,35 @@ const TILE_HOSTS = [
   'b.tile.openstreetmap.org',
   'c.tile.openstreetmap.org'
 ];
-const TILE_MAX_ENTRIES = 2000;   // tope duro para no llenar el disco
+const TILE_MAX_ENTRIES = 1000;   // tope duro para no llenar el disco
 
-self.addEventListener('fetch', (event) => {
+
+self.addEventListener('fetch', event => {
   const req = event.request;
   if (req.method !== 'GET') return;
 
   let url;
   try { url = new URL(req.url); } catch (e) { return; }
-  if (!TILE_HOSTS.includes(url.hostname)) return;
 
-  event.respondWith(handleTileRequest(req));
+  // 1️⃣ Tiles OSM (hosts externos)
+  if (TILE_HOSTS.includes(url.hostname)) {
+    event.respondWith(handleTileRequest(req));
+    return;
+  }
+
+  // 2️⃣ Recursos externos que NO son OSM → dejar pasar
+  if (url.origin !== self.location.origin) return;
+
+  // 3️⃣ Navegación / HTML
+  if (req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html')) {
+    event.respondWith(htmlStrategy(req));
+    return;
+  }
+
+  // 4️⃣ Estáticos same-origin
+  event.respondWith(cacheFirst(req, STATIC_CACHE));
 });
+
 
 async function handleTileRequest(req) {
   const cache = await caches.open(TILE_CACHE);
