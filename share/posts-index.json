@@ -18,29 +18,10 @@
       "paradas": [],
       "calles": [],
       "pois": []
-    },
-    {
-      "slug": "255tg169",
-      "title": "255TG",
-      "description": "Ruta 255TG",
-      "image": "",
-      "url": "/share/ruta/255tg169",
-      "tipo": "ruta",
-      "timestamp": 1789541408959,
-      "updatedAt": "2026-09-16T06:50:08.959Z",
-      "categoria": "urbana",
-      "tarifa": "",
-      "frecuencia": "",
-      "horarioIni": "",
-      "horarioFin": "",
-      "dias": "todos",
-      "paradas": [],
-      "calles": [],
-      "pois": []
     }
   ],
-  "total": 2,
-  "updatedAt": "2026-09-17T17:18:16.442Z",
+  "total": 1,
+  "updatedAt": "2026-09-17T17:18:18.772Z",
   "version": 1,
   "__sha": "5a2086d37086e515ce37d77d7c7add8c8b25146c"
 }
