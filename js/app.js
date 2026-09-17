@@ -1861,7 +1861,7 @@ const url = location.origin + '/share/m/' + id;
   }
 
   // Nombres amigables por defecto según el orden del punto
-  const TRIP_DEFAULT_NAMES = ['ESTOY AQUÍ', 'LLEGARÉ AQUÍ', 'PASO POR', 'DESVÍO A', 'DESTINO'];
+  const TRIP_DEFAULT_NAMES = ['ESTOY AQUÍ', 'DESTINO', 'PASO POR', 'DESVÍO A', 'LLEGARÉ AQUÍ'];
 
   function addTripPoint(lat, lng) {
     const idx = state.tripPoints.length;
