@@ -781,6 +781,23 @@ body.fs-active{overflow:hidden !important}
   letter-spacing: .1px;
 }
 
+
+   /* ============================================================
+   🎨 BOTONES COMPARTIR
+   ============================================================ */
+.btn-share {
+  background: linear-gradient(135deg, #1877F2, #166FE5) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+  box-shadow: 0 6px 18px -6px rgba(24, 119, 242, .55) !important;
+}
+.btn-share:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 8px 22px -6px rgba(24, 119, 242, .55) !important;
+}
+.btn-share svg {
+  color: #ffffff !important;
+}
 </style>
 </head>
 <body>
@@ -994,8 +1011,8 @@ body.fs-active{overflow:hidden !important}
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
           Regresar
         </button>
-        <button class="btn btn-primary btn-sm" id="tripShareBtn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+<button class="btn btn-share btn-sm" id="tripShareBtn">
+   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
           Compartir viaje
         </button>
       </div>
