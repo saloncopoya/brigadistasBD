@@ -1,6 +1,25 @@
 {
   "posts": [
     {
+      "slug": "prueba17septiembre179",
+      "title": "PRUEBA 17 SEPTIEMBRE",
+      "description": "Ruta PRUEBA 17 SEPTIEMBRE",
+      "image": "",
+      "url": "/share/ruta/prueba17septiembre179",
+      "tipo": "ruta",
+      "timestamp": 1789663840974,
+      "updatedAt": "2026-09-17T16:50:40.974Z",
+      "categoria": "urbana",
+      "tarifa": "",
+      "frecuencia": "",
+      "horarioIni": "",
+      "horarioFin": "",
+      "dias": "todos",
+      "paradas": [],
+      "calles": [],
+      "pois": []
+    },
+    {
       "slug": "esteesunarutanueva169",
       "title": "2027 ESTE ES UNA RUTA NUEVA",
       "description": "Ruta 2027 ESTE ES UNA RUTA NUEVA",
@@ -398,8 +417,8 @@
       "updatedAt": "2026-09-13T08:52:43.612Z"
     }
   ],
-  "total": 23,
-  "updatedAt": "2026-09-17T16:49:32.679Z",
+  "total": 24,
+  "updatedAt": "2026-09-17T16:50:40.974Z",
   "version": 1,
-  "__sha": "fb28215860433f49127b90679ca5aa37f094983a"
+  "__sha": "5a2086d37086e515ce37d77d7c7add8c8b25146c"
 }
