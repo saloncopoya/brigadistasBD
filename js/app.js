@@ -2452,13 +2452,15 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
         const colorOffset = results.direct.length;
         const color = TRIP_COLORS[(colorOffset + idx) % TRIP_COLORS.length];
 
-        // Chips del encabezado: cada chip es clickeable y abre su ruta
+
+                 // Chips del encabezado: cada chip es clickeable y abre su ruta.
+        // 🎨 El color del cuadrito coincide con el color del trazo en el mapa.
         const chipsHtml = t.legs.map((leg, li) => {
           const legColor = TRIP_COLORS[(colorOffset + li) % TRIP_COLORS.length];
           return `
             <button class="trip-chain-item" type="button" data-trip-focus="${esc(leg.id)}" title="Abrir ruta ${esc(leg.nombre)}">
 
-                            <div class="trip-chain-chip">
+              <div class="trip-chain-chip" style="background:${legColor};border-color:${legColor};color:#ffffff">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                   <rect x="3" y="4" width="18" height="13" rx="2"/>
                   <line x1="3" y1="11" x2="21" y2="11"/>
@@ -2468,10 +2470,11 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
                   <path d="M14 8h3"/>
                 </svg>
               </div>
-              
+
               <span class="trip-chain-name">${esc(leg.nombre)}</span>
             </button>`;
         }).join('<span class="trip-chain-sep">›</span>');
+         
 
     
 
