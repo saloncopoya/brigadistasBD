@@ -1,9 +1,12 @@
+
+
 /* ============================================================
    🔔 FIREBASE MESSAGING — Service Worker de notificaciones push
    ============================================================ */
-importScripts('/vendor/firebase/firebase-app-compat.js');
-importScripts('/vendor/firebase/firebase-messaging-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js');
 
+// ✅ MISMO proyecto que tu app (aplicacion-2c1c8)
 firebase.initializeApp({
   apiKey: "AIzaSyAiojpfnGUPhaoQkpAh1Yey3fp6uWU-iFQ",
   authDomain: "aplicacion-2c1c8.firebaseapp.com",
@@ -15,27 +18,17 @@ firebase.initializeApp({
   measurementId: "G-SFP1SEY20W"
 });
 
-/* ============================================================
-   🔔 PUSH EN SEGUNDO PLANO
-   Soporta:
-   - payload.notification (título + body + icon)
-   - payload.data (data-only push)
-   - Botones personalizados via data.letra1/2/3 + data.boton1/2/3
-   - Botones por defecto: VER / COMPARTIR / RECORDAR
-   ============================================================ */
+
+// Notificaciones push en segundo plano
 self.addEventListener('push', (event) => {
   event.waitUntil((async () => {
     let payload = {};
     if (event.data) {
-      try { payload = event.data.json(); } catch (e) {
-        try { payload = { notification: { title: 'Rutas BGD', body: event.data.text() } }; } catch (e2) {}
-      }
+      try { payload = event.data.json(); } catch (e) {}
     }
 
     const customData = payload.data || {};
-    const notif = payload.notification || {};
 
-    // Botones personalizados (letra1/boton1, letra2/boton2, letra3/boton3)
     const botones = [];
     for (let i = 1; i <= 3; i++) {
       const nombreBoton = customData[`letra${i}`];
@@ -57,15 +50,12 @@ self.addEventListener('push', (event) => {
       if (urlBoton) urlsBotones[`boton_${i}`] = urlBoton;
     }
 
-    const notificationTitle = notif.title || customData.title || 'Rutas BGD';
-    const notificationBody  = notif.body  || customData.body  || 'Notificación importante';
-    const notificationImage = notif.image || customData.image || '/img.png';
-
+    const notificationTitle = (payload.notification && payload.notification.title) || 'Rutas BGD';
     const notificationOptions = {
-      body: notificationBody,
-      icon: notificationImage,
+      body: (payload.notification && payload.notification.body) || 'Notificación importante',
+      icon: (payload.notification && payload.notification.image) || '/img.png',
       badge: '/img.png',
-      image: notificationImage,
+      image: (payload.notification && payload.notification.image) || '/img.png',
       vibrate: [200, 100, 200],
       requireInteraction: true,
       priority: 'high',
@@ -75,7 +65,7 @@ self.addEventListener('push', (event) => {
       actions: actions,
       data: {
         urls: urlsBotones,
-        url_por_defecto: customData.url || notif.click_action || '/'
+        url_por_defecto: customData.url || '/'
       }
     };
 
@@ -83,9 +73,7 @@ self.addEventListener('push', (event) => {
   })());
 });
 
-/* ============================================================
-   👆 CLIC EN NOTIFICACIÓN (botones y cuerpo)
-   ============================================================ */
+// Clic en los botones de la notificación
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
@@ -110,41 +98,23 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-/* ============================================================
-   🚫 CIERRE DE NOTIFICACIÓN (opcional, para limpieza)
-   ============================================================ */
-self.addEventListener('notificationclose', (event) => {
-  // Nada que limpiar por ahora, pero es buena práctica tenerlo
-});
-
-/* ============================================================
-   💾 CACHÉS
-   ============================================================ */
-const VERSION = 'bgd-v3.6.1';
+/* SW.JS — v8 · NO intercepta tiles ni APIs externas */
+const VERSION = 'bgd-v1.3';
 const STATIC_CACHE = `${VERSION}-static`;
 const HTML_CACHE = `${VERSION}-html`;
 
 const PRECACHE = [
-  '/',
-  '/index.html',
-  '/offline.html',
-  '/404.html',
-  '/manifest.json',
-  '/robots.txt',
-  '/sitemap.xml',
-  '/assets/icon.svg',
-  '/img.png',
-  '/js/db.js',
-  '/js/publisher.js',
-  '/js/app.js',
+  '/', '/index.html', '/admin.html', '/offline.html',
+  '/manifest.json', '/robots.txt', '/sitemap.xml',
+  '/assets/icon.svg', '/js/db.js', '/js/publisher.js', '/js/app.js',
   '/vendor/leaflet/leaflet.css',
   '/vendor/leaflet/leaflet.js',
-  '/vendor/leaflet/images/marker-icon.png',
+    '/vendor/leaflet/images/marker-icon.png',
   '/vendor/leaflet/images/marker-icon-2x.png',
   '/vendor/leaflet/images/marker-shadow.png',
   '/vendor/leaflet/images/layers.png',
   '/vendor/leaflet/images/layers-2x.png',
-  '/vendor/leaflet-image/leaflet-image.js',
+   '/vendor/leaflet-image/leaflet-image.js',
   '/vendor/idb/umd.js',
   '/vendor/firebase/firebase-app-compat.js',
   '/vendor/firebase/firebase-database-compat.js',
@@ -167,24 +137,17 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
-    await Promise.all(
-      keys.filter(k => !k.startsWith(VERSION)).map(k => caches.delete(k))
-    );
+    await Promise.all(keys.filter(k => !k.startsWith(VERSION)).map(k => caches.delete(k)));
     await self.clients.claim();
   })());
 });
 
-/* ============================================================
-   🌐 FETCH — HTML y estáticos
-   ============================================================ */
 self.addEventListener('fetch', event => {
   const req = event.request;
   if (req.method !== 'GET') return;
+  const url = new URL(req.url);
 
-  let url;
-  try { url = new URL(req.url); } catch (e) { return; }
-
-  // No interceptar recursos externos (tiles, firebase, cloudinary, etc.)
+  // ⚠️ NO interceptar recursos externos (tiles, firebase, etc.)
   if (url.origin !== self.location.origin) return;
 
   if (req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html')) {
@@ -198,19 +161,13 @@ async function htmlStrategy(req) {
   const cache = await caches.open(HTML_CACHE);
   try {
     const fresh = await fetch(req);
-    if (fresh && fresh.ok) {
-      cache.put(req, fresh.clone());
-      return fresh;
-    }
+    if (fresh && fresh.ok) { cache.put(req, fresh.clone()); return fresh; }
     throw new Error('bad');
   } catch (e) {
     const cached = await cache.match(req);
     if (cached) return cached;
     const offline = await caches.match('/offline.html');
-    return offline || new Response('<h1>Sin conexión</h1>', {
-      status: 503,
-      headers: { 'Content-Type': 'text/html' }
-    });
+    return offline || new Response('<h1>Sin conexión</h1>', { status: 503, headers: { 'Content-Type': 'text/html' } });
   }
 }
 
@@ -223,12 +180,16 @@ async function cacheFirst(req, cacheName) {
     if (fresh && fresh.ok) cache.put(req, fresh.clone());
     return fresh;
   } catch (e) {
-    return cached || new Response('', { status: 503, statusText: 'Offline' });
-  }
+  return cached || new Response('', { status: 503, statusText: 'Offline' });
+}
 }
 
 /* ============================================================
-   🗺️ CACHÉ DE TILES OSM
+   🗺️ CACHÉ DE TILES OSM — capa extra sobre IndexedDB
+   ------------------------------------------------------------
+   ✔ Solo guarda tiles que el usuario VE (no prefetch).
+   ✔ Respeta la política de OSM (caché por uso).
+   ✔ Si el usuario borra IndexedDB, el SW aún tiene los tiles.
    ============================================================ */
 const TILE_CACHE = 'bgd-tiles-v1';
 const TILE_HOSTS = [
@@ -237,7 +198,7 @@ const TILE_HOSTS = [
   'b.tile.openstreetmap.org',
   'c.tile.openstreetmap.org'
 ];
-const TILE_MAX_ENTRIES = 2000;
+const TILE_MAX_ENTRIES = 2000;   // tope duro para no llenar el disco
 
 self.addEventListener('fetch', (event) => {
   const req = event.request;
@@ -252,16 +213,21 @@ self.addEventListener('fetch', (event) => {
 
 async function handleTileRequest(req) {
   const cache = await caches.open(TILE_CACHE);
+
+  // 1️⃣ Cache-first (rápido y offline-friendly)
   const cached = await cache.match(req);
   if (cached) return cached;
 
+  // 2️⃣ No hay caché → red
   try {
     const fresh = await fetch(req, { mode: 'cors', credentials: 'omit' });
     if (fresh && fresh.ok) {
+      // Guardar copia (sin await para no bloquear la respuesta)
       cache.put(req, fresh.clone()).then(() => pruneTileCache(cache));
     }
     return fresh;
   } catch (err) {
+    // 3️⃣ Sin red y sin caché → tile vacío (transparente 1x1 PNG)
     return new Response(
       Uint8Array.from(atob(
         'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
@@ -271,20 +237,19 @@ async function handleTileRequest(req) {
   }
 }
 
+// Poda: si superamos N tiles, borramos los más antiguos
 async function pruneTileCache(cache) {
   try {
     const keys = await cache.keys();
     if (keys.length <= TILE_MAX_ENTRIES) return;
     const toDelete = keys.length - TILE_MAX_ENTRIES;
+    // Las keys vienen en orden de inserción → las primeras son las más viejas
     for (let i = 0; i < toDelete; i++) {
       await cache.delete(keys[i]);
     }
   } catch (e) {}
 }
 
-/* ============================================================
-   💬 MENSAJES DESDE LA APP
-   ============================================================ */
 self.addEventListener('message', event => {
   if (event.data === 'SKIP_WAITING') self.skipWaiting();
   if (event.data === 'CLEAR_CACHE') {
