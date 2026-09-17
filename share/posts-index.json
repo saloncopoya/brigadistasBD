@@ -200,33 +200,6 @@
       ]
     },
     {
-      "slug": "test_1789544868352",
-      "title": "TEST DE VERIFICACIÓN",
-      "description": "Esta es una prueba automática. Puedes borrarla después.",
-      "image": "",
-      "url": "/share/ruta/test_1789544868352",
-      "tipo": "ruta",
-      "timestamp": 1789544869433,
-      "updatedAt": "2026-09-16T07:47:49.433Z",
-      "categoria": "urbana",
-      "tarifa": 10,
-      "frecuencia": "Cada 15 min",
-      "horarioIni": "",
-      "horarioFin": "",
-      "dias": "",
-      "paradas": [
-        "Parada A",
-        "Parada B"
-      ],
-      "calles": [
-        "Calle 1",
-        "Calle 2"
-      ],
-      "pois": [
-        "POI 1"
-      ]
-    },
-    {
       "slug": "test_1789544802781",
       "title": "TEST DE VERIFICACIÓN",
       "description": "Esta es una prueba automática. Puedes borrarla después.",
@@ -509,8 +482,8 @@
       "updatedAt": "2026-09-13T08:52:43.612Z"
     }
   ],
-  "total": 29,
-  "updatedAt": "2026-09-17T16:37:17.147Z",
+  "total": 28,
+  "updatedAt": "2026-09-17T16:37:19.558Z",
   "version": 1,
   "__sha": "fb28215860433f49127b90679ca5aa37f094983a"
 }
