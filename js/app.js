@@ -18,7 +18,7 @@ apiKey: "AIzaSyAiojpfnGUPhaoQkpAh1Yey3fp6uWU-iFQ",
   };
 
 const DEFAULT_CENTER = [16.7530, -93.1150];
-  const DEFAULT_ZOOM = 13;
+  const DEFAULT_ZOOM = 14;
 
   // ==================== UTILIDADES ====================
   const $ = (s, r = document) => r.querySelector(s);
@@ -1012,7 +1012,7 @@ const url = location.origin + '/share/post/' + post.id;
      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   minZoom: 13,
   maxZoom: 16,
-  maxNativeZoom: 14,
+  maxNativeZoom: 15,
   crossOrigin: true,
   attribution: '© OpenStreetMap'
 }).addTo(state.map);   // ← o .addTo(state.tripMap) según el caso
@@ -1770,7 +1770,7 @@ const url = location.origin + '/share/m/' + id;
     if (state.tripMap) { state.tripMap.invalidateSize(); return; }
     const el = document.getElementById('tripMap');
     if (!el) return;
-    state.tripMap = L.map(el, {       zoomControl: true,       minZoom: 13,       maxZoom: 16     }).setView(DEFAULT_CENTER, 13);
+    state.tripMap = L.map(el, {       zoomControl: true,       minZoom: 13,       maxZoom: 16     }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
     // ✨ Registrar el mapa para auto-reparación (sin timers)
     registerMap(state.tripMap);
        
@@ -1779,7 +1779,7 @@ const url = location.origin + '/share/m/' + id;
  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   minZoom: 13,
   maxZoom: 16,
-  maxNativeZoom: 14,
+  maxNativeZoom: 15,
   crossOrigin: true,
   attribution: '© OpenStreetMap'
 }).addTo(state.tripMap);
