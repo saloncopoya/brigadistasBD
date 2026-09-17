@@ -160,7 +160,6 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
     isAdmin: false,
     online: navigator.onLine,
     historyStack: [],
-    // Editor
     editingRoute: null,
     routeDraft: { puntos: [], puntosVuelta: [], calles: [], pois: [], geometriaIda: [], geometriaVuelta: [], colorIda: '#00e5ff', colorVuelta: '#a855f7' },
     editorMap: null,
@@ -168,32 +167,28 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
     drawMode: 'draw',
     drawing: false,
     gpsWatch: null,
-    // Mapa principal
     map: null,
     mapLayers: {},
-    // Trip search
     tripMap: null,
     tripPoints: [],
     tripMarkers: [],
     tripCircles: [],
     tripRadius: 300,
-    userReactivated: false,   // ← NUEVA bandera: el usuario reactivó "+Agregar" manualmente
-      // 🎯 GPS en tiempo real (icono pulsante estilo Google Maps)
-    gpsLive: {
-      watchId: null,        // ID de navigator.geolocation.watchPosition
-      marker: null,         // L.marker con el icono pulsante
-      accuracyCircle: null, // L.circle con el radio de precisión
-      autoFollow: true,     // ¿El mapa sigue al usuario?
-      firstFix: false,      // ¿Ya se centró la primera vez?
-      heading: null,        // Último heading conocido (grados)
-      lastLatLng: null,     // Última posición conocida
-      minDistanceToPan: 8,  // metros mínimos para re-centrar (evita temblores)
-      active: false         // ← NUEVO: estado real del GPS (independiente del DOM)
-    },
-    // Firebase
+    userReactivated: false,
     fbDB: null,
-    // Comentarios
-    commentPostId: null
+    commentPostId: null,
+    // 🛰️ GPS en vivo
+    gpsLive: {
+      watchId: null,
+      marker: null,
+      accuracyCircle: null,
+      autoFollow: true,
+      firstFix: false,
+      heading: null,
+      lastLatLng: null,
+      minDistanceToPan: 8,
+      active: false
+    }
   };
   global.__APP_STATE__ = state;
 
@@ -1796,11 +1791,12 @@ const url = location.origin + '/share/m/' + id;
   attribution: '© OpenStreetMap'
 }).addTo(state.tripMap);
        
-    state.tripMap.on('click', e => {
-      // Solo agregar si el modo activo es "addpoint" (ignorando el GPS)
+
+
+       state.tripMap.on('click', e => {
+      // Solo agregar si el botón addpoint tiene la clase .active
       const addBtn = document.querySelector('#tripToolbar .tb[data-tool="addpoint"]');
-      const isAddActive = addBtn && addBtn.classList.contains('active');
-      if (!isAddActive) return;
+      if (!addBtn || !addBtn.classList.contains('active')) return;
 
       // Límite duro de 5 puntos
       if (state.tripPoints.length >= 5) {
@@ -2606,27 +2602,33 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
       if (res.method === 'clipboard') toast('Enlace copiado ✓');
     };
   }
-  // Toolbar trip
+
+
+     // Toolbar trip
   $$('#tripToolbar .tb').forEach(b => {
     b.onclick = () => {
       const tool = b.dataset.tool;
+
+      // 🛰️ GPS en vivo — toggle independiente
+      if (tool === 'locate') {
+        toggleLiveGPS(b, toast);
+        return;
+      }
+
       if (tool === 'undo') {
         if (!state.tripPoints.length) { toast('No hay puntos para deshacer', 'err'); return; }
         const lastIdx = state.tripPoints.length - 1;
-        // Quitar marker y círculo del mapa
         if (state.tripMarkers[lastIdx]) state.tripMap.removeLayer(state.tripMarkers[lastIdx]);
         if (state.tripCircles[lastIdx]) state.tripMap.removeLayer(state.tripCircles[lastIdx]);
         state.tripMarkers.splice(lastIdx, 1);
         state.tripCircles.splice(lastIdx, 1);
         state.tripPoints.splice(lastIdx, 1);
-        // Reetiquetar los que quedan
         state.tripPoints.forEach((p, idx) => {
           p.letter = String.fromCharCode(65 + idx);
           p.color = ['#10b981', '#ef4444', '#f59e0b', '#3b82f6', '#a855f7'][idx] || '#00e5ff';
           const isDefault = TRIP_DEFAULT_NAMES.includes(p.name) || /^PUNTO [A-E]$/.test(p.name);
           if (isDefault) p.name = TRIP_DEFAULT_NAMES[idx] || ('PUNTO ' + p.letter);
         });
-        // Redibujar markers con nueva letra/color/nombre
         state.tripMarkers.forEach((m, idx) => {
           const pt = state.tripPoints[idx];
           if (!pt) return;
@@ -2639,42 +2641,42 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
           });
           m.setIcon(icon);
         });
-              renderTripPointsList();
+        renderTripPointsList();
         performTripSearch();
-
-        // 🔓 Reactivar "+Agregar" si quedan 0 o 1 puntos
-        // y resetear la bandera de reactivación
         state.userReactivated = false;
         if (state.tripPoints.length <= 1) {
           const addBtn = document.querySelector('#tripToolbar .tb[data-tool="addpoint"]');
           if (addBtn) {
-            $$('#tripToolbar .tb').forEach(x => x.classList.remove('active'));
+            $$('#tripToolbar .tb').forEach(x => { if (x.dataset.tool !== 'locate') x.classList.remove('active'); });
             addBtn.classList.add('active');
           }
         }
         toast('Punto eliminado');
         return;
       }
-            if (tool === 'locate') {
-        // 🎯 GPS: se togglea con su propio estado, no con classList del grupo
-        toggleLiveGPS(b, toast);
+
+      if (tool === 'clear') {
+        state.tripMarkers.forEach(m => state.tripMap.removeLayer(m));
+        state.tripCircles.forEach(c => state.tripMap.removeLayer(c));
+        state.tripMarkers = []; state.tripCircles = []; state.tripPoints = [];
+        clearTripRouteLayers();
+        renderTripPointsList(); performTripSearch();
+        state.userReactivated = false;
+        const addBtn = document.querySelector('#tripToolbar .tb[data-tool="addpoint"]');
+        if (addBtn) {
+          $$('#tripToolbar .tb').forEach(x => { if (x.dataset.tool !== 'locate') x.classList.remove('active'); });
+          addBtn.classList.add('active');
+        }
+        toast('Puntos limpiados');
         return;
       }
 
-      // 🎯 Para "addpoint" y otros: NO tocar el botón GPS
+      // Cualquier otro botón (addpoint)
       $$('#tripToolbar .tb').forEach(x => {
         if (x.dataset.tool !== 'locate') x.classList.remove('active');
       });
-
+      b.classList.add('active');
       if (tool === 'addpoint') {
-        // Reglas del addpoint:
-        // - Si hay 3+ puntos → NO se puede activar
-        // - Si hay 0-2 puntos → activar normalmente
-        if (state.tripPoints.length >= 3) {
-          toast('Máx. 2 puntos. Borra uno para agregar otro.', 'err');
-          return;
-        }
-        b.classList.add('active');
         state.userReactivated = true;
       } else {
         state.userReactivated = false;
@@ -2682,94 +2684,59 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
     };
   });
 
-
-     /* ============================================================
-     🎯 GPS EN TIEMPO REAL — Icono pulsante estilo Google Maps
-     ------------------------------------------------------------
-     CAMBIOS v2:
-     • Flecha AHORA va DENTRO del círculo azul, rotando en su eje
-     • Estado del GPS es INDEPENDIENTE del DOM (state.gpsLive.active)
-     • NO interfiere con el modo "addpoint"
-     • La toolbar NO desactiva el GPS al pulsar otros botones
-     • Auto-follow suave + círculo de precisión + rotación por heading
-     ============================================================ */
+  // ============================================================
+  //  🛰️ GPS EN VIVO — Icono pulsante estilo Google Maps
+  // ============================================================
 
   function buildGpsLiveIcon() {
     return L.divIcon({
       className: 'gps-live-marker',
-      html:
-        '<div class="gps-live-icon">' +
-          '<div class="gps-live-pulse"></div>' +
-          '<div class="gps-live-dot"></div>' +
-          '<div class="gps-live-heading"></div>' +
-        '</div>',
-      iconSize: [24, 24],
-      iconAnchor: [12, 12]
+      html: `
+        <div class="gps-live-icon">
+          <div class="gps-live-pulse"></div>
+          <div class="gps-live-dot"></div>
+          <div class="gps-live-heading">
+            <svg viewBox="0 0 24 24" fill="#ffffff" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2 L17 20 L12 16 L7 20 Z"/>
+            </svg>
+          </div>
+        </div>`,
+      iconSize: [44, 44],
+      iconAnchor: [22, 22]
     });
   }
 
-  // Busca la flecha DENTRO del marker (no por ID, que puede duplicarse)
   function getGpsHeadingEl() {
-    const g = state.gpsLive;
-    if (!g.marker) return null;
-    const el = g.marker.getElement();
+    if (!state.gpsLive.marker) return null;
+    const el = state.gpsLive.marker.getElement();
     if (!el) return null;
     return el.querySelector('.gps-live-heading');
   }
 
   function startLiveGPS(btn, toastFn) {
     if (!navigator.geolocation) {
-      toastFn('GPS no disponible en este navegador', 'err');
+      toastFn('GPS no soportado por el navegador', 'err');
       return;
     }
+    if (!state.tripMap) return;
 
-    const g = state.gpsLive;
-    if (g.watchId !== null || g.active) return;  // ya está activo
+    state.gpsLive.active = true;
+    state.gpsLive.firstFix = false;
+    state.gpsLive.heading = null;
+    state.gpsLive.lastLatLng = null;
+    state.gpsLive.autoFollow = true;
+    state.gpsLive.__prevPan = null;
+    if (btn) btn.classList.add('active');
 
-    g.active = true;
-    btn.classList.add('active');
-    toastFn('🛰️ Ubicación en tiempo real activada');
+    state.gpsLive.watchId = navigator.geolocation.watchPosition(
+      pos => {
+        const { latitude: lat, longitude: lng, accuracy, heading } = pos.coords;
+        const latlng = [lat, lng];
 
-    g.autoFollow = true;
-    g.firstFix = false;
-    g.heading = null;
-    g.lastLatLng = null;
-    g.__prevPan = null;
-
-    // ⚠️ IMPORTANTE: NO tocar el botón "addpoint" aquí.
-    // El GPS es independiente del modo "agregar punto".
-
-    // Auto-follow off si el usuario arrastra el mapa
-    state.tripMap.once('dragstart', () => {
-      if (state.gpsLive.active && state.gpsLive.autoFollow) {
-        state.gpsLive.autoFollow = false;
-        toastFn('Auto-seguimiento desactivado (mueve el mapa libremente)', 'ok');
-      }
-    });
-
-    g.watchId = navigator.geolocation.watchPosition(
-      (pos) => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        const accuracy = pos.coords.accuracy || 30;
-        const heading = (pos.coords.heading != null && !isNaN(pos.coords.heading))
-          ? pos.coords.heading : null;
-
-        const g2 = state.gpsLive;
-        g2.lastLatLng = [lat, lng];
-        g2.heading = heading;
-
-        // 1️⃣ Crear capas la primera vez
-        if (!g2.marker) {
-          g2.marker = L.marker([lat, lng], {
-            icon: buildGpsLiveIcon(),
-            interactive: false,
-            keyboard: false,
-            zIndexOffset: 2000
-          }).addTo(state.tripMap);
-
-          g2.accuracyCircle = L.circle([lat, lng], {
-            radius: accuracy,
+        // Círculo de precisión
+        if (!state.gpsLive.accuracyCircle) {
+          state.gpsLive.accuracyCircle = L.circle(latlng, {
+            radius: accuracy || 20,
             color: '#3b82f6',
             fillColor: '#3b82f6',
             fillOpacity: 0.08,
@@ -2778,84 +2745,99 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
             interactive: false
           }).addTo(state.tripMap);
         } else {
-          g2.marker.setLatLng([lat, lng]);
-          g2.accuracyCircle.setLatLng([lat, lng]);
-          g2.accuracyCircle.setRadius(accuracy);
+          state.gpsLive.accuracyCircle.setLatLng(latlng);
+          state.gpsLive.accuracyCircle.setRadius(accuracy || 20);
         }
 
-        // 2️⃣ Rotar la flecha DENTRO del círculo (usa el elemento real)
-        const arrow = getGpsHeadingEl();
-        if (arrow && heading != null) {
-          // translateX(-50%) para centrar horizontalmente, luego rotar
-          arrow.style.transform =
-            'translateX(-50%) rotate(' + heading + 'deg)';
-        }
-
-        // 3️⃣ Auto-follow
-        if (!g2.firstFix) {
-          g2.firstFix = true;
-          state.tripMap.setView([lat, lng], Math.max(state.tripMap.getZoom(), 16), {
-            animate: true, duration: 0.6
+        // Marker
+        if (!state.gpsLive.marker) {
+          state.gpsLive.marker = L.marker(latlng, {
+            icon: buildGpsLiveIcon(),
+            interactive: false,
+            keyboard: false,
+            zIndexOffset: 1000
+          }).addTo(state.tripMap);
+          // Desactivar auto-follow si el usuario arrastra
+          state.tripMap.once('dragstart', () => {
+            if (state.gpsLive.active) {
+              state.gpsLive.autoFollow = false;
+              toastFn('Auto-seguimiento desactivado. Mueve el mapa libremente.');
+            }
           });
-        } else if (g2.autoFollow) {
-          const [prevLat, prevLng] = g2.__prevPan || g2.lastLatLng;
-          const dist = haversine(prevLat, prevLng, lat, lng);
-          if (dist >= g2.minDistanceToPan) {
-            g2.__prevPan = [lat, lng];
-            state.tripMap.panTo([lat, lng], {
-              animate: true, duration: 0.5, easeLinearity: 0.6
-            });
+        } else {
+          state.gpsLive.marker.setLatLng(latlng);
+        }
+
+        // Heading (rotar la flecha DENTRO del círculo)
+        if (typeof heading === 'number' && !isNaN(heading)) {
+          state.gpsLive.heading = heading;
+          const headingEl = getGpsHeadingEl();
+          if (headingEl) {
+            headingEl.classList.remove('hidden-heading');
+            headingEl.style.transform = `rotate(${heading}deg)`;
+          }
+        } else {
+          const headingEl = getGpsHeadingEl();
+          if (headingEl) headingEl.classList.add('hidden-heading');
+        }
+
+        // Auto-follow
+        if (state.gpsLive.autoFollow) {
+          if (!state.gpsLive.firstFix) {
+            state.tripMap.setView(latlng, Math.max(state.tripMap.getZoom(), 16), { animate: true });
+            state.gpsLive.firstFix = true;
+          } else {
+            const prev = state.gpsLive.lastLatLng;
+            if (prev) {
+              const d = haversine(prev[0], prev[1], lat, lng);
+              if (d > state.gpsLive.minDistanceToPan) {
+                state.tripMap.panTo(latlng, { animate: true, duration: 0.6 });
+              }
+            } else {
+              state.tripMap.panTo(latlng, { animate: true, duration: 0.6 });
+            }
           }
         }
+
+        state.gpsLive.lastLatLng = latlng;
       },
-      (err) => {
-        let msg = 'No se pudo obtener tu ubicación';
-        if (err.code === 1) msg = 'Permiso de ubicación denegado. Actívalo en el navegador.';
-        else if (err.code === 2) msg = 'Ubicación no disponible (GPS apagado o sin señal).';
-        else if (err.code === 3) msg = 'Tiempo de espera agotado buscando GPS.';
-        toastFn('⚠️ ' + msg, 'err');
+      err => {
+        let msg = 'Error de GPS';
+        if (err.code === 1) msg = 'Permiso de ubicación denegado';
+        else if (err.code === 2) msg = 'Ubicación no disponible (revisa tu GPS)';
+        else if (err.code === 3) msg = 'Timeout buscando señal GPS';
+        toastFn(msg, 'err');
         stopLiveGPS(btn, toastFn, true);
       },
-      {
-        enableHighAccuracy: true,
-        maximumAge: 1000,
-        timeout: 20000
-      }
+      { enableHighAccuracy: true, maximumAge: 1000, timeout: 20000 }
     );
+
+    toastFn('GPS activado · Mostrando tu ubicación en vivo');
   }
 
   function stopLiveGPS(btn, toastFn, silencioso) {
-    const g = state.gpsLive;
-
-    if (g.watchId !== null) {
-      navigator.geolocation.clearWatch(g.watchId);
-      g.watchId = null;
+    if (state.gpsLive.watchId != null) {
+      try { navigator.geolocation.clearWatch(state.gpsLive.watchId); } catch (e) {}
     }
-
-    if (g.marker) {
-      try { state.tripMap.removeLayer(g.marker); } catch (e) {}
-      g.marker = null;
+    if (state.gpsLive.marker && state.tripMap) {
+      try { state.tripMap.removeLayer(state.gpsLive.marker); } catch (e) {}
     }
-
-    if (g.accuracyCircle) {
-      try { state.tripMap.removeLayer(g.accuracyCircle); } catch (e) {}
-      g.accuracyCircle = null;
+    if (state.gpsLive.accuracyCircle && state.tripMap) {
+      try { state.tripMap.removeLayer(state.gpsLive.accuracyCircle); } catch (e) {}
     }
-
-    g.active = false;
-    g.autoFollow = true;
-    g.firstFix = false;
-    g.heading = null;
-    g.lastLatLng = null;
-    g.__prevPan = null;
-
+    state.gpsLive.watchId = null;
+    state.gpsLive.marker = null;
+    state.gpsLive.accuracyCircle = null;
+    state.gpsLive.firstFix = false;
+    state.gpsLive.heading = null;
+    state.gpsLive.lastLatLng = null;
+    state.gpsLive.autoFollow = true;
+    state.gpsLive.active = false;
     if (btn) btn.classList.remove('active');
-
-    if (!silencioso) toastFn('📍 Ubicación en tiempo real desactivada');
+    if (!silencioso) toastFn('GPS desactivado');
   }
 
   function toggleLiveGPS(btn, toastFn) {
-    // Usa el estado REAL, no el DOM (evita el bug de "no se apaga")
     if (state.gpsLive.active) {
       stopLiveGPS(btn, toastFn);
     } else {
@@ -2863,8 +2845,6 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
     }
   }
 
-
-   
   // ==================== BOTTOM NAV ====================
   $$('.nav-item').forEach(n => {
     n.onclick = () => navigateTo(n.dataset.page);
