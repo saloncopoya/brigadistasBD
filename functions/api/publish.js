@@ -471,7 +471,6 @@ bodyContent = renderRouteMapBlock(extra.route, baseUrl) + renderRouteBody(extra.
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Rutas BGD">
-<link rel="preconnect" href="https://unpkg.com">
 <link rel="preconnect" href="https://tile.openstreetmap.org">
 
 <!-- Open Graph -->
@@ -495,7 +494,7 @@ bodyContent = renderRouteMapBlock(extra.route, baseUrl) + renderRouteBody(extra.
 <!-- Schema.org -->
 <script type="application/ld+json">${JSON.stringify(schema)}</script>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
 
 <style>
 :root{
@@ -722,8 +721,9 @@ function renderRouteMapBlock(route, baseUrl) {
         </svg>
       </button>
     </div>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin><\/script>
+  <link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
+    <script src="/vendor/leaflet/leaflet.js"><\/script>
+    
     <script>
     (function(){
       var DATA = ${dataJSON};
