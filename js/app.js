@@ -998,8 +998,8 @@ const url = location.origin + '/share/post/' + post.id;
      
     state.map = L.map(container, {
       zoomControl: true,
-      minZoom: 10,
-      maxZoom: 15
+      minZoom: 13,
+      maxZoom: 16
     }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
      // ✨ Registrar el mapa para auto-reparación (sin timers)
     registerMap(state.map);
@@ -1010,8 +1010,8 @@ const url = location.origin + '/share/post/' + post.id;
    
 
      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  minZoom: 10,
-  maxZoom: 15,
+  minZoom: 13,
+  maxZoom: 16,
   maxNativeZoom: 14,
   crossOrigin: true,
   attribution: '© OpenStreetMap'
@@ -1770,15 +1770,15 @@ const url = location.origin + '/share/m/' + id;
     if (state.tripMap) { state.tripMap.invalidateSize(); return; }
     const el = document.getElementById('tripMap');
     if (!el) return;
-    state.tripMap = L.map(el, {       zoomControl: true,       minZoom: 10,       maxZoom: 15     }).setView(DEFAULT_CENTER, 13);
+    state.tripMap = L.map(el, {       zoomControl: true,       minZoom: 13,       maxZoom: 16     }).setView(DEFAULT_CENTER, 13);
     // ✨ Registrar el mapa para auto-reparación (sin timers)
     registerMap(state.tripMap);
        
     // 🖥️ Conectar el botón de pantalla completa con este mapa (sin timers)
     bindFullscreenButton('tripMapFsBtn', 'tripMapWrap');
  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  minZoom: 10,
-  maxZoom: 15,
+  minZoom: 13,
+  maxZoom: 16,
   maxNativeZoom: 14,
   crossOrigin: true,
   attribution: '© OpenStreetMap'
