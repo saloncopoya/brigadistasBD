@@ -1,47 +1,17 @@
+# Reglas específicas para /share/ (sin extensión → con .html)
 # ============================================================
-#  REDIRECTS — Cloudflare Pages
-#  Solo redirigimos .html → limpia (301).
-#  Los rewrites 200 los hace Cloudflare Pages automáticamente
-#  (clean URLs nativo).
+#  REDIRECTS — Rutas limpias sin extensión
 # ============================================================
 
-# ─────────────────────────────────────────────────────────────
-#  1️⃣ REDIRIGIR .php
-# ─────────────────────────────────────────────────────────────
-/index.php             /                        301
-/*.php                 /                        301
+# Redirigir .php a .html (o a la raíz si no existe)
+/index.php         /                 301
+/*.php              /                 301
 
-# ─────────────────────────────────────────────────────────────
-#  2️⃣ /index.html → raíz
-# ─────────────────────────────────────────────────────────────
-/index.html            /                        301
+# Redirigir .html a la versión sin extensión
+/share/ruta/*.html /share/ruta/:splat 301
+/share/post/*.html /share/post/:splat 301
+/share/m/*.html    /share/m/:splat    301
 
-# ─────────────────────────────────────────────────────────────
-#  3️⃣ ADMIN
-# ─────────────────────────────────────────────────────────────
-/admin.html            /admin                   301
-
-# ─────────────────────────────────────────────────────────────
-#  4️⃣ MAPA INTERACTIVO
-# ─────────────────────────────────────────────────────────────
-/mapainteractivo.html  /mapainteractivo         301
-
-# ─────────────────────────────────────────────────────────────
-#  5️⃣ SHARE / RUTA
-# ─────────────────────────────────────────────────────────────
-/share/ruta/*.html     /share/ruta/:splat       301
-
-# ─────────────────────────────────────────────────────────────
-#  6️⃣ SHARE / POST
-# ─────────────────────────────────────────────────────────────
-/share/post/*.html     /share/post/:splat       301
-
-# ─────────────────────────────────────────────────────────────
-#  7️⃣ SHARE / MARKET
-# ─────────────────────────────────────────────────────────────
-/share/m/*.html        /share/m/:splat          301
-
-# ─────────────────────────────────────────────────────────────
-#  8️⃣ FALLBACK 404
-# ─────────────────────────────────────────────────────────────
-/*                     /404.html                 404
+# Redirigir /index.html a la raíz
+/index.html        /                 301
+/admin.html        /admin.html       200
