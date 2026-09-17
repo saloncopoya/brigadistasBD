@@ -5,7 +5,6 @@ Disallow: /admin.html
 Disallow: /admin
 Disallow: /functions/
 Disallow: /api/
-Disallow: /js/
 Disallow: /assets/private/
 
 # Permitir indexación de contenido compartido
@@ -25,6 +24,3 @@ Disallow: /admin.html
 
 # Sitemap
 Sitemap: https://brigadistasbd.pages.dev/sitemap.xml
-
-# Host preferido
-Host: https://brigadistasbd.pages.dev
