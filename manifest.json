@@ -1,94 +1,34 @@
 {
-    "name": "BRIGADISTA BD",
-    "short_name": "BRIGADISTA BD",
-    "description": "BASE DE DATOS",
-    "start_url": "/",
-    "display": "standalone",
-    "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
-    "theme_color": "#8B4513",
-    "background_color": "#f8f9fa",
-    "orientation": "portrait-primary",
-    "scope": "/",
-    "lang": "es-MX",
-    "dir": "ltr",
-    "categories": ["sports", "entertainment", "productivity"],
-    "id": "legado-avicola-main",
-    "version": "2.0.0",
-    "gcm_sender_info": {
-    "sender_id": "837629411067"
-},
-    
-    "icons": [
-        {"src": "/img.png", "sizes": "48x48", "type": "image/png", "purpose": "any"},
-               {"src": "/img.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
-    ],
-
-    "shortcuts": [
-        {
-            "name": "⚡ COTEJO", 
-            "short_name": "Cotejo", 
-            "description": "Ver tabla de cotejo", 
-            "url": "/?tab=cotejo", 
-            "icons": [{"src": "https://placehold.co/96x96/8B4513/white?text=⚡", "sizes": "96x96", "type": "image/png"}]
-        },
-        {
-            "name": "🏆 POSICIONES", 
-            "short_name": "Posiciones", 
-            "description": "Ver tabla de posiciones", 
-            "url": "/?tab=posicion", 
-            "icons": [{"src": "https://placehold.co/96x96/8B4513/white?text=🏆", "sizes": "96x96", "type": "image/png"}]
-        },
-        {
-            "name": "📥 IMPORTAR", 
-            "short_name": "Importar", 
-            "description": "Importar torneo desde JSON", 
-            "url": "/?tab=cotejo", 
-            "icons": [{"src": "https://placehold.co/96x96/8B4513/white?text=📥", "sizes": "96x96", "type": "image/png"}]
-        }
-    ],
-
-    "screenshots": [
-        {"src": "/img.png", "sizes": "1280x720", "type": "image/png", "form_factor": "wide", "label": "T3"},
-        {"src": "/img.png", "sizes": "1280x720", "type": "image/png", "form_factor": "wide", "label": "t2"},
-        {"src": "/img.png", "sizes": "720x1280", "type": "image/png", "form_factor": "narrow", "label": "C1"}
-    ],
-
-"launch_handler": {
-    "client_mode": "navigate-new"
-},
-    
-    "edge_side_panel": {
-    "preferred_width": 400
-},
-"url_handlers": [
+  "name": "Rutas Colectivos · Blog & Market",
+  "short_name": "Rutas BGD",
+  "description": "Consulta, explora y administra rutas de colectivos. Blog y marketplace con mapas interactivos.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#0a0e1a",
+  "background_color": "#0a0e1a",
+  "lang": "es-MX",
+  "dir": "ltr",
+  "categories": ["travel", "navigation", "utilities"],
+  "icons": [
     {
-        "origin": "https://brigadistasbd.pages.dev",
-        "url": "/share/*"
-    }
-],
-"handle_links": "preferred",
-    
-    "share_target": {
-        "action": "/",
-        "method": "GET",
-        "enctype": "application/x-www-form-urlencoded",
-        "params": {"title": "title", "text": "text", "url": "url"}
+      "src": "/img.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
     },
-    
-    "serviceworker": {"src": "/sw.js", "scope": "/", "type": "classic", "update_via_cache": "all"},
-    "offline_enabled": true,
-    "cache": {"strategy": "cache-first", "max_age": 2592000, "max_entries": 100},
-    "prefetch": {"urls": ["/", "/offline.html"], "strategy": "eager"},
-    
-    "splash_screen": {"background_color": "#8B4513", "image": "https://placehold.co/512x512/8B4513/white?text=🐓", "image_purpose": "any"},
-    
-    "analytics": {"enabled": false},
-"features": {
-    "cross_window": true,
-    "fullscreen": true,
-    "picture_in_picture": false,
-    "wake_lock": false,
-    "push_notifications": true
-},
-    "capture_links": "existing-client-event"
+    {
+      "src": "/img.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/img.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
 }
