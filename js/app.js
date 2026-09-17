@@ -2695,23 +2695,14 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
         <div class="gps-live-icon">
           <div class="gps-live-pulse"></div>
           <div class="gps-live-dot"></div>
-          <div class="gps-live-heading">
-            <svg viewBox="0 0 24 24" fill="#ffffff" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2 L17 20 L12 16 L7 20 Z"/>
-            </svg>
-          </div>
         </div>`,
       iconSize: [44, 44],
       iconAnchor: [22, 22]
     });
   }
 
-  function getGpsHeadingEl() {
-    if (!state.gpsLive.marker) return null;
-    const el = state.gpsLive.marker.getElement();
-    if (!el) return null;
-    return el.querySelector('.gps-live-heading');
-  }
+   
+
 
   function startLiveGPS(btn, toastFn) {
     if (!navigator.geolocation) {
@@ -2730,7 +2721,7 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
 
     state.gpsLive.watchId = navigator.geolocation.watchPosition(
       pos => {
-        const { latitude: lat, longitude: lng, accuracy, heading } = pos.coords;
+        const { latitude: lat, longitude: lng, accuracy } = pos.coords;
         const latlng = [lat, lng];
 
         // Círculo de precisión
@@ -2761,25 +2752,13 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
           state.tripMap.once('dragstart', () => {
             if (state.gpsLive.active) {
               state.gpsLive.autoFollow = false;
-              toastFn('Auto-seguimiento desactivado. Mueve el mapa libremente.');
             }
           });
         } else {
           state.gpsLive.marker.setLatLng(latlng);
         }
 
-        // Heading (rotar la flecha DENTRO del círculo)
-        if (typeof heading === 'number' && !isNaN(heading)) {
-          state.gpsLive.heading = heading;
-          const headingEl = getGpsHeadingEl();
-          if (headingEl) {
-            headingEl.classList.remove('hidden-heading');
-            headingEl.style.transform = `rotate(${heading}deg)`;
-          }
-        } else {
-          const headingEl = getGpsHeadingEl();
-          if (headingEl) headingEl.classList.add('hidden-heading');
-        }
+
 
         // Auto-follow
         if (state.gpsLive.autoFollow) {
