@@ -720,17 +720,22 @@ body.fs-active{overflow:hidden !important}
   z-index: 700 !important;
 }
 
-/* Necesario: el contenedor .leaflet-bottom debe ocupar el 100% del ancho
-   para que el botón se pueda centrar respecto al mapa */
+/* Necesario: los contenedores top/bottom de Leaflet deben ocupar el 100%
+   del ancho para que el botón "Agregar puntos de viaje" se pueda centrar */
+.leaflet-top.leaflet-left,
+.leaflet-top.leaflet-right,
 .leaflet-bottom.leaflet-left,
 .leaflet-bottom.leaflet-right {
   width: 100%;
   pointer-events: none;
 }
+.leaflet-top.leaflet-left > *,
+.leaflet-top.leaflet-right > *,
 .leaflet-bottom.leaflet-left > *,
 .leaflet-bottom.leaflet-right > * {
   pointer-events: auto;
 }
+   
 .map-trip-btn {
   display: flex;
   flex-direction: column;
