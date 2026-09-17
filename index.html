@@ -676,11 +676,19 @@ body.fs-active{overflow:hidden !important}
   margin-bottom:4px;
 }
 .trip-chain-item{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:4px 8px 4px 4px;
-  background:var(--surface-2);
-  border:1px solid var(--border);
-  border-radius:10px;
+  display:inline-flex;align-items:center;gap:6px;padding:4px 8px 4px 4px;
+  background:var(--surface-2);border:1px solid var(--border);border-radius:10px;
+  cursor:pointer;transition:all .2s ease;
+  font-family:inherit;font-size:inherit;color:inherit;
+}
+.trip-chain-item:hover{
+  background:var(--surface-3);
+  border-color:var(--cyan);
+  transform:translateY(-1px);
+  box-shadow:0 4px 10px -4px var(--cyan-glow);
+}
+.trip-chain-item:active{
+  transform:scale(.97);
 }
 .trip-chain-chip{
   width:22px;height:22px;border-radius:6px;
