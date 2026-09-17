@@ -368,16 +368,6 @@
       "updatedAt": "2026-09-13T22:34:22.730Z"
     },
     {
-      "slug": "listo139",
-      "title": "LISTO",
-      "description": "Ruta LISTO",
-      "image": "",
-      "url": "/share/ruta/listo139",
-      "tipo": "ruta",
-      "timestamp": 1789335305904,
-      "updatedAt": "2026-09-13T21:35:05.904Z"
-    },
-    {
       "slug": "jsjw139",
       "title": "Jsjw",
       "description": "Ruta Jsjw",
@@ -418,8 +408,8 @@
       "updatedAt": "2026-09-13T08:52:43.612Z"
     }
   ],
-  "total": 25,
-  "updatedAt": "2026-09-17T16:37:26.301Z",
+  "total": 24,
+  "updatedAt": "2026-09-17T16:37:28.819Z",
   "version": 1,
   "__sha": "fb28215860433f49127b90679ca5aa37f094983a"
 }
