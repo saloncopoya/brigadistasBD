@@ -3,52 +3,54 @@
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://brigadistasbd.pages.dev/</loc>
-    <lastmod>2026-09-16</lastmod>
+    <lastmod>2026-09-17</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
-
-          <url>
-    <loc>https://brigadistasbd.pages.dev/mapainteractivo</loc>
-    <lastmod>2026-09-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-        
   <url>
     <loc>https://brigadistasbd.pages.dev/share/ruta/esteesunarutanueva169</loc>
     <lastmod>2026-09-16T17:32:47.504Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    <image:image><image:loc>https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789551753/ujxyfqyesdclwf7pivhl.png</image:loc></image:image>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789551753/ujxyfqyesdclwf7pivhl.png</image:loc>
+    </image:image>
   </url>
   <url>
     <loc>https://brigadistasbd.pages.dev/share/m/producto169</loc>
     <lastmod>2026-09-16T10:25:17.950Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    <image:image><image:loc>https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789554307/oon0yjos5lemhx73wwv4.png</image:loc></image:image>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789554307/oon0yjos5lemhx73wwv4.png</image:loc>
+    </image:image>
   </url>
   <url>
     <loc>https://brigadistasbd.pages.dev/share/post/post2027169</loc>
     <lastmod>2026-09-16T10:06:49.256Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    <image:image><image:loc>https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789553200/el6zjlnvj5rsuh3am7ef.png</image:loc></image:image>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789553200/el6zjlnvj5rsuh3am7ef.png</image:loc>
+    </image:image>
   </url>
   <url>
     <loc>https://brigadistasbd.pages.dev/share/ruta/ruta1149</loc>
     <lastmod>2026-09-16T08:24:42.832Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    <image:image><image:loc>https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789508995/c3vghvath2eewvchgl0c.png</image:loc></image:image>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789508995/c3vghvath2eewvchgl0c.png</image:loc>
+    </image:image>
   </url>
   <url>
     <loc>https://brigadistasbd.pages.dev/share/ruta/ruta3149</loc>
     <lastmod>2026-09-16T08:24:26.602Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    <image:image><image:loc>https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789463101/qigspxz4quvtrfqiko0c.jpg</image:loc></image:image>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789463101/qigspxz4quvtrfqiko0c.jpg</image:loc>
+    </image:image>
   </url>
   <url>
     <loc>https://brigadistasbd.pages.dev/share/ruta/test_1789544868352</loc>
@@ -73,7 +75,9 @@
     <lastmod>2026-09-16T07:22:57.870Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    <image:image><image:loc>https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789543370/qemih139mvyfvkc2nirw.jpg</image:loc></image:image>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789543370/qemih139mvyfvkc2nirw.jpg</image:loc>
+    </image:image>
   </url>
   <url>
     <loc>https://brigadistasbd.pages.dev/share/ruta/255tg169</loc>
@@ -86,14 +90,18 @@
     <lastmod>2026-09-14T16:22:44.490Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    <image:image><image:loc>https://res.cloudinary.com/davovja1g/image/upload/v1789402958/kzymaok5xmghxxufden1.jpg</image:loc></image:image>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/davovja1g/image/upload/v1789402958/kzymaok5xmghxxufden1.jpg</image:loc>
+    </image:image>
   </url>
   <url>
     <loc>https://brigadistasbd.pages.dev/share/ruta/rutax149</loc>
     <lastmod>2026-09-14T12:41:45.344Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    <image:image><image:loc>https://res.cloudinary.com/davovja1g/image/upload/v1789389698/az8gera4o41ynieim3fp.jpg</image:loc></image:image>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/davovja1g/image/upload/v1789389698/az8gera4o41ynieim3fp.jpg</image:loc>
+    </image:image>
   </url>
   <url>
     <loc>https://brigadistasbd.pages.dev/share/ruta/mirutafavorita139</loc>
@@ -154,14 +162,18 @@
     <lastmod>2026-09-13T22:46:08.670Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    <image:image><image:loc>https://res.cloudinary.com/davovja1g/image/upload/v1789339560/hui8m3orxbeffvwfo1xg.jpg</image:loc></image:image>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/davovja1g/image/upload/v1789339560/hui8m3orxbeffvwfo1xg.jpg</image:loc>
+    </image:image>
   </url>
   <url>
     <loc>https://brigadistasbd.pages.dev/share/post/postnuevo139</loc>
     <lastmod>2026-09-13T22:34:22.730Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    <image:image><image:loc>https://res.cloudinary.com/davovja1g/image/upload/v1789338854/mc6nggor1jcf9uwq3fiz.jpg</image:loc></image:image>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/davovja1g/image/upload/v1789338854/mc6nggor1jcf9uwq3fiz.jpg</image:loc>
+    </image:image>
   </url>
   <url>
     <loc>https://brigadistasbd.pages.dev/share/ruta/nueva1139</loc>
