@@ -99,7 +99,7 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 /* SW.JS — v8 · NO intercepta tiles ni APIs externas */
-const VERSION = 'bgd-v8';
+const VERSION = 'bgd-v9.1';
 const STATIC_CACHE = `${VERSION}-static`;
 const HTML_CACHE = `${VERSION}-html`;
 
@@ -147,7 +147,7 @@ const FIREBASE_REST_URL =
 
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
-    // 1) Precargar SOLO HTML/JS/CSS — install rápido
+    // 1) Precargar SOLO HTML/JS/CSS — install rápido (evita timeout en Android)
     const cache = await caches.open(STATIC_CACHE);
     await Promise.all(PRECACHE.map(async url => {
       try {
@@ -156,8 +156,9 @@ self.addEventListener('install', event => {
       } catch (e) {}
     }));
 
-    // 2) NO descargar rutas aquí. Se hará en background por mensaje.
-    //    (evita timeout de instalación del SW en Android)
+    // ⚠️ NO llamar a precacheRoutesToIndexedDB() aquí.
+    //    Se dispara desde app.js con postMessage('PRECACHE_ROUTES')
+    //    para no bloquear la instalación del SW en móvil.
 
     await self.skipWaiting();
   })());
@@ -433,8 +434,10 @@ self.addEventListener('message', event => {
   if (event.data === 'CLEAR_CACHE') {
     event.waitUntil(caches.keys().then(ks => Promise.all(ks.map(k => caches.delete(k)))));
   }
-  // 🔥 NUEVO: el precache de rutas se dispara desde la app, no en install
+  // 🔥 Precache de rutas en background, disparado desde app.js
   if (event.data === 'PRECACHE_ROUTES') {
-    event.waitUntil(precacheRoutesToIndexedDB().catch(e => console.warn('[SW] precacheRoutes:', e)));
+    event.waitUntil(
+      precacheRoutesToIndexedDB().catch(e => console.warn('[SW] precacheRoutes:', e))
+    );
   }
 });
