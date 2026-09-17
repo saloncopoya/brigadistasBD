@@ -2456,8 +2456,8 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
                  // Chips del encabezado: cada chip es clickeable y abre su ruta.
         // 🎨 El color del cuadrito coincide con el color del trazo en el mapa.
         const chipsHtml = t.legs.map((leg, li) => {
-          const legColor = TRIP_COLORS[(colorOffset + li) % TRIP_COLORS.length];
-          return `
+const legColor = li === 0 ? '#00e5ff' : '#a855f7';
+           return `
             <button class="trip-chain-item" type="button" data-trip-focus="${esc(leg.id)}" title="Abrir ruta ${esc(leg.nombre)}">
 
               <div class="trip-chain-chip" style="background:${legColor};border-color:${legColor};color:#ffffff">
