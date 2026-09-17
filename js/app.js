@@ -178,7 +178,7 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
     tripCircles: [],
     tripRadius: 300,
     userReactivated: false,   // ← NUEVA bandera: el usuario reactivó "+Agregar" manualmente
-    // 🎯 GPS en tiempo real (icono pulsante estilo Google Maps)
+      // 🎯 GPS en tiempo real (icono pulsante estilo Google Maps)
     gpsLive: {
       watchId: null,        // ID de navigator.geolocation.watchPosition
       marker: null,         // L.marker con el icono pulsante
@@ -187,7 +187,8 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
       firstFix: false,      // ¿Ya se centró la primera vez?
       heading: null,        // Último heading conocido (grados)
       lastLatLng: null,     // Última posición conocida
-      minDistanceToPan: 8   // metros mínimos para re-centrar el mapa (evita temblores)
+      minDistanceToPan: 8,  // metros mínimos para re-centrar (evita temblores)
+      active: false         // ← NUEVO: estado real del GPS (independiente del DOM)
     },
     // Firebase
     fbDB: null,
@@ -1796,10 +1797,10 @@ const url = location.origin + '/share/m/' + id;
 }).addTo(state.tripMap);
        
     state.tripMap.on('click', e => {
-      // Solo agregar si el modo activo es "addpoint"
-      const activeBtn = document.querySelector('#tripToolbar .tb.active');
-      const mode = activeBtn ? activeBtn.dataset.tool : 'addpoint';
-      if (mode !== 'addpoint') return;
+      // Solo agregar si el modo activo es "addpoint" (ignorando el GPS)
+      const addBtn = document.querySelector('#tripToolbar .tb[data-tool="addpoint"]');
+      const isAddActive = addBtn && addBtn.classList.contains('active');
+      if (!isAddActive) return;
 
       // Límite duro de 5 puntos
       if (state.tripPoints.length >= 5) {
@@ -2654,33 +2655,26 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
         toast('Punto eliminado');
         return;
       }
-      if (tool === 'clear') {
-        state.tripMarkers.forEach(m => state.tripMap.removeLayer(m));
-        state.tripCircles.forEach(c => state.tripMap.removeLayer(c));
-        state.tripMarkers = []; state.tripCircles = []; state.tripPoints = [];
-        clearTripRouteLayers();
-        renderTripPointsList(); performTripSearch();
-
-        // 🔓 Reactivar "+Agregar" tras limpiar todo
-        state.userReactivated = false;   // ← resetear bandera
-        const addBtn = document.querySelector('#tripToolbar .tb[data-tool="addpoint"]');
-        if (addBtn) {
-          $$('#tripToolbar .tb').forEach(x => x.classList.remove('active'));
-          addBtn.classList.add('active');
-        }
-        toast('Puntos limpiados');
-        return;
-      }
             if (tool === 'locate') {
+        // 🎯 GPS: se togglea con su propio estado, no con classList del grupo
         toggleLiveGPS(b, toast);
         return;
       }
-      $$('#tripToolbar .tb').forEach(x => x.classList.remove('active'));
-      b.classList.add('active');
 
-      // 🎯 Si el usuario pulsa "+Agregar" manualmente, activamos la bandera
-      // para permitir añadir el 3º, 4º o 5º punto aunque ya haya 2.
+      // 🎯 Para "addpoint" y otros: NO tocar el botón GPS
+      $$('#tripToolbar .tb').forEach(x => {
+        if (x.dataset.tool !== 'locate') x.classList.remove('active');
+      });
+
       if (tool === 'addpoint') {
+        // Reglas del addpoint:
+        // - Si hay 3+ puntos → NO se puede activar
+        // - Si hay 0-2 puntos → activar normalmente
+        if (state.tripPoints.length >= 3) {
+          toast('Máx. 2 puntos. Borra uno para agregar otro.', 'err');
+          return;
+        }
+        b.classList.add('active');
         state.userReactivated = true;
       } else {
         state.userReactivated = false;
@@ -2692,19 +2686,12 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
      /* ============================================================
      🎯 GPS EN TIEMPO REAL — Icono pulsante estilo Google Maps
      ------------------------------------------------------------
-     • watchPosition con enableHighAccuracy (GPS real, no red)
-     • maximumAge: 1000 → acepta posiciones de hace 1s (fluido)
-     • timeout: 20s → si no hay fix, avisa sin colgar
-     • Icono divIcon con:
-         - punto azul central
-         - anillo pulsante (radar)
-         - flecha de heading que rota según orientación
-     • Círculo de precisión que se adapta al accuracy real
-     • Auto-follow suave: solo recentra si el usuario se movió
-       más de `minDistanceToPan` metros (evita temblores GPS)
-     • Auto-follow se desactiva si el usuario mueve el mapa a mano
-     • Un solo watch, un solo marker, un solo círculo → sin RAM leaks
-     • Al apagar: clearWatch + removeLayer → 0 residuos
+     CAMBIOS v2:
+     • Flecha AHORA va DENTRO del círculo azul, rotando en su eje
+     • Estado del GPS es INDEPENDIENTE del DOM (state.gpsLive.active)
+     • NO interfiere con el modo "addpoint"
+     • La toolbar NO desactiva el GPS al pulsar otros botones
+     • Auto-follow suave + círculo de precisión + rotación por heading
      ============================================================ */
 
   function buildGpsLiveIcon() {
@@ -2713,12 +2700,21 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
       html:
         '<div class="gps-live-icon">' +
           '<div class="gps-live-pulse"></div>' +
-          '<div class="gps-live-heading" id="gpsLiveHeading"></div>' +
           '<div class="gps-live-dot"></div>' +
+          '<div class="gps-live-heading"></div>' +
         '</div>',
       iconSize: [24, 24],
       iconAnchor: [12, 12]
     });
+  }
+
+  // Busca la flecha DENTRO del marker (no por ID, que puede duplicarse)
+  function getGpsHeadingEl() {
+    const g = state.gpsLive;
+    if (!g.marker) return null;
+    const el = g.marker.getElement();
+    if (!el) return null;
+    return el.querySelector('.gps-live-heading');
   }
 
   function startLiveGPS(btn, toastFn) {
@@ -2728,10 +2724,9 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
     }
 
     const g = state.gpsLive;
+    if (g.watchId !== null || g.active) return;  // ya está activo
 
-    // Si ya está activo, no duplicar
-    if (g.watchId !== null) return;
-
+    g.active = true;
     btn.classList.add('active');
     toastFn('🛰️ Ubicación en tiempo real activada');
 
@@ -2739,21 +2734,18 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
     g.firstFix = false;
     g.heading = null;
     g.lastLatLng = null;
+    g.__prevPan = null;
 
-    // Desactivar cualquier otro modo de dibujo activo
-    // (para que el click en el mapa no añada puntos mientras GPS está on)
-    const addBtn = document.querySelector('#tripToolbar .tb[data-tool="addpoint"]');
-    if (addBtn) addBtn.classList.remove('active');
-    state.userReactivated = false;
+    // ⚠️ IMPORTANTE: NO tocar el botón "addpoint" aquí.
+    // El GPS es independiente del modo "agregar punto".
 
-    // Auto-follow se desactiva cuando el usuario arrastra el mapa
-    const onUserDrag = () => {
-      if (state.gpsLive.watchId !== null && state.gpsLive.autoFollow) {
+    // Auto-follow off si el usuario arrastra el mapa
+    state.tripMap.once('dragstart', () => {
+      if (state.gpsLive.active && state.gpsLive.autoFollow) {
         state.gpsLive.autoFollow = false;
         toastFn('Auto-seguimiento desactivado (mueve el mapa libremente)', 'ok');
       }
-    };
-    state.tripMap.once('dragstart', onUserDrag);
+    });
 
     g.watchId = navigator.geolocation.watchPosition(
       (pos) => {
@@ -2786,16 +2778,17 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
             interactive: false
           }).addTo(state.tripMap);
         } else {
-          // Mover sin animación (la animación de Leaflet en móvil es costosa)
           g2.marker.setLatLng([lat, lng]);
           g2.accuracyCircle.setLatLng([lat, lng]);
           g2.accuracyCircle.setRadius(accuracy);
         }
 
-        // 2️⃣ Rotar la flecha de heading si el dispositivo la provee
-        const arrow = document.getElementById('gpsLiveHeading');
+        // 2️⃣ Rotar la flecha DENTRO del círculo (usa el elemento real)
+        const arrow = getGpsHeadingEl();
         if (arrow && heading != null) {
-          arrow.style.transform = 'translateX(-50%) rotate(' + heading + 'deg)';
+          // translateX(-50%) para centrar horizontalmente, luego rotar
+          arrow.style.transform =
+            'translateX(-50%) rotate(' + heading + 'deg)';
         }
 
         // 3️⃣ Auto-follow
@@ -2804,8 +2797,7 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
           state.tripMap.setView([lat, lng], Math.max(state.tripMap.getZoom(), 16), {
             animate: true, duration: 0.6
           });
-        } else if (g2.autoFollow && g2.lastLatLng) {
-          // Solo recentra si el usuario se movió suficiente (evita micro-temblores)
+        } else if (g2.autoFollow) {
           const [prevLat, prevLng] = g2.__prevPan || g2.lastLatLng;
           const dist = haversine(prevLat, prevLng, lat, lng);
           if (dist >= g2.minDistanceToPan) {
@@ -2822,12 +2814,12 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
         else if (err.code === 2) msg = 'Ubicación no disponible (GPS apagado o sin señal).';
         else if (err.code === 3) msg = 'Tiempo de espera agotado buscando GPS.';
         toastFn('⚠️ ' + msg, 'err');
-        stopLiveGPS(btn, toastFn, /*silencioso=*/ true);
+        stopLiveGPS(btn, toastFn, true);
       },
       {
-        enableHighAccuracy: true,   // ← GPS real, no solo red
-        maximumAge: 1000,           // ← acepta posiciones de hace 1s (fluido)
-        timeout: 20000              // ← 20s máximo por lectura
+        enableHighAccuracy: true,
+        maximumAge: 1000,
+        timeout: 20000
       }
     );
   }
@@ -2850,6 +2842,7 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
       g.accuracyCircle = null;
     }
 
+    g.active = false;
     g.autoFollow = true;
     g.firstFix = false;
     g.heading = null;
@@ -2862,8 +2855,8 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
   }
 
   function toggleLiveGPS(btn, toastFn) {
-    const activo = btn.classList.contains('active');
-    if (activo) {
+    // Usa el estado REAL, no el DOM (evita el bug de "no se apaga")
+    if (state.gpsLive.active) {
       stopLiveGPS(btn, toastFn);
     } else {
       startLiveGPS(btn, toastFn);
