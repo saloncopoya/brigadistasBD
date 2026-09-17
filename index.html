@@ -676,31 +676,66 @@ body.fs-active{overflow:hidden !important}
   margin-bottom:4px;
 }
 .trip-chain-item{
-  display:inline-flex;align-items:center;gap:6px;padding:4px 8px 4px 4px;
-  background:var(--surface-2);border:1px solid var(--border);border-radius:10px;
-  cursor:pointer;transition:all .2s ease;
-  font-family:inherit;font-size:inherit;color:inherit;
+  display:inline-flex;align-items:center;gap:7px;
+  padding:6px 12px 6px 6px;
+  background:#0a0a0a;
+  color:#ffffff;
+  border:1.5px solid #3a3a3a;
+  border-radius:10px;
+  cursor:pointer;
+  transition:all .2s ease;
+  font-family:inherit;
+  font-size:12.5px;
+  font-weight:700;
+  letter-spacing:.2px;
+  box-shadow:
+    0 2px 6px rgba(0,0,0,.5),
+    inset 0 1px 0 rgba(255,255,255,.08);
+  text-transform:uppercase;
 }
 .trip-chain-item:hover{
-  background:var(--surface-3);
+  background:#151515;
   border-color:var(--cyan);
+  color:var(--cyan);
   transform:translateY(-1px);
-  box-shadow:0 4px 10px -4px var(--cyan-glow);
+  box-shadow:
+    0 4px 12px -2px rgba(0,229,255,.35),
+    inset 0 1px 0 rgba(255,255,255,.1);
 }
 .trip-chain-item:active{
   transform:scale(.97);
+  background:#000;
 }
+.trip-chain-item:focus-visible{
+  outline:2px solid var(--cyan);
+  outline-offset:2px;
+}
+   
 .trip-chain-chip{
-  width:22px;height:22px;border-radius:6px;
+  width:26px;height:26px;border-radius:7px;
   display:grid;place-items:center;
-  color:#fff;font-weight:800;font-size:11px;flex-shrink:0;
-  box-shadow:0 2px 6px rgba(0,0,0,.25);
+  background:#1c1c1c;
+  color:#ffffff;
+  border:1.5px solid #3a3a3a;
+  flex-shrink:0;
 }
+.trip-chain-chip svg{
+  width:16px;
+  height:16px;
+  stroke:currentColor;
+}
+
+   
 .trip-chain-name{
-  font-size:12.5px;font-weight:700;color:var(--text);
-  text-transform:uppercase;letter-spacing:.2px;
+  font-size:12.5px;
+  font-weight:800;
+  color:inherit;
+  text-transform:uppercase;
+  letter-spacing:.4px;
   white-space:nowrap;
 }
+
+   
 .trip-chain-sep{
   color:var(--text-3);font-weight:800;font-size:16px;
   margin:0 2px;line-height:1;
