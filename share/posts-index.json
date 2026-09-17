@@ -1,7 +1,27 @@
 {
-  "posts": [],
-  "total": 0,
-  "updatedAt": "2026-09-17T17:18:40.595Z",
+  "posts": [
+    {
+      "slug": "test-verificacion-1789665778873",
+      "title": "TEST VERIFICACION 1789665778873",
+      "description": "Este es un post de verificación temporal",
+      "image": "",
+      "url": "/share/post/test-verificacion-1789665778873",
+      "tipo": "post",
+      "timestamp": 1789665781165,
+      "updatedAt": "2026-09-17T17:23:01.165Z",
+      "categoria": "",
+      "tarifa": "",
+      "frecuencia": "",
+      "horarioIni": "",
+      "horarioFin": "",
+      "dias": "",
+      "paradas": [],
+      "calles": [],
+      "pois": []
+    }
+  ],
+  "total": 1,
+  "updatedAt": "2026-09-17T17:23:01.165Z",
   "version": 1,
-  "__sha": "5a2086d37086e515ce37d77d7c7add8c8b25146c"
+  "__sha": "70a9924c859891e971bf3429163d98075e4d5c48"
 }
