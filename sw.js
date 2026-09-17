@@ -99,169 +99,40 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 /* SW.JS — v8 · NO intercepta tiles ni APIs externas */
-const VERSION = 'bgd-v21';
+const VERSION = 'bgd-v3.5';
 const STATIC_CACHE = `${VERSION}-static`;
 const HTML_CACHE = `${VERSION}-html`;
 
 const PRECACHE = [
-  // Páginas principales (URLs limpias — el usuario las escribe así)
-  '/',
-  '/admin',
-  '/mapainteractivo',
-  '/offline.html',
-  '/404.html',
-
-  // Metadatos
-  '/manifest.json',
-  '/robots.txt',
-  '/sitemap.xml',
-
-  // Assets de la app
-  '/assets/icon.svg',
-  '/js/db.js',
-  '/js/publisher.js',
-  '/js/app.js',
-
-  // Leaflet
+  '/', '/index.html', '/admin.html', '/offline.html',
+  '/manifest.json', '/robots.txt', '/sitemap.xml',
+  '/assets/icon.svg', '/js/db.js', '/js/publisher.js', '/js/app.js',
   '/vendor/leaflet/leaflet.css',
   '/vendor/leaflet/leaflet.js',
-  '/vendor/leaflet/images/marker-icon.png',
+    '/vendor/leaflet/images/marker-icon.png',
   '/vendor/leaflet/images/marker-icon-2x.png',
   '/vendor/leaflet/images/marker-shadow.png',
   '/vendor/leaflet/images/layers.png',
   '/vendor/leaflet/images/layers-2x.png',
-  '/vendor/leaflet-image/leaflet-image.js',
-
-  // IndexedDB / Firebase
+   '/vendor/leaflet-image/leaflet-image.js',
   '/vendor/idb/umd.js',
   '/vendor/firebase/firebase-app-compat.js',
   '/vendor/firebase/firebase-database-compat.js',
   '/vendor/firebase/firebase-messaging-compat.js'
 ];
 
-/* ============================================================
-   🚀 INSTALL — precachea HTML/JS/CSS + DESCARGA RUTAS DE FIREBASE
-   ============================================================ */
-const FIREBASE_REST_URL =
-  'https://aplicacion-2c1c8.firebaseio.com/rutas_colectivos_tgz.json';
-
 self.addEventListener('install', event => {
-  self.skipWaiting();
-  
   event.waitUntil((async () => {
-    try {
-      const cache = await caches.open(STATIC_CACHE);
-      await Promise.all(PRECACHE.map(async url => {
-        try {
-          const res = await fetch(url, { cache: 'reload' });
-          if (res.ok) await cache.put(url, res);
-        } catch (e) {}
-      }));
-    } catch (e) {
-      console.warn('[SW] Precache falló (no crítico):', e);
-    }
-    
-    // Precarga en background, NUNCA bloquea
-    precacheRoutesToIndexedDB().catch(e =>
-      console.warn('[SW] Precarga rutas falló (no crítico):', e)
-    );
+    const cache = await caches.open(STATIC_CACHE);
+    await Promise.all(PRECACHE.map(async url => {
+      try {
+        const res = await fetch(url, { cache: 'reload' });
+        if (res.ok) await cache.put(url, res);
+      } catch (e) {}
+    }));
+    await self.skipWaiting();
   })());
 });
-
-/* ============================================================
-   📦 PRECACHE DE RUTAS EN INDEXEDDB
-   Descarga todas las rutas desde Firebase REST API y las
-   guarda en IndexedDB (base de datos "bgd-db", store "routes")
-   para que /mapainteractivo funcione offline desde la 1ª visita.
-   ============================================================ */
-async function precacheRoutesToIndexedDB() {
-  try {
-    const res = await fetch(FIREBASE_REST_URL, {
-      cache: 'no-store',
-      credentials: 'omit'
-    });
-    if (!res.ok) {
-      console.warn('[SW] Firebase HTTP', res.status);
-      return;
-    }
-    const data = await res.json();
-    if (!data) return;
-    const routes = Object.values(data).filter(r => r && r.id);
-    if (!routes.length) return;
-
-    console.log('[SW] 🔥 Rutas descargadas de Firebase:', routes.length);
-
-    const db = await openSWDatabase();
-    if (!db.objectStoreNames.contains('routes')) {
-      db.close();
-      return;
-    }
-    const tx = db.transaction('routes', 'readwrite');
-    const store = tx.objectStore('routes');
-    for (const route of routes) store.put(route);
-    await new Promise((resolve, reject) => {
-      tx.oncomplete = resolve;
-      tx.onerror = () => reject(tx.error);
-    });
-    db.close();
-    console.log('[SW] 💾 Rutas guardadas en IndexedDB:', routes.length);
-
-    try {
-      const cache = await caches.open('bgd-routes-v1');
-      await cache.put('/__routes_snapshot__.json',
-        new Response(JSON.stringify(routes), {
-          headers: { 'Content-Type': 'application/json' }
-        }));
-    } catch (e) {}
-  } catch (e) {
-    console.warn('[SW] precacheRoutesToIndexedDB error:', e);
-  }
-}
-
-/* ============================================================
-   🗄️ Abre (o crea) la base de datos IndexedDB desde el SW.
-   ⚠️ Debe coincidir EXACTAMENTE con la config de /js/db.js
-   ============================================================ */
-/* ============================================================
-   🗄️ Abre (o crea) la base de datos IndexedDB desde el SW.
-   ✅ Coincide EXACTAMENTE con /js/db.js:
-      DB_NAME = 'tgz_offline_db', DB_VERSION = 3
-      Stores: posts, routes, market, syncQueue, tiles, meta, history
-   ============================================================ */
-function openSWDatabase() {
-  return new Promise((resolve, reject) => {
-    const DB_NAME = 'tgz_offline_db';
-    const DB_VERSION = 3;
-
-    const req = indexedDB.open(DB_NAME, DB_VERSION);
-
-    req.onupgradeneeded = (event) => {
-      const db = event.target.result;
-
-      // Mismos stores que db.js
-      ['posts', 'routes', 'market', 'syncQueue', 'tiles', 'meta', 'history']
-        .forEach(store => {
-          if (!db.objectStoreNames.contains(store)) {
-            const s = db.createObjectStore(store, { keyPath: 'id' });
-
-            // Índices solo para posts/routes/market (igual que db.js)
-            if (store === 'posts' || store === 'routes' || store === 'market') {
-              s.createIndex('timestamp', 'timestamp');
-              s.createIndex('updatedAt', 'updatedAt');
-              s.createIndex('tipo', 'tipo');
-            }
-            if (store === 'syncQueue') {
-              s.createIndex('createdAt', 'createdAt');
-            }
-          }
-        });
-    };
-
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-
 
 self.addEventListener('activate', event => {
   event.waitUntil((async () => {
@@ -271,9 +142,6 @@ self.addEventListener('activate', event => {
   })());
 });
 
-
-
-
 self.addEventListener('fetch', event => {
   const req = event.request;
   if (req.method !== 'GET') return;
@@ -282,8 +150,6 @@ self.addEventListener('fetch', event => {
   // ⚠️ NO interceptar recursos externos (tiles, firebase, etc.)
   if (url.origin !== self.location.origin) return;
 
-  
-
   if (req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html')) {
     event.respondWith(htmlStrategy(req));
     return;
@@ -291,34 +157,19 @@ self.addEventListener('fetch', event => {
   event.respondWith(cacheFirst(req, STATIC_CACHE));
 });
 
-
-
-
 async function htmlStrategy(req) {
   const cache = await caches.open(HTML_CACHE);
   try {
-    // Red primero — SIN redirect:'manual', dejamos que el navegador siga el 301
     const fresh = await fetch(req);
-    if (fresh && fresh.ok) {
-      cache.put(req, fresh.clone());
-      return fresh;
-    }
-    return fresh;
+    if (fresh && fresh.ok) { cache.put(req, fresh.clone()); return fresh; }
+    throw new Error('bad');
   } catch (e) {
     const cached = await cache.match(req);
     if (cached) return cached;
     const offline = await caches.match('/offline.html');
-    if (offline) return offline;
-    const notFound = await caches.match('/?tab=routes');
-    if (notFound) return notFound;
-    return new Response('<h1>Sin conexión</h1>', {
-      status: 503,
-      headers: { 'Content-Type': 'text/html' }
-    });
+    return offline || new Response('<h1>Sin conexión</h1>', { status: 503, headers: { 'Content-Type': 'text/html' } });
   }
 }
-
-    
 
 async function cacheFirst(req, cacheName) {
   const cache = await caches.open(cacheName);
@@ -347,7 +198,7 @@ const TILE_HOSTS = [
   'b.tile.openstreetmap.org',
   'c.tile.openstreetmap.org'
 ];
-const TILE_MAX_ENTRIES = 1000;   // tope duro para no llenar el disco
+const TILE_MAX_ENTRIES = 2000;   // tope duro para no llenar el disco
 
 self.addEventListener('fetch', (event) => {
   const req = event.request;
