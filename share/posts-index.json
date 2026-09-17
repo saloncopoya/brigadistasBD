@@ -479,16 +479,6 @@
       "updatedAt": "2026-09-13T21:27:43.754Z"
     },
     {
-      "slug": "7139",
-      "title": "7",
-      "description": "Ruta 7",
-      "image": "",
-      "url": "/share/ruta/7139.html",
-      "tipo": "ruta",
-      "timestamp": 1789327682965,
-      "updatedAt": "2026-09-13T19:28:02.965Z"
-    },
-    {
       "slug": "num2+13+9",
       "title": "NUM2",
       "description": "Ruta NUM2",
@@ -519,8 +509,8 @@
       "updatedAt": "2026-09-13T08:52:43.612Z"
     }
   ],
-  "total": 30,
-  "updatedAt": "2026-09-17T16:37:14.942Z",
+  "total": 29,
+  "updatedAt": "2026-09-17T16:37:17.147Z",
   "version": 1,
   "__sha": "fb28215860433f49127b90679ca5aa37f094983a"
 }
