@@ -200,33 +200,6 @@
       ]
     },
     {
-      "slug": "test_1789544789397",
-      "title": "TEST DE VERIFICACIÓN",
-      "description": "Esta es una prueba automática. Puedes borrarla después.",
-      "image": "",
-      "url": "/share/ruta/test_1789544789397",
-      "tipo": "ruta",
-      "timestamp": 1789544790616,
-      "updatedAt": "2026-09-16T07:46:30.616Z",
-      "categoria": "urbana",
-      "tarifa": 10,
-      "frecuencia": "Cada 15 min",
-      "horarioIni": "",
-      "horarioFin": "",
-      "dias": "",
-      "paradas": [
-        "Parada A",
-        "Parada B"
-      ],
-      "calles": [
-        "Calle 1",
-        "Calle 2"
-      ],
-      "pois": [
-        "POI 1"
-      ]
-    },
-    {
       "slug": "uejej169",
       "title": "Uejej",
       "description": "Uejej",
@@ -455,8 +428,8 @@
       "updatedAt": "2026-09-13T08:52:43.612Z"
     }
   ],
-  "total": 27,
-  "updatedAt": "2026-09-17T16:37:21.998Z",
+  "total": 26,
+  "updatedAt": "2026-09-17T16:37:23.976Z",
   "version": 1,
   "__sha": "fb28215860433f49127b90679ca5aa37f094983a"
 }
