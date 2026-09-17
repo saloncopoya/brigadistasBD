@@ -2691,10 +2691,20 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
   async function init() {
     // Registrar Service Worker
     if ('serviceWorker' in navigator) {
-      try {
-        await navigator.serviceWorker.register('/sw.js', { scope: '/' });
-      } catch (e) { console.warn('SW:', e); }
-    }
+  try {
+    const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+
+    // 🔥 Disparar el precache de rutas en background, solo cuando el SW esté activo
+    reg.addEventListener('updatefound', () => {});
+    const activarPrecache = () => {
+      if (reg.active) reg.active.postMessage('PRECACHE_ROUTES');
+    };
+    if (reg.active) activarPrecache();
+    else reg.addEventListener('controllerchange', activarPrecache);
+    navigator.serviceWorker.ready.then(activarPrecache);
+  } catch (e) { console.warn('SW:', e); }
+}
+     
 
        // Leer URL inicial
     const params = new URLSearchParams(location.search);
