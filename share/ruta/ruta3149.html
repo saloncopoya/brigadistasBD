@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0e1a">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>RUTA 3 - urbana · Tuxtla Gutiérrez Chiapas</title>
+<meta name="description" content=" Ruta de Tuxtla Gutiérrez Chiapasj ·  Colonia Terán, Módulo II, Fraccionamiento Los Olivos II, Panteón de Terán, Colonia Ampliación Terán... ·  Calle 1a Or">
+<link rel="canonical" href="https://brigadistasbd.pages.dev/share/ruta/ruta3149">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" type="image/svg+xml" href="/assets/icon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/icon.svg">
+<link rel="apple-touch-icon" sizes="152x152" href="/assets/icon.svg">
+<link rel="apple-touch-icon" sizes="120x120" href="/assets/icon.svg">
+<meta name="format-detection" content="telephone=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rutas BGD">
+<link rel="preconnect" href="https://unpkg.com">
+<link rel="preconnect" href="https://tile.openstreetmap.org">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="RUTA 3 - urbana · Tuxtla Gutiérrez Chiapas">
+<meta property="og:description" content=" Ruta de Tuxtla Gutiérrez Chiapasj ·  Colonia Terán, Módulo II, Fraccionamiento Los Olivos II, Panteón de Terán, Colonia Ampl">
+<meta property="og:image" content="https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789463101/qigspxz4quvtrfqiko0c.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:url" content="https://brigadistasbd.pages.dev/share/ruta/ruta3149">
+<meta property="og:site_name" content="Rutas BGD">
+<meta property="og:locale" content="es_MX">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="RUTA 3 - urbana · Tuxtla Gutiérrez Chiapas">
+<meta name="twitter:description" content=" Ruta de Tuxtla Gutiérrez Chiapasj ·  Colonia Terán, Módulo II, Fraccionamiento Los Olivos II, Panteón de Terán, Colonia Ampl">
+<meta name="twitter:image" content="https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789463101/qigspxz4quvtrfqiko0c.jpg">
+
+<!-- Schema.org -->
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BusTrip","name":"RUTA 3","description":" Ruta de Tuxtla Gutiérrez Chiapasj ·  Colonia Terán, Módulo II, Fraccionamiento Los Olivos II, Panteón de Terán, Colonia Ampliación Terán... ·  Calle 1a Oriente","url":"https://brigadistasbd.pages.dev/share/ruta/ruta3149","image":"https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789463101/qigspxz4quvtrfqiko0c.jpg","provider":{"@type":"Organization","name":"Rutas BGD","url":"https://brigadistasbd.pages.dev"},"itinerary":[]}</script>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+
+<style>
+:root{
+  --cyan:#00e5ff;--cyan-d:#00b8cc;--cyan-glow:rgba(0,229,255,.35);
+  --purple:#a855f7;--green:#10b981;--amber:#f59e0b;--red:#ef4444;
+  --radius:14px;--radius-sm:10px;--radius-lg:22px;
+  --shadow:0 10px 30px rgba(0,0,0,.35);--shadow-sm:0 4px 12px rgba(0,0,0,.25);
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --header-h:58px;--nav-h:64px;--transition:.25s cubic-bezier(.4,0,.2,1);
+}
+[data-theme="dark"]{--bg:#0a0e1a;--bg-2:#0f1526;--surface:#141c30;--surface-2:#1c2540;--surface-3:#242f4d;--border:#26314f;--border-2:#334066;--text:#e8edf7;--text-2:#a9b4cc;--text-3:#6b7793;--input-bg:#0f1626}
+[data-theme="light"]{--bg:#f4f6fb;--bg-2:#fff;--surface:#fff;--surface-2:#f4f6fb;--surface-3:#e8ecf5;--border:#dde3ee;--border-2:#c5cfe2;--text:#0c1322;--text-2:#4a5773;--text-3:#8a95ad;--input-bg:#f8fafd}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.6;padding:0;padding-top:var(--header-h);padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom))}
+
+/* HEADER */
+.header{position:fixed;top:0;left:0;right:0;height:var(--header-h);background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 14px;z-index:1000}
+.header-brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px;letter-spacing:-.3px;color:var(--text);text-decoration:none}
+.header-brand .logo{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--cyan),var(--cyan-d));display:grid;place-items:center;color:#00121a;box-shadow:0 0 18px var(--cyan-glow)}
+.header-brand .logo svg{width:20px;height:20px}
+.header-brand .brand-txt{background:linear-gradient(90deg,var(--cyan),#7dd3fc);-webkit-background-clip:text;background-clip:text;color:transparent}
+.header-actions{display:flex;align-items:center;gap:6px}
+.icon-btn{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;color:var(--text-2);transition:var(--transition);text-decoration:none}
+.icon-btn:hover{background:var(--surface-2);color:var(--cyan)}
+.icon-btn svg{width:20px;height:20px}
+
+/* NAV INFERIOR */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav-h) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:color-mix(in srgb,var(--surface) 96%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(3,1fr);z-index:1000}
+.nav-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--text-3);font-size:11px;font-weight:600;transition:var(--transition);text-decoration:none;position:relative}
+.nav-item svg{width:23px;height:23px}
+.nav-item.active{color:var(--cyan)}
+.nav-item.active::before{content:"";position:absolute;top:6px;width:44px;height:3px;border-radius:0 0 4px 4px;background:var(--cyan);box-shadow:0 0 14px var(--cyan-glow)}
+
+/* CONTENIDO */
+.wrap{max-width:760px;margin:0 auto;padding:20px}
+.back{display:inline-flex;align-items:center;gap:6px;color:var(--cyan);text-decoration:none;font-size:13px;font-weight:700;margin-bottom:16px}
+h1{font-size:26px;font-weight:900;letter-spacing:-.4px;margin-bottom:8px;line-height:1.2}
+.meta{color:var(--text-2);font-size:13px;margin-bottom:20px}
+
+/* 🔒 IMAGEN SEO: oculta visualmente pero presente para crawlers */
+.seo-hero{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* MAPA GRANDE */
+.route-map-hero{
+  width:100%;height:50vh;min-height:340px;
+  border-radius:var(--radius);overflow:hidden;
+  border:1px solid var(--border);background:var(--surface-2);
+  position:relative;margin-bottom:20px;
+}
+#shareMapBig{width:100%;height:100%;z-index:1}
+.map-fs-btn{position:absolute;bottom:12px;right:12px;z-index:600;background:color-mix(in srgb,var(--surface) 96%,transparent);border:1px solid var(--border-2);border-radius:12px;width:42px;height:42px;display:grid;place-items:center;color:var(--text);box-shadow:var(--shadow);backdrop-filter:blur(10px);cursor:pointer}
+.map-fs-btn svg{width:20px;height:20px}
+.map-wrap.is-fullscreen{position:fixed!important;inset:0!important;z-index:9500!important;margin:0!important;border-radius:0!important;border:none!important;height:100vh!important}
+.map-wrap.is-fullscreen #shareMapBig{height:100vh!important;width:100vw!important}
+body.fs-active{overflow:hidden!important}
+.leaflet-container{background:var(--bg-2)!important;font-family:var(--font)!important}
+.leaflet-control-attribution{background:color-mix(in srgb,var(--surface) 88%,transparent)!important;color:var(--text-2)!important;font-size:10px!important}
+.leaflet-control-attribution a{color:var(--cyan)!important}
+.leaflet-control-zoom a{background:var(--surface)!important;color:var(--text)!important;border-color:var(--border)!important}
+
+
+/* LEYENDA MAPA (compacta) */
+.map-legend{background:color-mix(in srgb,var(--surface) 92%,transparent)!important;padding:4px 10px;border-radius:8px;font-size:11px;color:var(--text);border:1px solid var(--border);line-height:1.3;backdrop-filter:blur(8px)}
+.map-legend .lg-line{display:inline-block;width:16px;height:5px;vertical-align:middle;margin-right:6px;border-radius:2px}
+
+/* Botón centrado inferior dentro del mapa */
+.map-trip-btn-wrap{pointer-events:auto;padding-bottom:0px;position:absolute!important;left:50%!important;bottom:10px!important;transform:translateX(-50%)!important;z-index:700!important}
+.leaflet-bottom.leaflet-left,.leaflet-bottom.leaflet-right{width:100%;pointer-events:none}
+.leaflet-bottom.leaflet-left>*,.leaflet-bottom.leaflet-right>*{pointer-events:auto}
+
+.map-trip-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:2px 5px;border-radius:12px;background:linear-gradient(135deg,var(--cyan),var(--cyan-d));color:#00121a;font-family:inherit;font-weight:800;font-size:12px;letter-spacing:.2px;border:1px solid transparent;box-shadow:0 6px 18px -6px rgba(0,229,255,.35);cursor:pointer;transition:all .25s cubic-bezier(.4,0,.2,1);text-align:center;white-space:nowrap}
+.map-trip-btn:hover{filter:brightness(1.08);box-shadow:0 8px 22px -6px rgba(0,229,255,.55)}
+.map-trip-btn:active{transform:scale(.96)}
+.map-trip-btn svg{width:14px;height:14px}
+.map-trip-btn span{font-size:11.5px;font-weight:800;line-height:1}
+.map-trip-btn small{font-size:9.5px;font-weight:600;opacity:.75;line-height:1;letter-spacing:.1px}
+
+/* BLOQUES */
+.block{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px}
+.block h3{font-size:14px;font-weight:800;margin-bottom:10px;color:var(--cyan);display:flex;align-items:center;gap:6px}
+.block ul{list-style:none;padding:0}
+.block li{padding:7px 0;border-bottom:1px solid var(--border);font-size:14px}
+.block li:last-child{border-bottom:none}
+.post-content{font-size:15.5px;line-height:1.7;color:var(--text);background:var(--surface);padding:18px;border-radius:var(--radius);border:1px solid var(--border);margin-bottom:20px}
+.badge{display:inline-block;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin-bottom:12px}
+.badge-urbana{background:rgba(0,229,255,.16);color:var(--cyan)}
+.badge-foranea{background:rgba(168,85,247,.18);color:var(--purple)}
+.badge-green{background:rgba(16,185,129,.16);color:var(--green)}
+.price{font-size:22px;font-weight:900;color:var(--green);margin:10px 0}
+.cta{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:11px 18px;border-radius:10px;font-weight:700;font-size:13.5px;text-decoration:none;border:none;cursor:pointer;font-family:inherit}
+.btn-primary{background:linear-gradient(135deg,var(--cyan),#00b8cc);color:#00121a}
+.btn-ghost{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+/* 📝 PÁRRAFOS INTRODUCTORIOS (SEO) */
+.intro-paragraphs{margin:20px 0}
+.intro-paragraphs p{font-size:14.5px;line-height:1.75;color:var(--text-2);margin-bottom:14px;text-align:justify}
+.intro-paragraphs p strong{color:var(--text);font-weight:700}
+.intro-paragraphs p a{color:var(--cyan);text-decoration:none}
+.intro-paragraphs p a:hover{text-decoration:underline}
+
+footer{margin-top:30px;padding-top:20px;border-top:1px solid var(--border);color:var(--text-2);font-size:12px;text-align:center}
+footer a{color:var(--cyan)}
+</style>
+</head>
+<body data-theme="dark">
+
+<!-- HEADER -->
+<header class="header">
+  <a class="header-brand" href="https://brigadistasbd.pages.dev/">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+        <circle cx="12" cy="10" r="3"/>
+      </svg>
+    </div>
+    <span class="brand-txt">TUXRUTAS</span>
+    </a>
+  <div class="header-actions">
+    <a class="icon-btn" href="https://brigadistasbd.pages.dev/" title="Ir al inicio">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </a>
+  </div>
+</header>
+
+<div class="wrap">
+
+ <div class="cta">
+    <a class="btn btn-primary" href="https://brigadistasbd.pages.dev/">🚌 Ver todas las rutas</a>
+    <a class="btn btn-ghost" href="https://brigadistasbd.pages.dev/?tab=market" rel="nofollow">🛒 Marketplace</a>
+  </div>
+
+  
+  <span class="badge badge-urbana">Ruta</span>
+  <h1>RUTA 3</h1>
+  <div class="meta">17 de septiembre de 2026</div>
+
+  <!-- 🔒 IMAGEN SEO: oculta visualmente pero indexable por Google -->
+  <img class="seo-hero" src="https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789463101/qigspxz4quvtrfqiko0c.jpg" alt="RUTA 3" title="RUTA 3" width="1200" height="630" loading="eager">
+  
+  
+    <div class="route-map-hero map-wrap" id="mapWrapHero">
+      <div id="shareMapBig"></div>
+      <button class="map-fs-btn" id="mapFsBtn" title="Pantalla completa">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+          <path d="M8 3H5a2 2 0 0 0-2 2v3"/>
+          <path d="M21 8V5a2 2 0 0 0-2-2h-3"/>
+          <path d="M3 16v3a2 2 0 0 0 2 2h3"/>
+          <path d="M16 21h3a2 2 0 0 0 2-2v-3"/>
+        </svg>
+      </button>
+    </div>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin></script>
+    <script>
+    (function(){
+      var DATA = {"puntos":[[16.749206,-93.116152],[16.745977,-93.116654],[16.744151,-93.107725],[16.743929,-93.106714],[16.744959,-93.106437],[16.755072,-93.104637],[16.755474,-93.104148],[16.755064,-93.101405],[16.756876,-93.100905],[16.757401,-93.100552],[16.758564,-93.096668],[16.759059,-93.094198],[16.758586,-93.093026],[16.760047,-93.092393],[16.761237,-93.099354],[16.761147,-93.104406],[16.758346,-93.10972],[16.757923,-93.11486],[16.763097,-93.139953],[16.762883,-93.142553],[16.755498,-93.142403],[16.755436,-93.148519],[16.756347,-93.158569],[16.753216,-93.161384],[16.751392,-93.157376],[16.750718,-93.157779],[16.750833,-93.162999],[16.7424,-93.164756],[16.741743,-93.167982],[16.740159,-93.168985],[16.740363,-93.168092]],"puntosVuelta":[[16.74041,-93.168094],[16.741583,-93.166005],[16.741896,-93.164842],[16.74717,-93.163009],[16.751823,-93.162458],[16.750963,-93.155913],[16.749203,-93.15299],[16.751289,-93.151078],[16.753945,-93.150751],[16.755068,-93.145542],[16.755758,-93.142383],[16.762888,-93.142319],[16.761862,-93.136335],[16.757951,-93.115088],[16.758915,-93.109109],[16.760916,-93.103942],[16.760552,-93.100066],[16.760303,-93.093245],[16.75871,-93.092945],[16.75896,-93.094035],[16.75776,-93.099845],[16.755959,-93.102287],[16.744118,-93.104195],[16.743878,-93.105928],[16.745781,-93.115457],[16.748191,-93.115464],[16.748561,-93.116756],[16.74904,-93.117014],[16.749344,-93.116537],[16.749195,-93.116153]],"geomIda":[[16.749206,-93.116152],[16.748486,-93.116265],[16.747639,-93.116442],[16.746842,-93.116585],[16.74599,-93.116732],[16.745977,-93.116654],[16.745849,-93.115876],[16.745728,-93.11513],[16.74559,-93.114298],[16.745507,-93.113731],[16.745368,-93.112812],[16.745285,-93.112223],[16.745226,-93.111835],[16.745177,-93.11152],[16.745031,-93.110593],[16.744973,-93.110482],[16.744935,-93.110315],[16.7449,-93.110186],[16.744834,-93.109931],[16.744751,-93.109655],[16.744665,-93.109398],[16.744326,-93.108388],[16.744286,-93.108276],[16.74417,-93.107802],[16.744151,-93.107725],[16.744128,-93.107631],[16.744119,-93.107599],[16.743929,-93.106714],[16.743914,-93.106645],[16.744003,-93.106627],[16.744959,-93.106437],[16.745131,-93.106403],[16.745852,-93.106263],[16.746627,-93.106147],[16.746739,-93.106069],[16.746837,-93.106052],[16.747758,-93.105883],[16.74785,-93.105865],[16.748672,-93.105718],[16.749677,-93.105525],[16.749798,-93.105504],[16.75024,-93.105439],[16.750767,-93.105364],[16.750858,-93.105349],[16.75136,-93.105267],[16.751866,-93.105189],[16.751955,-93.105178],[16.752455,-93.105092],[16.752931,-93.105007],[16.753025,-93.104992],[16.753461,-93.104914],[16.753912,-93.104837],[16.753996,-93.104825],[16.754445,-93.104757],[16.754554,-93.104734],[16.755072,-93.104637],[16.755246,-93.104604],[16.755333,-93.104448],[16.755481,-93.1042],[16.755474,-93.104148],[16.755395,-93.103534],[16.755374,-93.103429],[16.755215,-93.102416],[16.7552,-93.102306],[16.755064,-93.101405],[16.755052,-93.101328],[16.755035,-93.101213],[16.756056,-93.101031],[16.756876,-93.100905],[16.75701,-93.100884],[16.757241,-93.100855],[16.757345,-93.10066],[16.757401,-93.100552],[16.757611,-93.100149],[16.757822,-93.09972],[16.757883,-93.099601],[16.758045,-93.099155],[16.758428,-93.097323],[16.758564,-93.096668],[16.758567,-93.096655],[16.75861,-93.096436],[16.758655,-93.09616],[16.758762,-93.095654],[16.758839,-93.095179],[16.758891,-93.094768],[16.758933,-93.094707],[16.759127,-93.094311],[16.759059,-93.094198],[16.758418,-93.093135],[16.758586,-93.093026],[16.758727,-93.092934],[16.759133,-93.092686],[16.759277,-93.092649],[16.759322,-93.092637],[16.759449,-93.092605],[16.759608,-93.092561],[16.759848,-93.092505],[16.759975,-93.092418],[16.760047,-93.092393],[16.760058,-93.092389],[16.760091,-93.09247],[16.760394,-93.093259],[16.761095,-93.094978],[16.761164,-93.095146],[16.761193,-93.095215],[16.761299,-93.095491],[16.76134,-93.095593],[16.761377,-93.095751],[16.761387,-93.095943],[16.761391,-93.096026],[16.761399,-93.096371],[16.761418,-93.09725],[16.761423,-93.097299],[16.76148,-93.0978],[16.76151,-93.098015],[16.761541,-93.098404],[16.76154,-93.098504],[16.76153,-93.098687],[16.761511,-93.098844],[16.761487,-93.098939],[16.761442,-93.099054],[16.761355,-93.099189],[16.761237,-93.099354],[16.760847,-93.099903],[16.760683,-93.100129],[16.760526,-93.100353],[16.760455,-93.100495],[16.760247,-93.100906],[16.760128,-93.101142],[16.759998,-93.101397],[16.759935,-93.101527],[16.760097,-93.101997],[16.760303,-93.101828],[16.760485,-93.101916],[16.760614,-93.102014],[16.760682,-93.102151],[16.760889,-93.103087],[16.761147,-93.104406],[16.761254,-93.104951],[16.76122,-93.105041],[16.76115,-93.10514],[16.760938,-93.105463],[16.760567,-93.106109],[16.760246,-93.106765],[16.759824,-93.1077],[16.759806,-93.10773],[16.75941,-93.108527],[16.759179,-93.108905],[16.758974,-93.109184],[16.758819,-93.109365],[16.758557,-93.109584],[16.758377,-93.109701],[16.758346,-93.10972],[16.75819,-93.109814],[16.758081,-93.109916],[16.757972,-93.110145],[16.757751,-93.110648],[16.757742,-93.110669],[16.757722,-93.110712],[16.757703,-93.11078],[16.757696,-93.110834],[16.757701,-93.111024],[16.757701,-93.111044],[16.757702,-93.111071],[16.757719,-93.11176],[16.75772,-93.111809],[16.757721,-93.111833],[16.757751,-93.112726],[16.757752,-93.112772],[16.757755,-93.112819],[16.757783,-93.113303],[16.757803,-93.113596],[16.757807,-93.113652],[16.757864,-93.114376],[16.757916,-93.114799],[16.757917,-93.114811],[16.757923,-93.11486],[16.757938,-93.114984],[16.757939,-93.11499],[16.757974,-93.115271],[16.757986,-93.115357],[16.75816,-93.116229],[16.758317,-93.117142],[16.75852,-93.118031],[16.758682,-93.11878],[16.7587,-93.118876],[16.758827,-93.119576],[16.75901,-93.120505],[16.759066,-93.120792],[16.759166,-93.121337],[16.75932,-93.12225],[16.759473,-93.123149],[16.75961,-93.12386],[16.759621,-93.123917],[16.75963,-93.123965],[16.759853,-93.125046],[16.759982,-93.125667],[16.760141,-93.126437],[16.760227,-93.126856],[16.760538,-93.128867],[16.76065,-93.129575],[16.760698,-93.129888],[16.760744,-93.130199],[16.760801,-93.13059],[16.760855,-93.130959],[16.760878,-93.13111],[16.76094,-93.131516],[16.760978,-93.131825],[16.760986,-93.131894],[16.76116,-93.133064],[16.761176,-93.133186],[16.761253,-93.133715],[16.761284,-93.134005],[16.761318,-93.134219],[16.761397,-93.134664],[16.761478,-93.135036],[16.761516,-93.135209],[16.761548,-93.135337],[16.761566,-93.135408],[16.761746,-93.136007],[16.761996,-93.136714],[16.76205,-93.136866],[16.762119,-93.137052],[16.762161,-93.137163],[16.762276,-93.137493],[16.762359,-93.137723],[16.762403,-93.137845],[16.762481,-93.138067],[16.76258,-93.13838],[16.762633,-93.138538],[16.762731,-93.138841],[16.762824,-93.139121],[16.763044,-93.139783],[16.763097,-93.139953],[16.763147,-93.140116],[16.763167,-93.140181],[16.76319,-93.140257],[16.763292,-93.140497],[16.763342,-93.14058],[16.76343,-93.140686],[16.763557,-93.140845],[16.763587,-93.140843],[16.763629,-93.14085],[16.763668,-93.14087],[16.763701,-93.140899],[16.763725,-93.140937],[16.763737,-93.140978],[16.763739,-93.141022],[16.763731,-93.141064],[16.763711,-93.141103],[16.763683,-93.141135],[16.763648,-93.141158],[16.763608,-93.141171],[16.763574,-93.141173],[16.763545,-93.141169],[16.763505,-93.141297],[16.763483,-93.141353],[16.763456,-93.141414],[16.763306,-93.141731],[16.763054,-93.142222],[16.762883,-93.142553],[16.762837,-93.142641],[16.762546,-93.143177],[16.762043,-93.144103],[16.761541,-93.145064],[16.761113,-93.145877],[16.760872,-93.146266],[16.760871,-93.146308],[16.76086,-93.146349],[16.76084,-93.146385],[16.760811,-93.146415],[16.760766,-93.14644],[16.760715,-93.146448],[16.760665,-93.146438],[16.76062,-93.146412],[16.760585,-93.146373],[16.760509,-93.146353],[16.760458,-93.146333],[16.760396,-93.146299],[16.760095,-93.146103],[16.759884,-93.145923],[16.75975,-93.145764],[16.759683,-93.145684],[16.759657,-93.145654],[16.759613,-93.145595],[16.759575,-93.145543],[16.759509,-93.145457],[16.759486,-93.145429],[16.759313,-93.145226],[16.759292,-93.145201],[16.759092,-93.14497],[16.758358,-93.144121],[16.758215,-93.143956],[16.757942,-93.143673],[16.757897,-93.143618],[16.757725,-93.143455],[16.757537,-93.143331],[16.757324,-93.143168],[16.756857,-93.142878],[16.756543,-93.142717],[16.756189,-93.142586],[16.755858,-93.142487],[16.755706,-93.142455],[16.755498,-93.142403],[16.755395,-93.142378],[16.755289,-93.142396],[16.755209,-93.142406],[16.755146,-93.142431],[16.75509,-93.142481],[16.755041,-93.142563],[16.755012,-93.142641],[16.755007,-93.142654],[16.754986,-93.142783],[16.755025,-93.143156],[16.75504,-93.143361],[16.755042,-93.143379],[16.755079,-93.143775],[16.75512,-93.144306],[16.755162,-93.144976],[16.755207,-93.145652],[16.755218,-93.14582],[16.75524,-93.146045],[16.755273,-93.146375],[16.755278,-93.146513],[16.755284,-93.14659],[16.755292,-93.14677],[16.755322,-93.147079],[16.755428,-93.148376],[16.755436,-93.148519],[16.755441,-93.148614],[16.755478,-93.149276],[16.755532,-93.150158],[16.755557,-93.150573],[16.75557,-93.150697],[16.755633,-93.151786],[16.75564,-93.15186],[16.755672,-93.152341],[16.755699,-93.152792],[16.75575,-93.153466],[16.755756,-93.153561],[16.755767,-93.153808],[16.755821,-93.154618],[16.755828,-93.154806],[16.755843,-93.155036],[16.755847,-93.155113],[16.755877,-93.155589],[16.755914,-93.156172],[16.755951,-93.156754],[16.756017,-93.157164],[16.756065,-93.157382],[16.756113,-93.157595],[16.756347,-93.158569],[16.756536,-93.159358],[16.756594,-93.159599],[16.756613,-93.159689],[16.756477,-93.159714],[16.756405,-93.159723],[16.756189,-93.159948],[16.75582,-93.16027],[16.75539,-93.160612],[16.755356,-93.160627],[16.75516,-93.160796],[16.755008,-93.160965],[16.754883,-93.161153],[16.754242,-93.16126],[16.753615,-93.161335],[16.753216,-93.161384],[16.752919,-93.16142],[16.752206,-93.161481],[16.752116,-93.160732],[16.751993,-93.159512],[16.751847,-93.158958],[16.751816,-93.158865],[16.75173,-93.158603],[16.751683,-93.158337],[16.751642,-93.158167],[16.751392,-93.157376],[16.751275,-93.157004],[16.750839,-93.157176],[16.750686,-93.157162],[16.750718,-93.157779],[16.750745,-93.158294],[16.750752,-93.158745],[16.750778,-93.159205],[16.750812,-93.159688],[16.750826,-93.160722],[16.750833,-93.161627],[16.75083,-93.162584],[16.750833,-93.162999],[16.750835,-93.163369],[16.750016,-93.163472],[16.749293,-93.163599],[16.748531,-93.16371],[16.747631,-93.163808],[16.747392,-93.16385],[16.747178,-93.163907],[16.746811,-93.164004],[16.746684,-93.164021],[16.746566,-93.164015],[16.745973,-93.163985],[16.745623,-93.163974],[16.745006,-93.163999],[16.744585,-93.164054],[16.744293,-93.164112],[16.743331,-93.164444],[16.742423,-93.164748],[16.7424,-93.164756],[16.74202,-93.164882],[16.741428,-93.165086],[16.741557,-93.165843],[16.741568,-93.165931],[16.741644,-93.166308],[16.74177,-93.167004],[16.741759,-93.167683],[16.741743,-93.167982],[16.741736,-93.168113],[16.741711,-93.168562],[16.741681,-93.168999],[16.740687,-93.168996],[16.740159,-93.168985],[16.739736,-93.168976],[16.739759,-93.168526],[16.739715,-93.168059],[16.740231,-93.168085],[16.740363,-93.168092]],"geomVuelta":[[16.74041,-93.168094],[16.740743,-93.168111],[16.740758,-93.167659],[16.740766,-93.167337],[16.740772,-93.167322],[16.740786,-93.16731],[16.741021,-93.167237],[16.74177,-93.167004],[16.741644,-93.166308],[16.741583,-93.166005],[16.741568,-93.165931],[16.741557,-93.165843],[16.741428,-93.165086],[16.740821,-93.165234],[16.740369,-93.16534],[16.740349,-93.165247],[16.740735,-93.165164],[16.741409,-93.165007],[16.741896,-93.164842],[16.741999,-93.164807],[16.742401,-93.164671],[16.743083,-93.164446],[16.74331,-93.164368],[16.744191,-93.164066],[16.744358,-93.164017],[16.744568,-93.163971],[16.744888,-93.163932],[16.745396,-93.1639],[16.745626,-93.163903],[16.745973,-93.163907],[16.74653,-93.163888],[16.74667,-93.163871],[16.746791,-93.163833],[16.746778,-93.163632],[16.746741,-93.163058],[16.74717,-93.163009],[16.748322,-93.162877],[16.748499,-93.16285],[16.749264,-93.162768],[16.750033,-93.16267],[16.75083,-93.162584],[16.751567,-93.162483],[16.751823,-93.162458],[16.752288,-93.162413],[16.752206,-93.161481],[16.752116,-93.160732],[16.751993,-93.159512],[16.751847,-93.158958],[16.751816,-93.158865],[16.75173,-93.158603],[16.751683,-93.158337],[16.751642,-93.158167],[16.751275,-93.157004],[16.751076,-93.156308],[16.750985,-93.155989],[16.750963,-93.155913],[16.750924,-93.155783],[16.750908,-93.15559],[16.750909,-93.15539],[16.750888,-93.155282],[16.750854,-93.155202],[16.750561,-93.154675],[16.75053,-93.154614],[16.75044,-93.154558],[16.750419,-93.154528],[16.750245,-93.154196],[16.750174,-93.154075],[16.750115,-93.15402],[16.750032,-93.153993],[16.749564,-93.15398],[16.749483,-93.15398],[16.749377,-93.153948],[16.749291,-93.153906],[16.749229,-93.153832],[16.749174,-93.153769],[16.749073,-93.153594],[16.748982,-93.153528],[16.749196,-93.153009],[16.749203,-93.15299],[16.749216,-93.152955],[16.749268,-93.152944],[16.749305,-93.15293],[16.749349,-93.152907],[16.749392,-93.15278],[16.749427,-93.152585],[16.749422,-93.152159],[16.749406,-93.151805],[16.749402,-93.151745],[16.749433,-93.151571],[16.749455,-93.151523],[16.749479,-93.151487],[16.749515,-93.151454],[16.749698,-93.1514],[16.749974,-93.151323],[16.751289,-93.151078],[16.752238,-93.150902],[16.752443,-93.150876],[16.753007,-93.150826],[16.753079,-93.15082],[16.753319,-93.1508],[16.753385,-93.150798],[16.753736,-93.150771],[16.753945,-93.150751],[16.754383,-93.150708],[16.754914,-93.150649],[16.755437,-93.150592],[16.755416,-93.150175],[16.755361,-93.149216],[16.755309,-93.148449],[16.755271,-93.147874],[16.755253,-93.147659],[16.755197,-93.147049],[16.755179,-93.146876],[16.75516,-93.146499],[16.755135,-93.146343],[16.755117,-93.146125],[16.755068,-93.145542],[16.755046,-93.145282],[16.755033,-93.145062],[16.75503,-93.144924],[16.755015,-93.144608],[16.754993,-93.14413],[16.754943,-93.143527],[16.754895,-93.14282],[16.754864,-93.14229],[16.754859,-93.142185],[16.754938,-93.142199],[16.755214,-93.142257],[16.755306,-93.142273],[16.755604,-93.142335],[16.755758,-93.142383],[16.756067,-93.142478],[16.756394,-93.142598],[16.756563,-93.142662],[16.756817,-93.142806],[16.757306,-93.143103],[16.757609,-93.143313],[16.757763,-93.143419],[16.757794,-93.143441],[16.757982,-93.143604],[16.7582,-93.143854],[16.758847,-93.144606],[16.758895,-93.144661],[16.759022,-93.144809],[16.759248,-93.145072],[16.759402,-93.145256],[16.759612,-93.145507],[16.759704,-93.145617],[16.759917,-93.145889],[16.760099,-93.146045],[16.760219,-93.146121],[16.760325,-93.146166],[16.760416,-93.146183],[16.760502,-93.146179],[16.76061,-93.146167],[16.76065,-93.146138],[16.760685,-93.146126],[16.760744,-93.146125],[16.760833,-93.146068],[16.760911,-93.145988],[16.761048,-93.145783],[16.761324,-93.145255],[16.761945,-93.144064],[16.762027,-93.143906],[16.762656,-93.142747],[16.762888,-93.142319],[16.763015,-93.142086],[16.7631,-93.141929],[16.763224,-93.141689],[16.763292,-93.141556],[16.763348,-93.141448],[16.763403,-93.141343],[16.763433,-93.141256],[16.763465,-93.14112],[16.763438,-93.141077],[16.763378,-93.140912],[16.76326,-93.14058],[16.763237,-93.140473],[16.763235,-93.140458],[16.76319,-93.140257],[16.763167,-93.140181],[16.763147,-93.140116],[16.763044,-93.139783],[16.762824,-93.139121],[16.762731,-93.138841],[16.762633,-93.138538],[16.76258,-93.13838],[16.762481,-93.138067],[16.762403,-93.137845],[16.762359,-93.137723],[16.762276,-93.137493],[16.762161,-93.137163],[16.762119,-93.137052],[16.76205,-93.136866],[16.761996,-93.136714],[16.761862,-93.136335],[16.761746,-93.136007],[16.761566,-93.135408],[16.761548,-93.135337],[16.761516,-93.135209],[16.761478,-93.135036],[16.761397,-93.134664],[16.761318,-93.134219],[16.761284,-93.134005],[16.761253,-93.133715],[16.761176,-93.133186],[16.76116,-93.133064],[16.760986,-93.131894],[16.760978,-93.131825],[16.76094,-93.131516],[16.760878,-93.13111],[16.760855,-93.130959],[16.760801,-93.13059],[16.760744,-93.130199],[16.760698,-93.129888],[16.76065,-93.129575],[16.760538,-93.128867],[16.760227,-93.126856],[16.760141,-93.126437],[16.759982,-93.125667],[16.759853,-93.125046],[16.75963,-93.123965],[16.759621,-93.123917],[16.75961,-93.12386],[16.759473,-93.123149],[16.75932,-93.12225],[16.759166,-93.121337],[16.759066,-93.120792],[16.75901,-93.120505],[16.758827,-93.119576],[16.7587,-93.118876],[16.758682,-93.11878],[16.75852,-93.118031],[16.758317,-93.117142],[16.75816,-93.116229],[16.757986,-93.115357],[16.757974,-93.115271],[16.757951,-93.115088],[16.757939,-93.11499],[16.757938,-93.114984],[16.757917,-93.114811],[16.757916,-93.114799],[16.757864,-93.114376],[16.757807,-93.113652],[16.757803,-93.113596],[16.757783,-93.113303],[16.757755,-93.112819],[16.757752,-93.112772],[16.757751,-93.112726],[16.757721,-93.111833],[16.75772,-93.111809],[16.757719,-93.11176],[16.757702,-93.111071],[16.757701,-93.111044],[16.757701,-93.111024],[16.757696,-93.110834],[16.757703,-93.11078],[16.757722,-93.110712],[16.757742,-93.110669],[16.757751,-93.110648],[16.757972,-93.110145],[16.758081,-93.109916],[16.758108,-93.109806],[16.758256,-93.109622],[16.75839,-93.109511],[16.758704,-93.109342],[16.758834,-93.109223],[16.758915,-93.109109],[16.759112,-93.10883],[16.759334,-93.108504],[16.759558,-93.108089],[16.759736,-93.107691],[16.760143,-93.106764],[16.760214,-93.106603],[16.760491,-93.106053],[16.760782,-93.105543],[16.760968,-93.105243],[16.761146,-93.104963],[16.761118,-93.104839],[16.760916,-93.103942],[16.760732,-93.103127],[16.760529,-93.102228],[16.760471,-93.102095],[16.760391,-93.102026],[16.760213,-93.101927],[16.759846,-93.101769],[16.759818,-93.10176],[16.759793,-93.101752],[16.759734,-93.101733],[16.759753,-93.101682],[16.759778,-93.101611],[16.759838,-93.101454],[16.759904,-93.101308],[16.760347,-93.10042],[16.760411,-93.100296],[16.760552,-93.100066],[16.760567,-93.100042],[16.76113,-93.099315],[16.761304,-93.099079],[16.761385,-93.098905],[16.76141,-93.098749],[16.761441,-93.09852],[16.761435,-93.098332],[16.761388,-93.09794],[16.761366,-93.097821],[16.761302,-93.097322],[16.761294,-93.096601],[16.761296,-93.096319],[16.761302,-93.096049],[16.761285,-93.095779],[16.761247,-93.095573],[16.76118,-93.095426],[16.761113,-93.095253],[16.761082,-93.095194],[16.760303,-93.093245],[16.760192,-93.092968],[16.760001,-93.092498],[16.759848,-93.092505],[16.759608,-93.092561],[16.759449,-93.092605],[16.759322,-93.092637],[16.759277,-93.092649],[16.759133,-93.092686],[16.758727,-93.092934],[16.75871,-93.092945],[16.758418,-93.093135],[16.75896,-93.094035],[16.759127,-93.094311],[16.758933,-93.094707],[16.758891,-93.094768],[16.758839,-93.095179],[16.758762,-93.095654],[16.758655,-93.09616],[16.75861,-93.096436],[16.758567,-93.096655],[16.758428,-93.097323],[16.758045,-93.099155],[16.757883,-93.099601],[16.757822,-93.09972],[16.75776,-93.099845],[16.757611,-93.100149],[16.757345,-93.10066],[16.757241,-93.100855],[16.757167,-93.100996],[16.756575,-93.102107],[16.756532,-93.102194],[16.756223,-93.102241],[16.755959,-93.102287],[16.755215,-93.102416],[16.754623,-93.102533],[16.754233,-93.102597],[16.754134,-93.10261],[16.753683,-93.102684],[16.753579,-93.102699],[16.753127,-93.10277],[16.752671,-93.102838],[16.752593,-93.102853],[16.751643,-93.103022],[16.75152,-93.103045],[16.750528,-93.103222],[16.750442,-93.103235],[16.749884,-93.103325],[16.749473,-93.103391],[16.749354,-93.103411],[16.748353,-93.103587],[16.747934,-93.103645],[16.74757,-93.103702],[16.747523,-93.103619],[16.74733,-93.103654],[16.747262,-93.103663],[16.746725,-93.103746],[16.746065,-93.103874],[16.745334,-93.103978],[16.745269,-93.10399],[16.745143,-93.104008],[16.744551,-93.104117],[16.744118,-93.104195],[16.743974,-93.104221],[16.74374,-93.104265],[16.743609,-93.104295],[16.74362,-93.10437],[16.743739,-93.105146],[16.743878,-93.105928],[16.744003,-93.106627],[16.7442,-93.107583],[16.744209,-93.107626],[16.744391,-93.108298],[16.744736,-93.109368],[16.744827,-93.109653],[16.745011,-93.110295],[16.745041,-93.110478],[16.745031,-93.110593],[16.745177,-93.11152],[16.745226,-93.111835],[16.745285,-93.112223],[16.745368,-93.112812],[16.745507,-93.113731],[16.74559,-93.114298],[16.745728,-93.11513],[16.745781,-93.115457],[16.745849,-93.115876],[16.746702,-93.11573],[16.747489,-93.115589],[16.748191,-93.115464],[16.748408,-93.115425],[16.748486,-93.116265],[16.748561,-93.116756],[16.74861,-93.117082],[16.74904,-93.117014],[16.749398,-93.116958],[16.749344,-93.116537],[16.749293,-93.116138],[16.749195,-93.116153]],"colorIda":"#3b82f6","colorVuelta":"#ef4444","nombre":"RUTA 3"};
+      if (typeof L === 'undefined') return;
+      var map = L.map('shareMapBig', { zoomControl: true, scrollWheelZoom: false });
+      window.__shareMap = map;
+      // Caché de mosaicos compartida (mismo IndexedDB que la app principal)
+      // 🛡️ En páginas publicadas, usar tileLayer estándar.
+      // El SW cachea automáticamente y el navegador cachea HTTP.
+      // NO usar L.tileLayer.offline aquí para evitar dependencias de scripts.
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        crossOrigin: true,
+        attribution: '© OpenStreetMap'
+      }).addTo(map);
+
+      var allCoords = [];
+         function drawLine(coords, color, dashed){
+        if (!coords || coords.length < 2) return;
+        var line = L.polyline(coords, {
+          color: color,
+          weight: 5,
+          opacity: 0.95,
+          dashArray: dashed ? '10,6' : null,
+          lineJoin: 'round',
+          lineCap: 'round'
+        }).addTo(map);
+        allCoords = allCoords.concat(coords);
+        return line;
+      }
+
+      // Offset perpendicular para separar ida y vuelta en la misma calle
+      function offsetPolyline(coords, offsetMeters){
+        if(!coords || coords.length < 2) return coords;
+        var out = [];
+        var R = 6371000;
+        for(var i=0;i<coords.length;i++){
+          var p = coords[i];
+          var prev = coords[Math.max(0,i-1)];
+          var next = coords[Math.min(coords.length-1,i+1)];
+          var dLat = next[0]-prev[0];
+          var dLng = next[1]-prev[1];
+          var len = Math.hypot(dLat,dLng) || 1;
+          var perpLat = -dLng/len;
+          var perpLng =  dLat/len;
+          var dLatDeg = (offsetMeters / R) * (180/Math.PI);
+          var dLngDeg = (offsetMeters / (R*Math.cos(p[0]*Math.PI/180))) * (180/Math.PI);
+          out.push([p[0] + perpLat*dLatDeg, p[1] + perpLng*dLngDeg]);
+        }
+        return out;
+      }
+
+      var idaCoords = (DATA.geomIda && DATA.geomIda.length > 1) ? DATA.geomIda : DATA.puntos;
+      var vueltaCoords = (DATA.geomVuelta && DATA.geomVuelta.length > 1) ? DATA.geomVuelta : DATA.puntosVuelta;
+
+      var hasIda = idaCoords && idaCoords.length > 1;
+      var hasVuelta = vueltaCoords && vueltaCoords.length > 1;
+
+      // Dibujar IDA con offset +4m si hay vuelta
+      if (hasIda) {
+        var idaDraw = hasVuelta ? offsetPolyline(idaCoords, 4) : idaCoords;
+        drawLine(idaDraw, DATA.colorIda, false);
+        // Marcadores inicio/fin IDA
+        L.circleMarker(idaDraw[0], { radius: 7, color: DATA.colorIda, fillColor: '#fff', fillOpacity: 1, weight: 3 })
+          .addTo(map).bindPopup('🟢 Inicio IDA');
+        L.circleMarker(idaDraw[idaDraw.length-1], { radius: 7, color: DATA.colorIda, fillColor: DATA.colorIda, fillOpacity: 1, weight: 2 })
+          .addTo(map).bindPopup('🔴 Fin IDA');
+      }
+
+      // Dibujar VUELTA con offset -4m si hay ida
+      if (hasVuelta) {
+        var vueltaDraw = hasIda ? offsetPolyline(vueltaCoords, -4) : vueltaCoords;
+        drawLine(vueltaDraw, DATA.colorVuelta, true);
+        L.circleMarker(vueltaDraw[0], { radius: 7, color: DATA.colorVuelta, fillColor: '#fff', fillOpacity: 1, weight: 3 })
+          .addTo(map).bindPopup('🟣 Inicio REGRESO');
+        L.circleMarker(vueltaDraw[vueltaDraw.length-1], { radius: 7, color: DATA.colorVuelta, fillColor: DATA.colorVuelta, fillOpacity: 1, weight: 2 })
+          .addTo(map).bindPopup('🔵 Fin REGRESO');
+      }
+
+
+
+      // Ajustar zoom
+      if (allCoords.length > 1) {
+        try { map.fitBounds(L.latLngBounds(allCoords).pad(0.15)); } catch(e) {}
+      } else if (allCoords.length === 1) {
+        map.setView(allCoords[0], 15);
+      } else {
+        map.setView([16.7530, -93.1150], 13);
+      }
+
+      // 🏷️ LEYENDA IDA / REGRESO (compacta, líneas gruesas) + botón viaje
+      var legend = L.control({ position: 'bottomleft' });
+      legend.onAdd = function(){
+        var div = L.DomUtil.create('div', 'map-legend');
+        div.innerHTML =
+          '<div style="background:rgba(20,28,48,.92);padding:4px 10px;border-radius:8px;font-size:11px;color:#e8edf7;border:1px solid #26314f;line-height:1.3;display:flex;flex-direction:column;gap:2px">' +
+            '<div style="display:flex;align-items:center;gap:6px">' +
+              '<span style="display:inline-block;width:16px;height:5px;background:' + DATA.colorIda + ';border-radius:2px"></span>' +
+              '<span>Ida</span>' +
+            '</div>' +
+            '<div style="display:flex;align-items:center;gap:6px">' +
+              '<span style="display:inline-block;width:16px;height:5px;background:' + DATA.colorVuelta + ';border-radius:2px"></span>' +
+              '<span>Regreso</span>' +
+            '</div>' +
+          '</div>';
+        return div;
+      };
+      legend.addTo(map);
+
+      // 🚀 Botón centrado abajo: "Agregar puntos de viaje" → ir a trip
+var tripBtn = L.control({ position: 'bottomleft' });
+tripBtn.onAdd = function(){
+        var div = L.DomUtil.create('div', 'map-trip-btn-wrap');
+        div.innerHTML =
+          '<button class="map-trip-btn" type="button">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="14" height="14">' +
+              '<circle cx="12" cy="12" r="10"/>' +
+              '<line x1="12" y1="8" x2="12" y2="16"/>' +
+              '<line x1="8" y1="12" x2="16" y2="12"/>' +
+            '</svg>' +
+            '<span>Agregar puntos de viaje</span>' +
+            '<small>Rutas relacionadas · Mapa interactivo</small>' +
+          '</button>';
+        var btn = div.querySelector('.map-trip-btn');
+        L.DomEvent.disableClickPropagation(div);
+        btn.addEventListener('click', function(){
+          window.location.href = 'https://brigadistasbd.pages.dev/?tab=trip';
+        });
+        return div;
+      };
+      tripBtn.addTo(map);
+    })();
+    </script>
+  <div class="block"><h3>📝 Notas adicionales</h3><div style="font-size:14px;line-height:1.6;color:var(--text-2);white-space:pre-wrap">Ruta de Tuxtla Gutiérrez Chiapasj</div></div><div class="block"><h3>📊 Resumen del recorrido</h3><p style="font-size:14.5px;line-height:1.75;color:var(--text-2);margin:0">Esta ruta de colectivo cuenta con un total de <strong>18 calles y avenidas, 34 POIs de ida</strong> a lo largo de su recorrido completo. A continuación se detalla cada uno de estos elementos para que los usuarios puedan planificar su viaje con información precisa y actualizada.</p></div><div class="block"><h3>ℹ️ Información</h3><ul><li>📅 Días: todos</li></ul></div><div class="block"><h3>🏥 POIs de Ida</h3><ul><li>Colonia Terán</li><li>Módulo II</li><li>Fraccionamiento Los Olivos II</li><li>Panteón de Terán</li><li>Colonia Ampliación Terán</li><li>Cobach 01 Plantel Tuxtla Terán</li><li>UNACH. Facultad de Humanidades</li><li>Escuela Preparatoria No. 7 del Estado</li><li>Escuela Preparatoria No. 2 del Estado (cerca)</li><li>UNACH. Facultad de de Contaduría y Administración</li><li>Campus I</li><li>Plaza Crystal / Galerías / Chedraui</li><li>Sam&#39;s Club</li><li>Parque Caña Hueca</li><li>Parque Tuchtlán</li><li>Parque Joyyo Mayu</li><li>Plaza de las Américas / Plaza Sol / Terminal OCC</li><li>CAT Telcel 5a Norte</li><li>Fraccionamiento Arboledas (cerca)</li><li>Cruz Roja 5a Norte</li><li>Colonia El Magueyito</li><li>Estación de Bomberos 5a Norte</li><li>Jardín Botánico Faustino Miranda</li><li>Teatro de la ciudad Emilio Rabasa</li><li>Centro de Convivencia infantil</li><li>Estadio Víctor Manuel Reyna</li><li>Parque del Oriente</li><li>Colonia El Vergel</li><li>Colonia El Brasilito (cerca)</li><li>Parque 5 de mayo</li><li>Mercado de los Ancianos</li><li>Panteón Municipal</li><li>Hospital Regional Dr. Rafael Pascacio Gamboa</li><li>Mercado Centro - Mercado Público Municipal Juan Sabines (cerca)</li></ul></div><div class="block"><h3>🛣️ Calles</h3><ul><li>Calle 1a Oriente Sur</li><li>Avenida 9a Sur Oriente cerca de Calle 1a Oriente Sur</li><li>Calle Décima Tercera Oriente Sur entre Avenida 9a Sur Oriente y Avenida 4a Norte Oriente</li><li>Avenida 4a Norte Oriente entre Calle Décima Tercera Oriente Sur y Calle Décima Sexta Oriente Norte</li><li>Calle Décima Sexta Oriente Norte entre Avenida 4a Norte Oriente y Calzada Ignacio Zaragoza</li><li>Calzada Ignacio Zaragoza entre Calle Décima Sexta Oriente Norte y Avenida Laurel</li><li>Avenida Laurel entre Calzada Ignacio Zaragoza y Avenida Rosa del Poniente</li><li>Avenida Rosa del Poniente entre Avenida Laurel y Calzada de las Culturas</li><li>Calzada de las Culturas entre Avenida Rosa del Poniente y Calzada al Sumidero</li><li>Calzada al Sumidero entre Calzada de las Culturas y Avenida 5a. Norte Oriente</li><li>Avenida 5a. Norte Oriente entre Calzada al Sumidero y Prolongacion 5a Norte Poniente</li><li>Prolongacion 5a Norte Poniente entre Avenida 5a. Norte Oriente y Boulevard Doctor Belisario Domínguez</li><li>Boulevard Doctor Belisario Domínguez cerca de Prolongacion 5a Norte Poniente</li><li>Avenida Quetzales entre Boulevard Doctor Belisario Domínguez y Avenida 2a Sur Oriente</li><li>Avenida 2a Sur Oriente entre Avenida Quetzales y Calzada Emiliano Zapata</li><li>Calzada Emiliano Zapata entre Avenida 2a Sur Oriente y Avenida de los Gardenias</li><li>Avenida de los Gardenias entre Calzada Emiliano Zapata y Calle de los Tulipanes</li><li>Calle de los Tulipanes</li></ul></div>
+
+
+  <div class="intro-paragraphs"><p>La <strong>RUTA 3</strong> es una ruta de colectivo de categoría <strong>urbana</strong> que opera en la ciudad de Tuxtla Gutiérrez, Chiapas, México.    Los días de operación son <strong>todos</strong>.</p><p>El recorrido de la ruta atraviesa las siguientes vialidades principales de Tuxtla Gutiérrez: Calle 1a Oriente Sur, Avenida 9a Sur Oriente cerca de Calle 1a Oriente Sur, Calle Décima Tercera Oriente Sur entre Avenida 9a Sur Oriente y Avenida 4a Norte Oriente, Avenida 4a Norte Oriente entre Calle Décima Tercera Oriente Sur y Calle Décima Sexta Oriente Norte, Calle Décima Sexta Oriente Norte entre Avenida 4a Norte Oriente y Calzada Ignacio Zaragoza, Calzada Ignacio Zaragoza entre Calle Décima Sexta Oriente Norte y Avenida Laurel, Avenida Laurel entre Calzada Ignacio Zaragoza y Avenida Rosa del Poniente, Avenida Rosa del Poniente entre Avenida Laurel y Calzada de las Culturas, Calzada de las Culturas entre Avenida Rosa del Poniente y Calzada al Sumidero, Calzada al Sumidero entre Calzada de las Culturas y Avenida 5a. Norte Oriente, Avenida 5a. Norte Oriente entre Calzada al Sumidero y Prolongacion 5a Norte Poniente, Prolongacion 5a Norte Poniente entre Avenida 5a. Norte Oriente y Boulevard Doctor Belisario Domínguez, entre otras calles y avenidas. Este trayecto conecta zonas clave de la ciudad y facilita el transporte de miles de pasajeros diariamente.</p><p>A lo largo de su trayecto, esta ruta pasa cerca de importantes puntos de interés (POIs) como: Colonia Terán, Módulo II, Fraccionamiento Los Olivos II, Panteón de Terán, Colonia Ampliación Terán, Cobach 01 Plantel Tuxtla Terán, UNACH. Facultad de Humanidades, Escuela Preparatoria No. 7 del Estado, Escuela Preparatoria No. 2 del Estado (cerca), UNACH. Facultad de de Contaduría y Administración, entre otros lugares de interés. Estos puntos de referencia son de gran utilidad para los usuarios que necesitan ubicarse dentro de la ciudad o identificar su parada más cercana.</p><p><strong>Notas adicionales:</strong> Ruta de Tuxtla Gutiérrez Chiapasj</p><p>Si necesitas planificar tu viaje en transporte público dentro de Tuxtla Gutiérrez, esta ruta de colectivo es una excelente opción. Puedes consultar más detalles, ver el mapa interactivo del trazado completo, las paradas oficiales y los puntos de interés cercanos directamente en esta página. Además, puedes compartir esta información con otros usuarios para que también puedan aprovecharla.</p><p>La información aquí presentada se actualiza periódicamente para asegurar que los usuarios cuenten con los datos más precisos sobre tarifas, horarios, recorridos y paradas. Si detectas alguna inconsistencia o deseas sugerir una mejora, puedes contactarnos a través del sitio principal <a href="https://brigadistasbd.pages.dev/">brigadistasbd.pages.dev</a>.</p></div>
+
+
+  
+  
+  <footer>© 2026 Rutas BGD · <a href="https://brigadistasbd.pages.dev">brigadistasbd.pages.dev</a></footer>
+</div>
+
+<!-- NAV INFERIOR -->
+<nav class="bottom-nav">
+  <a class="nav-item" href="https://brigadistasbd.pages.dev/?tab=home" rel="nofollow">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>Inicio</span>
+  </a>
+  <a class="nav-item active" href="https://brigadistasbd.pages.dev/?tab=routes" rel="nofollow">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M6 16V9a4 4 0 0 1 4-4h4"/><path d="M18 8v7a4 4 0 0 1-4 4H9"/></svg>
+    <span>Rutas</span>
+  </a>
+  <a class="nav-item " href="https://brigadistasbd.pages.dev/?tab=market" rel="nofollow">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+    <span>Market</span>
+  </a>
+</nav>
+
+<script>
+// 🖥️ Botón pantalla completa del mapa
+(function(){
+  var btn = document.getElementById('mapFsBtn');
+  var wrap = document.getElementById('mapWrapHero');
+  if(!btn || !wrap) return;
+  var ENTER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>';
+  var EXIT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 3v3a2 2 0 0 1-2 2H4"/><path d="M21 9h-3a2 2 0 0 0-2 2v3"/><path d="M3 15h3a2 2 0 0 1 2 2v3"/><path d="M15 21v-3a2 2 0 0 1 2-2h3"/></svg>';
+  btn.innerHTML = ENTER;
+  btn.onclick = function(){
+    var isFs = wrap.classList.toggle('is-fullscreen');
+    document.body.classList.toggle('fs-active', isFs);
+    btn.innerHTML = isFs ? EXIT : ENTER;
+    setTimeout(function(){ if(window.__shareMap) window.__shareMap.invalidateSize(); }, 250);
+  };
+})();
+</script>
+</body>
+</html>
