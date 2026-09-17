@@ -1130,8 +1130,8 @@ const tripBtn = L.control({ position: 'topleft' });
             <line x1="12" y1="8" x2="12" y2="16"/>
             <line x1="8" y1="12" x2="16" y2="12"/>
           </svg>
-          <span>Agregar puntos de viaje</span>
-          <small>Rutas relacionadas · Mapa interactivo</small>
+          <span>Agregar Ubicacion</span>
+          <small>Rutas cercanas · Mapa interactivo</small>
         </button>`;
       const btn = div.querySelector('.map-trip-btn');
       L.DomEvent.disableClickPropagation(div);
