@@ -1777,7 +1777,8 @@ const url = location.origin + '/share/m/' + id;
     if (state.tripMap) { state.tripMap.invalidateSize(); return; }
     const el = document.getElementById('tripMap');
     if (!el) return;
-    state.tripMap = L.map(el, {       zoomControl: true,       minZoom: 13,       maxZoom: 17     }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+    state.tripMap = L.map(el, {       zoomControl: false,       minZoom: 13,       maxZoom: 17     }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+    L.control.zoom({ position: 'bottomleft' }).addTo(state.tripMap);
     // ✨ Registrar el mapa para auto-reparación (sin timers)
     registerMap(state.tripMap);
        
