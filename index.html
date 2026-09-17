@@ -563,7 +563,7 @@ body.fs-active{overflow:hidden !important}
 
    
    
-.map-toolbar-above.tb{
+.map-toolbar-above .tb{
   width:34px;height:28px;
   justify-content:center;align-items:center;
   background:var(--surface-2);
@@ -575,21 +575,21 @@ body.fs-active{overflow:hidden !important}
   padding:0;
 }
 
-   .map-toolbar-above.tb.tb-text{
+   .map-toolbar-above .tb.tb-text{
   width:auto;
   padding:0 10px;
   gap:5px;
 }
-.map-toolbar-above.tb.tb-text span{
+.map-toolbar-above .tb.tb-text span{
   font-size:10.5px;
   font-weight:800;
   letter-spacing:.3px;
   color:inherit;
   line-height:1;
 }
-.map-toolbar-above.tb svg{width:14px;height:14px}
-.map-toolbar-above.tb:hover{border-color:var(--cyan);color:var(--cyan)}
-.map-toolbar-above.tb.active{background:var(--cyan);color:#00121a;border-color:transparent}
+.map-toolbar-above .tb svg{width:14px;height:14px}
+.map-toolbar-above .tb:hover{border-color:var(--cyan);color:var(--cyan)}
+.map-toolbar-above .tb.active{background:var(--cyan);color:#00121a;border-color:transparent}
    
 .trip-controls-row{
   display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;
@@ -692,8 +692,8 @@ body.fs-active{overflow:hidden !important}
   #map{height:70vh}
 }
 @media(max-width:380px){
-  .map-toolbar-above.tb{width:28px;height:24px}
-  .map-toolbar-above.tb svg{width:12px;height:12px}
+  .map-toolbar-above .tb{width:28px;height:24px}
+  .map-toolbar-above .tb svg{width:12px;height:12px}
   .routes-grid{grid-template-columns:repeat(3,1fr)}
    
   .header-brand .brand-txt{font-size:14px}
