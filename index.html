@@ -500,7 +500,58 @@ body.fs-active{overflow:hidden !important}
 }
    
 .marker-a,.marker-b,.marker-c,.marker-d,.marker-e{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:12px;color:#fff;border:2.5px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.5)}
-.marker-a{background:#10b981}.marker-b{background:#ef4444}.marker-c{background:#f59e0b}.marker-d{background:#3b82f6}.marker-e{background:#a855f7}
+
+   /* 🎯 GPS en tiempo real — Icono pulsante estilo Google Maps */
+.gps-live-marker {
+  background: transparent !important;
+  border: none !important;
+}
+.gps-live-icon {
+  position: relative;
+  width: 24px;
+  height: 24px;
+}
+.gps-live-icon .gps-live-dot {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: #3b82f6;
+  border: 3px solid #ffffff;
+  box-shadow: 0 2px 10px rgba(59,130,246,.85), 0 0 0 2px rgba(59,130,246,.35);
+  z-index: 3;
+}
+.gps-live-icon .gps-live-pulse {
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  background: rgba(59,130,246,.35);
+  animation: gpsLivePulse 1.8s ease-out infinite;
+  z-index: 1;
+  pointer-events: none;
+}
+@keyframes gpsLivePulse {
+  0%   { transform: scale(0.4); opacity: 1; }
+  70%  { transform: scale(1.9); opacity: 0; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+.gps-live-icon .gps-live-heading {
+  position: absolute;
+  left: 50%;
+  top: -14px;
+  width: 0;
+  height: 0;
+  transform: translateX(-50%) rotate(0deg);
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-bottom: 12px solid #3b82f6;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.5));
+  transition: transform .35s ease;
+  z-index: 4;
+  pointer-events: none;
+}
+
+   
+   .marker-a{background:#10b981}.marker-b{background:#ef4444}.marker-c{background:#f59e0b}.marker-d{background:#3b82f6}.marker-e{background:#a855f7}
 
 /* Panel ruta individual */
 .route-hero{padding:14px;display:flex;flex-direction:column;gap:10px}
