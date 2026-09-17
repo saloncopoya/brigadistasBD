@@ -1,27 +1,7 @@
 {
-  "posts": [
-    {
-      "slug": "uejej169",
-      "title": "Uejej",
-      "description": "Uejej",
-      "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789543370/qemih139mvyfvkc2nirw.jpg",
-      "url": "/share/post/uejej169",
-      "tipo": "post",
-      "timestamp": 1789543377870,
-      "updatedAt": "2026-09-16T07:22:57.870Z",
-      "categoria": "",
-      "tarifa": "",
-      "frecuencia": "",
-      "horarioIni": "",
-      "horarioFin": "",
-      "dias": "",
-      "paradas": [],
-      "calles": [],
-      "pois": []
-    }
-  ],
-  "total": 1,
-  "updatedAt": "2026-09-17T17:18:18.772Z",
+  "posts": [],
+  "total": 0,
+  "updatedAt": "2026-09-17T17:18:21.059Z",
   "version": 1,
   "__sha": "5a2086d37086e515ce37d77d7c7add8c8b25146c"
 }
