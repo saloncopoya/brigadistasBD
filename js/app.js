@@ -18,7 +18,7 @@ apiKey: "AIzaSyAiojpfnGUPhaoQkpAh1Yey3fp6uWU-iFQ",
   };
 
 const DEFAULT_CENTER = [16.7530, -93.1150];
-  const DEFAULT_ZOOM = 14;
+  const DEFAULT_ZOOM = 13;
 
   // ==================== UTILIDADES ====================
   const $ = (s, r = document) => r.querySelector(s);
@@ -412,7 +412,7 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             <span>${(p.comments || []).length}</span>
           </button>
-          <button class="post-action post-share" data-act="share">
+          <button class="post-action" data-act="share">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
           </button>
         </div>
@@ -709,7 +709,7 @@ const url = location.origin + '/share/post/' + post.id;
         <span class="badge ${r.categoria === 'foranea' ? 'badge-foranea' : 'badge-urbana'}">${esc(r.categoria || 'urbana')}</span>
         <div class="route-actions">
           <button class="icon-btn" data-act="open" title="Abrir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 6l8-3 6 3 8-3v15l-8 3-6-3-8 3z"/></svg></button>
-          <button class="icon-btn btn-share" data-act="share" title="Compartir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+          <button class="icon-btn" data-act="share" title="Compartir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
         </div>
       </div>`).join('') + `</div>`;
   }
@@ -896,7 +896,7 @@ const url = location.origin + '/share/post/' + post.id;
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
           Regresar
         </button>
-        <button class="btn btn-share btn-sm" id="btnShareRoute">
+        <button class="btn btn-primary btn-sm" id="btnShareRoute">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
           Compartir ruta
         </button>
@@ -963,9 +963,6 @@ const url = location.origin + '/share/post/' + post.id;
   }
 
      // Offset perpendicular a una polyline (separa ida y regreso en la misma calle)
-
-   
-     // Offset perpendicular a una polyline (separa ida y regreso en la misma calle)
   function offsetPolyline(coords, offsetMeters){
     if(!coords || coords.length < 2) return coords;
     const out = [];
@@ -985,38 +982,25 @@ const url = location.origin + '/share/post/' + post.id;
     }
     return out;
   }
-
+   
   function initRouteMap(route) {
     const container = document.getElementById('map');
     if (!container) return;
-    if (state.map) {
-      try { state.map.remove(); } catch (e) {}
-      state.map = null;
-      const cont = document.getElementById('map');
-      if (cont && cont._leaflet_id) delete cont._leaflet_id;
-    }
-     
-    state.map = L.map(container, {
-      zoomControl: true,
-      minZoom: 13,
-      maxZoom: 17
-    }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
-     // ✨ Registrar el mapa para auto-reparación (sin timers)
+    if (state.map) { state.map.remove(); state.map = null; }
+
+    state.map = L.map(container, { zoomControl: true }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+    // ✨ Registrar el mapa para auto-reparación (sin timers)
     registerMap(state.map);
 
      
     // 🖥️ Conectar el botón de pantalla completa con este mapa (sin timers)
     bindFullscreenButton('routeMapFsBtn', 'routeMapWrap');
-   
-
-     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  minZoom: 13,
-  maxZoom: 17,
-  maxNativeZoom: 17,
+    L.tileLayer.offline('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19,
   crossOrigin: true,
   attribution: '© OpenStreetMap'
-}).addTo(state.map);   // ← o .addTo(state.tripMap) según el caso
-     
+}).addTo(state.map);
+
     const layers = [];
     const colorIda = route.colorIda || '#00e5ff';
     const colorVuelta = route.colorVuelta || '#a855f7';
@@ -1120,7 +1104,7 @@ const url = location.origin + '/share/post/' + post.id;
     legend.addTo(state.map);
 
     // --- Botón inferior centrado: "Agregar ubicación" → ir a trip ---
-const tripBtn = L.control({ position: 'topleft' });
+const tripBtn = L.control({ position: 'bottomleft' });
      tripBtn.onAdd = function () {
       const div = L.DomUtil.create('div', 'map-trip-btn-wrap');
       div.innerHTML = `
@@ -1130,8 +1114,8 @@ const tripBtn = L.control({ position: 'topleft' });
             <line x1="12" y1="8" x2="12" y2="16"/>
             <line x1="8" y1="12" x2="16" y2="12"/>
           </svg>
-          <span>Agregar Ubicacion</span>
-          <small>Rutas cercanas · Mapa interactivo</small>
+          <span>Agregar puntos de viaje</span>
+          <small>Rutas relacionadas · Mapa interactivo</small>
         </button>`;
       const btn = div.querySelector('.map-trip-btn');
       L.DomEvent.disableClickPropagation(div);
@@ -1582,7 +1566,7 @@ const url = location.origin + '/share/ruta/' + route.id;
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8z"/></svg>
             WhatsApp
           </button>` : ''}
-          <button class="btn btn-share btn-sm" data-mact="share">
+          <button class="btn btn-ghost btn-sm" data-mact="share">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
           </button>
         </div>
@@ -1695,93 +1679,80 @@ const url = location.origin + '/share/m/' + id;
     } catch (e) {}
   }
 
-    async function syncFromFirebase() {
-    if (!state.online || !fbDB) return;
-    try {
-      // 🛡️ Recolectar IDs pendientes de subir para NO borrarlos
-      const pendingIds = new Set();
-      try {
-        const queue = await DB.getQueue();
-        queue.forEach(item => {
-          const payload = item.payload || item;
-          if (payload && payload.id) pendingIds.add(payload.id);
-        });
-      } catch (e) {}
+ async function syncFromFirebase() {
+  if (!state.online || !fbDB) return;
+  try {
+    const [postsSnap, routesSnap, marketSnap] = await Promise.all([
+      fbDB.ref('publicaciones').once('value'),
+      fbDB.ref('rutas_colectivos_tgz').once('value'),
+      fbDB.ref('marketplace').once('value')
+    ]);
 
-      const [postsSnap, routesSnap, marketSnap] = await Promise.all([
-        fbDB.ref('publicaciones').once('value'),
-        fbDB.ref('rutas_colectivos_tgz').once('value'),
-        fbDB.ref('marketplace').once('value')
-      ]);
+    // 🛡️ GUARD por nodo: detectar qué colecciones tienen datos en Firebase
+    const hayPosts = postsSnap.exists();
+    const hayRoutes = routesSnap.exists();
+    const hayMarket = marketSnap.exists();
 
-      // 🛡️ GUARD por nodo
-      const hayPosts = postsSnap.exists();
-      const hayRoutes = routesSnap.exists();
-      const hayMarket = marketSnap.exists();
+    // Si NINGÚN nodo existe, no borrar nada
+    if (!hayPosts && !hayRoutes && !hayMarket) {
+      console.warn('[Sync] Firebase no tiene datos remotos. No se borra local por seguridad.');
+      return;
+    }
 
-      if (!hayPosts && !hayRoutes && !hayMarket) {
-        console.warn('[Sync] Firebase no tiene datos remotos. No se borra local por seguridad.');
-        return;
-      }
+    const posts = postsSnap.val() || {};
+    const routes = routesSnap.val() || {};
+    const market = marketSnap.val() || {};
 
-      const posts = postsSnap.val() || {};
-      const routes = routesSnap.val() || {};
-      const market = marketSnap.val() || {};
+    const remotePostIds = new Set(Object.values(posts).filter(p => p && p.id).map(p => p.id));
+    const remoteRouteIds = new Set(Object.values(routes).filter(r => r && r.id).map(r => r.id));
+    const remoteMarketIds = new Set(Object.values(market).filter(m => m && m.id).map(m => m.id));
 
-      const remotePostIds = new Set(Object.values(posts).filter(p => p && p.id).map(p => p.id));
-      const remoteRouteIds = new Set(Object.values(routes).filter(r => r && r.id).map(r => r.id));
-      const remoteMarketIds = new Set(Object.values(market).filter(m => m && m.id).map(m => m.id));
+    const localPosts = await DB.getAll('posts');
+    const localRoutes = await DB.getAll('routes');
+    const localMarket = await DB.getAll('market');
+    const localPostIds = new Set(localPosts.map(p => p.id));
+    const localRouteIds = new Set(localRoutes.map(r => r.id));
+    const localMarketIds = new Set(localMarket.map(m => m.id));
 
-      const localPosts = await DB.getAll('posts');
-      const localRoutes = await DB.getAll('routes');
-      const localMarket = await DB.getAll('market');
-      const localPostIds = new Set(localPosts.map(p => p.id));
-      const localRouteIds = new Set(localRoutes.map(r => r.id));
-      const localMarketIds = new Set(localMarket.map(m => m.id));
+    for (const p of Object.values(posts)) if (p && p.id) await DB.put('posts', p);
+    for (const r of Object.values(routes)) if (r && r.id) await DB.put('routes', r);
+    for (const m of Object.values(market)) if (m && m.id) await DB.put('market', m);
 
-      for (const p of Object.values(posts)) if (p && p.id) await DB.put('posts', p);
-      for (const r of Object.values(routes)) if (r && r.id) await DB.put('routes', r);
-      for (const m of Object.values(market)) if (m && m.id) await DB.put('market', m);
+    // 🧹 BORRAR local lo que ya no está en Firebase
+    // Solo borrar de un tipo si SU nodo remoto existe (evita borrados si Firebase responde parcial)
+    if (hayPosts) {
+      for (const id of localPostIds) if (!remotePostIds.has(id)) await DB.delete('posts', id);
+    } else {
+    }
 
-      // 🧹 Borrar solo si NO está pendiente de subir
-      if (hayPosts) {
-        for (const id of localPostIds) {
-          if (!remotePostIds.has(id) && !pendingIds.has(id)) await DB.delete('posts', id);
-        }
-      }
-      if (hayRoutes) {
-        for (const id of localRouteIds) {
-          if (!remoteRouteIds.has(id) && !pendingIds.has(id)) await DB.delete('routes', id);
-        }
-      }
-      if (hayMarket) {
-        for (const id of localMarketIds) {
-          if (!remoteMarketIds.has(id) && !pendingIds.has(id)) await DB.delete('market', id);
-        }
-      }
+    if (hayRoutes) {
+      for (const id of localRouteIds) if (!remoteRouteIds.has(id)) await DB.delete('routes', id);
+    } else {
+    }
 
-      await loadPosts(); await loadRoutes(); await loadMarket();
-      renderFeed(); renderRouteContent(); renderMarket();
-    } catch (e) { console.warn('[Sync]', e); }
-  }
+    if (hayMarket) {
+      for (const id of localMarketIds) if (!remoteMarketIds.has(id)) await DB.delete('market', id);
+    } else {
+    }
+     
+    await loadPosts(); await loadRoutes(); await loadMarket();
+    renderFeed(); renderRouteContent(); renderMarket();
+  } catch (e) { console.warn('[Sync]', e); }
+}
 
   // ==================== TRIP SEARCH (MAPA) ====================
     function initTripMap() {
     if (state.tripMap) { state.tripMap.invalidateSize(); return; }
     const el = document.getElementById('tripMap');
     if (!el) return;
-    state.tripMap = L.map(el, {       zoomControl: true,       minZoom: 13,       maxZoom: 17     }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+    state.tripMap = L.map(el, { zoomControl: true }).setView(DEFAULT_CENTER, 13);
     // ✨ Registrar el mapa para auto-reparación (sin timers)
     registerMap(state.tripMap);
        
     // 🖥️ Conectar el botón de pantalla completa con este mapa (sin timers)
     bindFullscreenButton('tripMapFsBtn', 'tripMapWrap');
- L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  minZoom: 13,
-  maxZoom: 17,
-  maxNativeZoom: 17,
-  crossOrigin: true,
-  attribution: '© OpenStreetMap'
+    L.tileLayer.offline('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19, crossOrigin: true, attribution: '© OpenStreetMap'
 }).addTo(state.tripMap);
        
     state.tripMap.on('click', e => {
@@ -2296,7 +2267,7 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
       // ¿Existe una ruta directa que pase por TODOS los puntos?
       const start = state.tripPoints[0];
       const end   = state.tripPoints[state.tripPoints.length - 1];
-   
+      const middle = state.tripPoints.slice(1, -1);
 
       state.routes.forEach(r => {
         const touchesAll = state.tripPoints.every(p => routeNearPoint(r, p, p.radius));
