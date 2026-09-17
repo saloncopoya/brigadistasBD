@@ -178,6 +178,17 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
     tripCircles: [],
     tripRadius: 300,
     userReactivated: false,   // ← NUEVA bandera: el usuario reactivó "+Agregar" manualmente
+    // 🎯 GPS en tiempo real (icono pulsante estilo Google Maps)
+    gpsLive: {
+      watchId: null,        // ID de navigator.geolocation.watchPosition
+      marker: null,         // L.marker con el icono pulsante
+      accuracyCircle: null, // L.circle con el radio de precisión
+      autoFollow: true,     // ¿El mapa sigue al usuario?
+      firstFix: false,      // ¿Ya se centró la primera vez?
+      heading: null,        // Último heading conocido (grados)
+      lastLatLng: null,     // Última posición conocida
+      minDistanceToPan: 8   // metros mínimos para re-centrar el mapa (evita temblores)
+    },
     // Firebase
     fbDB: null,
     // Comentarios
@@ -2660,13 +2671,8 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
         toast('Puntos limpiados');
         return;
       }
-      if (tool === 'locate') {
-        if (!navigator.geolocation) { toast('GPS no disponible', 'err'); return; }
-        navigator.geolocation.getCurrentPosition(pos => {
-          const { latitude: lat, longitude: lng } = pos.coords;
-          if (state.tripMap) state.tripMap.setView([lat, lng], 15);
-          addTripPoint(lat, lng);
-        }, err => toast('GPS: ' + err.message, 'err'), { enableHighAccuracy: true });
+            if (tool === 'locate') {
+        toggleLiveGPS(b, toast);
         return;
       }
       $$('#tripToolbar .tb').forEach(x => x.classList.remove('active'));
@@ -2682,6 +2688,190 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
     };
   });
 
+
+     /* ============================================================
+     🎯 GPS EN TIEMPO REAL — Icono pulsante estilo Google Maps
+     ------------------------------------------------------------
+     • watchPosition con enableHighAccuracy (GPS real, no red)
+     • maximumAge: 1000 → acepta posiciones de hace 1s (fluido)
+     • timeout: 20s → si no hay fix, avisa sin colgar
+     • Icono divIcon con:
+         - punto azul central
+         - anillo pulsante (radar)
+         - flecha de heading que rota según orientación
+     • Círculo de precisión que se adapta al accuracy real
+     • Auto-follow suave: solo recentra si el usuario se movió
+       más de `minDistanceToPan` metros (evita temblores GPS)
+     • Auto-follow se desactiva si el usuario mueve el mapa a mano
+     • Un solo watch, un solo marker, un solo círculo → sin RAM leaks
+     • Al apagar: clearWatch + removeLayer → 0 residuos
+     ============================================================ */
+
+  function buildGpsLiveIcon() {
+    return L.divIcon({
+      className: 'gps-live-marker',
+      html:
+        '<div class="gps-live-icon">' +
+          '<div class="gps-live-pulse"></div>' +
+          '<div class="gps-live-heading" id="gpsLiveHeading"></div>' +
+          '<div class="gps-live-dot"></div>' +
+        '</div>',
+      iconSize: [24, 24],
+      iconAnchor: [12, 12]
+    });
+  }
+
+  function startLiveGPS(btn, toastFn) {
+    if (!navigator.geolocation) {
+      toastFn('GPS no disponible en este navegador', 'err');
+      return;
+    }
+
+    const g = state.gpsLive;
+
+    // Si ya está activo, no duplicar
+    if (g.watchId !== null) return;
+
+    btn.classList.add('active');
+    toastFn('🛰️ Ubicación en tiempo real activada');
+
+    g.autoFollow = true;
+    g.firstFix = false;
+    g.heading = null;
+    g.lastLatLng = null;
+
+    // Desactivar cualquier otro modo de dibujo activo
+    // (para que el click en el mapa no añada puntos mientras GPS está on)
+    const addBtn = document.querySelector('#tripToolbar .tb[data-tool="addpoint"]');
+    if (addBtn) addBtn.classList.remove('active');
+    state.userReactivated = false;
+
+    // Auto-follow se desactiva cuando el usuario arrastra el mapa
+    const onUserDrag = () => {
+      if (state.gpsLive.watchId !== null && state.gpsLive.autoFollow) {
+        state.gpsLive.autoFollow = false;
+        toastFn('Auto-seguimiento desactivado (mueve el mapa libremente)', 'ok');
+      }
+    };
+    state.tripMap.once('dragstart', onUserDrag);
+
+    g.watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        const accuracy = pos.coords.accuracy || 30;
+        const heading = (pos.coords.heading != null && !isNaN(pos.coords.heading))
+          ? pos.coords.heading : null;
+
+        const g2 = state.gpsLive;
+        g2.lastLatLng = [lat, lng];
+        g2.heading = heading;
+
+        // 1️⃣ Crear capas la primera vez
+        if (!g2.marker) {
+          g2.marker = L.marker([lat, lng], {
+            icon: buildGpsLiveIcon(),
+            interactive: false,
+            keyboard: false,
+            zIndexOffset: 2000
+          }).addTo(state.tripMap);
+
+          g2.accuracyCircle = L.circle([lat, lng], {
+            radius: accuracy,
+            color: '#3b82f6',
+            fillColor: '#3b82f6',
+            fillOpacity: 0.08,
+            weight: 1,
+            opacity: 0.45,
+            interactive: false
+          }).addTo(state.tripMap);
+        } else {
+          // Mover sin animación (la animación de Leaflet en móvil es costosa)
+          g2.marker.setLatLng([lat, lng]);
+          g2.accuracyCircle.setLatLng([lat, lng]);
+          g2.accuracyCircle.setRadius(accuracy);
+        }
+
+        // 2️⃣ Rotar la flecha de heading si el dispositivo la provee
+        const arrow = document.getElementById('gpsLiveHeading');
+        if (arrow && heading != null) {
+          arrow.style.transform = 'translateX(-50%) rotate(' + heading + 'deg)';
+        }
+
+        // 3️⃣ Auto-follow
+        if (!g2.firstFix) {
+          g2.firstFix = true;
+          state.tripMap.setView([lat, lng], Math.max(state.tripMap.getZoom(), 16), {
+            animate: true, duration: 0.6
+          });
+        } else if (g2.autoFollow && g2.lastLatLng) {
+          // Solo recentra si el usuario se movió suficiente (evita micro-temblores)
+          const [prevLat, prevLng] = g2.__prevPan || g2.lastLatLng;
+          const dist = haversine(prevLat, prevLng, lat, lng);
+          if (dist >= g2.minDistanceToPan) {
+            g2.__prevPan = [lat, lng];
+            state.tripMap.panTo([lat, lng], {
+              animate: true, duration: 0.5, easeLinearity: 0.6
+            });
+          }
+        }
+      },
+      (err) => {
+        let msg = 'No se pudo obtener tu ubicación';
+        if (err.code === 1) msg = 'Permiso de ubicación denegado. Actívalo en el navegador.';
+        else if (err.code === 2) msg = 'Ubicación no disponible (GPS apagado o sin señal).';
+        else if (err.code === 3) msg = 'Tiempo de espera agotado buscando GPS.';
+        toastFn('⚠️ ' + msg, 'err');
+        stopLiveGPS(btn, toastFn, /*silencioso=*/ true);
+      },
+      {
+        enableHighAccuracy: true,   // ← GPS real, no solo red
+        maximumAge: 1000,           // ← acepta posiciones de hace 1s (fluido)
+        timeout: 20000              // ← 20s máximo por lectura
+      }
+    );
+  }
+
+  function stopLiveGPS(btn, toastFn, silencioso) {
+    const g = state.gpsLive;
+
+    if (g.watchId !== null) {
+      navigator.geolocation.clearWatch(g.watchId);
+      g.watchId = null;
+    }
+
+    if (g.marker) {
+      try { state.tripMap.removeLayer(g.marker); } catch (e) {}
+      g.marker = null;
+    }
+
+    if (g.accuracyCircle) {
+      try { state.tripMap.removeLayer(g.accuracyCircle); } catch (e) {}
+      g.accuracyCircle = null;
+    }
+
+    g.autoFollow = true;
+    g.firstFix = false;
+    g.heading = null;
+    g.lastLatLng = null;
+    g.__prevPan = null;
+
+    if (btn) btn.classList.remove('active');
+
+    if (!silencioso) toastFn('📍 Ubicación en tiempo real desactivada');
+  }
+
+  function toggleLiveGPS(btn, toastFn) {
+    const activo = btn.classList.contains('active');
+    if (activo) {
+      stopLiveGPS(btn, toastFn);
+    } else {
+      startLiveGPS(btn, toastFn);
+    }
+  }
+
+
+   
   // ==================== BOTTOM NAV ====================
   $$('.nav-item').forEach(n => {
     n.onclick = () => navigateTo(n.dataset.page);
