@@ -2070,7 +2070,13 @@ const url = location.origin + '/share/m/' + id;
     }
     return min;
   }
-
+  // ¿La ruta pasa cerca de un punto? (usado por performTripSearch)
+  function routeNearPoint(route, point, radius) {
+    if (!route) return false;
+    const lat = point.lat != null ? point.lat : point[0];
+    const lng = point.lng != null ? point.lng : point[1];
+    return routeDistanceToPoint(route, lat, lng) <= radius;
+  }
 
    
      // ============================================================
