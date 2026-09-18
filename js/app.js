@@ -1062,14 +1062,14 @@ const url = location.origin + '/share/post/' + post.id;
     if (ptsVuelta.length > 1) {
       const hasIda = (route.geometriaIda && route.geometriaIda.length > 1) ||
                      (route.puntos && route.puntos.length > 1);
-      const finalPtsV = hasIda ? offsetPolyline(ptsVuelta, -4) : ptsVuelta;
+      const finalPtsV = hasIda ? offsetPolyline(ptsVuelta, -10) : ptsVuelta;
       const lineVuelta = L.polyline(finalPtsV, {
         color: colorVuelta,
         weight: 5,
         opacity: 0.95,
         lineJoin: 'round',
         lineCap: 'round',
-                 dashArray: '10,6'
+                 dashArray: '1, 14'
       }).addTo(state.map);
       layers.push(lineVuelta);
 
@@ -2665,7 +2665,8 @@ const url = location.origin + '/share/m/' + id;
     return out;
   }
 
-  function drawTripRoutesOnMap(routeList, highlightIdx = null) {
+
+     function drawTripRoutesOnMap(routeList, highlightIdx = null) {
     clearTripRouteLayers();
     if (!state.tripMap) return;
 
@@ -2678,6 +2679,7 @@ const url = location.origin + '/share/m/' + id;
       const color = TRIP_COLORS[idx % TRIP_COLORS.length];
       const isHl = highlightIdx === null || highlightIdx === idx;
 
+      // ─── IDA ───
       if (coordsIda.length > 1) {
         let idaDraw = coordsIda;
         if (total > 1) {
@@ -2697,30 +2699,93 @@ const url = location.origin + '/share/m/' + id;
           { sticky: true }
         );
         tripRouteLayers.push(lineIda);
+
+        // 🟢 Punto de INICIO de IDA: circulito blanco con borde del color de la ruta
+        const startIda = idaDraw[0];
+        const startMarkerIda = L.circleMarker(startIda, {
+          radius: 7,
+          color: color,          // borde del color de la ruta
+          fillColor: '#ffffff',  // relleno blanco
+          fillOpacity: 1,
+          weight: 3,
+          interactive: true
+        }).addTo(state.tripMap);
+        startMarkerIda.bindTooltip('🟢 Inicio de ida', { sticky: true });
+        tripRouteLayers.push(startMarkerIda);
       }
 
+      // ─── VUELTA (con flechitas que indican dirección) ───
       if (coordsVuelta.length > 1) {
+        // Offset MÁS GRANDE para separar bien ida de regreso (10 m en vez de 4)
         let vueltaDraw = coordsVuelta;
-        if (total > 1) {
-          const offset = (idx - (total - 1) / 2) * 4;
-          vueltaDraw = offsetPolyline(coordsVuelta, -offset);
-        }
+        const baseOffset = total > 1
+          ? (idx - (total - 1) / 2) * 4
+          : 0;
+        // 👉 El offset negativo hace que la vuelta se separe hacia el otro lado
+        vueltaDraw = offsetPolyline(coordsVuelta, -(baseOffset + 10));
+
+        // 1️⃣ Línea base punteada grande (separada)
         const lineVuelta = L.polyline(vueltaDraw, {
           color,
-          weight: isHl ? 4 : 2,
-          opacity: isHl ? 0.85 : 0.4,
+          weight: isHl ? 4 : 3,
+          opacity: isHl ? 0.9 : 0.5,
           lineJoin: 'round',
           lineCap: 'round',
-          dashArray: '10,6'
+          dashArray: '1, 14'   // ← guiones MUY separados = puntitos
         }).addTo(state.tripMap);
         lineVuelta.bindTooltip(
-          (item.label || route.nombre || 'Ruta') + ' · REGRESO' +
+          (item.label || route.nombre || 'Ruta') + ' · REGRESO ➤' +
           ` <span style="color:${color}">●</span>`,
           { sticky: true }
         );
         tripRouteLayers.push(lineVuelta);
+
+        // 2️⃣ FLECHAS cada N puntos a lo largo del trazo de regreso
+        //    Se dibujan como pequeños markers con chevron "▶"
+        const arrowStep = Math.max(3, Math.floor(vueltaDraw.length / 12)); // ~12 flechas por ruta
+        for (let i = 2; i < vueltaDraw.length - 1; i += arrowStep) {
+          const p1 = vueltaDraw[i - 1];
+          const p2 = vueltaDraw[i];
+          // Ángulo del segmento
+          const angle = Math.atan2(p2[1] - p1[1], p2[0] - p1[0]) * 180 / Math.PI;
+
+          const arrowIcon = L.divIcon({
+            className: 'trip-arrow',
+            html: `<div style="
+              width:0;height:0;
+              border-left:8px solid ${color};
+              border-top:5px solid transparent;
+              border-bottom:5px solid transparent;
+              transform: rotate(${-angle}deg);
+              transform-origin: center;
+              filter: drop-shadow(0 1px 2px rgba(0,0,0,.5));
+            "></div>`,
+            iconSize: [8, 10],
+            iconAnchor: [4, 5]
+          });
+          const arrowMarker = L.marker(p2, {
+            icon: arrowIcon,
+            interactive: false,
+            keyboard: false
+          }).addTo(state.tripMap);
+          tripRouteLayers.push(arrowMarker);
+        }
+
+        // 3️⃣ Punto de INICIO de VUELTA: circulito blanco con borde del color
+        const startVuelta = vueltaDraw[0];
+        const startMarkerVuelta = L.circleMarker(startVuelta, {
+          radius: 7,
+          color: color,
+          fillColor: '#ffffff',
+          fillOpacity: 1,
+          weight: 3,
+          interactive: true
+        }).addTo(state.tripMap);
+        startMarkerVuelta.bindTooltip('🟣 Inicio de regreso ➤', { sticky: true });
+        tripRouteLayers.push(startMarkerVuelta);
       }
 
+      // ─── Punto de TRANSBORDO ───
       if (item.transferPoint) {
         const tp = L.circleMarker(item.transferPoint, {
           radius: 9, color: '#fff', fillColor: color, fillOpacity: 1, weight: 3
@@ -2729,7 +2794,6 @@ const url = location.origin + '/share/m/' + id;
       }
     });
   }
-
   // (routeDistanceToPoint y getRouteAllSegments ya existen más arriba;
   //  los dejamos tal cual para no romper performTripSearch.)
 
