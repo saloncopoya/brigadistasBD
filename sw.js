@@ -99,15 +99,12 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 /* SW.JS — v8 · NO intercepta tiles ni APIs externas */
-const VERSION = 'bgd-v1.3.9';
+const VERSION = 'bgd-v3.5';
 const STATIC_CACHE = `${VERSION}-static`;
 const HTML_CACHE = `${VERSION}-html`;
 
 const PRECACHE = [
-  '/', 
-   '/index.html', '/admin.html',
-   '/index', 
-   '/offline.html',
+  '/', '/index.html', '/admin.html', '/offline.html',
   '/manifest.json', '/robots.txt', '/sitemap.xml',
   '/assets/icon.svg', '/js/db.js', '/js/publisher.js', '/js/app.js',
   '/vendor/leaflet/leaflet.css',
@@ -201,7 +198,7 @@ const TILE_HOSTS = [
   'b.tile.openstreetmap.org',
   'c.tile.openstreetmap.org'
 ];
-const TILE_MAX_ENTRIES = 1000;   // tope duro para no llenar el disco
+const TILE_MAX_ENTRIES = 2000;   // tope duro para no llenar el disco
 
 self.addEventListener('fetch', (event) => {
   const req = event.request;
