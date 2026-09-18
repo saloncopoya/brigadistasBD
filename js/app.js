@@ -2429,7 +2429,7 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
     let html = '';
 
     if (results.direct.length) {
-      html += `<div class="section-title">✅ Rutas directas (${results.direct.length})</div>`;
+      html += `<div class="section-title">✅ RESULTADOS: RUTAS DIRECTAS (${results.direct.length})</div>`;
       html += results.direct.map((r, idx) => `
         <div class="result-card directa" data-result-idx="${idx}" data-result-type="direct">
           <div class="rc-head">
@@ -2493,9 +2493,7 @@ const legColor = li === 0 ? '#00e5ff' : '#a855f7';
               return `
         <div class="result-card transbordo" data-result-idx="${idx}" data-result-type="transfer">
           <div class="rc-head">
-            <div class="rc-icon" style="background:${color}20;color:${color}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/></svg>
-            </div>
+         
             <div style="flex:1">
               <div class="trip-chain">${chipsHtml}</div>
               <div class="rc-sub">${t.transfers} transbordo(s) · ~${Math.round(t.totalDist)}m totales</div>
