@@ -2238,85 +2238,331 @@ const url = location.origin + '/share/m/' + id;
     });
   }
 
-  // Calcula la distancia mínima entre dos rutas (para transbordos)
+  // ============================================================
+  // 🔍 DISTANCIA MÍNIMA ENTRE 2 RUTAS (inteligente)
+  // ============================================================
+  //
+  // Optimizaciones:
+  //   1. Bounding box para eliminar 90% de puntos lejanos
+  //   2. Downsampling: analiza 1 de cada 3 puntos (más rápido)
+  //   3. Retorna info de índice para validar dirección después
+  //
+  // Retorna: { dist, p1, p2, mid, i1, i2 }
+  //   - i1, i2: índices de los puntos más cercanos (para validar dirección)
+
   function routesMinDistance(r1, r2) {
     const c1 = getRouteCoords(r1);
     const c2 = getRouteCoords(r2);
-    let best = Infinity, bestPt = null, bestPt2 = null;
-    c1.forEach(p1 => {
-      c2.forEach(p2 => {
-        const d = haversine(p1[0], p1[1], p2[0], p2[1]);
-        if (d < best) { best = d; bestPt = p1; bestPt2 = p2; }
-      });
+    if (!c1.length || !c2.length) return { dist: Infinity, p1: null, p2: null, mid: null, i1: -1, i2: -1 };
+
+    const TOL = TRANSFER_CONFIG.TOLERANCIA_TRANSBORDO_M;
+
+    // Downsampling: 1 punto cada 3 (velocidad)
+    const STEP = 3;
+    const s1 = [];
+    const s2 = [];
+    for (let i = 0; i < c1.length; i += STEP) s1.push({ p: c1[i], i });
+    if (c1.length > 1 && s1[s1.length - 1].i !== c1.length - 1) s1.push({ p: c1[c1.length - 1], i: c1.length - 1 });
+    for (let i = 0; i < c2.length; i += STEP) s2.push({ p: c2[i], i });
+    if (c2.length > 1 && s2[s2.length - 1].i !== c2.length - 1) s2.push({ p: c2[c2.length - 1], i: c2.length - 1 });
+
+    // Bounding box de s2 (con padding)
+    let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
+    s2.forEach(o => {
+      if (o.p[0] < minLat) minLat = o.p[0];
+      if (o.p[0] > maxLat) maxLat = o.p[0];
+      if (o.p[1] < minLng) minLng = o.p[1];
+      if (o.p[1] > maxLng) maxLng = o.p[1];
     });
-    return { dist: best, p1: bestPt, p2: bestPt2, mid: bestPt ? [(bestPt[0]+bestPt2[0])/2, (bestPt[1]+bestPt2[1])/2] : null };
+    const padLat = TOL / 111320;
+    const padLng = TOL / (111320 * Math.cos((minLat + maxLat) / 2 * Math.PI / 180));
+    minLat -= padLat; maxLat += padLat;
+    minLng -= padLng; maxLng += padLng;
+
+    // Encontrar el par más cercano
+    let bestDist = Infinity, bestP1 = null, bestP2 = null;
+    let bestI1 = -1, bestI2 = -1;
+
+    for (const o1 of s1) {
+      if (o1.p[0] < minLat || o1.p[0] > maxLat || o1.p[1] < minLng || o1.p[1] > maxLng) continue;
+      for (const o2 of s2) {
+        const d = haversine(o1.p[0], o1.p[1], o2.p[0], o2.p[1]);
+        if (d < bestDist) {
+          bestDist = d;
+          bestP1 = o1.p;
+          bestP2 = o2.p;
+          bestI1 = o1.i;
+          bestI2 = o2.i;
+        }
+      }
+    }
+
+    if (!bestP1 || !bestP2) {
+      return { dist: Infinity, p1: null, p2: null, mid: null, i1: -1, i2: -1 };
+    }
+
+    const mid = [(bestP1[0] + bestP2[0]) / 2, (bestP1[1] + bestP2[1]) / 2];
+
+    return {
+      dist: bestDist,
+      p1: bestP1,
+      p2: bestP2,
+      mid,
+      i1: bestI1,
+      i2: bestI2
+    };
   }
+   
 
   // Verifica si una ruta pasa cerca de un punto
   function routeNearPoint(route, point, radius) {
     return routeDistanceToPoint(route, point.lat, point.lng) <= radius;
   }
 
-  // Encuentra todos los transbordos posibles (1, 2, 3, 4 saltos)
+     // ============================================================
+  // 🧭 HELPERS DE DIRECCIÓN Y TRANSBORDO INTELIGENTE
+  // ============================================================
+  //
+  // Estas funciones permiten:
+  //   1. Detectar si 2 rutas van en direcciones compatibles
+  //   2. Colocar el punto de transbordo cerca del origen A
+  //      pero en la dirección del destino B
+  //   3. Manejar trazos paralelos (avenidas con 2 sentidos)
+
+  // Devuelve el punto MÁS CERCANO de una polilínea al punto dado.
+  // Retorna { point, index, distance }
+  function closestPointOnRoute(route, targetLat, targetLng) {
+    const coords = getRouteCoords(route);
+    if (!coords.length) return { point: null, index: -1, distance: Infinity };
+
+    let bestDist = Infinity;
+    let bestPoint = null;
+    let bestIndex = -1;
+
+    coords.forEach((c, i) => {
+      const d = haversine(c[0], c[1], targetLat, targetLng);
+      if (d < bestDist) {
+        bestDist = d;
+        bestPoint = c;
+        bestIndex = i;
+      }
+    });
+
+    return { point: bestPoint, index: bestIndex, distance: bestDist };
+  }
+
+  // Calcula el vector dirección de una ruta en el punto de índice dado.
+  // Retorna { dLat, dLng, angle } normalizado.
+  // Usa el promedio de los 5 puntos siguientes (o los previos si está al final).
+  function directionAtPoint(route, index) {
+    const coords = getRouteCoords(route);
+    if (coords.length < 2) return null;
+
+    // Toma un punto 5 posiciones adelante (o el último si se pasa)
+    const ahead = Math.min(index + 5, coords.length - 1);
+    // Y un punto 5 posiciones atrás (o el primero si se pasa)
+    const behind = Math.max(index - 5, 0);
+
+    const p1 = coords[behind];
+    const p2 = coords[ahead];
+
+    const dLat = p2[0] - p1[0];
+    const dLng = p2[1] - p1[1];
+    const mag = Math.hypot(dLat, dLng) || 1;
+
+    return {
+      dLat: dLat / mag,
+      dLng: dLng / mag,
+      angle: Math.atan2(dLat, dLng) * 180 / Math.PI
+    };
+  }
+
+  // Calcula la dirección "ideal" desde el punto A hacia el punto B.
+  // Vector unitario en formato {dLat, dLng}.
+  function directionAToB(a, b) {
+    const dLat = b.lat - a.lat;
+    const dLng = b.lng - a.lng;
+    const mag = Math.hypot(dLat, dLng) || 1;
+    return { dLat: dLat / mag, dLng: dLng / mag };
+  }
+
+  // Verifica si 2 vectores están alineados (producto punto > umbral).
+  // Umbral 0.3 = ±72° de tolerancia. Útil para:
+  //   - ida vs regreso: SIEMPRE alineados (mismo eje)
+  //   - trazos paralelos: alineados
+  //   - trazos que van opuestos: NO alineados (producto punto negativo)
+  function areDirectionsCompatible(dir1, dir2, umbral = 0.3) {
+    if (!dir1 || !dir2) return true; // si falta info, permitir
+    const dot = dir1.dLat * dir2.dLat + dir1.dLng * dir2.dLng;
+    return dot >= umbral;
+  }
+
+  // Verifica si una ruta va "en dirección a B" cuando estás en A.
+  // Compara la dirección de la ruta (en el punto cercano a A) con el vector A→B.
+  function routeGoesTowardB(route, pointA, pointB, umbral = 0.1) {
+    const closest = closestPointOnRoute(route, pointA.lat, pointA.lng);
+    if (!closest.point || closest.index < 0) return true;
+
+    const routeDir = directionAtPoint(route, closest.index);
+    if (!routeDir) return true;
+
+    const aToB = directionAToB(pointA, pointB);
+    return areDirectionsCompatible(routeDir, aToB, umbral);
+  }
+   
+
+  // ============================================================
+  // 🔄 MOTOR DE BÚSQUEDA DE TRANSBORDOS (con dirección)
+  // ============================================================
+  //
+  // Reglas:
+  //   1. Solo 1 o 2 transbordos
+  //   2. Rutas de salida deben ir "hacia B"
+  //   3. Rutas de llegada deben ir "hacia B" desde el punto de transbordo
+  //   4. Prioriza punto de transbordo cercano al punto A
+  //   5. Permite trazos paralelos (ida/regreso en la misma avenida)
+  //
+  // Retorna chains ordenadas por:
+  //   1. Menos transbordos
+  //   2. Punto de transbordo más cercano a A
+  //   3. Menor distancia total
+
   function findTransferChains(startPoint, endPoint, maxTransfers) {
-    // 🎯 Cap a MAX_TRANSBORDOS (default 2) para evitar O(N^3)
     maxTransfers = Math.min(
       TRANSFER_CONFIG.MAX_TRANSBORDOS,
       Math.max(1, +maxTransfers || 1)
     );
-     const chains = [];
+
+    const chains = [];
+    const TOL = TRANSFER_CONFIG.TOLERANCIA_TRANSBORDO_M;
+
+    // Rutas candidatas (que pasan cerca de A o B)
     const startRoutes = state.routes.filter(r => routeNearPoint(r, startPoint, startPoint.radius));
     const endRoutes   = state.routes.filter(r => routeNearPoint(r, endPoint, endPoint.radius));
 
     if (!startRoutes.length || !endRoutes.length) return chains;
 
-    // 1 transbordo (2 rutas)
+    // 🎯 Distancia máxima aceptable del punto de transbordo al punto A.
+    // Es el radio del punto A × 1.5. Si el transbordo está más lejos,
+    // significa que estamos caminando mucho antes de subir.
+    const maxDistFromA = (startPoint.radius || 300) * 1.5;
+
+    // ---- 1 TRANSBORDO (2 rutas) ----
     if (maxTransfers >= 1) {
       startRoutes.forEach(r1 => {
         endRoutes.forEach(r2 => {
           if (r1.id === r2.id) return;
-          const inter = routesMinDistance(r1, r2);
-         
 
-                     if (inter.dist <= TRANSFER_CONFIG.TOLERANCIA_TRANSBORDO_M) {
-            chains.push({
-              type: 'transfer',
-              legs: [r1, r2],
-              transferPoints: [inter.mid],
-              totalDist: routeTotalDistance(r1) + routeTotalDistance(r2),
-              transfers: 1
-            });
+          const inter = routesMinDistance(r1, r2);
+          if (inter.dist > TOL) return;
+
+          // 🧭 VALIDACIÓN 1: r1 debe ir hacia B
+          if (!routeGoesTowardB(r1, startPoint, endPoint)) return;
+
+          // 🧭 VALIDACIÓN 2: r2 debe ir hacia B desde el punto de transbordo
+          // (calculamos dirección de r2 en el punto medio del transbordo
+          // y verificamos que apunte hacia B)
+          const dir2 = directionAtPoint(r2, inter.i2);
+          if (dir2) {
+            const transferToB = directionAToB(
+              { lat: inter.mid[0], lng: inter.mid[1] },
+              endPoint
+            );
+            if (!areDirectionsCompatible(dir2, transferToB, 0.05)) return;
           }
+
+          // 🎯 VALIDACIÓN 3: transbordo debe estar relativamente cerca de A
+          const distFromA = haversine(
+            startPoint.lat, startPoint.lng,
+            inter.mid[0], inter.mid[1]
+          );
+          if (distFromA > maxDistFromA) return;
+
+          chains.push({
+            type: 'transfer',
+            legs: [r1, r2],
+            transferPoints: [inter.mid],
+            totalDist: routeTotalDistance(r1) + routeTotalDistance(r2),
+            transfers: 1,
+            distFromA: distFromA   // ← para ordenar después
+          });
         });
       });
     }
 
-    // 2 transbordos (3 rutas)
+    // ---- 2 TRANSBORDOS (3 rutas) ----
     if (maxTransfers >= 2) {
       startRoutes.forEach(r1 => {
         state.routes.forEach(r2 => {
           if (r2.id === r1.id) return;
+
           const i12 = routesMinDistance(r1, r2);
-          if (i12.dist > TRANSFER_CONFIG.TOLERANCIA_TRANSBORDO_M) return;
+          if (i12.dist > TOL) return;
+
+          // Validar dirección r1 → B
+          if (!routeGoesTowardB(r1, startPoint, endPoint)) return;
+
+          // Validar dirección de r2 en el punto de transbordo 1
+          const dir2 = directionAtPoint(r2, i12.i2);
+          if (dir2) {
+            const t1ToB = directionAToB(
+              { lat: i12.mid[0], lng: i12.mid[1] },
+              endPoint
+            );
+            if (!areDirectionsCompatible(dir2, t1ToB, 0.05)) return;
+          }
+
+          // Distancia del primer transbordo a A
+          const distFromA1 = haversine(
+            startPoint.lat, startPoint.lng,
+            i12.mid[0], i12.mid[1]
+          );
+          if (distFromA1 > maxDistFromA) return;
+
           endRoutes.forEach(r3 => {
             if (r3.id === r2.id || r3.id === r1.id) return;
+
             const i23 = routesMinDistance(r2, r3);
-            if (i23.dist > TRANSFER_CONFIG.TOLERANCIA_TRANSBORDO_M) return;
+            if (i23.dist > TOL) return;
+
+            // Validar dirección de r3 en el punto de transbordo 2
+            const dir3 = directionAtPoint(r3, i23.i2);
+            if (dir3) {
+              const t2ToB = directionAToB(
+                { lat: i23.mid[0], lng: i23.mid[1] },
+                endPoint
+              );
+              if (!areDirectionsCompatible(dir3, t2ToB, 0.05)) return;
+            }
+
+            // Los 2 puntos de transbordo deben estar cerca de A
+            const distFromA2 = haversine(
+              startPoint.lat, startPoint.lng,
+              i23.mid[0], i23.mid[1]
+            );
+            if (distFromA2 > maxDistFromA * 2) return; // más permisivo para 2T
+
             chains.push({
               type: 'transfer',
               legs: [r1, r2, r3],
               transferPoints: [i12.mid, i23.mid],
               totalDist: routeTotalDistance(r1) + routeTotalDistance(r2) + routeTotalDistance(r3),
-              transfers: 2
+              transfers: 2,
+              distFromA: distFromA1
             });
           });
         });
       });
     }
 
+    // 🎯 ORDENAR: menos transbordos → más cerca de A → menor distancia total
+    chains.sort((a, b) => {
+      if (a.transfers !== b.transfers) return a.transfers - b.transfers;
+      if (Math.abs(a.distFromA - b.distFromA) > 100) return a.distFromA - b.distFromA;
+      return a.totalDist - b.totalDist;
+    });
 
-
-    // Eliminar cadenas duplicadas (misma secuencia de rutas)
+    // Eliminar duplicados por combinación de IDs
     const seen = new Set();
     return chains.filter(c => {
       const key = c.legs.map(l => l.id).join('>');
@@ -2325,6 +2571,7 @@ const url = location.origin + '/share/m/' + id;
       return true;
     });
   }
+   
 
   function performTripSearch() {
     const el = $('#tripResults');
