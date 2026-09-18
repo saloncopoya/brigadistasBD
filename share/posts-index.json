@@ -1,6 +1,29 @@
 {
   "posts": [
     {
+      "slug": "sur179",
+      "title": "SUR",
+      "description": "Ruta SUR",
+      "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789704799/nzveputmo80akuriopcm.jpg",
+      "url": "/share/ruta/sur179",
+      "tipo": "ruta",
+      "timestamp": 1789714766316,
+      "updatedAt": "2026-09-18T06:59:26.316Z",
+      "categoria": "urbana",
+      "tarifa": "",
+      "frecuencia": "",
+      "horarioIni": "",
+      "horarioFin": "",
+      "dias": "todos",
+      "paradas": [],
+      "calles": [
+        "San Cristóbal",
+        "Avenida Pichucalco entre San Cristóbal y Calle Rosa Naranja",
+        "Calle Rosa Naranja"
+      ],
+      "pois": []
+    },
+    {
       "slug": "norte179",
       "title": "NORTE",
       "description": "Ruta NORTE",
@@ -17,29 +40,6 @@
       "dias": "todos",
       "paradas": [],
       "calles": [],
-      "pois": []
-    },
-    {
-      "slug": "sur179",
-      "title": "SUR",
-      "description": "Ruta SUR",
-      "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789704799/nzveputmo80akuriopcm.jpg",
-      "url": "/share/ruta/sur179",
-      "tipo": "ruta",
-      "timestamp": 1789713946938,
-      "updatedAt": "2026-09-18T06:45:46.938Z",
-      "categoria": "urbana",
-      "tarifa": "",
-      "frecuencia": "",
-      "horarioIni": "",
-      "horarioFin": "",
-      "dias": "todos",
-      "paradas": [],
-      "calles": [
-        "San Cristóbal",
-        "Avenida Pichucalco entre San Cristóbal y Calle Rosa Naranja",
-        "Calle Rosa Naranja"
-      ],
       "pois": []
     },
     {
@@ -179,7 +179,7 @@
     }
   ],
   "total": 4,
-  "updatedAt": "2026-09-18T06:55:47.545Z",
+  "updatedAt": "2026-09-18T06:59:26.316Z",
   "version": 1,
-  "__sha": "6274d26a8e59d4f467256ffbc84b58770214304a"
+  "__sha": "799df4ea53754cb00c3d93eaf16524903e3bd352"
 }
