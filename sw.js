@@ -153,12 +153,17 @@ self.addEventListener('fetch', event => {
   // ⚠️ NO interceptar recursos externos (tiles, firebase, etc.)
   if (url.origin !== self.location.origin) return;
 
+
+   
+  // 🚫 No interceptar APIs (el Worker ya cachea en KV)
+  if (url.pathname.startsWith('/api/')) return;
   if (req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html')) {
     event.respondWith(htmlStrategy(req));
     return;
   }
   event.respondWith(cacheFirst(req, STATIC_CACHE));
-});
+
+
 
 async function htmlStrategy(req) {
   const cache = await caches.open(HTML_CACHE);
