@@ -2677,7 +2677,7 @@ const url = location.origin + '/share/m/' + id;
     // Ángulo máximo (grados) entre segmentos para considerarse "recto"
     const MAX_ANGLE_FOR_ARROW_DEG = 15;
     // Cada cuántos METROS meter una flechita en la vuelta
-    const ARROW_EVERY_N_METERS = 100;
+    const ARROW_EVERY_N_METERS = 900;
 
     routeList.forEach((item, idx) => {
       const route = item.route || item;
