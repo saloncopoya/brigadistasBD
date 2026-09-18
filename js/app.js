@@ -2497,6 +2497,11 @@ const url = location.origin + '/share/m/' + id;
 
     if (!startRoutes.length || !endRoutes.length) return chains;
 
+         console.log('[Transbordos] Rutas cerca de A:', startRoutes.length);
+    console.log('[Transbordos] Rutas cerca de B:', endRoutes.length);
+    startRoutes.forEach(r => console.log('  A-side:', r.nombre, '| ida:', (r.puntos||r.geometriaIda||[]).length, '| vuelta:', (r.puntosVuelta||r.geometriaVuelta||[]).length));
+    endRoutes.forEach(r => console.log('  B-side:', r.nombre, '| ida:', (r.puntos||r.geometriaIda||[]).length, '| vuelta:', (r.puntosVuelta||r.geometriaVuelta||[]).length));
+
     // ─── 1 TRANSBORDO (2 rutas) ───
     if (maxTransfers >= 1) {
       for (const r1 of startRoutes) {
