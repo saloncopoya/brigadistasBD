@@ -7,8 +7,8 @@
       "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789704741/rvnqkxhcqlgqfd8xx1ej.jpg",
       "url": "/share/ruta/norte179",
       "tipo": "ruta",
-      "timestamp": 1789714487468,
-      "updatedAt": "2026-09-18T06:54:47.468Z",
+      "timestamp": 1789714547545,
+      "updatedAt": "2026-09-18T06:55:47.545Z",
       "categoria": "urbana",
       "tarifa": "",
       "frecuencia": "",
@@ -179,7 +179,7 @@
     }
   ],
   "total": 4,
-  "updatedAt": "2026-09-18T06:54:47.468Z",
+  "updatedAt": "2026-09-18T06:55:47.545Z",
   "version": 1,
-  "__sha": "0804590628a33f0f0d6982a64901a1d84d93f084"
+  "__sha": "6274d26a8e59d4f467256ffbc84b58770214304a"
 }
