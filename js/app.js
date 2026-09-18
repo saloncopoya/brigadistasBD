@@ -203,10 +203,15 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
   } catch (e) { console.warn('[Firebase] No inicializado:', e); }
 
 
+
+
+   
      // ==================== HELPER DE ÍNDICES (Cloudflare Worker + KV) ====================
   // Todos los usuarios comparten 1 read cada 5 min. Baja ~20x el consumo de Firebase.
   async function fetchIndex(key) {
     try {
+
+       
       const res = await fetch('/api/idx?key=' + encodeURIComponent(key), {
         headers: { 'Accept': 'application/json' }
       });
@@ -218,6 +223,9 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
       return null;
     }
   }
+
+
+   
 
 
    
@@ -3519,7 +3527,16 @@ await Promise.all([
   });
 
 
-    async migrateToSplit() {
+   
+   
+   
+  // ==================== API PÚBLICA ====================
+  global.App = {
+    state,
+    navigateTo,
+    goBack,
+
+      async migrateToSplit() {
       if (!state.isAdmin) { toast('Necesitas ser admin primero', 'err'); return; }
       if (!state.online || !fbDB) { toast('Sin conexión', 'err'); return; }
       if (!confirm('¿Migrar todas las rutas a la nueva estructura (índice + geometría separados)?')) return;
@@ -3551,13 +3568,7 @@ await Promise.all([
       toast(`✅ Migración completa: ${done} rutas`, 'ok');
       await loadRoutes();
     },
-   
-   
-  // ==================== API PÚBLICA ====================
-  global.App = {
-    state,
-    navigateTo,
-    goBack,
+     
     openRouteDetail,
     openRouteEditor,
     openPostEditor: () => {
