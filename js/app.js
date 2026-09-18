@@ -1278,7 +1278,8 @@ const url = location.origin + '/share/ruta/' + route.id;
       html += rutasFiltradas.map(r => `
         <div class="result-card directa" data-route-id="${esc(r.id)}" style="cursor:pointer">
           <div class="rc-head">
-            <div class="rc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="M3 11h18"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg></div>
+          
+            
             <div style="flex:1">
               <div class="rc-route">${esc(r.nombre)}</div>
               <div class="rc-sub">${esc(r.categoria || 'urbana')}</div>
