@@ -2792,10 +2792,15 @@ const url = location.origin + '/share/m/' + id;
           if (minDistToIda < NO_ARROW_IF_CLOSER_THAN_M) continue;
 
           // (c) Dirección real del trazo
-          const angleDeg = Math.atan2(
-            pNext[1] - pPrev[1],
-            pNext[0] - pPrev[0]
+          // Ángulo del segmento (dirección real del trazo)
+          const segmentAngleDeg = Math.atan2(
+            pNext[1] - pPrev[1],   // Δ lng
+            pNext[0] - pPrev[0]    // Δ lat
           ) * 180 / Math.PI;
+
+          // 🎯 Corrección: nuestra flecha apunta "hacia arriba" por defecto,
+          // así que le sumamos 90° para que apunte en la dirección del trazo.
+          const angleDeg = segmentAngleDeg - 90;
 
           // (d) Flechita chica tipo Google Maps: chevron ">".
           //     Sin colita. Pequeña, discreta, del mismo color.
