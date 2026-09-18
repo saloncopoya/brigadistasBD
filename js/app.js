@@ -2672,15 +2672,14 @@ const url = location.origin + '/share/m/' + id;
 
     const total = routeList.length;
 
-    // ───── Ajustes finos ─────
-    // Distancia mínima (m) para considerar que la ida está "pegada" al punto
-    // de la vuelta → si está pegada, NO ponemos flecha (se confundiría).
+    // Distancia mínima (m) para considerar que la ida está "pegada" a la vuelta
     const NO_ARROW_IF_CLOSER_THAN_M = 15;
 
-    // Ángulo máximo (grados) que puede cambiar el trazo entre dos segmentos
-    // consecutivos para considerarse "recto". Si cambia más → es curva/esquina
-    // → NO ponemos flecha.
-    const MAX_ANGLE_FOR_ARROW_DEG = 12;
+    // Ángulo máximo (grados) entre segmentos para considerarse "recto"
+    const MAX_ANGLE_FOR_ARROW_DEG = 20;
+
+    // Distancia objetivo entre flechas (en cantidad de puntos del trazo)
+    const ARROW_EVERY_N_POINTS = 3;
 
     routeList.forEach((item, idx) => {
       const route = item.route || item;
@@ -2689,7 +2688,7 @@ const url = location.origin + '/share/m/' + id;
       const color = TRIP_COLORS[idx % TRIP_COLORS.length];
       const isHl = highlightIdx === null || highlightIdx === idx;
 
-      // Offsets (idénticos a los actuales)
+      // Offsets idénticos a los actuales
       let idaDraw = coordsIda;
       let vueltaDraw = coordsVuelta;
       if (idaDraw.length > 1 && total > 1) {
@@ -2701,7 +2700,7 @@ const url = location.origin + '/share/m/' + id;
         vueltaDraw = offsetPolyline(vueltaDraw, -offset);
       }
 
-      // ─────────── IDA ───────────
+      // ─────────── IDA: línea continua normal ───────────
       if (idaDraw.length > 1) {
         const lineIda = L.polyline(idaDraw, {
           color,
@@ -2717,25 +2716,27 @@ const url = location.origin + '/share/m/' + id;
         );
         tripRouteLayers.push(lineIda);
 
-        // 🟢 Círculo blanco SOLO en el INICIO de la IDA
+        // 🟢 Círculo hueco al inicio de la IDA (mismo grosor que la línea)
+        //    Usamos fillColor igual a la línea para que "sea parte" de la línea.
         const startMarkerIda = L.circleMarker(idaDraw[0], {
-          radius: 7,
-          color: color,          // borde del color de la ruta
-          fillColor: '#ffffff',  // relleno blanco
-          fillOpacity: 1,
-          weight: 3,
-          interactive: true
+          radius: 6,
+          color: color,
+          weight: 3,          // mismo grosor que la línea (4-ish, ajustado)
+          fillColor: '#ffffff',
+          fillOpacity: 0
         }).addTo(state.tripMap);
         startMarkerIda.bindTooltip('🟢 Inicio de ida', { sticky: true });
         tripRouteLayers.push(startMarkerIda);
       }
 
-      // ─────────── VUELTA ───────────
+      // ─────────── VUELTA: flechas siguiendo el trazo ───────────
       if (vueltaDraw.length > 1) {
+
+        // 1️⃣ Dibujar la línea punteada de base (guía continua)
         const lineVuelta = L.polyline(vueltaDraw, {
           color,
-          weight: isHl ? 4 : 2,
-          opacity: isHl ? 0.85 : 0.4,
+          weight: isHl ? 3 : 2,
+          opacity: isHl ? 0.35 : 0.15,   // más tenue para que las flechas resalten
           lineJoin: 'round',
           lineCap: 'round',
           dashArray: '10,6'
@@ -2747,43 +2748,29 @@ const url = location.origin + '/share/m/' + id;
         );
         tripRouteLayers.push(lineVuelta);
 
-        // (Sin círculo de inicio en la vuelta, como pediste)
+        // 2️⃣ Reemplazar los "guiones" con flechas SVG sobre la vuelta
+        //    Recorremos el trazo y colocamos flechas cada N puntos,
+        //    PERO omitiendo los tramos rectos que van pegados a la ida
+        //    y las curvas muy cerradas.
 
-        // ─────── Flechas SOBRE la línea punteada de la VUELTA ───────
-        // Reglas:
-        //   a) Se coloca una flecha cada N puntos del recorrido.
-        //   b) NO se coloca si la ida está a < NO_ARROW_IF_CLOSER_THAN_M.
-        //   c) NO se coloca si el trazo está en curva o esquina
-        //      (el ángulo cambia más de MAX_ANGLE_FOR_ARROW_DEG entre
-        //       el segmento anterior y el siguiente).
-        //   d) La flecha se dibuja EXACTAMENTE sobre el punto del trazo
-        //      (mismo punto, sin offsets) y rotada con la dirección del
-        //      segmento.
-
-        const arrowStep = Math.max(4, Math.floor(vueltaDraw.length / 12));
-
-        for (let i = 2; i < vueltaDraw.length - 2; i += arrowStep) {
-          const pPrev = vueltaDraw[i - 1];
+        for (let i = 1; i < vueltaDraw.length - 1; i += ARROW_EVERY_N_POINTS) {
           const p     = vueltaDraw[i];
-          const pNext = vueltaDraw[i + 1];
+          const pPrev = vueltaDraw[i - 1];
+          const pNext = vueltaDraw[i + 1] || p;
 
-          // --- (c) ¿Es recto o curva? ---
-          // Ángulo del segmento anterior y del siguiente.
+          // --- (a) ¿Es recto? ---
           const a1 = Math.atan2(p[1] - pPrev[1], p[0] - pPrev[0]);
           const a2 = Math.atan2(pNext[1] - p[1], pNext[0] - p[0]);
           let deltaDeg = Math.abs((a2 - a1) * 180 / Math.PI);
           if (deltaDeg > 180) deltaDeg = 360 - deltaDeg;
-
-          if (deltaDeg > MAX_ANGLE_FOR_ARROW_DEG) continue; // es curva/esquina
+          if (deltaDeg > MAX_ANGLE_FOR_ARROW_DEG) continue; // curva/esquina, saltar
 
           // --- (b) ¿Está pegada a la ida? ---
           let minDistToIda = Infinity;
           if (idaDraw.length > 1) {
-            const refLat = p[0];
             const mPerDegLat = 111320;
-            const mPerDegLng = 111320 * Math.cos(refLat * Math.PI / 180);
+            const mPerDegLng = 111320 * Math.cos(p[0] * Math.PI / 180);
             const pMeters = [p[0] * mPerDegLat, p[1] * mPerDegLng];
-
             for (let j = 0; j < idaDraw.length - 1; j++) {
               const segMeters = [
                 [idaDraw[j][0] * mPerDegLat,   idaDraw[j][1] * mPerDegLng],
@@ -2794,44 +2781,43 @@ const url = location.origin + '/share/m/' + id;
               if (minDistToIda < NO_ARROW_IF_CLOSER_THAN_M) break;
             }
           }
-          if (minDistToIda < NO_ARROW_IF_CLOSER_THAN_M) continue;
+          if (minDistToIda < NO_ARROW_IF_CLOSER_THAN_M) continue; // pegada, saltar
 
-          // --- (d) Dibujar la flecha centrada en `p`, siguiendo la dirección ---
-          // Ángulo de la flecha (dirección real del recorrido de la vuelta)
-          const angleDeg = Math.atan2(
-            p[1] - pPrev[1],   // Δ lng
-            p[0] - pPrev[0]    // Δ lat
-          ) * 180 / Math.PI;
+          // --- (c) Dibujar la flecha en `p`, orientada según la dirección ---
+          // Dirección real del trazo en este punto
+          const dx = pNext[1] - pPrev[1];
+          const dy = pNext[0] - pPrev[0];
+          const angleDeg = Math.atan2(dy, dx) * 180 / Math.PI;
 
-          // Flecha LARGA PUNTIAGUDA en SVG, centrada sobre la línea.
-          // El iconAnchor está en el centro → la flecha queda SOBRE el trazo.
+          // Flecha "chevron" larga: forma de V estirada, tipo ">".
+          // Está DISEÑADA para verse como si fuera un guion más del punteado,
+          // solo que en vez de guion es una flecha.
           const arrowIcon = L.divIcon({
-            className: 'trip-arrow-on-line',
+            className: 'trip-arrow-segment',
             html: `
-              <svg width="24" height="14" viewBox="0 0 24 14"
-                   style="transform: rotate(${-angleDeg}deg);
+              <svg width="20" height="14" viewBox="0 0 20 14"
+                   style="transform: rotate(${angleDeg}deg);
                           transform-origin: 50% 50%;
                           overflow: visible;
-                          display:block;
-                          filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.65));">
-                <!-- Colita recta de la flecha, alineada con la línea -->
-                <line x1="0" y1="7" x2="15" y2="7"
-                      stroke="${color}" stroke-width="2.2" stroke-linecap="round"/>
-                <!-- Punta larga y clara -->
-                <polygon points="14,1.5 23,7 14,12.5 16,7"
-                         fill="${color}" stroke="${color}" stroke-width="0.4"
-                         stroke-linejoin="round"/>
+                          display: block;">
+                <!-- Forma de flecha chevron ">" larga y puntiaguda -->
+                <polyline points="3,1 17,7 3,13"
+                          fill="none"
+                          stroke="${color}"
+                          stroke-width="2.4"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"/>
               </svg>
             `,
-            iconSize: [24, 14],
-            iconAnchor: [12, 7]   // centro → la flecha queda encima de la línea
+            iconSize: [20, 14],
+            iconAnchor: [10, 7]
           });
 
           const arrowMarker = L.marker(p, {
             icon: arrowIcon,
             interactive: false,
             keyboard: false,
-            zIndexOffset: 50  // encima de la línea, no debajo
+            zIndexOffset: 30
           }).addTo(state.tripMap);
           tripRouteLayers.push(arrowMarker);
         }
