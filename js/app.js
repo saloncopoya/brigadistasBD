@@ -2926,13 +2926,37 @@ const url = location.origin + '/share/m/' + id;
 
   async function ensureAllGeos() {
     if (!state.online) return;
-    const needs = state.routes.filter(r => !r.geometriaIda || !r.geometriaIda.length);
+    if (!state.tripPoints.length) return;
+
+    // Calcular bbox de interés (A + B con margen = radio máximo + 2 km)
+    let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
+    state.tripPoints.forEach(p => {
+      if (p.lat < minLat) minLat = p.lat;
+      if (p.lat > maxLat) maxLat = p.lat;
+      if (p.lng < minLng) minLng = p.lng;
+      if (p.lng > maxLng) maxLng = p.lng;
+    });
+    const marginDeg = 0.02; // ~2 km
+    minLat -= marginDeg; maxLat += marginDeg;
+    minLng -= marginDeg; maxLng += marginDeg;
+
+    // Solo pedir geometrías de rutas cuyos puntos tocan el bbox
+    const needs = state.routes.filter(r => {
+      if (r.geometriaIda && r.geometriaIda.length) return false;
+      const pts = [].concat(r.puntos || [], r.puntosVuelta || []);
+      if (!pts.length) return true; // sin puntos → sí cargar (raro)
+      return pts.some(pt =>
+        pt[0] >= minLat && pt[0] <= maxLat && pt[1] >= minLng && pt[1] <= maxLng
+      );
+    });
+
     if (!needs.length) return;
-    await Promise.all(needs.map(r =>
+    await Promise.all(needs.slice(0, 60).map(r =>   // tope duro: 60 por búsqueda
       loadRouteGeo(r.id).then(geo => { if (geo) Object.assign(r, geo); })
     ));
   }
 
+   
   function performTripSearchCore(el) {
     const el = $('#tripResults');
     if (!el) return;
