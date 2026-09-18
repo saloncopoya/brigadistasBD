@@ -6,7 +6,7 @@
   'use strict';
 
   const DB_NAME = 'tgz_offline_db';
-  const DB_VERSION = 3;
+  const DB_VERSION = 4;
 
   let dbPromise = null;
 
@@ -14,8 +14,8 @@
     if (dbPromise) return dbPromise;
     dbPromise = idb.openDB(DB_NAME, DB_VERSION, {
       upgrade(db) {
-        ['posts', 'routes', 'market', 'syncQueue', 'tiles', 'meta', 'history'].forEach(store => {
-          if (!db.objectStoreNames.contains(store)) {
+        ['posts', 'routes', 'routes_geo', 'market', 'syncQueue', 'tiles', 'meta', 'history'].forEach(store => {
+           if (!db.objectStoreNames.contains(store)) {
             const s = db.createObjectStore(store, { keyPath: 'id' });
             if (store === 'posts' || store === 'routes' || store === 'market') {
               s.createIndex('timestamp', 'timestamp');
