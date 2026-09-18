@@ -2676,8 +2676,8 @@ const url = location.origin + '/share/m/' + id;
     const NO_ARROW_IF_CLOSER_THAN_M = 30;
     // Ángulo máximo (grados) entre segmentos para considerarse "recto"
     const MAX_ANGLE_FOR_ARROW_DEG = 15;
-    // Cada cuántos puntos meter una flechita en la vuelta
-    const ARROW_EVERY_N_POINTS = 8;
+    // Cada cuántos METROS meter una flechita en la vuelta
+    const ARROW_EVERY_N_METERS = 100;
 
     routeList.forEach((item, idx) => {
       const route = item.route || item;
@@ -2761,10 +2761,23 @@ const url = location.origin + '/share/m/' + id;
         tripRouteLayers.push(lineVuelta);
 
         // 2️⃣ Flechitas chiquitas tipo Google Maps, sobre el trazo
-        for (let i = 1; i < vueltaDraw.length - 1; i += ARROW_EVERY_N_POINTS) {
-          const p     = vueltaDraw[i];
+        //    Se colocan cada ARROW_EVERY_N_METERS metros recorridos,
+        //    ignorando curvas, esquinas y tramos pegados a la ida.
+        let metrosAcumulados = 0;
+        let proximaFlechaEn = ARROW_EVERY_N_METERS; // la 1ª flecha a los 100 m
+
+        for (let i = 1; i < vueltaDraw.length - 1; i++) {
           const pPrev = vueltaDraw[i - 1];
+          const p     = vueltaDraw[i];
           const pNext = vueltaDraw[i + 1] || p;
+
+          // 🔵 Sumar los metros del segmento pPrev → p
+          const metrosSeg = haversine(pPrev[0], pPrev[1], p[0], p[1]);
+          metrosAcumulados += metrosSeg;
+
+          // ¿Ya toca poner flecha?
+          if (metrosAcumulados < proximaFlechaEn) continue;
+          proximaFlechaEn += ARROW_EVERY_N_METERS;
 
           // (a) ¿Es recto? (ángulo entre segmento anterior y siguiente)
           const a1 = Math.atan2(p[1] - pPrev[1], p[0] - pPrev[0]);
@@ -2792,18 +2805,14 @@ const url = location.origin + '/share/m/' + id;
           if (minDistToIda < NO_ARROW_IF_CLOSER_THAN_M) continue;
 
           // (c) Dirección real del trazo
-          // Ángulo del segmento (dirección real del trazo)
           const segmentAngleDeg = Math.atan2(
             pNext[1] - pPrev[1],   // Δ lng
             pNext[0] - pPrev[0]    // Δ lat
           ) * 180 / Math.PI;
 
-          // 🎯 Corrección: nuestra flecha apunta "hacia arriba" por defecto,
-          // así que le sumamos 90° para que apunte en la dirección del trazo.
           const angleDeg = segmentAngleDeg - 90;
 
-          // (d) Flechita chica tipo Google Maps: chevron ">".
-          //     Sin colita. Pequeña, discreta, del mismo color.
+          // (d) Flechita chevron ">"
           const arrowIcon = L.divIcon({
             className: 'trip-arrow-gmaps',
             html: `
