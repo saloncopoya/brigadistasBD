@@ -1906,6 +1906,17 @@ const url = location.origin + '/share/m/' + id;
   function renderTripPointsList() {
     const el = $('#tripPointsList');
     if (!el) return;
+
+    // 🎯 Mostrar/ocultar los controles según haya puntos o no
+    const controlsRow = $('#tripControlsRow');
+    if (controlsRow) {
+      if (state.tripPoints.length >= 1) {
+        controlsRow.classList.remove('hidden');
+      } else {
+        controlsRow.classList.add('hidden');
+      }
+    }
+
     if (!state.tripPoints.length) {
       el.innerHTML = '<div class="empty-trip"> Toca el mapa para agregar ubicaciones y ver las rutas cercanas.</div>';
       return;
