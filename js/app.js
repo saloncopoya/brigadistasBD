@@ -2375,70 +2375,13 @@ const url = location.origin + '/share/m/' + id;
     return { dist, mid: [midLat, midLng] };
   }
 
+
   // ─────── INTERSECCIÓN O PROXIMIDAD ENTRE DOS RUTAS ───────
-  // Devuelve el mejor punto de "encuentro" entre r1 y r2, con la condición:
-  //   - El trazo de r1 debe avanzar hacia `towards` (el destino)
-  //   - El trazo de r2 también debe avanzar hacia `towards`
-  // Devuelve { point, dist, dirOk } o null
-  function findMeetingPoint(r1, r2, towards) {
-    const segs1 = getRouteSegments(r1);
-    const segs2 = getRouteSegments(r2);
-    if (!segs1.length || !segs2.length) return null;
-
-    const refLat = towards[0];
-    let best = null;
-
-    for (const s1 of segs1) {
-      // Pre-filtro bbox
-      const s1minLat = Math.min(s1.a[0], s1.b[0]);
-      const s1maxLat = Math.max(s1.a[0], s1.b[0]);
-      const s1minLng = Math.min(s1.a[1], s1.b[1]);
-      const s1maxLng = Math.max(s1.a[1], s1.b[1]);
-      const marginLat = TRANSFER_TOLERANCE_M / 111320;
-      const marginLng = TRANSFER_TOLERANCE_M / (111320 * Math.cos(refLat * Math.PI / 180));
-
-      for (const s2 of segs2) {
-        const s2minLat = Math.min(s2.a[0], s2.b[0]);
-        const s2maxLat = Math.max(s2.a[0], s2.b[0]);
-        const s2minLng = Math.min(s2.a[1], s2.b[1]);
-        const s2maxLng = Math.max(s2.a[1], s2.b[1]);
-
-        if (s1maxLat + marginLat < s2minLat || s1minLat - marginLat > s2maxLat) continue;
-        if (s1maxLng + marginLng < s2minLng || s1minLng - marginLng > s2maxLng) continue;
-
-        // Distancia entre segmentos (metros)
-        const d = segmentSegmentDistance(s1, s2);
-        if (!d || d.dist > TRANSFER_TOLERANCE_M) continue;
-
-        // Punto de encuentro = punto medio entre los dos segmentos
-        const meet = d.mid;
-
-        // Comprobar dirección de ambos segmentos hacia `towards`
-        const dir1 = segmentTowards(s1, towards);
-        const dir2 = segmentTowards(s2, towards);
-        if (!dir1 || !dir2) continue;
-
-        // Distancia del punto de encuentro al origen A (si nos lo pasan)
-        // (se calculará fuera, aquí solo guardamos el punto)
-        const score = d.dist; // menor = mejor
-        if (!best || score < best.dist) {
-          best = {
-            point: meet,
-            dist: d.dist,
-            seg1: s1,
-            seg2: s2,
-            dirOk: true
-          };
-        }
-      }
-    }
-    return best;
-    // Devuelve { point, dist, sentido } — SOLO si hay un par de segmentos
+  // Devuelve { point, dist, sentido } — SOLO si hay un par de segmentos
   // (uno de cada ruta) que:
   //   1) Se tocan o están cerca (≤ TRANSFER_TOLERANCE_M)
   //   2) AMBOS van hacia `towards`
-  //   3) Ambos son del MISMO sentido (ida con ida, vuelta con vuelta) —
-  //      no mezclar ida con vuelta porque confunde al usuario.
+  //   3) Ambos son del MISMO sentido (ida con ida, vuelta con vuelta)
   function findMeetingPoint(r1, r2, towards) {
     const segs1 = getRouteSegments(r1);
     const segs2 = getRouteSegments(r2);
@@ -2479,7 +2422,7 @@ const url = location.origin + '/share/m/' + id;
           best = {
             point: d.mid,
             dist: d.dist,
-            sentido: s1.sentido,   // 👈 guardamos el sentido
+            sentido: s1.sentido,
             seg1: s1,
             seg2: s2
           };
@@ -2488,8 +2431,6 @@ const url = location.origin + '/share/m/' + id;
     }
     return best;
   }
-     
-
   // ¿El segmento s avanza hacia `towards`?
   function segmentTowards(s, towards) {
     const vx = s.b[1] - s.a[1];
@@ -2499,11 +2440,11 @@ const url = location.origin + '/share/m/' + id;
     return (vx * wx + vy * wy) > 0;
   }
 
-  // ─────── DISTANCIA PUNTO → RUTA CON DIRECCIÓN HACIA `towards` ───────
-  // (wrapper de closestPointOnRoute con la dirección correcta)
-  // Devuelve { dist, point, sentido:'ida'|'vuelta', seg } donde `sentido`
-  // indica si el segmento que cumple la dirección es de IDA o de VUELTA.
-  // Si no hay ningún segmento que vaya hacia `towards`, devuelve null.
+
+     // ─────── DISTANCIA PUNTO → RUTA CON DIRECCIÓN HACIA `towards` ───────
+  // Devuelve { dist, point, sentido:'ida'|'vuelta', seg }.
+  // El `sentido` indica si el segmento que cumple la dirección hacia
+  // `towards` es de IDA o de VUELTA.
   function routeTowardsPoint(route, from, towards) {
     const segs = getRouteSegments(route);
     let best = null;
@@ -2532,51 +2473,15 @@ const url = location.origin + '/share/m/' + id;
           dist,
           point: [latP, lngP],
           seg: s,
-          sentido: s.sentido    // 👈 NUEVO: guardamos si es ida o vuelta
+          sentido: s.sentido
         };
       }
     }
     return best;
   }
+   
 
-
-     // ¿La ruta va desde `from` hacia `towards` EN UN SENTIDO ESPECÍFICO?
-  // sentido = 'ida' | 'vuelta' | null (cualquiera)
-  // Devuelve true/false.
-  function routeHasDirectionToPoint(route, from, towards, sentido) {
-    const segs = getRouteSegments(route);
-    for (const s of segs) {
-      if (sentido && s.sentido !== sentido) continue;
-
-      // ¿Este segmento va hacia `towards`?
-      if (!segmentTowards(s, towards)) continue;
-
-      // ¿`from` está cerca de este segmento?
-      const refLat = from[0];
-      const pM = projectToMeters(from[0], from[1], refLat);
-      const aM = projectToMeters(s.a[0], s.a[1], refLat);
-      const bM = projectToMeters(s.b[0], s.b[1], refLat);
-      const dx = bM[0] - aM[0], dy = bM[1] - aM[1];
-      const len2 = dx * dx + dy * dy;
-      let t = 0;
-      if (len2 > 0) {
-        t = ((pM[0] - aM[0]) * dx + (pM[1] - aM[1]) * dy) / len2;
-        t = Math.max(0, Math.min(1, t));
-      }
-      const cx = aM[0] + t * dx, cy = aM[1] + t * dy;
-      const dist = Math.hypot(pM[0] - cx, pM[1] - cy);
-
-      if (dist <= TRANSFER_WALK_MAX_M) return true;
-    }
-    return false;
-  }
-
-  // ─────── BÚSQUEDA DE CADENAS DE TRANSBORDO (v2 inteligente) ───────
-  // Devuelve un array de cadenas ordenadas por:
-  //   1) menos transbordos
-  //   2) transbordo más cercano a A
-  // Cada cadena: { type:'transfer', legs:[r1,r2,...], transferPoints:[[lat,lng],...],
-  //                totalDist, transfers, firstTransferDistToA }
+     // ─────── BÚSQUEDA DE CADENAS DE TRANSBORDO (v2 inteligente) ───────
   function findTransferChains(startPoint, endPoint, maxTransfers) {
     maxTransfers = Math.min(MAX_TRANSFERS_HARD, Math.max(1, +maxTransfers || 1));
     const chains = [];
@@ -2584,19 +2489,13 @@ const url = location.origin + '/share/m/' + id;
     const A = [startPoint.lat, startPoint.lng];
     const B = [endPoint.lat, endPoint.lng];
 
-    // 1) Rutas que tocan A (respetando radio del punto)
     const startRoutes = routesNear(A[0], A[1], startPoint.radius)
       .filter(r => routeDistanceToPoint(r, A[0], A[1]) <= startPoint.radius);
 
-    // 2) Rutas que tocan B
     const endRoutes = routesNear(B[0], B[1], endPoint.radius)
       .filter(r => routeDistanceToPoint(r, B[0], B[1]) <= endPoint.radius);
 
     if (!startRoutes.length || !endRoutes.length) return chains;
-
-    // Helper: ¿la ruta r conecta A con B directamente?
-    // (ya lo maneja el bloque de "directas" antes, así que aquí solo
-    //  construimos cadenas con 1+ transbordos)
 
     // ─── 1 TRANSBORDO (2 rutas) ───
     if (maxTransfers >= 1) {
@@ -2604,26 +2503,22 @@ const url = location.origin + '/share/m/' + id;
         for (const r2 of endRoutes) {
           if (r1.id === r2.id) continue;
 
-               // ¿r1 va de A hacia B?
+          // ¿r1 va de A hacia B?
           const dir1 = routeTowardsPoint(r1, A, B);
           if (!dir1) continue;
-          // 🎯 Debe ser el MISMO sentido que el punto de encuentro
-          if (dir1.sentido !== meet.sentido) continue;   // 👈 NUEVA LÍNEA
-          // ⚠️ Nota: "meet" se calcula abajo, hay que mover esta línea
 
-         
-                     // ¿r2 va de su punto de encuentro hacia B?
+          // Punto de encuentro
           const meet = findMeetingPoint(r1, r2, B);
           if (!meet) continue;
 
+          // 🎯 Los tres deben ser del MISMO sentido
+          if (dir1.sentido !== meet.sentido) continue;
+
           const distAtoMeet1 = haversine(A[0], A[1], meet.point[0], meet.point[1]);
 
-          // 🎯 Exigimos que r2 vaya hacia B EN EL MISMO SENTIDO que el
-          // punto de encuentro (ida con ida, vuelta con vuelta).
           const dir2 = routeTowardsPoint(r2, meet.point, B);
           if (!dir2) continue;
-          if (dir2.sentido !== meet.sentido) continue;   // 👈 NUEVA LÍNEA
-           
+          if (dir2.sentido !== meet.sentido) continue;
 
           chains.push({
             type: 'transfer',
@@ -2643,12 +2538,9 @@ const url = location.origin + '/share/m/' + id;
         const dir1 = routeTowardsPoint(r1, A, B);
         if (!dir1) continue;
 
-        // Candidatas para r2: rutas que se cruzan con r1
-        // (usamos la cuadrícula para no probar todas)
         const candidateIds = new Set();
         const segs1 = getRouteSegments(r1);
         for (const s of segs1) {
-          // Buscar rutas cerca del segmento s1
           const nearby = routesNear(s.a[0], s.a[1], TRANSFER_TOLERANCE_M + 100);
           nearby.forEach(r => { if (r.id !== r1.id) candidateIds.add(r.id); });
         }
@@ -2660,29 +2552,24 @@ const url = location.origin + '/share/m/' + id;
 
           const meet1 = findMeetingPoint(r1, r2, B);
           if (!meet1) continue;
-          if (dir1.sentido !== meet1.sentido) continue;  
+          if (dir1.sentido !== meet1.sentido) continue;
 
           const dir2 = routeTowardsPoint(r2, meet1.point, B);
           if (!dir2) continue;
-          if (dir2.sentido !== meet1.sentido) continue;  
+          if (dir2.sentido !== meet1.sentido) continue;
 
-          // Tercera ruta: debe tocar B y cruzarse con r2
           for (const r3 of endRoutes) {
             if (r3.id === r1.id || r3.id === r2.id) continue;
 
             const meet2 = findMeetingPoint(r2, r3, B);
             if (!meet2) continue;
-            if (meet1.sentido !== meet2.sentido) continue;  
+            if (meet1.sentido !== meet2.sentido) continue;
 
             const dir3 = routeTowardsPoint(r3, meet2.point, B);
             if (!dir3) continue;
-            if (dir3.sentido !== meet2.sentido) continue;   
+            if (dir3.sentido !== meet2.sentido) continue;
 
             const distAtoMeet1 = haversine(A[0], A[1], meet1.point[0], meet1.point[1]);
-            const distMeet1toMeet2 = haversine(
-              meet1.point[0], meet1.point[1],
-              meet2.point[0], meet2.point[1]
-            );
 
             chains.push({
               type: 'transfer',
@@ -2697,7 +2584,7 @@ const url = location.origin + '/share/m/' + id;
       }
     }
 
-    // ─── Deduplicar por secuencia de IDs ───
+    // Deduplicar
     const seen = new Set();
     const unique = chains.filter(c => {
       const key = c.legs.map(l => l.id).join('>');
@@ -2706,15 +2593,16 @@ const url = location.origin + '/share/m/' + id;
       return true;
     });
 
-    // ─── Ordenar: menos transbordos primero, luego transbordo más cercano a A ───
+    // Ordenar: menos transbordos, luego más cerca a A
     unique.sort((a, b) => {
       if (a.transfers !== b.transfers) return a.transfers - b.transfers;
       return a.firstTransferDistToA - b.firstTransferDistToA;
     });
 
-    return unique.slice(0, 30); // limitamos para no saturar UI
+    return unique.slice(0, 30);
   }
 
+   
   // ─────── HELPERS DE DIBUJO (reemplazan los del motor viejo) ───────
   function getRouteCoords(route) {
     if (route.geometriaIda && route.geometriaIda.length > 1) {
