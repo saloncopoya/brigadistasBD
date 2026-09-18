@@ -11,6 +11,7 @@
     uploadPreset: 'sinfirmaupload',
     apiKey: '688569119694815'
   };
+   
 
   // ---------- Utilidades ----------
   function slugify(text, dia, mes) {
@@ -153,6 +154,8 @@
           return data;
         }
       }
+
+       
     } catch (e) { /* fallback local */ }
     // Fallback: IndexedDB
     try {
