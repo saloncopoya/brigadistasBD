@@ -1056,20 +1056,46 @@ const url = location.origin + '/share/post/' + post.id;
   }
 
   function initRouteMap(route) {
-    const container = document.getElementById('map');
-    if (!container) return;
-    if (state.map) {
-      try { state.map.remove(); } catch (e) {}
-      state.map = null;
-      const cont = document.getElementById('map');
-      if (cont && cont._leaflet_id) delete cont._leaflet_id;
+  const container = document.getElementById('map');
+  if (!container) return;
+
+  // 🛡️ Destruir el mapa anterior de forma segura
+  if (state.map) {
+    try {
+      // 1. Cancelar animaciones en curso
+      state.map.stop();
+      // 2. Desconectar observers del helper registerMap
+      try { state.map.__ro?.disconnect(); } catch (e) {}
+      try { state.map.__io?.disconnect(); } catch (e) {}
+      try { state.map.__mo?.disconnect(); } catch (e) {}
+      // 3. Remover el mapa
+      state.map.remove();
+    } catch (e) { console.warn('[initRouteMap] cleanup:', e); }
+    state.map = null;
+  }
+
+  // Limpiar el contenedor
+  const cont = document.getElementById('map');
+  if (cont) {
+    if (cont._leaflet_id) {
+      try { delete cont._leaflet_id; } catch (e) { cont._leaflet_id = undefined; }
     }
+    // Vaciar por si quedaron residuos
+    cont.innerHTML = '';
+  }
+     
      
     state.map = L.map(container, {
-      zoomControl: true,
-      minZoom: 13,
-      maxZoom: 17
-    }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+  zoomControl: true,
+  minZoom: 13,
+  maxZoom: 17,
+  // 🛡️ Evita animaciones de zoom que rompen _leaflet_pos
+  zoomAnimation: false,
+  fadeAnimation: false,
+  markerZoomAnimation: false
+}).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+
+     
      // ✨ Registrar el mapa para auto-reparación (sin timers)
     registerMap(state.map);
 
