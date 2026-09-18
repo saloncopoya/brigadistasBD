@@ -1062,14 +1062,14 @@ const url = location.origin + '/share/post/' + post.id;
     if (ptsVuelta.length > 1) {
       const hasIda = (route.geometriaIda && route.geometriaIda.length > 1) ||
                      (route.puntos && route.puntos.length > 1);
-      const finalPtsV = hasIda ? offsetPolyline(ptsVuelta, -10) : ptsVuelta;
+      const finalPtsV = hasIda ? offsetPolyline(ptsVuelta, -4) : ptsVuelta;
       const lineVuelta = L.polyline(finalPtsV, {
         color: colorVuelta,
         weight: 5,
         opacity: 0.95,
         lineJoin: 'round',
         lineCap: 'round',
-                 dashArray: '1, 14'
+                 dashArray: '10, 10'
       }).addTo(state.map);
       layers.push(lineVuelta);
 
