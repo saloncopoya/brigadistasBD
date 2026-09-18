@@ -2672,14 +2672,12 @@ const url = location.origin + '/share/m/' + id;
 
     const total = routeList.length;
 
-    // Distancia mínima (m) para considerar que la ida está "pegada" a la vuelta
+    // Distancia mínima (m) para considerar que la ida está pegada
     const NO_ARROW_IF_CLOSER_THAN_M = 15;
-
     // Ángulo máximo (grados) entre segmentos para considerarse "recto"
-    const MAX_ANGLE_FOR_ARROW_DEG = 20;
-
-    // Distancia objetivo entre flechas (en cantidad de puntos del trazo)
-    const ARROW_EVERY_N_POINTS = 3;
+    const MAX_ANGLE_FOR_ARROW_DEG = 15;
+    // Cada cuántos puntos meter una flechita en la vuelta
+    const ARROW_EVERY_N_POINTS = 2;
 
     routeList.forEach((item, idx) => {
       const route = item.route || item;
@@ -2688,7 +2686,7 @@ const url = location.origin + '/share/m/' + id;
       const color = TRIP_COLORS[idx % TRIP_COLORS.length];
       const isHl = highlightIdx === null || highlightIdx === idx;
 
-      // Offsets idénticos a los actuales
+      // Offsets iguales a los actuales
       let idaDraw = coordsIda;
       let vueltaDraw = coordsVuelta;
       if (idaDraw.length > 1 && total > 1) {
@@ -2700,11 +2698,14 @@ const url = location.origin + '/share/m/' + id;
         vueltaDraw = offsetPolyline(vueltaDraw, -offset);
       }
 
-      // ─────────── IDA: línea continua normal ───────────
+      // ─────────── IDA ───────────
       if (idaDraw.length > 1) {
+        // Grosor ACTUAL de la ida
+        const idaWeight = item.type === 'transfer' ? (isHl ? 5 : 3) : (isHl ? 6 : 4);
+
         const lineIda = L.polyline(idaDraw, {
           color,
-          weight: item.type === 'transfer' ? (isHl ? 5 : 3) : (isHl ? 6 : 4),
+          weight: idaWeight,
           opacity: isHl ? 0.95 : 0.5,
           lineJoin: 'round',
           lineCap: 'round'
@@ -2716,30 +2717,41 @@ const url = location.origin + '/share/m/' + id;
         );
         tripRouteLayers.push(lineIda);
 
-        // 🟢 Círculo hueco al inicio de la IDA (mismo grosor que la línea)
-        //    Usamos fillColor igual a la línea para que "sea parte" de la línea.
-        const startMarkerIda = L.circleMarker(idaDraw[0], {
-          radius: 6,
-          color: color,
-          weight: 3,          // mismo grosor que la línea (4-ish, ajustado)
-          fillColor: '#ffffff',
-          fillOpacity: 0
+        // 🟢 Círculo inicio IDA: mismo grosor que la línea + puntito blanco
+        //    - Anillo del color de la ruta, con radio = idaWeight/2 aprox.
+        //    - Puntito blanco al centro.
+        const idaStartRing = L.circleMarker(idaDraw[0], {
+          radius: idaWeight / 2 + 1,   // mismo ancho visual que la línea
+          color: color,                // borde del color de la ruta
+          weight: 0,                   // sin borde extra
+          fillColor: color,
+          fillOpacity: 1
         }).addTo(state.tripMap);
-        startMarkerIda.bindTooltip('🟢 Inicio de ida', { sticky: true });
-        tripRouteLayers.push(startMarkerIda);
+        tripRouteLayers.push(idaStartRing);
+
+        const idaStartDot = L.circleMarker(idaDraw[0], {
+          radius: Math.max(2, idaWeight / 4),
+          color: '#ffffff',
+          weight: 0,
+          fillColor: '#ffffff',
+          fillOpacity: 1
+        }).addTo(state.tripMap);
+        idaStartDot.bindTooltip('🟢 Inicio de ida', { sticky: true });
+        tripRouteLayers.push(idaStartDot);
       }
 
-      // ─────────── VUELTA: flechas siguiendo el trazo ───────────
+      // ─────────── VUELTA (línea delgada + flechitas) ───────────
       if (vueltaDraw.length > 1) {
+        // Grosor de la vuelta: DELGADITO
+        const vueltaWeight = isHl ? 2.5 : 1.8;
 
-        // 1️⃣ Dibujar la línea punteada de base (guía continua)
+        // 1️⃣ Línea base delgada (opaca, no punteada)
         const lineVuelta = L.polyline(vueltaDraw, {
           color,
-          weight: isHl ? 3 : 2,
-          opacity: isHl ? 0.35 : 0.15,   // más tenue para que las flechas resalten
+          weight: vueltaWeight,
+          opacity: isHl ? 0.85 : 0.5,
           lineJoin: 'round',
-          lineCap: 'round',
-          dashArray: '10,6'
+          lineCap: 'round'
         }).addTo(state.tripMap);
         lineVuelta.bindTooltip(
           (item.label || route.nombre || 'Ruta') + ' · REGRESO' +
@@ -2748,24 +2760,20 @@ const url = location.origin + '/share/m/' + id;
         );
         tripRouteLayers.push(lineVuelta);
 
-        // 2️⃣ Reemplazar los "guiones" con flechas SVG sobre la vuelta
-        //    Recorremos el trazo y colocamos flechas cada N puntos,
-        //    PERO omitiendo los tramos rectos que van pegados a la ida
-        //    y las curvas muy cerradas.
-
+        // 2️⃣ Flechitas chiquitas tipo Google Maps, sobre el trazo
         for (let i = 1; i < vueltaDraw.length - 1; i += ARROW_EVERY_N_POINTS) {
           const p     = vueltaDraw[i];
           const pPrev = vueltaDraw[i - 1];
           const pNext = vueltaDraw[i + 1] || p;
 
-          // --- (a) ¿Es recto? ---
+          // (a) ¿Es recto? (ángulo entre segmento anterior y siguiente)
           const a1 = Math.atan2(p[1] - pPrev[1], p[0] - pPrev[0]);
           const a2 = Math.atan2(pNext[1] - p[1], pNext[0] - p[0]);
           let deltaDeg = Math.abs((a2 - a1) * 180 / Math.PI);
           if (deltaDeg > 180) deltaDeg = 360 - deltaDeg;
-          if (deltaDeg > MAX_ANGLE_FOR_ARROW_DEG) continue; // curva/esquina, saltar
+          if (deltaDeg > MAX_ANGLE_FOR_ARROW_DEG) continue;
 
-          // --- (b) ¿Está pegada a la ida? ---
+          // (b) ¿Pegada a la ida?
           let minDistToIda = Infinity;
           if (idaDraw.length > 1) {
             const mPerDegLat = 111320;
@@ -2781,36 +2789,34 @@ const url = location.origin + '/share/m/' + id;
               if (minDistToIda < NO_ARROW_IF_CLOSER_THAN_M) break;
             }
           }
-          if (minDistToIda < NO_ARROW_IF_CLOSER_THAN_M) continue; // pegada, saltar
+          if (minDistToIda < NO_ARROW_IF_CLOSER_THAN_M) continue;
 
-          // --- (c) Dibujar la flecha en `p`, orientada según la dirección ---
-          // Dirección real del trazo en este punto
-          const dx = pNext[1] - pPrev[1];
-          const dy = pNext[0] - pPrev[0];
-          const angleDeg = Math.atan2(dy, dx) * 180 / Math.PI;
+          // (c) Dirección real del trazo
+          const angleDeg = Math.atan2(
+            pNext[1] - pPrev[1],
+            pNext[0] - pPrev[0]
+          ) * 180 / Math.PI;
 
-          // Flecha "chevron" larga: forma de V estirada, tipo ">".
-          // Está DISEÑADA para verse como si fuera un guion más del punteado,
-          // solo que en vez de guion es una flecha.
+          // (d) Flechita chica tipo Google Maps: chevron ">".
+          //     Sin colita. Pequeña, discreta, del mismo color.
           const arrowIcon = L.divIcon({
-            className: 'trip-arrow-segment',
+            className: 'trip-arrow-gmaps',
             html: `
-              <svg width="20" height="14" viewBox="0 0 20 14"
+              <svg width="10" height="10" viewBox="0 0 10 10"
                    style="transform: rotate(${angleDeg}deg);
                           transform-origin: 50% 50%;
-                          overflow: visible;
-                          display: block;">
-                <!-- Forma de flecha chevron ">" larga y puntiaguda -->
-                <polyline points="3,1 17,7 3,13"
+                          display: block;
+                          overflow: visible;">
+                <polyline points="2,1 8,5 2,9"
                           fill="none"
                           stroke="${color}"
-                          stroke-width="2.4"
+                          stroke-width="1.8"
                           stroke-linecap="round"
                           stroke-linejoin="round"/>
               </svg>
             `,
-            iconSize: [20, 14],
-            iconAnchor: [10, 7]
+            iconSize: [10, 10],
+            iconAnchor: [5, 5]
           });
 
           const arrowMarker = L.marker(p, {
@@ -2832,7 +2838,6 @@ const url = location.origin + '/share/m/' + id;
       }
     });
   }
-
    
   // (routeDistanceToPoint y getRouteAllSegments ya existen más arriba;
   //  los dejamos tal cual para no romper performTripSearch.)
