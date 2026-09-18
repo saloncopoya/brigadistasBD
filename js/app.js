@@ -671,6 +671,9 @@ const url = location.origin + '/share/post/' + post.id;
     })();
   }
 
+  // ♻️ Invalidar el índice espacial de transbordos cuando cambian las rutas
+  __routeIndex = null;
+
   return state.routes;
 }
 
@@ -2068,24 +2071,550 @@ const url = location.origin + '/share/m/' + id;
     return min;
   }
 
-  // ============================================================
-  //  MOTOR AVANZADO DE BÚSQUEDA DE VIAJES
-  //  - Rutas directas
-  //  - Transbordos de 1, 2, 3, 4 saltos
-  //  - Ordenados por distancia total y cantidad de transbordos
-  //  - Dibuja trazos en el mapa con colores únicos por resultado
+
+   
+     // ============================================================
+  //  🧠 MOTOR INTELIGENTE DE TRANSBORDOS (v2)
+  //  - Detecta intersecciones reales de trazos (ida/vuelta)
+  //  - Respeta la dirección del trazo (A → B)
+  //  - Coloca el transbordo lo más cerca posible de A
+  //  - Tolerancia configurable para paralelas (avenidas doble sentido)
+  //  - Indexación espacial (cuadrícula) para O(n) con cientos de rutas
+  //  - Máximo 2 transbordos (configurable)
+  //  - Sin OSRM, sin servicios externos
   // ============================================================
 
   const TRIP_COLORS = ['#00e5ff','#a855f7','#10b981','#f59e0b','#ef4444','#ec4899','#3b82f6','#84cc16','#f97316','#14b8a6','#8b5cf6','#eab308'];
-  let tripRouteLayers = [];        // capas de trazos de resultados en el mapa
-  let tripCurrentHighlight = null; // índice del resultado resaltado
+
+  // ─────── CONSTANTES DE CONFIGURACIÓN ───────
+  // Tolerancia para considerar que dos trazos se "tocan" aunque no se crucen
+  // exactamente (paralelas en avenidas de doble sentido, mismos carriles, etc.)
+  const TRANSFER_TOLERANCE_M = 150;
+  // Distancia máxima de caminata entre el punto de transbordo y el inicio
+  // del siguiente trazo (por si el offset de ida/vuelta los separa).
+  const TRANSFER_WALK_MAX_M = 200;
+  // Máximo de transbordos permitidos (el HTML ya limita el select a 1 o 2)
+  const MAX_TRANSFERS_HARD = 2;
+  // Tamaño de celda de la cuadrícula espacial (en grados, ~ 0.005 ≈ 550 m)
+  const GRID_CELL_DEG = 0.005;
+
+  let tripRouteLayers = [];
+  let tripCurrentHighlight = null;
 
   function clearTripRouteLayers() {
     tripRouteLayers.forEach(l => { try { state.tripMap.removeLayer(l); } catch(e){} });
     tripRouteLayers = [];
   }
 
-  // Devuelve las coordenadas [lat,lng] de la IDA de una ruta (geometría o puntos)
+  // ─────── UTILIDADES GEO ───────
+  function haversine(lat1, lng1, lat2, lng2) {
+    const R = 6371000;
+    const φ1 = lat1 * Math.PI / 180, φ2 = lat2 * Math.PI / 180;
+    const Δφ = (lat2 - lat1) * Math.PI / 180;
+    const Δλ = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+    return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  function pointToSegmentDistance(p, a, b) {
+    const [px, py] = p, [ax, ay] = a, [bx, by] = b;
+    const dx = bx - ax, dy = by - ay;
+    const len2 = dx * dx + dy * dy;
+    if (len2 === 0) return Math.hypot(px - ax, py - ay);
+    let t = ((px - ax) * dx + (py - ay) * dy) / len2;
+    t = Math.max(0, Math.min(1, t));
+    const cx = ax + t * dx, cy = ay + t * dy;
+    return Math.hypot(px - cx, py - cy);
+  }
+
+  // Convierte un punto [lat,lng] a metros locales (proyección equirectangular).
+  // Usamos esto para comparar distancias reales en metros sin recalcular
+  // haversine por cada segmento (mucho más rápido).
+  function projectToMeters(lat, lng, refLat) {
+    const mPerDegLat = 111320;
+    const mPerDegLng = 111320 * Math.cos(refLat * Math.PI / 180);
+    return [lng * mPerDegLng, lat * mPerDegLat];
+  }
+
+  // ─────── EXTRACCIÓN DE TRAZOS ───────
+  // Devuelve TODOS los segmentos de una ruta con metadata de dirección.
+  // Un "segmento" es { a:[lat,lng], b:[lat,lng], idx, sentido:'ida'|'vuelta', ruta }
+  function getRouteSegments(route) {
+    const segs = [];
+    const pushSegs = (pts, sentido) => {
+      if (!pts || pts.length < 2) return;
+      for (let i = 0; i < pts.length - 1; i++) {
+        segs.push({
+          a: pts[i],
+          b: pts[i + 1],
+          idx: i,
+          sentido,
+          ruta: route
+        });
+      }
+    };
+    // IDA
+    const ida = (route.geometriaIda && route.geometriaIda.length > 1)
+      ? route.geometriaIda
+      : (route.puntos || []);
+    pushSegs(ida, 'ida');
+    // VUELTA
+    const vuelta = (route.geometriaVuelta && route.geometriaVuelta.length > 1)
+      ? route.geometriaVuelta
+      : (route.puntosVuelta || []);
+    pushSegs(vuelta, 'vuelta');
+    return segs;
+  }
+
+  // ─────── BOUNDING BOX + CUADRÍCULA ESPACIAL ───────
+  function bboxOfRoute(route) {
+    let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
+    const scan = (pts) => {
+      if (!pts) return;
+      for (const p of pts) {
+        if (p[0] < minLat) minLat = p[0];
+        if (p[0] > maxLat) maxLat = p[0];
+        if (p[1] < minLng) minLng = p[1];
+        if (p[1] > maxLng) maxLng = p[1];
+      }
+    };
+    scan(route.geometriaIda); scan(route.puntos);
+    scan(route.geometriaVuelta); scan(route.puntosVuelta);
+    if (minLat === Infinity) return null;
+    return { minLat, maxLat, minLng, maxLng };
+  }
+
+  function bboxIntersects(a, b, marginDeg) {
+    const m = marginDeg || 0;
+    return !(a.maxLat + m < b.minLat || a.minLat - m > b.maxLat ||
+             a.maxLng + m < b.minLng || a.minLng - m > b.maxLng);
+  }
+
+  // Índice espacial global (se reconstruye cada vez que cambian las rutas)
+  let __routeIndex = null;
+  function buildRouteIndex() {
+    const idx = {
+      routes: [],
+      bbox: new Map(),        // routeId → bbox
+      grid: new Map(),        // cellKey → [routeId,...]
+      segments: new Map()     // routeId → [segments]
+    };
+    const cellKey = (lat, lng) => {
+      const cx = Math.floor(lng / GRID_CELL_DEG);
+      const cy = Math.floor(lat / GRID_CELL_DEG);
+      return cx + ',' + cy;
+    };
+    for (const r of state.routes) {
+      const bbox = bboxOfRoute(r);
+      if (!bbox) continue;
+      idx.routes.push(r);
+      idx.bbox.set(r.id, bbox);
+      const segs = getRouteSegments(r);
+      if (!segs.length) continue;
+      idx.segments.set(r.id, segs);
+      // Insertar en cuadrícula: cada segmento aporta su celda y vecinas
+      const insertedCells = new Set();
+      for (const s of segs) {
+        // Muestreamos algunos puntos del segmento para cubrir toda la línea
+        const steps = 3;
+        for (let k = 0; k <= steps; k++) {
+          const t = k / steps;
+          const lat = s.a[0] + (s.b[0] - s.a[0]) * t;
+          const lng = s.a[1] + (s.b[1] - s.a[1]) * t;
+          const key = cellKey(lat, lng);
+          if (!insertedCells.has(key)) {
+            insertedCells.add(key);
+            if (!idx.grid.has(key)) idx.grid.set(key, new Set());
+            idx.grid.get(key).add(r.id);
+          }
+        }
+      }
+    }
+    __routeIndex = idx;
+    return idx;
+  }
+
+  function getIndex() {
+    if (!__routeIndex) return buildRouteIndex();
+    // Verificamos rápidamente si cambió el número de rutas (caso barato)
+    if (__routeIndex.routes.length !== state.routes.length) {
+      return buildRouteIndex();
+    }
+    return __routeIndex;
+  }
+
+  // Rutas candidatas cerca de un punto (usa la cuadrícula espacial)
+  function routesNear(lat, lng, radiusMeters) {
+    const idx = getIndex();
+    const out = new Set();
+    const cellDeg = GRID_CELL_DEG;
+    const latRadiusDeg = radiusMeters / 111320;
+    const lngRadiusDeg = radiusMeters / (111320 * Math.cos(lat * Math.PI / 180));
+    const cells = Math.ceil(Math.max(latRadiusDeg, lngRadiusDeg) / cellDeg) + 1;
+    const cx0 = Math.floor(lng / cellDeg);
+    const cy0 = Math.floor(lat / cellDeg);
+    for (let dx = -cells; dx <= cells; dx++) {
+      for (let dy = -cells; dy <= cells; dy++) {
+        const key = (cx0 + dx) + ',' + (cy0 + dy);
+        const set = idx.grid.get(key);
+        if (set) set.forEach(id => out.add(id));
+      }
+    }
+    // Filtrar por bbox real (más preciso)
+    const result = [];
+    for (const id of out) {
+      const r = idx.routes.find(x => x.id === id);
+      if (!r) continue;
+      const bb = idx.bbox.get(id);
+      if (!bb) continue;
+      if (lat < bb.minLat - latRadiusDeg || lat > bb.maxLat + latRadiusDeg) continue;
+      if (lng < bb.minLng - lngRadiusDeg || lng > bb.maxLng + lngRadiusDeg) continue;
+      result.push(r);
+    }
+    return result;
+  }
+
+  // ─────── DISTANCIA PUNTO → RUTA (más cercana, con dirección opcional) ───────
+  // Retorna { dist, point, segIdx, sentido, idx } o null
+  // Si requireDir = 'forward' | 'backward' | null, filtra por dirección
+  // respecto al punto de referencia `refPoint` (normalmente el destino B).
+  // 'forward'  → el segmento avanza hacia refPoint
+  // 'backward' → el segmento se aleja de refPoint
+  function closestPointOnRoute(route, lat, lng, opts) {
+    opts = opts || {};
+    const segs = getRouteSegments(route);
+    if (!segs.length) return null;
+
+    const refLat = opts.refLat != null ? opts.refLat : lat;
+    const pMeters = projectToMeters(lat, lng, refLat);
+
+    let best = null;
+    for (const s of segs) {
+      // Proyección local: usamos refLat para el eje lng
+      const aM = projectToMeters(s.a[0], s.a[1], refLat);
+      const bM = projectToMeters(s.b[0], s.b[1], refLat);
+      const dx = bM[0] - aM[0], dy = bM[1] - aM[1];
+      const len2 = dx * dx + dy * dy;
+      let t = 0;
+      if (len2 > 0) {
+        t = ((pMeters[0] - aM[0]) * dx + (pMeters[1] - aM[1]) * dy) / len2;
+        t = Math.max(0, Math.min(1, t));
+      }
+      const cx = aM[0] + t * dx, cy = aM[1] + t * dy;
+      const dist = Math.hypot(pMeters[0] - cx, pMeters[1] - cy);
+
+      // Reconstruir lat/lng aproximado del punto proyectado
+      const latP = s.a[0] + (s.b[0] - s.a[0]) * t;
+      const lngP = s.a[1] + (s.b[1] - s.a[1]) * t;
+
+      // Si se exige dirección, comprobamos el sentido del segmento
+      if (opts.requireDir) {
+        const vectorSeg = [s.b[0] - s.a[0], s.b[1] - s.a[1]];
+        const vectorToRef = [refLat - latP, opts.refLng != null ? (opts.refLng - lngP) : 0];
+        const dot = vectorSeg[0] * vectorToRef[0] + vectorSeg[1] * vectorToRef[1];
+        // Si el destino está "hacia adelante" respecto al segmento, el dot > 0
+        const avanzandoHaciaRef = dot > 0;
+        if (opts.requireDir === 'forward' && !avanzandoHaciaRef) continue;
+        if (opts.requireDir === 'backward' && avanzandoHaciaRef) continue;
+      }
+
+      if (!best || dist < best.dist) {
+        best = {
+          dist,
+          point: [latP, lngP],
+          segIdx: s.idx,
+          sentido: s.sentido,
+          segStart: s.a,
+          segEnd: s.b,
+          t
+        };
+      }
+    }
+    return best;
+  }
+
+  // ─────── DISTANCIA ENTRE DOS TRAZOS (segmento → segmento) ───────
+  // Retorna { dist, mid, p1, p2 } con el punto medio entre los dos más cercanos
+  function segmentSegmentDistance(s1, s2) {
+    // Test rápido bbox de cada segmento
+    const s1minLat = Math.min(s1.a[0], s1.b[0]);
+    const s1maxLat = Math.max(s1.a[0], s1.b[0]);
+    const s1minLng = Math.min(s1.a[1], s1.b[1]);
+    const s1maxLng = Math.max(s1.a[1], s1.b[1]);
+    const s2minLat = Math.min(s2.a[0], s2.b[0]);
+    const s2maxLat = Math.max(s2.a[0], s2.b[0]);
+    const s2minLng = Math.min(s2.a[1], s2.b[1]);
+    const s2maxLng = Math.max(s2.a[1], s2.b[1]);
+    const latOverlap = !(s1maxLat < s2minLat || s1minLat > s2maxLat);
+    const lngOverlap = !(s1maxLng < s2minLng || s1minLng > s2maxLng);
+    if (!latOverlap || !lngOverlap) return null;
+
+    // Proyectar a metros locales
+    const refLat = (s1.a[0] + s1.b[0] + s2.a[0] + s2.b[0]) / 4;
+    const a1 = projectToMeters(s1.a[0], s1.a[1], refLat);
+    const b1 = projectToMeters(s1.b[0], s1.b[1], refLat);
+    const a2 = projectToMeters(s2.a[0], s2.a[1], refLat);
+    const b2 = projectToMeters(s2.b[0], s2.b[1], refLat);
+
+    // Distancia entre segmentos (algoritmo clásico)
+    const d1 = pointToSegmentDistance(a1, a2, b2);
+    const d2 = pointToSegmentDistance(b1, a2, b2);
+    const d3 = pointToSegmentDistance(a2, a1, b1);
+    const d4 = pointToSegmentDistance(b2, a1, b1);
+    const dist = Math.min(d1, d2, d3, d4);
+
+    // Punto medio entre los dos más cercanos (aproximado)
+    const midLat = (s1.a[0] + s1.b[0] + s2.a[0] + s2.b[0]) / 4;
+    const midLng = (s1.a[1] + s1.b[1] + s2.a[1] + s2.b[1]) / 4;
+    return { dist, mid: [midLat, midLng] };
+  }
+
+  // ─────── INTERSECCIÓN O PROXIMIDAD ENTRE DOS RUTAS ───────
+  // Devuelve el mejor punto de "encuentro" entre r1 y r2, con la condición:
+  //   - El trazo de r1 debe avanzar hacia `towards` (el destino)
+  //   - El trazo de r2 también debe avanzar hacia `towards`
+  // Devuelve { point, dist, dirOk } o null
+  function findMeetingPoint(r1, r2, towards) {
+    const segs1 = getRouteSegments(r1);
+    const segs2 = getRouteSegments(r2);
+    if (!segs1.length || !segs2.length) return null;
+
+    const refLat = towards[0];
+    let best = null;
+
+    for (const s1 of segs1) {
+      // Pre-filtro bbox
+      const s1minLat = Math.min(s1.a[0], s1.b[0]);
+      const s1maxLat = Math.max(s1.a[0], s1.b[0]);
+      const s1minLng = Math.min(s1.a[1], s1.b[1]);
+      const s1maxLng = Math.max(s1.a[1], s1.b[1]);
+      const marginLat = TRANSFER_TOLERANCE_M / 111320;
+      const marginLng = TRANSFER_TOLERANCE_M / (111320 * Math.cos(refLat * Math.PI / 180));
+
+      for (const s2 of segs2) {
+        const s2minLat = Math.min(s2.a[0], s2.b[0]);
+        const s2maxLat = Math.max(s2.a[0], s2.b[0]);
+        const s2minLng = Math.min(s2.a[1], s2.b[1]);
+        const s2maxLng = Math.max(s2.a[1], s2.b[1]);
+
+        if (s1maxLat + marginLat < s2minLat || s1minLat - marginLat > s2maxLat) continue;
+        if (s1maxLng + marginLng < s2minLng || s1minLng - marginLng > s2maxLng) continue;
+
+        // Distancia entre segmentos (metros)
+        const d = segmentSegmentDistance(s1, s2);
+        if (!d || d.dist > TRANSFER_TOLERANCE_M) continue;
+
+        // Punto de encuentro = punto medio entre los dos segmentos
+        const meet = d.mid;
+
+        // Comprobar dirección de ambos segmentos hacia `towards`
+        const dir1 = segmentTowards(s1, towards);
+        const dir2 = segmentTowards(s2, towards);
+        if (!dir1 || !dir2) continue;
+
+        // Distancia del punto de encuentro al origen A (si nos lo pasan)
+        // (se calculará fuera, aquí solo guardamos el punto)
+        const score = d.dist; // menor = mejor
+        if (!best || score < best.dist) {
+          best = {
+            point: meet,
+            dist: d.dist,
+            seg1: s1,
+            seg2: s2,
+            dirOk: true
+          };
+        }
+      }
+    }
+    return best;
+  }
+
+  // ¿El segmento s avanza hacia `towards`?
+  function segmentTowards(s, towards) {
+    const vx = s.b[1] - s.a[1];
+    const vy = s.b[0] - s.a[0];
+    const wx = towards[1] - s.a[1];
+    const wy = towards[0] - s.a[0];
+    return (vx * wx + vy * wy) > 0;
+  }
+
+  // ─────── DISTANCIA PUNTO → RUTA CON DIRECCIÓN HACIA `towards` ───────
+  // (wrapper de closestPointOnRoute con la dirección correcta)
+  function routeTowardsPoint(route, from, towards) {
+    const segs = getRouteSegments(route);
+    let best = null;
+    for (const s of segs) {
+      // Distancia del `from` a este segmento
+      const refLat = from[0];
+      const pM = projectToMeters(from[0], from[1], refLat);
+      const aM = projectToMeters(s.a[0], s.a[1], refLat);
+      const bM = projectToMeters(s.b[0], s.b[1], refLat);
+      const dx = bM[0] - aM[0], dy = bM[1] - aM[1];
+      const len2 = dx * dx + dy * dy;
+      let t = 0;
+      if (len2 > 0) {
+        t = ((pM[0] - aM[0]) * dx + (pM[1] - aM[1]) * dy) / len2;
+        t = Math.max(0, Math.min(1, t));
+      }
+      const cx = aM[0] + t * dx, cy = aM[1] + t * dy;
+      const dist = Math.hypot(pM[0] - cx, pM[1] - cy);
+      const latP = s.a[0] + (s.b[0] - s.a[0]) * t;
+      const lngP = s.a[1] + (s.b[1] - s.a[1]) * t;
+
+      // ¿El segmento avanza hacia `towards`?
+      if (!segmentTowards(s, towards)) continue;
+      // ¿El `from` está antes o después en el segmento?
+      // Si `from` proyecta en t≈1 (al final), la ruta ya pasó.
+      // Nos interesa que la ruta vaya desde `from` hacia `towards`,
+      // es decir, que el punto proyectado sea ANTES del final del segmento.
+      if (t > 0.98) continue;
+
+      if (!best || dist < best.dist) {
+        best = { dist, point: [latP, lngP], seg: s };
+      }
+    }
+    return best;
+  }
+
+  // ─────── BÚSQUEDA DE CADENAS DE TRANSBORDO (v2 inteligente) ───────
+  // Devuelve un array de cadenas ordenadas por:
+  //   1) menos transbordos
+  //   2) transbordo más cercano a A
+  // Cada cadena: { type:'transfer', legs:[r1,r2,...], transferPoints:[[lat,lng],...],
+  //                totalDist, transfers, firstTransferDistToA }
+  function findTransferChains(startPoint, endPoint, maxTransfers) {
+    maxTransfers = Math.min(MAX_TRANSFERS_HARD, Math.max(1, +maxTransfers || 1));
+    const chains = [];
+
+    const A = [startPoint.lat, startPoint.lng];
+    const B = [endPoint.lat, endPoint.lng];
+
+    // 1) Rutas que tocan A (respetando radio del punto)
+    const startRoutes = routesNear(A[0], A[1], startPoint.radius)
+      .filter(r => routeDistanceToPoint(r, A[0], A[1]) <= startPoint.radius);
+
+    // 2) Rutas que tocan B
+    const endRoutes = routesNear(B[0], B[1], endPoint.radius)
+      .filter(r => routeDistanceToPoint(r, B[0], B[1]) <= endPoint.radius);
+
+    if (!startRoutes.length || !endRoutes.length) return chains;
+
+    // Helper: ¿la ruta r conecta A con B directamente?
+    // (ya lo maneja el bloque de "directas" antes, así que aquí solo
+    //  construimos cadenas con 1+ transbordos)
+
+    // ─── 1 TRANSBORDO (2 rutas) ───
+    if (maxTransfers >= 1) {
+      for (const r1 of startRoutes) {
+        for (const r2 of endRoutes) {
+          if (r1.id === r2.id) continue;
+
+          // ¿r1 va de A hacia B?
+          const dir1 = routeTowardsPoint(r1, A, B);
+          if (!dir1) continue;
+
+          // ¿r2 va de su punto de encuentro hacia B?
+          // Primero, punto de encuentro
+          const meet = findMeetingPoint(r1, r2, B);
+          if (!meet) continue;
+
+          // Verificar que el punto de encuentro esté en r1 ANTES de B
+          // (o sea, que r1 pase por meet y luego siga hacia B)
+          const distAtoMeet1 = haversine(A[0], A[1], meet.point[0], meet.point[1]);
+
+          // Verificar que r2 desde meet vaya hacia B
+          const dir2 = routeTowardsPoint(r2, meet.point, B);
+          if (!dir2) continue;
+
+          chains.push({
+            type: 'transfer',
+            legs: [r1, r2],
+            transferPoints: [meet.point],
+            transfers: 1,
+            totalDist: dir1.dist + meet.dist + dir2.dist,
+            firstTransferDistToA: distAtoMeet1
+          });
+        }
+      }
+    }
+
+    // ─── 2 TRANSBORDOS (3 rutas) ───
+    if (maxTransfers >= 2) {
+      for (const r1 of startRoutes) {
+        const dir1 = routeTowardsPoint(r1, A, B);
+        if (!dir1) continue;
+
+        // Candidatas para r2: rutas que se cruzan con r1
+        // (usamos la cuadrícula para no probar todas)
+        const candidateIds = new Set();
+        const segs1 = getRouteSegments(r1);
+        for (const s of segs1) {
+          // Buscar rutas cerca del segmento s1
+          const nearby = routesNear(s.a[0], s.a[1], TRANSFER_TOLERANCE_M + 100);
+          nearby.forEach(r => { if (r.id !== r1.id) candidateIds.add(r.id); });
+        }
+
+        for (const r2id of candidateIds) {
+          const r2 = state.routes.find(x => x.id === r2id);
+          if (!r2) continue;
+          if (r2.id === r1.id) continue;
+
+          const meet1 = findMeetingPoint(r1, r2, B);
+          if (!meet1) continue;
+
+          // ¿r2 desde meet1 va hacia B?
+          const dir2 = routeTowardsPoint(r2, meet1.point, B);
+          if (!dir2) continue;
+
+          // Tercera ruta: debe tocar B y cruzarse con r2
+          for (const r3 of endRoutes) {
+            if (r3.id === r1.id || r3.id === r2.id) continue;
+
+            const meet2 = findMeetingPoint(r2, r3, B);
+            if (!meet2) continue;
+
+            // ¿r3 desde meet2 va hacia B?
+            const dir3 = routeTowardsPoint(r3, meet2.point, B);
+            if (!dir3) continue;
+
+            const distAtoMeet1 = haversine(A[0], A[1], meet1.point[0], meet1.point[1]);
+            const distMeet1toMeet2 = haversine(
+              meet1.point[0], meet1.point[1],
+              meet2.point[0], meet2.point[1]
+            );
+
+            chains.push({
+              type: 'transfer',
+              legs: [r1, r2, r3],
+              transferPoints: [meet1.point, meet2.point],
+              transfers: 2,
+              totalDist: dir1.dist + meet1.dist + dir2.dist + meet2.dist + dir3.dist,
+              firstTransferDistToA: distAtoMeet1
+            });
+          }
+        }
+      }
+    }
+
+    // ─── Deduplicar por secuencia de IDs ───
+    const seen = new Set();
+    const unique = chains.filter(c => {
+      const key = c.legs.map(l => l.id).join('>');
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    // ─── Ordenar: menos transbordos primero, luego transbordo más cercano a A ───
+    unique.sort((a, b) => {
+      if (a.transfers !== b.transfers) return a.transfers - b.transfers;
+      return a.firstTransferDistToA - b.firstTransferDistToA;
+    });
+
+    return unique.slice(0, 30); // limitamos para no saturar UI
+  }
+
+  // ─────── HELPERS DE DIBUJO (reemplazan los del motor viejo) ───────
   function getRouteCoords(route) {
     if (route.geometriaIda && route.geometriaIda.length > 1) {
       return route.geometriaIda.map(c => [c[0], c[1]]);
@@ -2093,7 +2622,6 @@ const url = location.origin + '/share/m/' + id;
     return (route.puntos || []).map(c => [c[0], c[1]]);
   }
 
-  // Devuelve las coordenadas [lat,lng] de la VUELTA de una ruta
   function getRouteCoordsVuelta(route) {
     if (route.geometriaVuelta && route.geometriaVuelta.length > 1) {
       return route.geometriaVuelta.map(c => [c[0], c[1]]);
@@ -2101,7 +2629,6 @@ const url = location.origin + '/share/m/' + id;
     return (route.puntosVuelta || []).map(c => [c[0], c[1]]);
   }
 
-  // Distancia total de una ruta (en metros)
   function routeTotalDistance(route) {
     const coords = getRouteCoords(route);
     if (coords.length < 2) return 0;
@@ -2112,8 +2639,6 @@ const url = location.origin + '/share/m/' + id;
     return total;
   }
 
-  // Offset perpendicular para separar visualmente 2 trazos en la misma calle.
-  // (mismo algoritmo que usa el render de ruta individual)
   function offsetPolyline(coords, offsetMeters) {
     if (!coords || coords.length < 2) return coords;
     const out = [];
@@ -2134,10 +2659,6 @@ const url = location.origin + '/share/m/' + id;
     return out;
   }
 
-  // Dibuja en el mapa un conjunto de rutas con colores únicos.
-  // AHORA dibuja IDA y VUELTA, con offset cuando hay varias rutas o ambos sentidos.
-  // Si se pasan varias rutas con el mismo color lógico (p.ej. varias directas),
-  // se separan con offsets perpendiculares para que se vean ambas.
   function drawTripRoutesOnMap(routeList, highlightIdx = null) {
     clearTripRouteLayers();
     if (!state.tripMap) return;
@@ -2151,14 +2672,10 @@ const url = location.origin + '/share/m/' + id;
       const color = TRIP_COLORS[idx % TRIP_COLORS.length];
       const isHl = highlightIdx === null || highlightIdx === idx;
 
-      // ---- IDA ----
       if (coordsIda.length > 1) {
-        // Si hay más de 1 ruta en el mapa, aplicamos offset alterno
-        // para que no se superpongan en calles compartidas.
         let idaDraw = coordsIda;
         if (total > 1) {
-          // Offset entre -6 y +6 metros según índice, alternando signo
-          const offset = (idx - (total - 1) / 2) * 4; // separa ±4m por índice
+          const offset = (idx - (total - 1) / 2) * 4;
           idaDraw = offsetPolyline(coordsIda, offset);
         }
         const lineIda = L.polyline(idaDraw, {
@@ -2166,8 +2683,7 @@ const url = location.origin + '/share/m/' + id;
           weight: item.type === 'transfer' ? (isHl ? 5 : 3) : (isHl ? 6 : 4),
           opacity: isHl ? 0.95 : 0.5,
           lineJoin: 'round',
-          lineCap: 'round',
-          dashArray: null
+          lineCap: 'round'
         }).addTo(state.tripMap);
         lineIda.bindTooltip(
           (item.label || route.nombre || 'Ruta') + ' · IDA' +
@@ -2177,12 +2693,11 @@ const url = location.origin + '/share/m/' + id;
         tripRouteLayers.push(lineIda);
       }
 
-      // ---- VUELTA ----
       if (coordsVuelta.length > 1) {
         let vueltaDraw = coordsVuelta;
         if (total > 1) {
           const offset = (idx - (total - 1) / 2) * 4;
-          vueltaDraw = offsetPolyline(coordsVuelta, -offset); // signo contrario para separar de ida
+          vueltaDraw = offsetPolyline(coordsVuelta, -offset);
         }
         const lineVuelta = L.polyline(vueltaDraw, {
           color,
@@ -2190,7 +2705,7 @@ const url = location.origin + '/share/m/' + id;
           opacity: isHl ? 0.85 : 0.4,
           lineJoin: 'round',
           lineCap: 'round',
-          dashArray: '10,6' // guiones para distinguir vuelta de ida
+          dashArray: '10,6'
         }).addTo(state.tripMap);
         lineVuelta.bindTooltip(
           (item.label || route.nombre || 'Ruta') + ' · REGRESO' +
@@ -2200,7 +2715,6 @@ const url = location.origin + '/share/m/' + id;
         tripRouteLayers.push(lineVuelta);
       }
 
-      // Si es transbordo, marcar el punto de encuentro
       if (item.transferPoint) {
         const tp = L.circleMarker(item.transferPoint, {
           radius: 9, color: '#fff', fillColor: color, fillOpacity: 1, weight: 3
@@ -2210,169 +2724,34 @@ const url = location.origin + '/share/m/' + id;
     });
   }
 
-  // Calcula la distancia mínima entre dos rutas (para transbordos)
-  function routesMinDistance(r1, r2) {
-    const c1 = getRouteCoords(r1);
-    const c2 = getRouteCoords(r2);
-    let best = Infinity, bestPt = null, bestPt2 = null;
-    c1.forEach(p1 => {
-      c2.forEach(p2 => {
-        const d = haversine(p1[0], p1[1], p2[0], p2[1]);
-        if (d < best) { best = d; bestPt = p1; bestPt2 = p2; }
-      });
-    });
-    return { dist: best, p1: bestPt, p2: bestPt2, mid: bestPt ? [(bestPt[0]+bestPt2[0])/2, (bestPt[1]+bestPt2[1])/2] : null };
-  }
+  // (routeDistanceToPoint y getRouteAllSegments ya existen más arriba;
+  //  los dejamos tal cual para no romper performTripSearch.)
 
-  // Verifica si una ruta pasa cerca de un punto
-  function routeNearPoint(route, point, radius) {
-    return routeDistanceToPoint(route, point.lat, point.lng) <= radius;
-  }
 
-  // Encuentra todos los transbordos posibles (1, 2, 3, 4 saltos)
-  function findTransferChains(startPoint, endPoint, maxTransfers) {
-    maxTransfers = Math.max(1, +maxTransfers || 1);
-     const chains = [];
-    const startRoutes = state.routes.filter(r => routeNearPoint(r, startPoint, startPoint.radius));
-    const endRoutes   = state.routes.filter(r => routeNearPoint(r, endPoint, endPoint.radius));
-
-    if (!startRoutes.length || !endRoutes.length) return chains;
-
-    // 1 transbordo (2 rutas)
-    if (maxTransfers >= 1) {
-      startRoutes.forEach(r1 => {
-        endRoutes.forEach(r2 => {
-          if (r1.id === r2.id) return;
-          const inter = routesMinDistance(r1, r2);
-          if (inter.dist <= 400) {
-            chains.push({
-              type: 'transfer',
-              legs: [r1, r2],
-              transferPoints: [inter.mid],
-              totalDist: routeTotalDistance(r1) + routeTotalDistance(r2),
-              transfers: 1
-            });
-          }
-        });
-      });
-    }
-
-    // 2 transbordos (3 rutas)
-    if (maxTransfers >= 2) {
-      startRoutes.forEach(r1 => {
-        state.routes.forEach(r2 => {
-          if (r2.id === r1.id) return;
-          const i12 = routesMinDistance(r1, r2);
-          if (i12.dist > 400) return;
-          endRoutes.forEach(r3 => {
-            if (r3.id === r2.id || r3.id === r1.id) return;
-            const i23 = routesMinDistance(r2, r3);
-            if (i23.dist > 400) return;
-            chains.push({
-              type: 'transfer',
-              legs: [r1, r2, r3],
-              transferPoints: [i12.mid, i23.mid],
-              totalDist: routeTotalDistance(r1) + routeTotalDistance(r2) + routeTotalDistance(r3),
-              transfers: 2
-            });
-          });
-        });
-      });
-    }
-
-    // 3 transbordos (4 rutas)
-    if (maxTransfers >= 3) {
-      startRoutes.forEach(r1 => {
-        state.routes.forEach(r2 => {
-          if (r2.id === r1.id) return;
-          const i12 = routesMinDistance(r1, r2);
-          if (i12.dist > 400) return;
-          state.routes.forEach(r3 => {
-            if (r3.id === r2.id || r3.id === r1.id) return;
-            const i23 = routesMinDistance(r2, r3);
-            if (i23.dist > 400) return;
-            endRoutes.forEach(r4 => {
-              if (r4.id === r3.id || r4.id === r2.id || r4.id === r1.id) return;
-              const i34 = routesMinDistance(r3, r4);
-              if (i34.dist > 400) return;
-              chains.push({
-                type: 'transfer',
-                legs: [r1, r2, r3, r4],
-                transferPoints: [i12.mid, i23.mid, i34.mid],
-                totalDist: routeTotalDistance(r1) + routeTotalDistance(r2) + routeTotalDistance(r3) + routeTotalDistance(r4),
-                transfers: 3
-              });
-            });
-          });
-        });
-      });
-    }
-
-    // 4 transbordos (5 rutas)
-    if (maxTransfers >= 4) {
-      startRoutes.forEach(r1 => {
-        state.routes.forEach(r2 => {
-          if (r2.id === r1.id) return;
-          const i12 = routesMinDistance(r1, r2);
-          if (i12.dist > 400) return;
-          state.routes.forEach(r3 => {
-            if (r3.id === r2.id || r3.id === r1.id) return;
-            const i23 = routesMinDistance(r2, r3);
-            if (i23.dist > 400) return;
-            state.routes.forEach(r4 => {
-              if (r4.id === r3.id || r4.id === r2.id || r4.id === r1.id) return;
-              const i34 = routesMinDistance(r3, r4);
-              if (i34.dist > 400) return;
-              endRoutes.forEach(r5 => {
-                if (r5.id === r4.id || r5.id === r3.id || r5.id === r2.id || r5.id === r1.id) return;
-                const i45 = routesMinDistance(r4, r5);
-                      if (i45.dist > 400) return;
-                chains.push({
-                  type: 'transfer',
-                  legs: [r1, r2, r3, r4, r5],
-                  transferPoints: [i12.mid, i23.mid, i34.mid, i45.mid],
-                  totalDist: routeTotalDistance(r1) + routeTotalDistance(r2) + routeTotalDistance(r3) + routeTotalDistance(r4) + routeTotalDistance(r5),
-                  transfers: 4
-                });
-              });
-            });
-          });
-        });
-      });
-    }
-
-    // Eliminar cadenas duplicadas (misma secuencia de rutas)
-    const seen = new Set();
-    return chains.filter(c => {
-      const key = c.legs.map(l => l.id).join('>');
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-  }
-
-  function performTripSearch() {
+     function performTripSearch() {
     const el = $('#tripResults');
     if (!el) return;
     clearTripRouteLayers();
     if (state.tripPoints.length < 1) { el.innerHTML = ''; return; }
 
-const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
-     const results = { direct: [], transfers: [] };
+    const maxTransfers = Math.min(MAX_TRANSFERS_HARD, +($('#tripMaxTransfers')?.value || 2));
+    const results = { direct: [], transfers: [] };
 
     if (state.tripPoints.length === 1) {
       // Rutas que tocan el punto A
       const p = state.tripPoints[0];
-      state.routes.forEach(r => {
+      const nearRoutes = routesNear(p.lat, p.lng, p.radius);
+      nearRoutes.forEach(r => {
         const d = routeDistanceToPoint(r, p.lat, p.lng);
         if (d <= p.radius) results.direct.push({ route: r, dist: d, type: 'direct' });
       });
+      // Ordenar por distancia al punto A
+      results.direct.sort((a, b) => a.dist - b.dist);
     } else {
-      // ¿Existe una ruta directa que pase por TODOS los puntos?
       const start = state.tripPoints[0];
       const end   = state.tripPoints[state.tripPoints.length - 1];
-   
 
+      // ─── 1) RUTAS DIRECTAS: una sola ruta que toca TODOS los puntos ───
       state.routes.forEach(r => {
         const touchesAll = state.tripPoints.every(p => routeNearPoint(r, p, p.radius));
         if (touchesAll) {
@@ -2380,27 +2759,22 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
         }
       });
 
-            // Si no hay directa, o si el usuario quiere ver también transbordos,
-      // calculamos cadenas de transbordos. SIEMPRE intentamos al menos 1.
-      if (!results.direct.length || maxTransfers >= 1) {         
-        // Para 2 puntos
+      // ─── 2) TRANSBORDOS INTELIGENTES ───
+      // Solo si el usuario quiere (maxTransfers >= 1) o si no hay directas
+      if (!results.direct.length || maxTransfers >= 1) {
         if (state.tripPoints.length === 2) {
+          // Motor v2: devuelve cadenas ya ordenadas por transbordos y cercanía a A
           const chains = findTransferChains(start, end, maxTransfers);
-          // Ordenar por: menos transbordos primero, luego distancia total
-          chains.sort((a, b) => a.transfers - b.transfers || a.totalDist - b.totalDist);
           results.transfers = chains.slice(0, 20);
         } else {
-          // Para 3+ puntos: buscar cadena que pase por todos los puntos
-          // Estrategia simplificada: buscar ruta que una start→mid1, mid1→mid2, etc.
-          // Aquí se puede extender; por ahora hacemos pares consecutivos
+          // 3+ puntos: encadenar transbordos entre pares consecutivos
           const pairs = [];
           for (let i = 0; i < state.tripPoints.length - 1; i++) {
             const a = state.tripPoints[i];
-            const b = state.tripPoints[i+1];
+            const b = state.tripPoints[i + 1];
             const chains = findTransferChains(a, b, maxTransfers);
-            if (chains.length) pairs.push(chains[0]); // la mejor de cada par
+            if (chains.length) pairs.push(chains[0]);
           }
-          // Combinar en una sola "ruta multi-punto" (simplificado)
           if (pairs.length) {
             const allLegs = [];
             const allTransferPts = [];
@@ -2413,17 +2787,15 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
               legs: allLegs,
               transferPoints: allTransferPts,
               totalDist: pairs.reduce((s, p) => s + p.totalDist, 0),
-              transfers: allLegs.length - 1
+              transfers: allLegs.length - 1,
+              firstTransferDistToA: pairs[0]?.firstTransferDistToA || 0
             });
           }
         }
       }
     }
 
-       // Si hay directas, dibujarlas TODAS en el mapa con offset para que no se
-    // superpongan. El offset se calcula dentro de drawTripRoutesOnMap.
-    // Si NO hay directas pero SÍ hay transbordos, dibujamos automáticamente
-    // el primer resultado de transbordo para que el mapa no quede vacío.
+    // ─── DIBUJO EN MAPA ───
     if (results.direct.length) {
       drawTripRoutesOnMap(
         results.direct.map(d => ({
@@ -2431,7 +2803,7 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
           label: d.route.nombre,
           type: 'direct'
         })),
-        null  // sin highlight, todas con mismo peso
+        null
       );
     } else if (results.transfers.length) {
       const t0 = results.transfers[0];
@@ -2445,7 +2817,7 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
       );
     }
 
-    // Render de resultados
+    // ─── RENDER HTML ───
     let html = '';
 
     if (results.direct.length) {
@@ -2461,9 +2833,8 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
                 <span class="trip-badge-route" style="background:${TRIP_COLORS[idx % TRIP_COLORS.length]}">${idx+1}</span>
                 ${esc(r.route.nombre)}
               </div>
-
-                            <div class="rc-sub">${esc(r.route.categoria || 'urbana')} · ${formatTripDistance(state.tripPoints)}</div>
-                          </div>
+              <div class="rc-sub">${esc(r.route.categoria || 'urbana')} · ${formatTripDistance(state.tripPoints)}</div>
+            </div>
             <span class="badge badge-green">Directa</span>
           </div>
           <div class="trip-result-actions">
@@ -2480,19 +2851,15 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
     }
 
     if (results.transfers.length) {
-      html += `<div class="section-title">🔄 Transbordos (${results.transfers.length})</div>`;
+      html += `<div class="section-title">🔄 Transbordos inteligentes (${results.transfers.length})</div>`;
       html += results.transfers.map((t, idx) => {
         const colorOffset = results.direct.length;
         const color = TRIP_COLORS[(colorOffset + idx) % TRIP_COLORS.length];
 
-
-                 // Chips del encabezado: cada chip es clickeable y abre su ruta.
-        // 🎨 El color del cuadrito coincide con el color del trazo en el mapa.
         const chipsHtml = t.legs.map((leg, li) => {
-const legColor = li === 0 ? '#00e5ff' : '#a855f7';
-           return `
+          const legColor = li === 0 ? '#00e5ff' : '#a855f7';
+          return `
             <button class="trip-chain-item" type="button" data-trip-focus="${esc(leg.id)}" title="Abrir ruta ${esc(leg.nombre)}">
-
               <div class="trip-chain-chip" style="background:${legColor};border-color:${legColor};color:#ffffff">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                   <rect x="3" y="4" width="18" height="13" rx="2"/>
@@ -2503,22 +2870,16 @@ const legColor = li === 0 ? '#00e5ff' : '#a855f7';
                   <path d="M14 8h3"/>
                 </svg>
               </div>
-
               <span class="trip-chain-name">${esc(leg.nombre)}</span>
             </button>`;
         }).join('<span class="trip-chain-sep">›</span>');
-         
 
-    
-
-              return `
+        return `
         <div class="result-card transbordo" data-result-idx="${idx}" data-result-type="transfer">
           <div class="rc-head">
-            
             <div style="flex:1">
               <div class="trip-chain">${chipsHtml}</div>
-             
-              <div class="rc-sub">${t.transfers} transbordo(s) · ${formatTripDistance(state.tripPoints)}</div>              
+              <div class="rc-sub">${t.transfers} transbordo(s) · Transbordo a ${Math.round(t.firstTransferDistToA)} m de A · ${formatTripDistance(state.tripPoints)}</div>
             </div>
             <span class="badge badge-amber">${t.transfers}T</span>
           </div>
@@ -2528,7 +2889,6 @@ const legColor = li === 0 ? '#00e5ff' : '#a855f7';
               Ver trazos en mapa
             </button>
           </div>
-          
         </div>`;
       }).join('');
     }
@@ -2544,43 +2904,29 @@ const legColor = li === 0 ? '#00e5ff' : '#a855f7';
 
     el.innerHTML = html;
 
-    // ✅ NUEVO: Eventos para botones de RUTAS DIRECTAS
+    // ─── EVENTOS ───
     el.querySelectorAll('[data-trip-show-direct]').forEach(b => {
       b.onclick = (e) => {
         e.stopPropagation();
         const idx = +b.dataset.tripShowDirect;
         const r = results.direct[idx];
         if (!r) return;
-        
-        // Dibujar SOLO el trazo de esta ruta directa
-        drawTripRoutesOnMap([{
-          route: r.route,
-          label: r.route.nombre,
-          type: 'direct'
-        }]);
-        
-        // Ajustar el zoom del mapa a esta ruta
+        drawTripRoutesOnMap([{ route: r.route, label: r.route.nombre, type: 'direct' }]);
         const allCoords = [...getRouteCoords(r.route), ...getRouteCoordsVuelta(r.route)];
         if (allCoords.length) {
           try { state.tripMap.fitBounds(L.latLngBounds(allCoords).pad(0.15)); } catch(e){}
         }
-        
-        // 📜 Scroll automático al mapa
-        const mapEl = document.getElementById('tripMap');
-        if (mapEl) {
-          const mapWrap = document.querySelector('#page-trip .map-wrap');
-          if (mapWrap) {
-            const headerH = 58;
-            const rect = mapWrap.getBoundingClientRect();
-            const targetY = window.scrollY + rect.top - headerH - 8;
-            window.scrollTo({ top: targetY, behavior: 'smooth' });
-          }
+        const mapWrap = document.querySelector('#page-trip .map-wrap');
+        if (mapWrap) {
+          const headerH = 58;
+          const rect = mapWrap.getBoundingClientRect();
+          const targetY = window.scrollY + rect.top - headerH - 8;
+          window.scrollTo({ top: targetY, behavior: 'smooth' });
         }
         toast('Mostrando trazo de: ' + r.route.nombre);
       };
     });
 
-    // ✅ NUEVO: Botón "Abrir ruta" en tarjetas directas
     el.querySelectorAll('[data-trip-open-direct]').forEach(b => {
       b.onclick = (e) => {
         e.stopPropagation();
@@ -2589,21 +2935,18 @@ const legColor = li === 0 ? '#00e5ff' : '#a855f7';
       };
     });
 
-    // Eventos de resultados (transbordos)
     el.querySelectorAll('[data-trip-show]').forEach(b => {
       b.onclick = (e) => {
         e.stopPropagation();
         const idx = +b.dataset.tripShow;
         const t = results.transfers[idx];
         if (!t) return;
-        // Dibujar SOLO los trazos de este transbordo (ida + vuelta)
         drawTripRoutesOnMap(t.legs.map((l, li) => ({
           route: l,
           label: l.nombre,
-          type: 'transfer',                        // ← añadido
+          type: 'transfer',
           transferPoint: li === 0 ? t.transferPoints[0] : (t.transferPoints[li - 1] || null)
         })));
-        // Recolectar todas las coordenadas (ida + vuelta + transbordos)
         const allCoords = [];
         t.legs.forEach(l => {
           allCoords.push(...getRouteCoords(l));
@@ -2613,18 +2956,12 @@ const legColor = li === 0 ? '#00e5ff' : '#a855f7';
         if (allCoords.length) {
           try { state.tripMap.fitBounds(L.latLngBounds(allCoords).pad(0.15)); } catch(e){}
         }
-        // 📜 Scroll automático al mapa
-        const mapEl = document.getElementById('tripMap');
-        if (mapEl) {
-
-                     const mapWrap = document.querySelector('#page-trip .map-wrap');
-          if (mapWrap) {
-            const headerH = 58;
-            const rect = mapWrap.getBoundingClientRect();
-            const targetY = window.scrollY + rect.top - headerH - 8;
-            window.scrollTo({ top: targetY, behavior: 'smooth' });
-          }
-        
+        const mapWrap = document.querySelector('#page-trip .map-wrap');
+        if (mapWrap) {
+          const headerH = 58;
+          const rect = mapWrap.getBoundingClientRect();
+          const targetY = window.scrollY + rect.top - headerH - 8;
+          window.scrollTo({ top: targetY, behavior: 'smooth' });
         }
         toast('Mostrando ' + t.legs.length + ' trazos del transbordo');
       };
@@ -2637,12 +2974,9 @@ const legColor = li === 0 ? '#00e5ff' : '#a855f7';
         if (r) openRouteDetail(r);
       };
     });
-
-
-
- 
   }
-
+             
+ 
   $('#tripRadius').oninput = e => {
     state.tripRadius = +e.target.value;
     $('#tripRadiusVal').textContent = e.target.value;
