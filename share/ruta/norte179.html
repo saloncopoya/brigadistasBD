@@ -181,6 +181,154 @@ footer a{color:var(--cyan)}
   <!-- 🔒 IMAGEN SEO: oculta visualmente pero indexable por Google -->
   <img class="seo-hero" src="https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789704741/rvnqkxhcqlgqfd8xx1ej.jpg" alt="NORTE" title="NORTE" width="1200" height="630" loading="eager">
   
+  
+    <div class="route-map-hero map-wrap" id="mapWrapHero">
+      <div id="shareMapBig"></div>
+      <button class="map-fs-btn" id="mapFsBtn" title="Pantalla completa">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+          <path d="M8 3H5a2 2 0 0 0-2 2v3"/>
+          <path d="M21 8V5a2 2 0 0 0-2-2h-3"/>
+          <path d="M3 16v3a2 2 0 0 0 2 2h3"/>
+          <path d="M16 21h3a2 2 0 0 0 2-2v-3"/>
+        </svg>
+      </button>
+    </div>
+  <link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
+    <script src="/vendor/leaflet/leaflet.js"></script>
+    
+    <script>
+    (function(){
+      var DATA = {"puntos":[[16.763355,-93.070439],[16.755988,-93.068311]],"puntosVuelta":[],"geomIda":[[16.763355,-93.070439],[16.762766,-93.070381],[16.761718,-93.070278],[16.76069,-93.07016],[16.760726,-93.069691],[16.760049,-93.069652],[16.759705,-93.069635],[16.759354,-93.069608],[16.759356,-93.069541],[16.759367,-93.069034],[16.75936,-93.068576],[16.758737,-93.068527],[16.757724,-93.068447],[16.756672,-93.068364],[16.755988,-93.068311]],"geomVuelta":[],"colorIda":"#3b82f6","colorVuelta":"#ef4444","nombre":"NORTE"};
+      if (typeof L === 'undefined') return;
+      var map = L.map('shareMapBig', { zoomControl: true, scrollWheelZoom: false });
+      window.__shareMap = map;
+      // Caché de mosaicos compartida (mismo IndexedDB que la app principal)
+      // 🛡️ En páginas publicadas, usar tileLayer estándar.
+      // El SW cachea automáticamente y el navegador cachea HTTP.
+      // NO usar L.tileLayer.offline aquí para evitar dependencias de scripts.
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        crossOrigin: true,
+        attribution: '© OpenStreetMap'
+      }).addTo(map);
+
+      var allCoords = [];
+         function drawLine(coords, color, dashed){
+        if (!coords || coords.length < 2) return;
+        var line = L.polyline(coords, {
+          color: color,
+          weight: 5,
+          opacity: 0.95,
+          dashArray: dashed ? '10,6' : null,
+          lineJoin: 'round',
+          lineCap: 'round'
+        }).addTo(map);
+        allCoords = allCoords.concat(coords);
+        return line;
+      }
+
+      // Offset perpendicular para separar ida y vuelta en la misma calle
+      function offsetPolyline(coords, offsetMeters){
+        if(!coords || coords.length < 2) return coords;
+        var out = [];
+        var R = 6371000;
+        for(var i=0;i<coords.length;i++){
+          var p = coords[i];
+          var prev = coords[Math.max(0,i-1)];
+          var next = coords[Math.min(coords.length-1,i+1)];
+          var dLat = next[0]-prev[0];
+          var dLng = next[1]-prev[1];
+          var len = Math.hypot(dLat,dLng) || 1;
+          var perpLat = -dLng/len;
+          var perpLng =  dLat/len;
+          var dLatDeg = (offsetMeters / R) * (180/Math.PI);
+          var dLngDeg = (offsetMeters / (R*Math.cos(p[0]*Math.PI/180))) * (180/Math.PI);
+          out.push([p[0] + perpLat*dLatDeg, p[1] + perpLng*dLngDeg]);
+        }
+        return out;
+      }
+
+      var idaCoords = (DATA.geomIda && DATA.geomIda.length > 1) ? DATA.geomIda : DATA.puntos;
+      var vueltaCoords = (DATA.geomVuelta && DATA.geomVuelta.length > 1) ? DATA.geomVuelta : DATA.puntosVuelta;
+
+      var hasIda = idaCoords && idaCoords.length > 1;
+      var hasVuelta = vueltaCoords && vueltaCoords.length > 1;
+
+      // Dibujar IDA con offset +4m si hay vuelta
+      if (hasIda) {
+        var idaDraw = hasVuelta ? offsetPolyline(idaCoords, 4) : idaCoords;
+        drawLine(idaDraw, DATA.colorIda, false);
+        // Marcadores inicio/fin IDA
+        L.circleMarker(idaDraw[0], { radius: 7, color: DATA.colorIda, fillColor: '#fff', fillOpacity: 1, weight: 3 })
+          .addTo(map).bindPopup('🟢 Inicio IDA');
+        L.circleMarker(idaDraw[idaDraw.length-1], { radius: 7, color: DATA.colorIda, fillColor: DATA.colorIda, fillOpacity: 1, weight: 2 })
+          .addTo(map).bindPopup('🔴 Fin IDA');
+      }
+
+      // Dibujar VUELTA con offset -4m si hay ida
+      if (hasVuelta) {
+        var vueltaDraw = hasIda ? offsetPolyline(vueltaCoords, -4) : vueltaCoords;
+        drawLine(vueltaDraw, DATA.colorVuelta, true);
+        L.circleMarker(vueltaDraw[0], { radius: 7, color: DATA.colorVuelta, fillColor: '#fff', fillOpacity: 1, weight: 3 })
+          .addTo(map).bindPopup('🟣 Inicio REGRESO');
+        L.circleMarker(vueltaDraw[vueltaDraw.length-1], { radius: 7, color: DATA.colorVuelta, fillColor: DATA.colorVuelta, fillOpacity: 1, weight: 2 })
+          .addTo(map).bindPopup('🔵 Fin REGRESO');
+      }
+
+
+
+      // Ajustar zoom
+      if (allCoords.length > 1) {
+        try { map.fitBounds(L.latLngBounds(allCoords).pad(0.15)); } catch(e) {}
+      } else if (allCoords.length === 1) {
+        map.setView(allCoords[0], 15);
+      } else {
+        map.setView([16.7530, -93.1150], 13);
+      }
+
+      // 🏷️ LEYENDA IDA / REGRESO (compacta, líneas gruesas) + botón viaje
+      var legend = L.control({ position: 'bottomleft' });
+      legend.onAdd = function(){
+        var div = L.DomUtil.create('div', 'map-legend');
+        div.innerHTML =
+          '<div style="background:rgba(20,28,48,.92);padding:4px 10px;border-radius:8px;font-size:11px;color:#e8edf7;border:1px solid #26314f;line-height:1.3;display:flex;flex-direction:column;gap:2px">' +
+            '<div style="display:flex;align-items:center;gap:6px">' +
+              '<span style="display:inline-block;width:16px;height:5px;background:' + DATA.colorIda + ';border-radius:2px"></span>' +
+              '<span>Ida</span>' +
+            '</div>' +
+            '<div style="display:flex;align-items:center;gap:6px">' +
+              '<span style="display:inline-block;width:16px;height:5px;background:' + DATA.colorVuelta + ';border-radius:2px"></span>' +
+              '<span>Regreso</span>' +
+            '</div>' +
+          '</div>';
+        return div;
+      };
+      legend.addTo(map);
+
+      // 🚀 Botón centrado abajo: "Agregar puntos de viaje" → ir a trip
+var tripBtn = L.control({ position: 'bottomleft' });
+tripBtn.onAdd = function(){
+        var div = L.DomUtil.create('div', 'map-trip-btn-wrap');
+        div.innerHTML =
+          '<button class="map-trip-btn" type="button">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="14" height="14">' +
+              '<circle cx="12" cy="12" r="10"/>' +
+              '<line x1="12" y1="8" x2="12" y2="16"/>' +
+              '<line x1="8" y1="12" x2="16" y2="12"/>' +
+            '</svg>' +
+            '<span>Agregar puntos de viaje</span>' +
+            '<small>Rutas relacionadas · Mapa interactivo</small>' +
+          '</button>';
+        var btn = div.querySelector('.map-trip-btn');
+        L.DomEvent.disableClickPropagation(div);
+        btn.addEventListener('click', function(){
+          window.location.href = 'https://brigadistasbd.pages.dev/?tab=trip';
+        });
+        return div;
+      };
+      tripBtn.addTo(map);
+    })();
+    </script>
   <div class="block"><h3>ℹ️ Información</h3><ul><li>📅 Días: todos</li></ul></div>
 
 
