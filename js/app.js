@@ -358,12 +358,50 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
   window.addEventListener('offline', updateConn);
 
   // ==================== PWA INSTALL ====================
-  let deferredPrompt = null;
-  window.addEventListener('beforeinstallprompt', e => {
-    e.preventDefault();
-    deferredPrompt = e;
-    $('#installBtn').classList.add('show');
-  });
+ let deferredPrompt = null;
+
+// ✅ NO llamamos e.preventDefault() → el banner NATIVO aparece
+window.addEventListener('beforeinstallprompt', e => {
+  deferredPrompt = e;
+  $('#installBtn').classList.add('show');
+});
+
+$('#installBtn').onclick = async () => {
+  // Intento 1: prompt nativo
+  if (deferredPrompt) {
+    try {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') toast('App instalada ✓');
+      deferredPrompt = null;
+      $('#installBtn').classList.remove('show');
+      return;
+    } catch (err) {
+      console.warn('[install] prompt no disponible, mostrando instrucciones');
+    }
+  }
+
+  // Intento 2: instrucciones específicas por navegador
+  const ua = navigator.userAgent.toLowerCase();
+  let msg = 'Busca "Instalar aplicación" en el menú del navegador';
+  if (ua.includes('edg')) msg = 'Menú Edge (⋯) → Aplicaciones → Instalar esta aplicación';
+  else if (ua.includes('chrome') || ua.includes('android')) msg = 'Menú (⋮) → "Instalar aplicación" o "Añadir a pantalla de inicio"';
+  else if (ua.includes('firefox')) msg = 'Menú Firefox → "Instalar"';
+  else if (ua.includes('safari')) msg = 'Botón Compartir (□↑) → "Añadir a pantalla de inicio"';
+  toast(msg, 'ok');
+};
+
+window.addEventListener('appinstalled', () => {
+  $('#installBtn').classList.remove('show');
+  toast('¡App instalada! 🎉');
+});
+
+if (window.matchMedia('(display-mode: standalone)').matches) {
+  $('#installBtn').classList.remove('show');
+}
+
+   
+   
   $('#installBtn').onclick = async () => {
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
