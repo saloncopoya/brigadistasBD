@@ -8,6 +8,15 @@
     <priority>1.0</priority>
   </url>
   <url>
+    <loc>https://brigadistasbd.pages.dev/share/ruta/sur179</loc>
+    <lastmod>2026-09-18T04:13:24.426Z</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789704799/nzveputmo80akuriopcm.jpg</image:loc>
+    </image:image>
+  </url>
+  <url>
     <loc>https://brigadistasbd.pages.dev/share/ruta/norte179</loc>
     <lastmod>2026-09-18T04:12:27.735Z</lastmod>
     <changefreq>weekly</changefreq>
