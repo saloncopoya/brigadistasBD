@@ -241,11 +241,12 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
     if (!opts.keepModals) closeAllModals();
 
     // URL
-    const params = { tab: page };
-    if (opts.post) params.post = opts.post;
-    if (opts.ruta) params.ruta = opts.ruta;
-    if (opts.market) params.market = opts.market;
-    pushURL(params, opts.replace);
+  const params = {};
+  if (page !== 'routes') params.tab = page;
+  if (opts.post)   params.post   = opts.post;
+  if (opts.ruta)   params.ruta   = opts.ruta;
+  if (opts.market) params.market = opts.market;
+  pushURL(params, opts.replace);
 
     // Acciones específicas
    if (page === 'routes') {
@@ -283,7 +284,7 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
   // Manejar popstate
   window.addEventListener('popstate', e => {
     const st = e.state || {};
-    const page = st.tab || 'home';
+    const page = st.tab || 'routes';
     // Cerrar modales primero
     if ($('.modal.open')) { closeAllModals(); }
     if ($('#viewer.open')) { closeViewer(); return; }
