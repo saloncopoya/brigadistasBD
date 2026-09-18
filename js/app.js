@@ -2301,7 +2301,7 @@ const url = location.origin + '/share/m/' + id;
           endRoutes.forEach(r3 => {
             if (r3.id === r2.id || r3.id === r1.id) return;
             const i23 = routesMinDistance(r2, r3);
-            if (i23.dist > 400) return;
+            if (i23.dist > TRANSFER_CONFIG.TOLERANCIA_TRANSBORDO_M) return;
             chains.push({
               type: 'transfer',
               legs: [r1, r2, r3],
