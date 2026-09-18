@@ -1,25 +1,6 @@
 {
   "posts": [
     {
-      "slug": "norte179",
-      "title": "NORTE",
-      "description": "Ruta NORTE",
-      "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789704741/rvnqkxhcqlgqfd8xx1ej.jpg",
-      "url": "/share/ruta/norte179",
-      "tipo": "ruta",
-      "timestamp": 1789752413015,
-      "updatedAt": "2026-09-18T17:26:53.015Z",
-      "categoria": "urbana",
-      "tarifa": "",
-      "frecuencia": "",
-      "horarioIni": "",
-      "horarioFin": "",
-      "dias": "todos",
-      "paradas": [],
-      "calles": [],
-      "pois": []
-    },
-    {
       "slug": "sur179",
       "title": "SUR",
       "description": "Ruta SUR",
@@ -178,8 +159,8 @@
       ]
     }
   ],
-  "total": 4,
-  "updatedAt": "2026-09-18T17:26:53.015Z",
+  "total": 3,
+  "updatedAt": "2026-09-18T21:06:40.195Z",
   "version": 1,
   "__sha": "c8d37d39d60b5d5039c5eeed921ab1635de5b4af"
 }
