@@ -2958,15 +2958,14 @@ const url = location.origin + '/share/m/' + id;
 
    
   function performTripSearchCore(el) {
-    const el = $('#tripResults');
     if (!el) return;
     clearTripRouteLayers();
     if (state.tripPoints.length < 1) { el.innerHTML = ''; return; }
 
-
-        
     const maxTransfers = Math.min(MAX_TRANSFERS_HARD, +($('#tripMaxTransfers')?.value || 2));
-    const results = { direct: [], transfers: [] };
+     
+     
+     const results = { direct: [], transfers: [] };
 
     if (state.tripPoints.length === 1) {
       // Rutas que tocan el punto A
