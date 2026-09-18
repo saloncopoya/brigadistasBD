@@ -2673,7 +2673,7 @@ const url = location.origin + '/share/m/' + id;
     const total = routeList.length;
 
     // Distancia mínima (m) para considerar que la ida está pegada
-    const NO_ARROW_IF_CLOSER_THAN_M = 15;
+    const NO_ARROW_IF_CLOSER_THAN_M = 30;
     // Ángulo máximo (grados) entre segmentos para considerarse "recto"
     const MAX_ANGLE_FOR_ARROW_DEG = 15;
     // Cada cuántos puntos meter una flechita en la vuelta
