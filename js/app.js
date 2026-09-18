@@ -202,6 +202,25 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
     }
   } catch (e) { console.warn('[Firebase] No inicializado:', e); }
 
+
+     // ==================== HELPER DE ÍNDICES (Cloudflare Worker + KV) ====================
+  // Todos los usuarios comparten 1 read cada 5 min. Baja ~20x el consumo de Firebase.
+  async function fetchIndex(key) {
+    try {
+      const res = await fetch('/api/idx?key=' + encodeURIComponent(key), {
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      return data;
+    } catch (e) {
+      console.warn('[fetchIndex] Falló:', key, e);
+      return null;
+    }
+  }
+
+
+   
   // ==================== NAVEGACIÓN / HISTORIAL ====================
   function buildURL(params) {
     const url = new URL(location.origin + location.pathname);
@@ -623,60 +642,71 @@ const url = location.origin + '/share/post/' + post.id;
   $('#viewerClose').onclick = closeViewer;
   $('#viewer').onclick = (e) => { if (e.target.id === 'viewer') closeViewer(); };
       
-      async function loadRoutes() {
-  // ─────────────────────────────────────────────
-  // FASE 1: leer IndexedDB (rápido, ~10-50ms)
-  // ─────────────────────────────────────────────
-  let local = [];
-  try { local = await DB.getAll('routes'); } catch (e) {}
-  state.routes = local.sort((a, b) =>
-    String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es',
-      { numeric: true, sensitivity: 'base' })
-  );
 
-  // ⚡ Si ya hay rutas locales, pintarlas YA y devolver el control
-  //    (la app se siente instantánea).
-  if (state.routes.length && state.currentPage === 'routes') {
-    try { renderRouteContent(); } catch (e) {}
-  }
 
-  // ─────────────────────────────────────────────
-  // FASE 2: Firebase en BACKGROUND (no bloquea)
-  // ─────────────────────────────────────────────
-  if (state.online && fbDB) {
-    // No await: dejamos que corra y repinte cuando termine
-    (async () => {
-      try {
-        // Solo traer campos que la UI necesita — no la geometría completa.
-        // Firebase no permite "project", así que traemos todo, pero lo
-        // procesamos rápido.
-        const snap = await fbDB.ref('rutas_colectivos_tgz').once('value');
-        const val = snap.val() || {};
-        const map = new Map(state.routes.map(r => [r.id, r]));
-        Object.values(val).forEach(r => {
-          if (r && r.id && !map.has(r.id)) map.set(r.id, r);
-        });
 
-        state.routes = Array.from(map.values()).sort((a, b) =>
-          String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es',
-            { numeric: true, sensitivity: 'base' })
-        );
+     async function loadRoutes() {
+    // ─── FASE 1: IndexedDB local (rápido) ───
+    let local = [];
+    try { local = await DB.getAll('routes'); } catch (e) {}
+    state.routes = local.sort((a, b) =>
+      String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es',
+        { numeric: true, sensitivity: 'base' })
+    );
 
-        // Repintar SOLO si estamos en la pestaña de rutas
-        if (state.currentPage === 'routes') {
-          try { renderRouteContent(); } catch (e) {}
+    if (state.routes.length && state.currentPage === 'routes') {
+      try { renderRouteContent(); } catch (e) {}
+    }
+
+    // ─── FASE 2: Worker (índice compartido, cacheado en KV) ───
+    if (state.online) {
+      (async () => {
+        try {
+          const idx = await fetchIndex('rutas_index');
+          if (!idx) return;
+          const map = new Map(state.routes.map(r => [r.id, r]));
+          Object.values(idx).forEach(r => {
+            if (r && r.id) map.set(r.id, { ...(map.get(r.id) || {}), ...r });
+          });
+          state.routes = Array.from(map.values()).sort((a, b) =>
+            String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es',
+              { numeric: true, sensitivity: 'base' })
+          );
+          if (state.currentPage === 'routes') {
+            try { renderRouteContent(); } catch (e) {}
+          }
+        } catch (e) {
+          console.warn('[loadRoutes] Worker falló:', e);
         }
-      } catch (e) {
-        console.warn('[loadRoutes] Firebase falló:', e);
-      }
-    })();
+      })();
+    }
+
+    __routeIndex = null;
+    return state.routes;
   }
 
-  // ♻️ Invalidar el índice espacial de transbordos cuando cambian las rutas
-  __routeIndex = null;
+  // 🚀 Carga la geometría pesada de UNA ruta bajo demanda.
+  // La guarda en IndexedDB para no volver a pedirla.
+  async function loadRouteGeo(id) {
+    // 1) IndexedDB primero
+    try {
+      const cached = await DB.get('routes_geo', id);
+      if (cached && Array.isArray(cached.geometriaIda)) return cached;
+    } catch (e) {}
+    // 2) Worker → KV → Firebase
+    if (!state.online) return null;
+    try {
+      const geo = await fetchIndex('rutas_geo/' + id);
+      if (geo && typeof geo === 'object') {
+        const record = { id, ...geo };
+        try { await DB.put('routes_geo', record); } catch (e) {}
+        return record;
+      }
+    } catch (e) {}
+    return null;
+  }
 
-  return state.routes;
-}
+   
 
   function renderRouteContent() {
     const mode = state.routeMode;
@@ -884,10 +914,29 @@ const url = location.origin + '/share/post/' + post.id;
     });
   }
 
-  async function openRouteDetail(route) {
+
+
+
+     async function openRouteDetail(route) {
     state.currentRoute = route;
     navigateTo('route', { ruta: route.id, route });
+
+    // 🚀 Cargar geometría bajo demanda si no la tenemos
+    const needsGeo = !route.geometriaIda || !route.geometriaIda.length;
+    if (needsGeo && state.online) {
+      const geo = await loadRouteGeo(route.id);
+      if (geo) {
+        Object.assign(route, geo);
+        // Refrescar el mapa con la geometría nueva
+        if (state.currentPage === 'route' && state.currentRoute?.id === route.id) {
+          try { initRouteMap(route); } catch (e) {}
+        }
+      }
+    }
   }
+
+
+   
 
   function renderRouteDetail(route) {
     const hero = $('#routeHero');
@@ -1559,12 +1608,31 @@ const url = location.origin + '/share/ruta/' + route.id;
         updatedAt: Date.now(),
         url: `/share/ruta/${id}`
       };
-      await DB.put('routes', route);
-      if (fbDB && state.online) fbDB.ref('rutas_colectivos_tgz/' + id).set(route).catch(() => {});
+
+
+             await DB.put('routes', route);
+      if (fbDB && state.online) {
+        // 🎯 Separar índice y geometría
+        const routeIndex = { ...route };
+        delete routeIndex.geometriaIda;
+        delete routeIndex.geometriaVuelta;
+
+        const routeGeo = {
+          id,
+          geometriaIda: state.routeDraft.geometriaIda || [],
+          geometriaVuelta: state.routeDraft.geometriaVuelta || []
+        };
+
+        await Promise.all([
+          fbDB.ref('rutas_index/' + id).set(routeIndex).catch(() => {}),
+          fbDB.ref('rutas_geo/' + id).set(routeGeo).catch(() => {})
+        ]);
+      }
       await loadRoutes();
       renderRouteContent();
       closeModal('editorModal');
       toast('Ruta guardada ✓');
+       
     };
   }
 
@@ -1578,11 +1646,13 @@ const url = location.origin + '/share/ruta/' + route.id;
     try { renderMarket(); } catch (e) {}
   }
 
-  if (state.online && fbDB) {
+
+
+       if (state.online) {
     (async () => {
       try {
-        const snap = await fbDB.ref('marketplace').once('value');
-        const val = snap.val() || {};
+        const val = await fetchIndex('marketplace');
+        if (!val) return;
         const map = new Map(state.market.map(m => [m.id, m]));
         Object.values(val).forEach(m => {
           if (m && m.id && !map.has(m.id)) map.set(m.id, m);
@@ -1758,7 +1828,7 @@ const url = location.origin + '/share/m/' + id;
 
       const [postsSnap, routesSnap, marketSnap] = await Promise.all([
         fbDB.ref('publicaciones').once('value'),
-        fbDB.ref('rutas_colectivos_tgz').once('value'),
+        fbDB.ref('rutas_index').once('value'),
         fbDB.ref('marketplace').once('value')
       ]);
 
@@ -2836,13 +2906,33 @@ const url = location.origin + '/share/m/' + id;
   // (routeDistanceToPoint y getRouteAllSegments ya existen más arriba;
   //  los dejamos tal cual para no romper performTripSearch.)
 
-
      function performTripSearch() {
     const el = $('#tripResults');
     if (!el) return;
     clearTripRouteLayers();
     if (state.tripPoints.length < 1) { el.innerHTML = ''; return; }
 
+    // 🚀 Asegurar geometrías antes de calcular (async, no bloquea)
+    ensureAllGeos().then(() => performTripSearchCore(el));
+  }
+
+  async function ensureAllGeos() {
+    if (!state.online) return;
+    const needs = state.routes.filter(r => !r.geometriaIda || !r.geometriaIda.length);
+    if (!needs.length) return;
+    await Promise.all(needs.map(r =>
+      loadRouteGeo(r.id).then(geo => { if (geo) Object.assign(r, geo); })
+    ));
+  }
+
+  function performTripSearchCore(el) {
+    const el = $('#tripResults');
+    if (!el) return;
+    clearTripRouteLayers();
+    if (state.tripPoints.length < 1) { el.innerHTML = ''; return; }
+
+
+        
     const maxTransfers = Math.min(MAX_TRANSFERS_HARD, +($('#tripMaxTransfers')?.value || 2));
     const results = { direct: [], transfers: [] };
 
@@ -3428,6 +3518,41 @@ await Promise.all([
     }
   });
 
+
+    async migrateToSplit() {
+      if (!state.isAdmin) { toast('Necesitas ser admin primero', 'err'); return; }
+      if (!state.online || !fbDB) { toast('Sin conexión', 'err'); return; }
+      if (!confirm('¿Migrar todas las rutas a la nueva estructura (índice + geometría separados)?')) return;
+
+      const snap = await fbDB.ref('rutas_colectivos_tgz').once('value');
+      const val = snap.val() || {};
+      const entries = Object.entries(val);
+      if (!entries.length) { toast('No hay rutas para migrar'); return; }
+
+      let done = 0;
+      toast(`Migrando ${entries.length} rutas…`);
+      for (const [id, r] of entries) {
+        if (!r || !r.id) continue;
+        const idx = { ...r };
+        delete idx.geometriaIda;
+        delete idx.geometriaVuelta;
+        const geo = {
+          id,
+          geometriaIda: r.geometriaIda || [],
+          geometriaVuelta: r.geometriaVuelta || []
+        };
+        await Promise.all([
+          fbDB.ref('rutas_index/' + id).set(idx).catch(() => {}),
+          fbDB.ref('rutas_geo/' + id).set(geo).catch(() => {})
+        ]);
+        done++;
+        if (done % 20 === 0) toast(`Migradas ${done}/${entries.length}`);
+      }
+      toast(`✅ Migración completa: ${done} rutas`, 'ok');
+      await loadRoutes();
+    },
+   
+   
   // ==================== API PÚBLICA ====================
   global.App = {
     state,
