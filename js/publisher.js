@@ -144,26 +144,25 @@
 
   // ---------- Leer índice de posts ----------
   async function fetchIndex() {
-    try {
-      // Intentar red primero
-      if (navigator.onLine) {
-        const res = await fetch(`${API_BASE}/posts`, { cache: 'no-store' });
-        if (res.ok) {
-          const data = await res.json();
-          try { await DB.setMeta('posts_index', data); } catch (e) {}
-          return data;
-        }
+  try {
+    if (navigator.onLine) {
+      const res = await fetch(`${API_BASE}/idx?key=posts_index`, { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        try { await DB.setMeta('posts_index', data); } catch (e) {}
+        return data;
       }
+    }
+  } catch (e) { /* fallback local */ }
+  try {
+    const cached = await DB.getMeta('posts_index');
+    if (cached) return cached;
+  } catch (e) {}
+  return { posts: [], total: 0, updatedAt: null };
+}
 
-       
-    } catch (e) { /* fallback local */ }
-    // Fallback: IndexedDB
-    try {
-      const cached = await DB.getMeta('posts_index');
-      if (cached) return cached;
-    } catch (e) {}
-    return { posts: [], total: 0, updatedAt: null };
-  }
+
+   
 
   // ---------- Compartir ----------
   async function share({ title, text, url }) {
