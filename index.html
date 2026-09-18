@@ -200,7 +200,8 @@ img{max-width:100%;display:block}
 .bottom-nav{
   position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav-h) + env(safe-area-inset-bottom));
   padding-bottom:env(safe-area-inset-bottom);
-  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(18px);
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+   backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(18px);
   border-top:1px solid var(--text-2);
   display:grid;grid-template-columns:repeat(3,1fr);z-index:1000;
 }
@@ -1145,7 +1146,8 @@ body.fs-active{overflow:hidden !important}
 
       <!-- Barra de control compacta ARRIBA del mapa -->
       <div class="trip-controls">
-        <div class="trip-controls-row">
+        <!-- 🎯 Estos controles se ocultan hasta que haya al menos 1 punto -->
+        <div class="trip-controls-row hidden" id="tripControlsRow">
           <div class="trip-radius-box">
             <label>Radio de busqueda: <span id="tripRadiusVal">300</span>m</label>
             <input type="range" id="tripRadius" min="10" max="2000" value="300" step="10">
@@ -1153,8 +1155,8 @@ body.fs-active{overflow:hidden !important}
           <div class="trip-transfers-box">
             <label>Máx. transbordos:</label>
             <select class="select" id="tripMaxTransfers">
-            <option value="1" selected>1 transbordo</option>
-<option value="2">2 transbordos</option>
+              <option value="1" selected>1 transbordo</option>
+              <option value="2">2 transbordos</option>
               <option value="3">3 transbordos</option>
               <option value="4">4 transbordos</option>
             </select>
