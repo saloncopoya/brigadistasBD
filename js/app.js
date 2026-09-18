@@ -19,6 +19,34 @@ apiKey: "AIzaSyAiojpfnGUPhaoQkpAh1Yey3fp6uWU-iFQ",
 
 const DEFAULT_CENTER = [16.7530, -93.1150];
   const DEFAULT_ZOOM = 14;
+   // ============================================================
+// 🎯 CONFIGURACIÓN DEL MOTOR DE TRANSBORDOS
+// ============================================================
+const TRANSFER_CONFIG = {
+  // Distancia mínima entre 2 rutas para hacer transbordo (metros).
+  // Sirve para detectar cruces de trazos Y trazos paralelos.
+  //   - 50m  → solo cruces exactos
+  //   - 100m → trazos paralelos en la misma calle
+  //   - 150m → trazos en calles contiguas (default)
+  //   - 400m → muy tolerante
+  TOLERANCIA_TRANSBORDO_M: 150,
+
+  // Máximo de transbordos permitidos (cap duro).
+  MAX_TRANSBORDOS: 2,
+
+  // Máximo de resultados a mostrar.
+  MAX_RESULTADOS: 20,
+
+  // Factor urbano para estimar distancia real (sin OSRM).
+  //   1.0 = línea recta pura
+  //   1.35 = ciudades medianas (default)
+  //   1.5 = ciudades con calles sinuosas
+  HAVERSINE_FACTOR_URBANO: 1.35,
+
+  // TTL de cache en IndexedDB (7 días).
+  CACHE_TTL_MS: 7 * 24 * 60 * 60 * 1000
+};
+   
 
   // ==================== UTILIDADES ====================
   const $ = (s, r = document) => r.querySelector(s);
@@ -2231,7 +2259,11 @@ const url = location.origin + '/share/m/' + id;
 
   // Encuentra todos los transbordos posibles (1, 2, 3, 4 saltos)
   function findTransferChains(startPoint, endPoint, maxTransfers) {
-    maxTransfers = Math.max(1, +maxTransfers || 1);
+    // 🎯 Cap a MAX_TRANSBORDOS (default 2) para evitar O(N^3)
+    maxTransfers = Math.min(
+      TRANSFER_CONFIG.MAX_TRANSBORDOS,
+      Math.max(1, +maxTransfers || 1)
+    );
      const chains = [];
     const startRoutes = state.routes.filter(r => routeNearPoint(r, startPoint, startPoint.radius));
     const endRoutes   = state.routes.filter(r => routeNearPoint(r, endPoint, endPoint.radius));
@@ -2244,7 +2276,9 @@ const url = location.origin + '/share/m/' + id;
         endRoutes.forEach(r2 => {
           if (r1.id === r2.id) return;
           const inter = routesMinDistance(r1, r2);
-          if (inter.dist <= 400) {
+         
+
+                     if (inter.dist <= TRANSFER_CONFIG.TOLERANCIA_TRANSBORDO_M) {
             chains.push({
               type: 'transfer',
               legs: [r1, r2],
@@ -2263,7 +2297,7 @@ const url = location.origin + '/share/m/' + id;
         state.routes.forEach(r2 => {
           if (r2.id === r1.id) return;
           const i12 = routesMinDistance(r1, r2);
-          if (i12.dist > 400) return;
+          if (i12.dist > TRANSFER_CONFIG.TOLERANCIA_TRANSBORDO_M) return;
           endRoutes.forEach(r3 => {
             if (r3.id === r2.id || r3.id === r1.id) return;
             const i23 = routesMinDistance(r2, r3);
@@ -2280,66 +2314,7 @@ const url = location.origin + '/share/m/' + id;
       });
     }
 
-    // 3 transbordos (4 rutas)
-    if (maxTransfers >= 3) {
-      startRoutes.forEach(r1 => {
-        state.routes.forEach(r2 => {
-          if (r2.id === r1.id) return;
-          const i12 = routesMinDistance(r1, r2);
-          if (i12.dist > 400) return;
-          state.routes.forEach(r3 => {
-            if (r3.id === r2.id || r3.id === r1.id) return;
-            const i23 = routesMinDistance(r2, r3);
-            if (i23.dist > 400) return;
-            endRoutes.forEach(r4 => {
-              if (r4.id === r3.id || r4.id === r2.id || r4.id === r1.id) return;
-              const i34 = routesMinDistance(r3, r4);
-              if (i34.dist > 400) return;
-              chains.push({
-                type: 'transfer',
-                legs: [r1, r2, r3, r4],
-                transferPoints: [i12.mid, i23.mid, i34.mid],
-                totalDist: routeTotalDistance(r1) + routeTotalDistance(r2) + routeTotalDistance(r3) + routeTotalDistance(r4),
-                transfers: 3
-              });
-            });
-          });
-        });
-      });
-    }
 
-    // 4 transbordos (5 rutas)
-    if (maxTransfers >= 4) {
-      startRoutes.forEach(r1 => {
-        state.routes.forEach(r2 => {
-          if (r2.id === r1.id) return;
-          const i12 = routesMinDistance(r1, r2);
-          if (i12.dist > 400) return;
-          state.routes.forEach(r3 => {
-            if (r3.id === r2.id || r3.id === r1.id) return;
-            const i23 = routesMinDistance(r2, r3);
-            if (i23.dist > 400) return;
-            state.routes.forEach(r4 => {
-              if (r4.id === r3.id || r4.id === r2.id || r4.id === r1.id) return;
-              const i34 = routesMinDistance(r3, r4);
-              if (i34.dist > 400) return;
-              endRoutes.forEach(r5 => {
-                if (r5.id === r4.id || r5.id === r3.id || r5.id === r2.id || r5.id === r1.id) return;
-                const i45 = routesMinDistance(r4, r5);
-                      if (i45.dist > 400) return;
-                chains.push({
-                  type: 'transfer',
-                  legs: [r1, r2, r3, r4, r5],
-                  transferPoints: [i12.mid, i23.mid, i34.mid, i45.mid],
-                  totalDist: routeTotalDistance(r1) + routeTotalDistance(r2) + routeTotalDistance(r3) + routeTotalDistance(r4) + routeTotalDistance(r5),
-                  transfers: 4
-                });
-              });
-            });
-          });
-        });
-      });
-    }
 
     // Eliminar cadenas duplicadas (misma secuencia de rutas)
     const seen = new Set();
@@ -2357,7 +2332,11 @@ const url = location.origin + '/share/m/' + id;
     clearTripRouteLayers();
     if (state.tripPoints.length < 1) { el.innerHTML = ''; return; }
 
-const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
+    const maxTransfers = Math.min(
+      TRANSFER_CONFIG.MAX_TRANSBORDOS,
+      +($('#tripMaxTransfers')?.value || TRANSFER_CONFIG.MAX_TRANSBORDOS)
+    );
+     
      const results = { direct: [], transfers: [] };
 
     if (state.tripPoints.length === 1) {
@@ -2388,7 +2367,7 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
           const chains = findTransferChains(start, end, maxTransfers);
           // Ordenar por: menos transbordos primero, luego distancia total
           chains.sort((a, b) => a.transfers - b.transfers || a.totalDist - b.totalDist);
-          results.transfers = chains.slice(0, 20);
+          results.transfers = chains.slice(0, TRANSFER_CONFIG.MAX_RESULTADOS);
         } else {
           // Para 3+ puntos: buscar cadena que pase por todos los puntos
           // Estrategia simplificada: buscar ruta que una start→mid1, mid1→mid2, etc.
