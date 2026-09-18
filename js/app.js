@@ -1285,6 +1285,8 @@ const url = location.origin + '/share/ruta/' + route.id;
               <div class="rc-sub">${esc(r.categoria || 'urbana')}</div>
             </div>
             <span class="badge badge-green">Pasa por aquí</span>
+
+            
           </div>
         </div>`).join('');
        
@@ -2005,6 +2007,24 @@ const url = location.origin + '/share/m/' + id;
     return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
 
+     // 📏 Distancia acumulada del viaje: A→B + B→C + C→D + ...
+  // Recorre los puntos del viaje en orden y suma las distancias
+  // entre cada par consecutivo. Devuelve un string formateado:
+  // "450 m", "1.2 km", "12.3 km", etc.
+  function formatTripDistance(points) {
+    if (!points || points.length < 2) return '—';
+    let metros = 0;
+    for (let i = 0; i < points.length - 1; i++) {
+      metros += haversine(
+        points[i].lat, points[i].lng,
+        points[i + 1].lat, points[i + 1].lng
+      );
+    }
+    if (metros < 1000) return `${Math.round(metros)} m`;
+    return `${(metros / 1000).toFixed(1)} km`;
+  }
+   
+   
   // Devuelve TODAS las polilíneas posibles de una ruta (ida + vuelta)
   // combinando geometría real (OSRM) y puntos crudos como fallback.
   function getRouteAllSegments(route) {
@@ -2441,8 +2461,9 @@ const maxTransfers = +($('#tripMaxTransfers')?.value || 2);
                 <span class="trip-badge-route" style="background:${TRIP_COLORS[idx % TRIP_COLORS.length]}">${idx+1}</span>
                 ${esc(r.route.nombre)}
               </div>
-              <div class="rc-sub">${esc(r.route.categoria || 'urbana')}${r.dist ? ' · ' + Math.round(r.dist) + 'm del punto' : ''}</div>
-            </div>
+
+                            <div class="rc-sub">${esc(r.route.categoria || 'urbana')} · ${formatTripDistance(state.tripPoints)}</div>
+                          </div>
             <span class="badge badge-green">Directa</span>
           </div>
           <div class="trip-result-actions">
@@ -2493,10 +2514,11 @@ const legColor = li === 0 ? '#00e5ff' : '#a855f7';
               return `
         <div class="result-card transbordo" data-result-idx="${idx}" data-result-type="transfer">
           <div class="rc-head">
-         
+            
             <div style="flex:1">
               <div class="trip-chain">${chipsHtml}</div>
-              <div class="rc-sub">${t.transfers} transbordo(s) · ~${Math.round(t.totalDist)}m totales</div>
+             
+              <div class="rc-sub">${t.transfers} transbordo(s) · ${formatTripDistance(state.tripPoints)}</div>              
             </div>
             <span class="badge badge-amber">${t.transfers}T</span>
           </div>
