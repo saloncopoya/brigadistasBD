@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0e1a">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Norte - urbana · Tuxtla Gutiérrez Chiapas</title>
+<meta name="description" content="Ruta Norte">
+<link rel="canonical" href="https://brigadistasbd.pages.dev/share/ruta/norte179">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" type="image/svg+xml" href="/assets/icon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/icon.svg">
+<link rel="apple-touch-icon" sizes="152x152" href="/assets/icon.svg">
+<link rel="apple-touch-icon" sizes="120x120" href="/assets/icon.svg">
+<meta name="format-detection" content="telephone=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rutas BGD">
+<link rel="preconnect" href="https://tile.openstreetmap.org">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Norte - urbana · Tuxtla Gutiérrez Chiapas">
+<meta property="og:description" content="Ruta Norte">
+<meta property="og:image" content="https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789704741/rvnqkxhcqlgqfd8xx1ej.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:url" content="https://brigadistasbd.pages.dev/share/ruta/norte179">
+<meta property="og:site_name" content="Rutas BGD">
+<meta property="og:locale" content="es_MX">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Norte - urbana · Tuxtla Gutiérrez Chiapas">
+<meta name="twitter:description" content="Ruta Norte">
+<meta name="twitter:image" content="https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789704741/rvnqkxhcqlgqfd8xx1ej.jpg">
+
+<!-- Schema.org -->
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BusTrip","name":"Norte","description":"Ruta Norte","url":"https://brigadistasbd.pages.dev/share/ruta/norte179","image":"https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789704741/rvnqkxhcqlgqfd8xx1ej.jpg","provider":{"@type":"Organization","name":"Rutas BGD","url":"https://brigadistasbd.pages.dev"},"itinerary":[]}</script>
+
+<link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
+
+<style>
+:root{
+  --cyan:#00e5ff;--cyan-d:#00b8cc;--cyan-glow:rgba(0,229,255,.35);
+  --purple:#a855f7;--green:#10b981;--amber:#f59e0b;--red:#ef4444;
+  --radius:14px;--radius-sm:10px;--radius-lg:22px;
+  --shadow:0 10px 30px rgba(0,0,0,.35);--shadow-sm:0 4px 12px rgba(0,0,0,.25);
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --header-h:58px;--nav-h:64px;--transition:.25s cubic-bezier(.4,0,.2,1);
+}
+[data-theme="dark"]{--bg:#0a0e1a;--bg-2:#0f1526;--surface:#141c30;--surface-2:#1c2540;--surface-3:#242f4d;--border:#26314f;--border-2:#334066;--text:#e8edf7;--text-2:#a9b4cc;--text-3:#6b7793;--input-bg:#0f1626}
+[data-theme="light"]{--bg:#f4f6fb;--bg-2:#fff;--surface:#fff;--surface-2:#f4f6fb;--surface-3:#e8ecf5;--border:#dde3ee;--border-2:#c5cfe2;--text:#0c1322;--text-2:#4a5773;--text-3:#8a95ad;--input-bg:#f8fafd}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.6;padding:0;padding-top:var(--header-h);padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom))}
+
+/* HEADER */
+.header{position:fixed;top:0;left:0;right:0;height:var(--header-h);background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 14px;z-index:1000}
+.header-brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px;letter-spacing:-.3px;color:var(--text);text-decoration:none}
+.header-brand .logo{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--cyan),var(--cyan-d));display:grid;place-items:center;color:#00121a;box-shadow:0 0 18px var(--cyan-glow)}
+.header-brand .logo svg{width:20px;height:20px}
+.header-brand .brand-txt{background:linear-gradient(90deg,var(--cyan),#7dd3fc);-webkit-background-clip:text;background-clip:text;color:transparent}
+.header-actions{display:flex;align-items:center;gap:6px}
+.icon-btn{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;color:var(--text-2);transition:var(--transition);text-decoration:none}
+.icon-btn:hover{background:var(--surface-2);color:var(--cyan)}
+.icon-btn svg{width:20px;height:20px}
+
+/* NAV INFERIOR */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav-h) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:color-mix(in srgb,var(--surface) 96%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(3,1fr);z-index:1000}
+.nav-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--text-3);font-size:11px;font-weight:600;transition:var(--transition);text-decoration:none;position:relative}
+.nav-item svg{width:23px;height:23px}
+.nav-item.active{color:var(--cyan)}
+.nav-item.active::before{content:"";position:absolute;top:6px;width:44px;height:3px;border-radius:0 0 4px 4px;background:var(--cyan);box-shadow:0 0 14px var(--cyan-glow)}
+
+/* CONTENIDO */
+.wrap{max-width:760px;margin:0 auto;padding:20px}
+.back{display:inline-flex;align-items:center;gap:6px;color:var(--cyan);text-decoration:none;font-size:13px;font-weight:700;margin-bottom:16px}
+h1{font-size:26px;font-weight:900;letter-spacing:-.4px;margin-bottom:8px;line-height:1.2}
+.meta{color:var(--text-2);font-size:13px;margin-bottom:20px}
+
+/* 🔒 IMAGEN SEO: oculta visualmente pero presente para crawlers */
+.seo-hero{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* MAPA GRANDE */
+.route-map-hero{
+  width:100%;height:50vh;min-height:340px;
+  border-radius:var(--radius);overflow:hidden;
+  border:1px solid var(--border);background:var(--surface-2);
+  position:relative;margin-bottom:20px;
+}
+#shareMapBig{width:100%;height:100%;z-index:1}
+.map-fs-btn{position:absolute;bottom:12px;right:12px;z-index:600;background:color-mix(in srgb,var(--surface) 96%,transparent);border:1px solid var(--border-2);border-radius:12px;width:42px;height:42px;display:grid;place-items:center;color:var(--text);box-shadow:var(--shadow);backdrop-filter:blur(10px);cursor:pointer}
+.map-fs-btn svg{width:20px;height:20px}
+.map-wrap.is-fullscreen{position:fixed!important;inset:0!important;z-index:9500!important;margin:0!important;border-radius:0!important;border:none!important;height:100vh!important}
+.map-wrap.is-fullscreen #shareMapBig{height:100vh!important;width:100vw!important}
+body.fs-active{overflow:hidden!important}
+.leaflet-container{background:var(--bg-2)!important;font-family:var(--font)!important}
+.leaflet-control-attribution{background:color-mix(in srgb,var(--surface) 88%,transparent)!important;color:var(--text-2)!important;font-size:10px!important}
+.leaflet-control-attribution a{color:var(--cyan)!important}
+.leaflet-control-zoom a{background:var(--surface)!important;color:var(--text)!important;border-color:var(--border)!important}
+
+
+/* LEYENDA MAPA (compacta) */
+.map-legend{background:color-mix(in srgb,var(--surface) 92%,transparent)!important;padding:4px 10px;border-radius:8px;font-size:11px;color:var(--text);border:1px solid var(--border);line-height:1.3;backdrop-filter:blur(8px)}
+.map-legend .lg-line{display:inline-block;width:16px;height:5px;vertical-align:middle;margin-right:6px;border-radius:2px}
+
+/* Botón centrado inferior dentro del mapa */
+.map-trip-btn-wrap{pointer-events:auto;padding-bottom:0px;position:absolute!important;left:50%!important;bottom:10px!important;transform:translateX(-50%)!important;z-index:700!important}
+.leaflet-bottom.leaflet-left,.leaflet-bottom.leaflet-right{width:100%;pointer-events:none}
+.leaflet-bottom.leaflet-left>*,.leaflet-bottom.leaflet-right>*{pointer-events:auto}
+
+.map-trip-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:2px 5px;border-radius:12px;background:linear-gradient(135deg,var(--cyan),var(--cyan-d));color:#00121a;font-family:inherit;font-weight:800;font-size:12px;letter-spacing:.2px;border:1px solid transparent;box-shadow:0 6px 18px -6px rgba(0,229,255,.35);cursor:pointer;transition:all .25s cubic-bezier(.4,0,.2,1);text-align:center;white-space:nowrap}
+.map-trip-btn:hover{filter:brightness(1.08);box-shadow:0 8px 22px -6px rgba(0,229,255,.55)}
+.map-trip-btn:active{transform:scale(.96)}
+.map-trip-btn svg{width:14px;height:14px}
+.map-trip-btn span{font-size:11.5px;font-weight:800;line-height:1}
+.map-trip-btn small{font-size:9.5px;font-weight:600;opacity:.75;line-height:1;letter-spacing:.1px}
+
+/* BLOQUES */
+.block{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px}
+.block h3{font-size:14px;font-weight:800;margin-bottom:10px;color:var(--cyan);display:flex;align-items:center;gap:6px}
+.block ul{list-style:none;padding:0}
+.block li{padding:7px 0;border-bottom:1px solid var(--border);font-size:14px}
+.block li:last-child{border-bottom:none}
+.post-content{font-size:15.5px;line-height:1.7;color:var(--text);background:var(--surface);padding:18px;border-radius:var(--radius);border:1px solid var(--border);margin-bottom:20px}
+.badge{display:inline-block;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin-bottom:12px}
+.badge-urbana{background:rgba(0,229,255,.16);color:var(--cyan)}
+.badge-foranea{background:rgba(168,85,247,.18);color:var(--purple)}
+.badge-green{background:rgba(16,185,129,.16);color:var(--green)}
+.price{font-size:22px;font-weight:900;color:var(--green);margin:10px 0}
+.cta{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:11px 18px;border-radius:10px;font-weight:700;font-size:13.5px;text-decoration:none;border:none;cursor:pointer;font-family:inherit}
+.btn-primary{background:linear-gradient(135deg,var(--cyan),#00b8cc);color:#00121a}
+.btn-ghost{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+/* 📝 PÁRRAFOS INTRODUCTORIOS (SEO) */
+.intro-paragraphs{margin:20px 0}
+.intro-paragraphs p{font-size:14.5px;line-height:1.75;color:var(--text-2);margin-bottom:14px;text-align:justify}
+.intro-paragraphs p strong{color:var(--text);font-weight:700}
+.intro-paragraphs p a{color:var(--cyan);text-decoration:none}
+.intro-paragraphs p a:hover{text-decoration:underline}
+
+footer{margin-top:30px;padding-top:20px;border-top:1px solid var(--border);color:var(--text-2);font-size:12px;text-align:center}
+footer a{color:var(--cyan)}
+</style>
+</head>
+<body data-theme="dark">
+
+<!-- HEADER -->
+<header class="header">
+  <a class="header-brand" href="https://brigadistasbd.pages.dev/">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+        <circle cx="12" cy="10" r="3"/>
+      </svg>
+    </div>
+    <span class="brand-txt">TUXRUTAS</span>
+    </a>
+  <div class="header-actions">
+    <a class="icon-btn" href="https://brigadistasbd.pages.dev/" title="Ir al inicio">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </a>
+  </div>
+</header>
+
+<div class="wrap">
+
+ <div class="cta">
+    <a class="btn btn-primary" href="https://brigadistasbd.pages.dev/">🚌 Ver todas las rutas</a>
+    <a class="btn btn-ghost" href="https://brigadistasbd.pages.dev/?tab=market" rel="nofollow">🛒 Marketplace</a>
+  </div>
+
+  
+  <span class="badge badge-urbana">Ruta</span>
+  <h1>Norte</h1>
+  <div class="meta">18 de septiembre de 2026</div>
+
+  <!-- 🔒 IMAGEN SEO: oculta visualmente pero indexable por Google -->
+  <img class="seo-hero" src="https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789704741/rvnqkxhcqlgqfd8xx1ej.jpg" alt="Norte" title="Norte" width="1200" height="630" loading="eager">
+  
+  
+    <div class="route-map-hero map-wrap" id="mapWrapHero">
+      <div id="shareMapBig"></div>
+      <button class="map-fs-btn" id="mapFsBtn" title="Pantalla completa">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+          <path d="M8 3H5a2 2 0 0 0-2 2v3"/>
+          <path d="M21 8V5a2 2 0 0 0-2-2h-3"/>
+          <path d="M3 16v3a2 2 0 0 0 2 2h3"/>
+          <path d="M16 21h3a2 2 0 0 0 2-2v-3"/>
+        </svg>
+      </button>
+    </div>
+  <link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
+    <script src="/vendor/leaflet/leaflet.js"></script>
+    
+    <script>
+    (function(){
+      var DATA = {"puntos":[[16.771744,-93.14163],[16.765226,-93.095008],[16.743347,-93.071695]],"puntosVuelta":[[16.740988,-93.076121],[16.749973,-93.092706],[16.75425,-93.110327],[16.763061,-93.156567]],"geomIda":[[16.771744,-93.14163],[16.771662,-93.141661],[16.771613,-93.141665],[16.771155,-93.141594],[16.771044,-93.14154],[16.770656,-93.141486],[16.770599,-93.141464],[16.770568,-93.141374],[16.77065,-93.141065],[16.770656,-93.141045],[16.770907,-93.140218],[16.770943,-93.140092],[16.770922,-93.140025],[16.770859,-93.139962],[16.770298,-93.141583],[16.77008,-93.142225],[16.769944,-93.142664],[16.769858,-93.143135],[16.769819,-93.143416],[16.769805,-93.143766],[16.769813,-93.144159],[16.769824,-93.144418],[16.769842,-93.144669],[16.769895,-93.145016],[16.769975,-93.145389],[16.770041,-93.145642],[16.770116,-93.145903],[16.770142,-93.146265],[16.770131,-93.146521],[16.770183,-93.146794],[16.770227,-93.147181],[16.770284,-93.147532],[16.770334,-93.148261],[16.770416,-93.148746],[16.770554,-93.149848],[16.77101,-93.152546],[16.771096,-93.152966],[16.771295,-93.154157],[16.771417,-93.154955],[16.771575,-93.156131],[16.771687,-93.156839],[16.771771,-93.157185],[16.771822,-93.15736],[16.771955,-93.157813],[16.771981,-93.157983],[16.771996,-93.158152],[16.772006,-93.158378],[16.772016,-93.15883],[16.772065,-93.159178],[16.772169,-93.15959],[16.772448,-93.160167],[16.77268,-93.160561],[16.772888,-93.160934],[16.773059,-93.161343],[16.773234,-93.161734],[16.773547,-93.162318],[16.773636,-93.162474],[16.77352,-93.162565],[16.77314,-93.161886],[16.772688,-93.160879],[16.772459,-93.160466],[16.772202,-93.159992],[16.772048,-93.15964],[16.771922,-93.159193],[16.77187,-93.158884],[16.77185,-93.158579],[16.771837,-93.158285],[16.771795,-93.157834],[16.771671,-93.157412],[16.771568,-93.157039],[16.771522,-93.156837],[16.77148,-93.156583],[16.771428,-93.156266],[16.771392,-93.155996],[16.771254,-93.154867],[16.770936,-93.152883],[16.770693,-93.15162],[16.770672,-93.151401],[16.770582,-93.150863],[16.770282,-93.149116],[16.770268,-93.148992],[16.770229,-93.14862],[16.770186,-93.148268],[16.7701,-93.1473],[16.770025,-93.146861],[16.769978,-93.146533],[16.769993,-93.146313],[16.769984,-93.146094],[16.769955,-93.145887],[16.769897,-93.145712],[16.769722,-93.144822],[16.769677,-93.144295],[16.769647,-93.143556],[16.769686,-93.143098],[16.769725,-93.142866],[16.769797,-93.142642],[16.769828,-93.142542],[16.769924,-93.142225],[16.770067,-93.141763],[16.770457,-93.140577],[16.77071,-93.139822],[16.770801,-93.139551],[16.770948,-93.139113],[16.771184,-93.138407],[16.772562,-93.134161],[16.773065,-93.132671],[16.773118,-93.132499],[16.773142,-93.132326],[16.773133,-93.132146],[16.773094,-93.131966],[16.77284,-93.131066],[16.772749,-93.130748],[16.772727,-93.130607],[16.772702,-93.130449],[16.772713,-93.130265],[16.772914,-93.129541],[16.773485,-93.127821],[16.773734,-93.127109],[16.773891,-93.126603],[16.774178,-93.12574],[16.774304,-93.125143],[16.774357,-93.124649],[16.774365,-93.124263],[16.774312,-93.123738],[16.774164,-93.123009],[16.774068,-93.122618],[16.773488,-93.120385],[16.773456,-93.120263],[16.773088,-93.118913],[16.772926,-93.118419],[16.772784,-93.118076],[16.77231,-93.117032],[16.772123,-93.116588],[16.771012,-93.114053],[16.770529,-93.112885],[16.770482,-93.112737],[16.770272,-93.112052],[16.770176,-93.111581],[16.770127,-93.110814],[16.77013,-93.110228],[16.770136,-93.109765],[16.77017,-93.109336],[16.770188,-93.109029],[16.770269,-93.107116],[16.770364,-93.105642],[16.7705,-93.10381],[16.770527,-93.103447],[16.770531,-93.103135],[16.7705,-93.102787],[16.770465,-93.102657],[16.770401,-93.102432],[16.77022,-93.102026],[16.770041,-93.101736],[16.769636,-93.101213],[16.769026,-93.100459],[16.768807,-93.100145],[16.768654,-93.099884],[16.768568,-93.099738],[16.768494,-93.099603],[16.767886,-93.098495],[16.767771,-93.098286],[16.767565,-93.098012],[16.767495,-93.097916],[16.767314,-93.09767],[16.767094,-93.097394],[16.766882,-93.097252],[16.766521,-93.096787],[16.766465,-93.096717],[16.766432,-93.096677],[16.765893,-93.095992],[16.76573,-93.095797],[16.765582,-93.09562],[16.765366,-93.095264],[16.765226,-93.095008],[16.765061,-93.094706],[16.764942,-93.094491],[16.764814,-93.094223],[16.764652,-93.093978],[16.764623,-93.093943],[16.764576,-93.093876],[16.764458,-93.093721],[16.76442,-93.093644],[16.764305,-93.093462],[16.763864,-93.092826],[16.763389,-93.09214],[16.762856,-93.091449],[16.762786,-93.091368],[16.762008,-93.090424],[16.762041,-93.090293],[16.761857,-93.090048],[16.760475,-93.088129],[16.760334,-93.087928],[16.760279,-93.087853],[16.760191,-93.087731],[16.760142,-93.087662],[16.759966,-93.087418],[16.7594,-93.086636],[16.759037,-93.086123],[16.758426,-93.08527],[16.757949,-93.084625],[16.757413,-93.083882],[16.757016,-93.083327],[16.756515,-93.082635],[16.756269,-93.08229],[16.755927,-93.081799],[16.755746,-93.081539],[16.755619,-93.08135],[16.755532,-93.081219],[16.754848,-93.080257],[16.754023,-93.079138],[16.753633,-93.07861],[16.753322,-93.078162],[16.753253,-93.078067],[16.752662,-93.077244],[16.752582,-93.077131],[16.752516,-93.077049],[16.752409,-93.076909],[16.752026,-93.076372],[16.751715,-93.075941],[16.751525,-93.075724],[16.751051,-93.075407],[16.750672,-93.075206],[16.750289,-93.075014],[16.749752,-93.074749],[16.74919,-93.074496],[16.748591,-93.074211],[16.74796,-93.073918],[16.746946,-93.073442],[16.745901,-93.072955],[16.745704,-93.072865],[16.745645,-93.072836],[16.745365,-93.072696],[16.745171,-93.072601],[16.744759,-93.072409],[16.744357,-93.072225],[16.744102,-93.07215],[16.743906,-93.072132],[16.743842,-93.072132],[16.743742,-93.072144],[16.743554,-93.072204],[16.743397,-93.072287],[16.743246,-93.072419],[16.743113,-93.072569],[16.742961,-93.072877],[16.742844,-93.073255],[16.742747,-93.07357],[16.742697,-93.073718],[16.742687,-93.073698],[16.74268,-93.073685],[16.742666,-93.073673],[16.742648,-93.073664],[16.742629,-93.073661],[16.742606,-93.073662],[16.742586,-93.073668],[16.742569,-93.073677],[16.742543,-93.073715],[16.74269,-93.073192],[16.742765,-93.072963],[16.74288,-93.072699],[16.742932,-93.072614],[16.742979,-93.072538],[16.743074,-93.072401],[16.743176,-93.072316],[16.743256,-93.072241],[16.743332,-93.072185],[16.743505,-93.072094],[16.74374,-93.072028],[16.743789,-93.072018],[16.743968,-93.07201],[16.744137,-93.072023],[16.744525,-93.072083],[16.744751,-93.072108],[16.744898,-93.072068],[16.744977,-93.072013],[16.745025,-93.071946],[16.745075,-93.071857],[16.745097,-93.071738],[16.745087,-93.071629],[16.74504,-93.07154],[16.744975,-93.07146],[16.744827,-93.071371],[16.744473,-93.071209],[16.743947,-93.070959],[16.743757,-93.070883],[16.74364,-93.070865],[16.743525,-93.070894],[16.743391,-93.070981],[16.743294,-93.071126],[16.743255,-93.071263],[16.74327,-93.07142],[16.743334,-93.071669],[16.743347,-93.071695]],"geomVuelta":[[16.740988,-93.076121],[16.740873,-93.074888],[16.740744,-93.073739],[16.740739,-93.073673],[16.741046,-93.073627],[16.741409,-93.073582],[16.741526,-93.073576],[16.741707,-93.073587],[16.74169,-93.073664],[16.741533,-93.074264],[16.741491,-93.074468],[16.741498,-93.074591],[16.741586,-93.074812],[16.74163,-93.074979],[16.741656,-93.075211],[16.741619,-93.075725],[16.741655,-93.075873],[16.74172,-93.075944],[16.741778,-93.075971],[16.741857,-93.075991],[16.741927,-93.075761],[16.742261,-93.074691],[16.742503,-93.073861],[16.742543,-93.073715],[16.74269,-93.073192],[16.742765,-93.072963],[16.74288,-93.072699],[16.742932,-93.072614],[16.742979,-93.072538],[16.743074,-93.072401],[16.743176,-93.072316],[16.743256,-93.072241],[16.743332,-93.072185],[16.743505,-93.072094],[16.74374,-93.072028],[16.743789,-93.072018],[16.743968,-93.07201],[16.744137,-93.072023],[16.744392,-93.072103],[16.745179,-93.072492],[16.746343,-93.072989],[16.747117,-93.073319],[16.748039,-93.073741],[16.749146,-93.074266],[16.750271,-93.07459],[16.750717,-93.07475],[16.751027,-93.074932],[16.751294,-93.075128],[16.751532,-93.075419],[16.751707,-93.075654],[16.75184,-93.075833],[16.751953,-93.075988],[16.752042,-93.076112],[16.752163,-93.07628],[16.752295,-93.076474],[16.75237,-93.076582],[16.752628,-93.076949],[16.752685,-93.077023],[16.752922,-93.07735],[16.753088,-93.077579],[16.753316,-93.077893],[16.753612,-93.078128],[16.753719,-93.078282],[16.753896,-93.078535],[16.754002,-93.078687],[16.754844,-93.079844],[16.755604,-93.080925],[16.755746,-93.081132],[16.7558,-93.081213],[16.755746,-93.081248],[16.755595,-93.081326],[16.755485,-93.081362],[16.755318,-93.081416],[16.755284,-93.081426],[16.755115,-93.081476],[16.755033,-93.081498],[16.754736,-93.081587],[16.753408,-93.08196],[16.751478,-93.082539],[16.751227,-93.082611],[16.751025,-93.082617],[16.750838,-93.082589],[16.750549,-93.08248],[16.750386,-93.082397],[16.750185,-93.082322],[16.750118,-93.082309],[16.749967,-93.082308],[16.749852,-93.082328],[16.749694,-93.082378],[16.749338,-93.082525],[16.7492,-93.08258],[16.748875,-93.082713],[16.748109,-93.082998],[16.747767,-93.083156],[16.747557,-93.083297],[16.747551,-93.083312],[16.747544,-93.083327],[16.747572,-93.083623],[16.747723,-93.084571],[16.747921,-93.085737],[16.747923,-93.085748],[16.748034,-93.086308],[16.748054,-93.086396],[16.748128,-93.086761],[16.748219,-93.087235],[16.748436,-93.088229],[16.748526,-93.088655],[16.748576,-93.088887],[16.748628,-93.089137],[16.748839,-93.090133],[16.749173,-93.091618],[16.749268,-93.09204],[16.749386,-93.092567],[16.749455,-93.092865],[16.749778,-93.092792],[16.749973,-93.092706],[16.750145,-93.09263],[16.749778,-93.092792],[16.749455,-93.092865],[16.749463,-93.092912],[16.749583,-93.093453],[16.749628,-93.093653],[16.749813,-93.094507],[16.750139,-93.095967],[16.750353,-93.096931],[16.750485,-93.097513],[16.750688,-93.098417],[16.750747,-93.09868],[16.750918,-93.099436],[16.750949,-93.099582],[16.751198,-93.100691],[16.751468,-93.101871],[16.751629,-93.102932],[16.751643,-93.103022],[16.751788,-93.104047],[16.751803,-93.104143],[16.751955,-93.105178],[16.751968,-93.105268],[16.752224,-93.106814],[16.752699,-93.106743],[16.753656,-93.106604],[16.75367,-93.106679],[16.753757,-93.107395],[16.753903,-93.108198],[16.753919,-93.108359],[16.754037,-93.109057],[16.754047,-93.10913],[16.754095,-93.109386],[16.75425,-93.110327],[16.754335,-93.110842],[16.755177,-93.110655],[16.755374,-93.110609],[16.755437,-93.110596],[16.755473,-93.110595],[16.75576,-93.11061],[16.755782,-93.110611],[16.755845,-93.110613],[16.756197,-93.11066],[16.756537,-93.110707],[16.756762,-93.110714],[16.757629,-93.110736],[16.757722,-93.110712],[16.757703,-93.11078],[16.757696,-93.110834],[16.757701,-93.111024],[16.757701,-93.111044],[16.757702,-93.111071],[16.757719,-93.11176],[16.75772,-93.111809],[16.757721,-93.111833],[16.757751,-93.112726],[16.757752,-93.112772],[16.757755,-93.112819],[16.757783,-93.113303],[16.757803,-93.113596],[16.757807,-93.113652],[16.757864,-93.114376],[16.757916,-93.114799],[16.757917,-93.114811],[16.757938,-93.114984],[16.757939,-93.11499],[16.757974,-93.115271],[16.757986,-93.115357],[16.75816,-93.116229],[16.758317,-93.117142],[16.75852,-93.118031],[16.758682,-93.11878],[16.7587,-93.118876],[16.758827,-93.119576],[16.75901,-93.120505],[16.759066,-93.120792],[16.759166,-93.121337],[16.75932,-93.12225],[16.759473,-93.123149],[16.75961,-93.12386],[16.759621,-93.123917],[16.75963,-93.123965],[16.759853,-93.125046],[16.759982,-93.125667],[16.760141,-93.126437],[16.760227,-93.126856],[16.760538,-93.128867],[16.76065,-93.129575],[16.760698,-93.129888],[16.760744,-93.130199],[16.760801,-93.13059],[16.760855,-93.130959],[16.760878,-93.13111],[16.76094,-93.131516],[16.760978,-93.131825],[16.760986,-93.131894],[16.76116,-93.133064],[16.761176,-93.133186],[16.761253,-93.133715],[16.761284,-93.134005],[16.761318,-93.134219],[16.761397,-93.134664],[16.761478,-93.135036],[16.761516,-93.135209],[16.761548,-93.135337],[16.761566,-93.135408],[16.761746,-93.136007],[16.761996,-93.136714],[16.76205,-93.136866],[16.762119,-93.137052],[16.762161,-93.137163],[16.762276,-93.137493],[16.762359,-93.137723],[16.762403,-93.137845],[16.762481,-93.138067],[16.76258,-93.13838],[16.762633,-93.138538],[16.762731,-93.138841],[16.762824,-93.139121],[16.763044,-93.139783],[16.763147,-93.140116],[16.763167,-93.140181],[16.76319,-93.140257],[16.763292,-93.140497],[16.763342,-93.14058],[16.76343,-93.140686],[16.763557,-93.140845],[16.763587,-93.140843],[16.763629,-93.14085],[16.763668,-93.14087],[16.763701,-93.140899],[16.763725,-93.140937],[16.763737,-93.140978],[16.763739,-93.141022],[16.763731,-93.141064],[16.763711,-93.141103],[16.763683,-93.141135],[16.763648,-93.141158],[16.763608,-93.141171],[16.763574,-93.141173],[16.763545,-93.141169],[16.763505,-93.141297],[16.763483,-93.141353],[16.763456,-93.141414],[16.763306,-93.141731],[16.763054,-93.142222],[16.762837,-93.142641],[16.762546,-93.143177],[16.762043,-93.144103],[16.761541,-93.145064],[16.761113,-93.145877],[16.760872,-93.146266],[16.760871,-93.146308],[16.76086,-93.146349],[16.76084,-93.146385],[16.760811,-93.146415],[16.760804,-93.146607],[16.760807,-93.146732],[16.760911,-93.147847],[16.760931,-93.147964],[16.761043,-93.148638],[16.761131,-93.148999],[16.761182,-93.14921],[16.761193,-93.149255],[16.761336,-93.149876],[16.761534,-93.150405],[16.761871,-93.151359],[16.762261,-93.15238],[16.762422,-93.152843],[16.762593,-93.153356],[16.762797,-93.154406],[16.763026,-93.155797],[16.763043,-93.155897],[16.763349,-93.157442],[16.763373,-93.157572],[16.763257,-93.157609],[16.763228,-93.157477],[16.763186,-93.157255],[16.763061,-93.156567]],"colorIda":"#3b82f6","colorVuelta":"#ef4444","nombre":"NORTE"};
+      if (typeof L === 'undefined') return;
+      var map = L.map('shareMapBig', { zoomControl: true, scrollWheelZoom: false });
+      window.__shareMap = map;
+      // Caché de mosaicos compartida (mismo IndexedDB que la app principal)
+      // 🛡️ En páginas publicadas, usar tileLayer estándar.
+      // El SW cachea automáticamente y el navegador cachea HTTP.
+      // NO usar L.tileLayer.offline aquí para evitar dependencias de scripts.
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        crossOrigin: true,
+        attribution: '© OpenStreetMap'
+      }).addTo(map);
+
+      var allCoords = [];
+         function drawLine(coords, color, dashed){
+        if (!coords || coords.length < 2) return;
+        var line = L.polyline(coords, {
+          color: color,
+          weight: 5,
+          opacity: 0.95,
+          dashArray: dashed ? '10,6' : null,
+          lineJoin: 'round',
+          lineCap: 'round'
+        }).addTo(map);
+        allCoords = allCoords.concat(coords);
+        return line;
+      }
+
+      // Offset perpendicular para separar ida y vuelta en la misma calle
+      function offsetPolyline(coords, offsetMeters){
+        if(!coords || coords.length < 2) return coords;
+        var out = [];
+        var R = 6371000;
+        for(var i=0;i<coords.length;i++){
+          var p = coords[i];
+          var prev = coords[Math.max(0,i-1)];
+          var next = coords[Math.min(coords.length-1,i+1)];
+          var dLat = next[0]-prev[0];
+          var dLng = next[1]-prev[1];
+          var len = Math.hypot(dLat,dLng) || 1;
+          var perpLat = -dLng/len;
+          var perpLng =  dLat/len;
+          var dLatDeg = (offsetMeters / R) * (180/Math.PI);
+          var dLngDeg = (offsetMeters / (R*Math.cos(p[0]*Math.PI/180))) * (180/Math.PI);
+          out.push([p[0] + perpLat*dLatDeg, p[1] + perpLng*dLngDeg]);
+        }
+        return out;
+      }
+
+      var idaCoords = (DATA.geomIda && DATA.geomIda.length > 1) ? DATA.geomIda : DATA.puntos;
+      var vueltaCoords = (DATA.geomVuelta && DATA.geomVuelta.length > 1) ? DATA.geomVuelta : DATA.puntosVuelta;
+
+      var hasIda = idaCoords && idaCoords.length > 1;
+      var hasVuelta = vueltaCoords && vueltaCoords.length > 1;
+
+      // Dibujar IDA con offset +4m si hay vuelta
+      if (hasIda) {
+        var idaDraw = hasVuelta ? offsetPolyline(idaCoords, 4) : idaCoords;
+        drawLine(idaDraw, DATA.colorIda, false);
+        // Marcadores inicio/fin IDA
+        L.circleMarker(idaDraw[0], { radius: 7, color: DATA.colorIda, fillColor: '#fff', fillOpacity: 1, weight: 3 })
+          .addTo(map).bindPopup('🟢 Inicio IDA');
+        L.circleMarker(idaDraw[idaDraw.length-1], { radius: 7, color: DATA.colorIda, fillColor: DATA.colorIda, fillOpacity: 1, weight: 2 })
+          .addTo(map).bindPopup('🔴 Fin IDA');
+      }
+
+      // Dibujar VUELTA con offset -4m si hay ida
+      if (hasVuelta) {
+        var vueltaDraw = hasIda ? offsetPolyline(vueltaCoords, -4) : vueltaCoords;
+        drawLine(vueltaDraw, DATA.colorVuelta, true);
+        L.circleMarker(vueltaDraw[0], { radius: 7, color: DATA.colorVuelta, fillColor: '#fff', fillOpacity: 1, weight: 3 })
+          .addTo(map).bindPopup('🟣 Inicio REGRESO');
+        L.circleMarker(vueltaDraw[vueltaDraw.length-1], { radius: 7, color: DATA.colorVuelta, fillColor: DATA.colorVuelta, fillOpacity: 1, weight: 2 })
+          .addTo(map).bindPopup('🔵 Fin REGRESO');
+      }
+
+
+
+      // Ajustar zoom
+      if (allCoords.length > 1) {
+        try { map.fitBounds(L.latLngBounds(allCoords).pad(0.15)); } catch(e) {}
+      } else if (allCoords.length === 1) {
+        map.setView(allCoords[0], 15);
+      } else {
+        map.setView([16.7530, -93.1150], 13);
+      }
+
+      // 🏷️ LEYENDA IDA / REGRESO (compacta, líneas gruesas) + botón viaje
+      var legend = L.control({ position: 'bottomleft' });
+      legend.onAdd = function(){
+        var div = L.DomUtil.create('div', 'map-legend');
+        div.innerHTML =
+          '<div style="background:rgba(20,28,48,.92);padding:4px 10px;border-radius:8px;font-size:11px;color:#e8edf7;border:1px solid #26314f;line-height:1.3;display:flex;flex-direction:column;gap:2px">' +
+            '<div style="display:flex;align-items:center;gap:6px">' +
+              '<span style="display:inline-block;width:16px;height:5px;background:' + DATA.colorIda + ';border-radius:2px"></span>' +
+              '<span>Ida</span>' +
+            '</div>' +
+            '<div style="display:flex;align-items:center;gap:6px">' +
+              '<span style="display:inline-block;width:16px;height:5px;background:' + DATA.colorVuelta + ';border-radius:2px"></span>' +
+              '<span>Regreso</span>' +
+            '</div>' +
+          '</div>';
+        return div;
+      };
+      legend.addTo(map);
+
+      // 🚀 Botón centrado abajo: "Agregar puntos de viaje" → ir a trip
+var tripBtn = L.control({ position: 'bottomleft' });
+tripBtn.onAdd = function(){
+        var div = L.DomUtil.create('div', 'map-trip-btn-wrap');
+        div.innerHTML =
+          '<button class="map-trip-btn" type="button">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="14" height="14">' +
+              '<circle cx="12" cy="12" r="10"/>' +
+              '<line x1="12" y1="8" x2="12" y2="16"/>' +
+              '<line x1="8" y1="12" x2="16" y2="12"/>' +
+            '</svg>' +
+            '<span>Agregar puntos de viaje</span>' +
+            '<small>Rutas relacionadas · Mapa interactivo</small>' +
+          '</button>';
+        var btn = div.querySelector('.map-trip-btn');
+        L.DomEvent.disableClickPropagation(div);
+        btn.addEventListener('click', function(){
+          window.location.href = 'https://brigadistasbd.pages.dev/?tab=trip';
+        });
+        return div;
+      };
+      tripBtn.addTo(map);
+    })();
+    </script>
+  <div class="block"><h3>ℹ️ Información</h3><ul><li>📅 Días: todos</li></ul></div>
+
+
+  <div class="intro-paragraphs"><p>La <strong>Norte</strong> es una ruta de colectivo de categoría <strong>urbana</strong> que opera en la ciudad de Tuxtla Gutiérrez, Chiapas, México.    Los días de operación son <strong>todos</strong>.</p><p>Si necesitas planificar tu viaje en transporte público dentro de Tuxtla Gutiérrez, esta ruta de colectivo es una excelente opción. Puedes consultar más detalles, ver el mapa interactivo del trazado completo, las paradas oficiales y los puntos de interés cercanos directamente en esta página. Además, puedes compartir esta información con otros usuarios para que también puedan aprovecharla.</p><p>La información aquí presentada se actualiza periódicamente para asegurar que los usuarios cuenten con los datos más precisos sobre tarifas, horarios, recorridos y paradas. Si detectas alguna inconsistencia o deseas sugerir una mejora, puedes contactarnos a través del sitio principal <a href="https://brigadistasbd.pages.dev/">brigadistasbd.pages.dev</a>.</p></div>
+
+
+  
+  
+  <footer>© 2026 Rutas BGD · <a href="https://brigadistasbd.pages.dev">brigadistasbd.pages.dev</a></footer>
+</div>
+
+<!-- NAV INFERIOR -->
+<nav class="bottom-nav">
+  <a class="nav-item" href="https://brigadistasbd.pages.dev/?tab=home" rel="nofollow">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>Inicio</span>
+  </a>
+  <a class="nav-item active" href="https://brigadistasbd.pages.dev/?tab=routes" rel="nofollow">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M6 16V9a4 4 0 0 1 4-4h4"/><path d="M18 8v7a4 4 0 0 1-4 4H9"/></svg>
+    <span>Rutas</span>
+  </a>
+  <a class="nav-item " href="https://brigadistasbd.pages.dev/?tab=market" rel="nofollow">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+    <span>Market</span>
+  </a>
+</nav>
+
+<script>
+// 🖥️ Botón pantalla completa del mapa
+(function(){
+  var btn = document.getElementById('mapFsBtn');
+  var wrap = document.getElementById('mapWrapHero');
+  if(!btn || !wrap) return;
+  var ENTER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>';
+  var EXIT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 3v3a2 2 0 0 1-2 2H4"/><path d="M21 9h-3a2 2 0 0 0-2 2v3"/><path d="M3 15h3a2 2 0 0 1 2 2v3"/><path d="M15 21v-3a2 2 0 0 1 2-2h3"/></svg>';
+  btn.innerHTML = ENTER;
+  btn.onclick = function(){
+    var isFs = wrap.classList.toggle('is-fullscreen');
+    document.body.classList.toggle('fs-active', isFs);
+    btn.innerHTML = isFs ? EXIT : ENTER;
+    setTimeout(function(){ if(window.__shareMap) window.__shareMap.invalidateSize(); }, 250);
+  };
+})();
+</script>
+</body>
+</html>
