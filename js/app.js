@@ -1069,7 +1069,7 @@ const url = location.origin + '/share/post/' + post.id;
         opacity: 0.95,
         lineJoin: 'round',
         lineCap: 'round',
-                 dashArray: '10, 10'
+                 dashArray: '10, 6'
       }).addTo(state.map);
       layers.push(lineVuelta);
 
