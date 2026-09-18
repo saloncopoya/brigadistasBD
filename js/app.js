@@ -2399,8 +2399,7 @@ const url = location.origin + '/share/m/' + id;
       const marginLng = TRANSFER_TOLERANCE_M / (111320 * Math.cos(refLat * Math.PI / 180));
 
       for (const s2 of segs2) {
-        // 🎯 SOLO mismo sentido: ida con ida, vuelta con vuelta
-        if (s1.sentido !== s2.sentido) continue;
+
 
         const s2minLat = Math.min(s2.a[0], s2.b[0]);
         const s2maxLat = Math.max(s2.a[0], s2.b[0]);
@@ -2508,7 +2507,7 @@ const url = location.origin + '/share/m/' + id;
         for (const r2 of endRoutes) {
           if (r1.id === r2.id) continue;
 
-          // ¿r1 va de A hacia B?
+                  // ¿r1 va de A hacia B?
           const dir1 = routeTowardsPoint(r1, A, B);
           if (!dir1) continue;
 
@@ -2516,14 +2515,10 @@ const url = location.origin + '/share/m/' + id;
           const meet = findMeetingPoint(r1, r2, B);
           if (!meet) continue;
 
-          // 🎯 Los tres deben ser del MISMO sentido
-          if (dir1.sentido !== meet.sentido) continue;
-
           const distAtoMeet1 = haversine(A[0], A[1], meet.point[0], meet.point[1]);
 
           const dir2 = routeTowardsPoint(r2, meet.point, B);
           if (!dir2) continue;
-          if (dir2.sentido !== meet.sentido) continue;
 
           chains.push({
             type: 'transfer',
@@ -2557,22 +2552,18 @@ const url = location.origin + '/share/m/' + id;
 
           const meet1 = findMeetingPoint(r1, r2, B);
           if (!meet1) continue;
-          if (dir1.sentido !== meet1.sentido) continue;
 
           const dir2 = routeTowardsPoint(r2, meet1.point, B);
           if (!dir2) continue;
-          if (dir2.sentido !== meet1.sentido) continue;
 
           for (const r3 of endRoutes) {
             if (r3.id === r1.id || r3.id === r2.id) continue;
 
             const meet2 = findMeetingPoint(r2, r3, B);
             if (!meet2) continue;
-            if (meet1.sentido !== meet2.sentido) continue;
 
             const dir3 = routeTowardsPoint(r3, meet2.point, B);
             if (!dir3) continue;
-            if (dir3.sentido !== meet2.sentido) continue;
 
             const distAtoMeet1 = haversine(A[0], A[1], meet1.point[0], meet1.point[1]);
 
