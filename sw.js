@@ -162,7 +162,7 @@ self.addEventListener('fetch', event => {
     return;
   }
   event.respondWith(cacheFirst(req, STATIC_CACHE));
-
+});
 
 
 async function htmlStrategy(req) {
