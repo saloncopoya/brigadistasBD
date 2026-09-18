@@ -7,8 +7,8 @@
       "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789704799/nzveputmo80akuriopcm.jpg",
       "url": "/share/ruta/sur179",
       "tipo": "ruta",
-      "timestamp": 1789714766316,
-      "updatedAt": "2026-09-18T06:59:26.316Z",
+      "timestamp": 1789752377320,
+      "updatedAt": "2026-09-18T17:26:17.320Z",
       "categoria": "urbana",
       "tarifa": "",
       "frecuencia": "",
@@ -179,7 +179,7 @@
     }
   ],
   "total": 4,
-  "updatedAt": "2026-09-18T06:59:26.316Z",
+  "updatedAt": "2026-09-18T17:26:17.320Z",
   "version": 1,
-  "__sha": "799df4ea53754cb00c3d93eaf16524903e3bd352"
+  "__sha": "ecdc91c2a1f2557608ea908757e7072421b99efc"
 }
