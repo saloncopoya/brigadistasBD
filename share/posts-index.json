@@ -1,6 +1,25 @@
 {
   "posts": [
     {
+      "slug": "norte179",
+      "title": "NORTE",
+      "description": "Ruta NORTE",
+      "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789704741/rvnqkxhcqlgqfd8xx1ej.jpg",
+      "url": "/share/ruta/norte179",
+      "tipo": "ruta",
+      "timestamp": 1789714040241,
+      "updatedAt": "2026-09-18T06:47:20.241Z",
+      "categoria": "urbana",
+      "tarifa": "",
+      "frecuencia": "",
+      "horarioIni": "",
+      "horarioFin": "",
+      "dias": "todos",
+      "paradas": [],
+      "calles": [],
+      "pois": []
+    },
+    {
       "slug": "sur179",
       "title": "SUR",
       "description": "Ruta SUR",
@@ -21,25 +40,6 @@
         "Avenida Pichucalco entre San Cristóbal y Calle Rosa Naranja",
         "Calle Rosa Naranja"
       ],
-      "pois": []
-    },
-    {
-      "slug": "norte179",
-      "title": "NORTE",
-      "description": "Ruta NORTE",
-      "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789704741/rvnqkxhcqlgqfd8xx1ej.jpg",
-      "url": "/share/ruta/norte179",
-      "tipo": "ruta",
-      "timestamp": 1789712403054,
-      "updatedAt": "2026-09-18T06:20:03.054Z",
-      "categoria": "urbana",
-      "tarifa": "",
-      "frecuencia": "",
-      "horarioIni": "",
-      "horarioFin": "",
-      "dias": "todos",
-      "paradas": [],
-      "calles": [],
       "pois": []
     },
     {
@@ -179,7 +179,7 @@
     }
   ],
   "total": 4,
-  "updatedAt": "2026-09-18T06:45:46.938Z",
+  "updatedAt": "2026-09-18T06:47:20.241Z",
   "version": 1,
-  "__sha": "4079c2a268c64e6b8ad551b6552a12e936065f02"
+  "__sha": "42b8b3d2efc3899ea273ac0b2cb18a7931333eb8"
 }
