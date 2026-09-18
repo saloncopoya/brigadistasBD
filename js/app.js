@@ -402,14 +402,7 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
 
    
    
-  $('#installBtn').onclick = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') toast('App instalada ✓');
-    deferredPrompt = null;
-    $('#installBtn').classList.remove('show');
-  };
+
 
   // ==================== POSTS / FEED ====================
   async function loadPosts() {
