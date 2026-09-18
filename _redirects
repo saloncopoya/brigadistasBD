@@ -1,5 +1,0 @@
-/admin               /admin.html              200
-/admin/              /admin.html              200
-/mapainteractivo     /mapainteractivo.html    200
-/mapainteractivo/    /mapainteractivo.html    200
-/share/ruta/*        /share/ruta/:splat       200
