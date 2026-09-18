@@ -2,7 +2,7 @@
     "name": "BRIGADISTA BD",
     "short_name": "BRIGADISTA BD",
     "description": "BASE DE DATOS",
-    "start_url": "/?tab=routes",
+    "start_url": "/s",
     "display": "standalone",
     "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
     "theme_color": "#8B4513",
