@@ -8,21 +8,21 @@
     <priority>1.0</priority>
   </url>
   <url>
+    <loc>https://brigadistasbd.pages.dev/share/ruta/ruta1149</loc>
+    <lastmod>2026-09-19T06:05:51.112Z</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789508995/c3vghvath2eewvchgl0c.png</image:loc>
+    </image:image>
+  </url>
+  <url>
     <loc>https://brigadistasbd.pages.dev/share/ruta/ruta3149</loc>
     <lastmod>2026-09-17T17:38:01.692Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
       <image:loc>https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789463101/qigspxz4quvtrfqiko0c.jpg</image:loc>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://brigadistasbd.pages.dev/share/ruta/ruta1149</loc>
-    <lastmod>2026-09-17T17:37:01.889Z</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789508995/c3vghvath2eewvchgl0c.png</image:loc>
     </image:image>
   </url>
 </urlset>
