@@ -319,20 +319,72 @@ function escapeHTML(s) {
 //  Generador de HTML
 // ==========================================================================
 function generateHTML({ tipo, title, content, image, slug, pageUrl, baseUrl, extra }) {
-  // 📰 Título optimizado para SEO (50-60 caracteres)
+
+
+     // 📰 Título optimizado para SEO (máx ~60 caracteres, ideal para Google)
+  const SEO_MAX = 60;
+  const GEO_SUFFIX = ' - Tuxtla Gutiérrez';
+
   let seoTitle = title;
   if (tipo === 'ruta') {
-    // Añadir palabras clave al título
-    const cat = extra?.route?.categoria ? ` - ${extra.route.categoria}` : '';
-    const kw = 'Tuxtla Gutiérrez Chiapas';
-    seoTitle = `${title}${cat} · ${kw}`;
+    const r = extra?.route || {};
+
+    // 1) Categoría capitalizada (urbana → Urbana, foranea → Foránea)
+    let cat = '';
+    if (r.categoria) {
+      const c = String(r.categoria).toLowerCase();
+      const pretty = c === 'foranea' ? 'Foránea'
+                   : c === 'urbana'  ? 'Urbana'
+                   : (c.charAt(0).toUpperCase() + c.slice(1));
+      cat = ` - ${pretty}`;
+    }
+
+    // 2) Primera parada (máx 25 chars para no comerse el resto)
+    const paradas = Array.isArray(r.paradas) ? r.paradas.filter(Boolean) : [];
+    const firstParada = paradas.length
+      ? String(paradas[0]).trim().slice(0, 25)
+      : '';
+    const paradaPart = firstParada ? ` - Parada ${firstParada}` : '';
+
+    // 3) Primer retorno (máx 25 chars)
+    const retornos = Array.isArray(r.retornos) ? r.retornos.filter(Boolean) : [];
+    const firstRetorno = retornos.length
+      ? String(retornos[0]).trim().slice(0, 25)
+      : '';
+    const retornoPart = firstRetorno ? ` - Retorno ${firstRetorno}` : '';
+
+    // 4) Construir título con lo que haya
+    seoTitle = `${title}${cat}${paradaPart}${retornoPart}`;
+
+    // 5) 🎯 Fallback geográfico: si falta parada O retorno, y hay espacio
+    //    suficiente, añadimos "Tuxtla Gutiérrez" para posicionamiento local.
+    const tieneParada  = !!firstParada;
+    const tieneRetorno = !!firstRetorno;
+    const faltaInfo    = !tieneParada || !tieneRetorno;
+
+    if (faltaInfo
+        && !/tuxtla/i.test(seoTitle)
+        && (seoTitle.length + GEO_SUFFIX.length) <= SEO_MAX) {
+      seoTitle += GEO_SUFFIX;
+    }
+
   } else if (tipo === 'market') {
     seoTitle = `${title} · Marketplace Tuxtla Gutiérrez`;
   } else {
-    seoTitle = `${title} · Blog Rutas BGD`;
+    seoTitle = `${title} · Blog`;
   }
-  // Limitar a 60 caracteres
-  if (seoTitle.length > 60) seoTitle = seoTitle.slice(0, 57) + '...';
+
+  // ✂️ Limitar a 60 caracteres SIN cortar palabras a la mitad.
+  //    Si hay un separador " - " o " · " cerca del corte, cortamos ahí.
+  if (seoTitle.length > SEO_MAX) {
+    const cut = seoTitle.slice(0, SEO_MAX);
+    const lastSep = Math.max(cut.lastIndexOf(' - '), cut.lastIndexOf(' · '));
+    if (lastSep >= 35) {
+      seoTitle = cut.slice(0, lastSep);
+    } else {
+      seoTitle = cut.trim() + '…';
+    }
+  }
 
   const safeTitle = escapeHTML(title);       // título original (para h1)
   const safeSeoTitle = escapeHTML(seoTitle); // título SEO (para <title> y og:title)
