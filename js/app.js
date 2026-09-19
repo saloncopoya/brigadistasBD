@@ -406,28 +406,52 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
    
 
 
+  // ==================== ANTI-RESURRECCIÓN (TOMBSTONES) ====================
+  async function getDeletedSet(tipo) {
+    try {
+      const db = await DB.openDB();
+      const all = await db.getAll('deleted');
+      const now = Date.now();
+      const ONE_WEEK = 7 * 24 * 60 * 60 * 1000;
+      const set = new Set();
+      for (const d of all) {
+        if (!d || d.tipo !== tipo) continue;
+        if (now - d.deletedAt > ONE_WEEK) {
+          try { await DB.delete('deleted', d.id); } catch(e){}
+          continue;
+        }
+        set.add(d.refId);
+      }
+      return set;
+    } catch(e) { return new Set(); }
+  }
+
   // ==================== POSTS / FEED ====================
   async function loadPosts() {
+  const deleted = await getDeletedSet('post');
+
   let local = [];
   try { local = await DB.getAll('posts'); } catch (e) {}
+  local = local.filter(p => !deleted.has(p.id));
   local.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
   state.posts = local;
-  state.postsShown = 2;  
+  state.postsShown = 2;
 
-  // Pintar ya si estamos en home
   if (state.posts.length && state.currentPage === 'home') {
     try { renderFeed(); } catch (e) {}
   }
 
-  // Traer índice en background
   (async () => {
     try {
       const idx = await Publisher.fetchIndex();
       if (idx && Array.isArray(idx.posts)) {
         const map = new Map(state.posts.map(p => [p.id, p]));
-        idx.posts.forEach(p => { if (!map.has(p.id)) map.set(p.id, p); });
+        idx.posts.forEach(p => {
+          if (!map.has(p.id) && !deleted.has(p.id)) map.set(p.id, p);
+        });
         state.posts = Array.from(map.values())
           .filter(p => p.tipo === 'post' || !p.tipo)
+          .filter(p => !deleted.has(p.id))
           .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
         if (state.currentPage === 'home') renderFeed();
       }
@@ -540,24 +564,44 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
             openComments(post);
           } else if (act === 'share') {
             sharePost(post);
-          } else if (act === 'del-post') {
+
+                       } else if (act === 'del-post') {
             if (!confirm('¿Eliminar esta publicación?')) return;
-            const pass = prompt('Contraseña admin para eliminar en GitHub:') || '';
-            await DB.delete('posts', id);
-            if (fbDB) fbDB.ref('publicaciones/' + id).remove().catch(() => {});
-            if (pass && typeof Publisher.deleteFromGitHub === 'function') {
-              try {
-                const res = await Publisher.deleteFromGitHub({ tipo: 'post', slug: id, password: pass });
-                if (res.ok) toast('Publicación eliminada (GitHub ✓)');
-                else toast('Eliminado local. GitHub: ' + (res.error || 'sin borrar'), 'err');
-              } catch (e) {
-                toast('Eliminado local (sin conexión)', 'err');
-              }
-            } else {
-              toast('Publicación eliminada (solo local)');
+
+            let pass = sessionStorage.getItem('tgz_admin') || '';
+            if (!pass) pass = prompt('Contraseña admin para eliminar:') || '';
+            if (!pass) {
+              toast('Se necesita la contraseña para eliminar del servidor', 'err');
+              return;
             }
-            await loadPosts(); renderFeed();
+
+            try {
+              const db = await DB.openDB();
+              const tx = db.transaction('deleted', 'readwrite');
+              tx.objectStore('deleted').put({
+                id: 'post:' + id, tipo: 'post', refId: id, deletedAt: Date.now()
+              });
+              await tx.done;
+            } catch(e){}
+
+            await DB.delete('posts', id);
+            if (fbDB) {
+              try { await fbDB.ref('publicaciones/' + id).remove(); }
+              catch (e) { console.warn('[del post]', e); }
+            }
+
+            try {
+              const res = await Publisher.deleteFromGitHub({ tipo: 'post', slug: id, password: pass });
+              if (res.ok) toast('Publicación eliminada ✓');
+              else toast('Eliminado local. GitHub: ' + (res.error || ''), 'err');
+            } catch (e) {
+              toast('Eliminado local (sin conexión)', 'err');
+            }
+
+            await loadPosts();
+            renderFeed();
           }
+           
         };
       });
     });
@@ -1742,28 +1786,29 @@ const url = location.origin + '/share/ruta/' + route.id;
 
   // ==================== MARKETPLACE ====================
   async function loadMarket() {
+  const deleted = await getDeletedSet('market');
+
   let local = [];
   try { local = await DB.getAll('market'); } catch (e) {}
+  local = local.filter(m => !deleted.has(m.id));
   state.market = local.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-  state.marketShown = 2;   
-     
+  state.marketShown = 2;
 
   if (state.market.length && state.currentPage === 'market') {
     try { renderMarket(); } catch (e) {}
   }
 
-
-
-       if (state.online) {
+  if (state.online) {
     (async () => {
       try {
         const val = await fetchIndex('marketplace');
         if (!val) return;
         const map = new Map(state.market.map(m => [m.id, m]));
         Object.values(val).forEach(m => {
-          if (m && m.id && !map.has(m.id)) map.set(m.id, m);
+          if (m && m.id && !map.has(m.id) && !deleted.has(m.id)) map.set(m.id, m);
         });
         state.market = Array.from(map.values())
+          .filter(m => !deleted.has(m.id))
           .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
         if (state.currentPage === 'market') renderMarket();
       } catch (e) {}
@@ -1771,6 +1816,8 @@ const url = location.origin + '/share/ruta/' + route.id;
   }
   return state.market;
 }
+
+   
 
   function renderMarket() {
     const grid = $('#marketGrid');
