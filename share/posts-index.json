@@ -74,25 +74,6 @@
       ]
     },
     {
-      "slug": "ppppp199",
-      "title": "ppppp",
-      "description": "Ruta ppppp",
-      "image": "",
-      "url": "/share/ruta/ppppp199",
-      "tipo": "ruta",
-      "timestamp": 1789841036273,
-      "updatedAt": "2026-09-19T18:03:56.273Z",
-      "categoria": "urbana",
-      "tarifa": "",
-      "frecuencia": "",
-      "horarioIni": "",
-      "horarioFin": "",
-      "dias": "todos",
-      "paradas": [],
-      "calles": [],
-      "pois": []
-    },
-    {
       "slug": "holasd199",
       "title": "holasd",
       "description": "Ruta holasd",
@@ -244,8 +225,8 @@
       ]
     }
   ],
-  "total": 6,
-  "updatedAt": "2026-09-19T19:31:01.465Z",
+  "total": 5,
+  "updatedAt": "2026-09-19T19:41:54.675Z",
   "version": 1,
   "__sha": "c562eb95bc0db0ffb7cf92385e690ec164dc413b"
 }
