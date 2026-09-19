@@ -1,6 +1,25 @@
 {
   "posts": [
     {
+      "slug": "lizbeth199",
+      "title": "Lizbeth",
+      "description": "Ruta Lizbeth",
+      "image": "",
+      "url": "/share/ruta/lizbeth199",
+      "tipo": "ruta",
+      "timestamp": 1789845272673,
+      "updatedAt": "2026-09-19T19:14:32.673Z",
+      "categoria": "urbana",
+      "tarifa": "",
+      "frecuencia": "",
+      "horarioIni": "",
+      "horarioFin": "",
+      "dias": "todos",
+      "paradas": [],
+      "calles": [],
+      "pois": []
+    },
+    {
       "slug": "producto169",
       "title": "Producto 1",
       "description": "Se vende varios",
@@ -263,8 +282,8 @@
       ]
     }
   ],
-  "total": 7,
-  "updatedAt": "2026-09-19T19:13:48.580Z",
+  "total": 8,
+  "updatedAt": "2026-09-19T19:14:32.673Z",
   "version": 1,
-  "__sha": "b9b7aa41ae7575cfa4900cc29e0e368c25085934"
+  "__sha": "1506cc188dc18e5e98929dbb6b600184255b8b09"
 }
