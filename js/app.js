@@ -822,7 +822,19 @@ const url = location.origin + '/share/post/' + post.id;
             const localTs  = new Date(existing?.updatedAt || existing?.timestamp || 0).getTime();
             if (existing && localTs >= remoteTs) return;
 
-            map.set(key, { ...(existing || {}), ...r, id: key });
+            map.set(key, {
+  ...(existing || {}),
+  ...r,
+  id: key,
+  // 🔒 Preservar geometría si el remoto no la trae
+  geometriaIda: (r.geometriaIda && r.geometriaIda.length)
+    ? r.geometriaIda
+    : (existing?.geometriaIda || []),
+  geometriaVuelta: (r.geometriaVuelta && r.geometriaVuelta.length)
+    ? r.geometriaVuelta
+    : (existing?.geometriaVuelta || [])
+});
+             
           });
 
           state.routes = Array.from(map.values()).sort((a, b) =>
@@ -1260,194 +1272,207 @@ const url = location.origin + '/share/post/' + post.id;
     return out;
   }
 
-  function initRouteMap(route) {
+// ─── OSRM: obtiene geometría real siguiendo calles ───
+async function getRouteGeometryOSRM(points) {
+  if (!points || points.length < 2) return points;
+  try {
+    const coords = points.map(p => `${p[1]},${p[0]}`).join(';');
+    const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
+    const r = await fetch(url);
+    const j = await r.json();
+    if (j.code === 'Ok' && j.routes && j.routes[0]) {
+      return j.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+    }
+  } catch (e) {
+    console.warn('[OSRM] Falló, usando puntos crudos:', e);
+  }
+  return points; // fallback: líneas rectas
+}
+
+async function initRouteMap(route) {
   const container = document.getElementById('map');
   if (!container) return;
 
-  // 🛡️ Destruir el mapa anterior de forma segura
+  // 🛡️ Destruir el mapa anterior
   if (state.map) {
     try {
-      // 1. Cancelar animaciones en curso
       state.map.stop();
-      // 2. Desconectar observers del helper registerMap
       try { state.map.__ro?.disconnect(); } catch (e) {}
       try { state.map.__io?.disconnect(); } catch (e) {}
       try { state.map.__mo?.disconnect(); } catch (e) {}
-      // 3. Remover el mapa
       state.map.remove();
     } catch (e) { console.warn('[initRouteMap] cleanup:', e); }
     state.map = null;
   }
 
-  // Limpiar el contenedor
   const cont = document.getElementById('map');
   if (cont) {
     if (cont._leaflet_id) {
       try { delete cont._leaflet_id; } catch (e) { cont._leaflet_id = undefined; }
     }
-    // Vaciar por si quedaron residuos
     cont.innerHTML = '';
   }
-     
-     
-    state.map = L.map(container, {
-  zoomControl: true,
-  minZoom: 13,
-maxZoom: 20,
-       zoomAnimation: false,
-  // 🛡️ Evita animaciones de zoom que rompen _leaflet_pos
-  fadeAnimation: false,
-  markerZoomAnimation: false
-}).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
 
-     
-     // ✨ Registrar el mapa para auto-reparación (sin timers)
-    registerMap(state.map);
+  // 🚀 FALLBACK OSRM: si no hay geometría pero sí puntos, generarla
+  const needsGeoIda = (!route.geometriaIda || route.geometriaIda.length < 2)
+                      && (route.puntos && route.puntos.length >= 2);
+  const needsGeoVuelta = (!route.geometriaVuelta || route.geometriaVuelta.length < 2)
+                         && (route.puntosVuelta && route.puntosVuelta.length >= 2);
 
-     
-    // 🖥️ Conectar el botón de pantalla completa con este mapa (sin timers)
-    bindFullscreenButton('routeMapFsBtn', 'routeMapWrap');
-   
-
-          L.tileLayer('https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}@2x.png?key=kXZYdaMbZkD1EevhGXMI', {
-  tileSize: 512,
-  zoomOffset: -1,
-  minZoom: 13,
- maxZoom: 20,
-
-  maxNativeZoom: 20,
-  crossOrigin: true,
-  attribution: '© <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
-}).addTo(state.map);
-     
-     
-    const layers = [];
-    const colorIda = route.colorIda || '#4285F4';
-    const colorVuelta = route.colorVuelta || '#a855f7';
-
-    // --- IDA ---
-    const ptsIda = (route.geometriaIda && route.geometriaIda.length) ? route.geometriaIda : (route.puntos || []);
-    if (ptsIda.length > 1) {
-      // Si hay vuelta, aplicamos offset; si no, dibujamos centrado
-      const hasVuelta = (route.geometriaVuelta && route.geometriaVuelta.length > 1) ||
-                        (route.puntosVuelta && route.puntosVuelta.length > 1);
-      const finalPts = hasVuelta ? offsetPolyline(ptsIda, 4) : ptsIda;
-      const lineIda = L.polyline(finalPts, {
-        color: colorIda,
-        weight: 5,
-        opacity: 0.95,
-        lineJoin: 'round',
-        lineCap: 'round'
-      }).addTo(state.map);
-      layers.push(lineIda);
-
-      // Marcadores de inicio/fin de ida
-      const startIda = finalPts[0];
-      const endIda = finalPts[finalPts.length - 1];
-      L.circleMarker(startIda, { radius: 7, color: colorIda, fillColor: '#fff', fillOpacity: 1, weight: 3 })
-        .addTo(state.map).bindPopup('🟢 Inicio ida');
-      L.circleMarker(endIda, { radius: 7, color: colorIda, fillColor: colorIda, fillOpacity: 1, weight: 2 })
-        .addTo(state.map).bindPopup('🔴 Fin ida');
+  if (needsGeoIda || needsGeoVuelta) {
+    if (needsGeoIda) {
+      console.log('[initRouteMap] Generando geometría IDA con OSRM…');
+      route.geometriaIda = await getRouteGeometryOSRM(route.puntos);
     }
-
-    // --- REGRESO ---
-    const ptsVuelta = (route.geometriaVuelta && route.geometriaVuelta.length) ? route.geometriaVuelta : (route.puntosVuelta || []);
-    if (ptsVuelta.length > 1) {
-      const hasIda = (route.geometriaIda && route.geometriaIda.length > 1) ||
-                     (route.puntos && route.puntos.length > 1);
-      const finalPtsV = hasIda ? offsetPolyline(ptsVuelta, -4) : ptsVuelta;
-      const lineVuelta = L.polyline(finalPtsV, {
-        color: colorVuelta,
-        weight: 5,
-        opacity: 0.95,
-        lineJoin: 'round',
-        lineCap: 'round',
-                 dashArray: '10, 6'
-      }).addTo(state.map);
-      layers.push(lineVuelta);
-
-      // Marcadores de inicio/fin de regreso
-      const startV = finalPtsV[0];
-      const endV = finalPtsV[finalPtsV.length - 1];
-      L.circleMarker(startV, { radius: 7, color: colorVuelta, fillColor: '#fff', fillOpacity: 1, weight: 3 })
-        .addTo(state.map).bindPopup('🟣 Inicio regreso');
-      L.circleMarker(endV, { radius: 7, color: colorVuelta, fillColor: colorVuelta, fillOpacity: 1, weight: 2 })
-        .addTo(state.map).bindPopup('🔵 Fin regreso');
+    if (needsGeoVuelta) {
+      console.log('[initRouteMap] Generando geometría VUELTA con OSRM…');
+      route.geometriaVuelta = await getRouteGeometryOSRM(route.puntosVuelta);
     }
-
-    // --- POIs ---
-    (route.pois || []).forEach((poi, i) => {
-      if (Array.isArray(poi) && poi.length === 2) {
-        L.circleMarker(poi, {
-          radius: 6, color: '#f59e0b', fillColor: '#f59e0b', fillOpacity: 0.9, weight: 2
-        }).addTo(state.map).bindPopup('📍 POI ' + (i + 1));
-      }
-    });
-
-    // --- Centrar mapa ---
-    const allPts = (route.puntos || []).concat(route.puntosVuelta || []);
-    if (allPts.length) {
-      // Refrescamos tamaño ANTES de fitBounds y lo repetimos en los siguientes
-      // frames de pintado, para garantizar que se calcula con el tamaño correcto.
-      refreshMap(state.map);
-      try { state.map.fitBounds(L.latLngBounds(allPts).pad(0.15)); } catch (e) {}
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          refreshMap(state.map);
-          try { state.map.fitBounds(L.latLngBounds(allPts).pad(0.15)); } catch (e) {}
+    // 💾 Guardar en IndexedDB (store aparte) para no volver a pedir a OSRM
+    try {
+      await DB.put('routes_geo', {
+        id: route.id,
+        geometriaIda: route.geometriaIda || [],
+        geometriaVuelta: route.geometriaVuelta || []
+      });
+    } catch (e) {}
+    // 💾 Actualizar también el store principal (para que sobreviva a re-render)
+    try {
+      const existing = await DB.get('routes', route.id);
+      if (existing) {
+        await DB.put('routes', {
+          ...existing,
+          geometriaIda: route.geometriaIda || [],
+          geometriaVuelta: route.geometriaVuelta || []
         });
-      });
-    } else if (route.calles && route.calles.length) {
-      // Si no hay puntos pero hay calles, mostrar centro por defecto
-      state.map.setView(DEFAULT_CENTER, 13);
-    } else {
-      state.map.setView(DEFAULT_CENTER, 12);
-    }
-
-    // --- Leyenda flotante (compacta, líneas gruesas) + botón centrar viaje ---
-    const legend = L.control({ position: 'bottomleft' });
-    legend.onAdd = function () {
-      const div = L.DomUtil.create('div', 'map-legend');
-      div.innerHTML = `
-        <div style="background:rgba(20,28,48,.92);padding:4px 10px;border-radius:8px;font-size:11px;color:#e8edf7;border:1px solid #26314f;line-height:1.3;display:flex;flex-direction:column;gap:2px">
-          <div style="display:flex;align-items:center;gap:6px">
-            <span style="display:inline-block;width:16px;height:5px;background:${colorIda};border-radius:2px"></span>
-            <span>Ida</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:6px">
-            <span style="display:inline-block;width:16px;height:5px;background:${colorVuelta};border-radius:2px"></span>
-            <span>Regreso</span>
-          </div>
-        </div>`;
-      return div;
-    };
-    legend.addTo(state.map);
-
-    // --- Botón inferior centrado: "Agregar ubicación" → ir a trip ---
-const tripBtn = L.control({ position: 'topleft' });
-     tripBtn.onAdd = function () {
-      const div = L.DomUtil.create('div', 'map-trip-btn-wrap');
-      div.innerHTML = `
-        <button class="map-trip-btn" type="button">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="14" height="14">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="16"/>
-            <line x1="8" y1="12" x2="16" y2="12"/>
-          </svg>
-          <span>Agregar Ubicacion</span>
-          <small>Rutas cercanas · Mapa interactivo</small>
-        </button>`;
-      const btn = div.querySelector('.map-trip-btn');
-      L.DomEvent.disableClickPropagation(div);
-      btn.addEventListener('click', () => {
-        navigateTo('trip');
-      });
-      return div;
-    };
-    tripBtn.addTo(state.map);
-
-    state.mapLayers = { route: layers };
+      }
+    } catch (e) {}
   }
+
+  state.map = L.map(container, {
+    zoomControl: true,
+    minZoom: 13,
+    maxZoom: 20,
+    zoomAnimation: false,
+    fadeAnimation: false,
+    markerZoomAnimation: false
+  }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+
+  registerMap(state.map);
+  bindFullscreenButton('routeMapFsBtn', 'routeMapWrap');
+
+  L.tileLayer('https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}@2x.png?key=kXZYdaMbZkD1EevhGXMI', {
+    tileSize: 512, zoomOffset: -1, minZoom: 13, maxZoom: 20, maxNativeZoom: 20,
+    crossOrigin: true,
+    attribution: '© <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
+  }).addTo(state.map);
+
+  const layers = [];
+  const colorIda = route.colorIda || '#4285F4';
+  const colorVuelta = route.colorVuelta || '#a855f7';
+
+  // --- IDA ---
+  const ptsIda = (route.geometriaIda && route.geometriaIda.length > 1)
+    ? route.geometriaIda : (route.puntos || []);
+  if (ptsIda.length > 1) {
+    const hasVuelta = (route.geometriaVuelta && route.geometriaVuelta.length > 1) ||
+                      (route.puntosVuelta && route.puntosVuelta.length > 1);
+    const finalPts = hasVuelta ? offsetPolyline(ptsIda, 4) : ptsIda;
+    const lineIda = L.polyline(finalPts, {
+      color: colorIda, weight: 5, opacity: 0.95,
+      lineJoin: 'round', lineCap: 'round'
+    }).addTo(state.map);
+    layers.push(lineIda);
+    L.circleMarker(finalPts[0], { radius: 7, color: colorIda, fillColor: '#fff', fillOpacity: 1, weight: 3 })
+      .addTo(state.map).bindPopup('🟢 Inicio ida');
+    L.circleMarker(finalPts[finalPts.length - 1], { radius: 7, color: colorIda, fillColor: colorIda, fillOpacity: 1, weight: 2 })
+      .addTo(state.map).bindPopup('🔴 Fin ida');
+  }
+
+  // --- REGRESO ---
+  const ptsVuelta = (route.geometriaVuelta && route.geometriaVuelta.length > 1)
+    ? route.geometriaVuelta : (route.puntosVuelta || []);
+  if (ptsVuelta.length > 1) {
+    const hasIda = (route.geometriaIda && route.geometriaIda.length > 1) ||
+                   (route.puntos && route.puntos.length > 1);
+    const finalPtsV = hasIda ? offsetPolyline(ptsVuelta, -4) : ptsVuelta;
+    const lineVuelta = L.polyline(finalPtsV, {
+      color: colorVuelta, weight: 5, opacity: 0.95,
+      lineJoin: 'round', lineCap: 'round', dashArray: '10, 6'
+    }).addTo(state.map);
+    layers.push(lineVuelta);
+    L.circleMarker(finalPtsV[0], { radius: 7, color: colorVuelta, fillColor: '#fff', fillOpacity: 1, weight: 3 })
+      .addTo(state.map).bindPopup('🟣 Inicio regreso');
+    L.circleMarker(finalPtsV[finalPtsV.length - 1], { radius: 7, color: colorVuelta, fillColor: colorVuelta, fillOpacity: 1, weight: 2 })
+      .addTo(state.map).bindPopup('🔵 Fin regreso');
+  }
+
+  // --- POIs ---
+  (route.pois || []).forEach((poi, i) => {
+    if (Array.isArray(poi) && poi.length === 2) {
+      L.circleMarker(poi, { radius: 6, color: '#f59e0b', fillColor: '#f59e0b', fillOpacity: 0.9, weight: 2 })
+        .addTo(state.map).bindPopup('📍 POI ' + (i + 1));
+    }
+  });
+
+  // --- Centrar mapa ---
+  const allPts = (route.geometriaIda || route.puntos || [])
+    .concat(route.geometriaVuelta || route.puntosVuelta || []);
+  if (allPts.length) {
+    refreshMap(state.map);
+    try { state.map.fitBounds(L.latLngBounds(allPts).pad(0.15)); } catch (e) {}
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        refreshMap(state.map);
+        try { state.map.fitBounds(L.latLngBounds(allPts).pad(0.15)); } catch (e) {}
+      });
+    });
+  } else {
+    state.map.setView(DEFAULT_CENTER, 13);
+  }
+
+  // --- Leyenda ---
+  const legend = L.control({ position: 'bottomleft' });
+  legend.onAdd = function () {
+    const div = L.DomUtil.create('div', 'map-legend');
+    div.innerHTML = `
+      <div style="background:rgba(20,28,48,.92);padding:4px 10px;border-radius:8px;font-size:11px;color:#e8edf7;border:1px solid #26314f;line-height:1.3;display:flex;flex-direction:column;gap:2px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="display:inline-block;width:16px;height:5px;background:${colorIda};border-radius:2px"></span>
+          <span>Ida</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="display:inline-block;width:16px;height:5px;background:${colorVuelta};border-radius:2px"></span>
+          <span>Regreso</span>
+        </div>
+      </div>`;
+    return div;
+  };
+  legend.addTo(state.map);
+
+  // --- Botón inferior centrado ---
+  const tripBtn = L.control({ position: 'topleft' });
+  tripBtn.onAdd = function () {
+    const div = L.DomUtil.create('div', 'map-trip-btn-wrap');
+    div.innerHTML = `
+      <button class="map-trip-btn" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="14" height="14">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="16"/>
+          <line x1="8" y1="12" x2="16" y2="12"/>
+        </svg>
+        <span>Agregar Ubicacion</span>
+        <small>Rutas cercanas · Mapa interactivo</small>
+      </button>`;
+    const btn = div.querySelector('.map-trip-btn');
+    L.DomEvent.disableClickPropagation(div);
+    btn.addEventListener('click', () => navigateTo('trip'));
+    return div;
+  };
+  tripBtn.addTo(state.map);
+
+  state.mapLayers = { route: layers };
+}
 
   async function shareRoute(route) {
 const url = location.origin + '/share/ruta/' + route.id;
@@ -2177,8 +2202,29 @@ const url = location.origin + '/share/m/' + id;
       const deletedMarket = await getDeletedSet('market');
 
       for (const p of Object.values(posts)) if (p && p.id && !deletedPosts.has(p.id)) await DB.put('posts', p);
-      for (const r of Object.values(routes)) if (r && r.id && !deletedRoutes.has(r.id)) await DB.put('routes', r);
-      for (const m of Object.values(market)) if (m && m.id && !deletedMarket.has(m.id)) await DB.put('market', m);
+
+       for (const r of Object.values(routes)) {
+  if (!r || !r.id || deletedRoutes.has(r.id)) continue;
+  // 🔒 Preservar geometría local si el remoto no la trae
+  const existing = await DB.get('routes', r.id).catch(() => null);
+  const merged = existing
+    ? {
+        ...existing,
+        ...r,
+        // Si el remoto no trae geometría, conservar la local
+        geometriaIda: (r.geometriaIda && r.geometriaIda.length)
+          ? r.geometriaIda
+          : (existing.geometriaIda || []),
+        geometriaVuelta: (r.geometriaVuelta && r.geometriaVuelta.length)
+          ? r.geometriaVuelta
+          : (existing.geometriaVuelta || []),
+        puntos: (r.puntos && r.puntos.length) ? r.puntos : (existing.puntos || []),
+        puntosVuelta: (r.puntosVuelta && r.puntosVuelta.length) ? r.puntosVuelta : (existing.puntosVuelta || [])
+      }
+    : r;
+  await DB.put('routes', merged);
+}
+       for (const m of Object.values(market)) if (m && m.id && !deletedMarket.has(m.id)) await DB.put('market', m);
        
       // 🧹 Borrar solo si NO está pendiente de subir
       if (hayPosts) {
