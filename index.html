@@ -1381,7 +1381,6 @@ body.fs-active{overflow:hidden !important}
 
     } catch (err) {
       console.error('[FCM] Error:', err);
-      alert('Error al activar notificaciones: ' + err.message);
     }
   }
 
@@ -1402,8 +1401,9 @@ body.fs-active{overflow:hidden !important}
       return;
     }
 
-    // B) Si ya dio permiso, auto-registrar
+    // B) Si ya dio permiso, auto-registrar SOLO si no hay token guardado
     if (Notification.permission === 'granted') {
+      if (localStorage.getItem('fcm_token')) return;  // ya registrado → no molestar
       setTimeout(() => activarNotificacionesPush(false), 2000);
     }
   });
