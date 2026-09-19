@@ -124,24 +124,42 @@ export async function onRequest(context) {
       index.total = index.posts.length;
       index.updatedAt = new Date().toISOString();
 
-      if (indexSha) {
-        try {
-          const putRes = await fetch(`${apiBase}/${indexPath}`, {
-            method: 'PUT',
-            headers: ghHeaders,
-            body: JSON.stringify({
-              message: `actualizar índice (eliminar ${safeSlug})`,
-              content: b64EncodeUnicode(JSON.stringify(index, null, 2)),
-              sha: indexSha,
-              branch: 'main'
-            })
-          });
-          if (!putRes.ok) {
-            const errTxt = await putRes.text();
-            console.error('[delete] Error guardando índice:', errTxt);
+      // 🧹 Quitar __sha antes de serializar
+      const shaToUse = index.__sha || indexSha;
+      delete index.__sha;
+
+      if (shaToUse) {
+        const delBody = {
+          message: `actualizar índice (eliminar ${safeSlug})`,
+          content: b64EncodeUnicode(JSON.stringify(index, null, 2)),
+          sha: shaToUse,
+          branch: 'main'
+        };
+
+        let delOk = false;
+        for (let attempt = 0; attempt < 3 && !delOk; attempt++) {
+          try {
+            const putRes = await fetch(`${apiBase}/${indexPath}`, {
+              method: 'PUT',
+              headers: ghHeaders,
+              body: JSON.stringify(delBody)
+            });
+            if (putRes.ok) {
+              delOk = true;
+              console.log(`[delete] Índice OK (intento ${attempt + 1})`);
+            } else {
+              const errTxt = await putRes.text();
+              console.error(`[delete] Intento ${attempt + 1} falló (${putRes.status}):`, errTxt.slice(0, 200));
+              if (putRes.status === 409) {
+                const fresh = await fetch(`${apiBase}/${indexPath}?ref=main`, { headers: ghHeaders });
+                if (fresh.ok) delBody.sha = (await fresh.json()).sha;
+              }
+              await new Promise(res => setTimeout(res, 800));
+            }
+          } catch (e) {
+            console.error(`[delete] Intento ${attempt + 1} error:`, e.message);
+            await new Promise(res => setTimeout(res, 800));
           }
-        } catch (e) {
-          console.error('[delete] Error guardando índice:', e);
         }
       }
 
@@ -273,18 +291,44 @@ const cleanPath = `${folder}/${safeSlug}`;
     index.total = index.posts.length;
     index.updatedAt = new Date().toISOString();
 
+    // 🧹 Quitar __sha antes de serializar (no debe ir al JSON)
+    const shaToUse = index.__sha;
+    delete index.__sha;
+
     const idxPutBody = {
       message: `actualizar índice: ${safeSlug}`,
       content: b64EncodeUnicode(JSON.stringify(index, null, 2)),
       branch: 'main'
     };
-    if (index.__sha) idxPutBody.sha = index.__sha;
+    if (shaToUse) idxPutBody.sha = shaToUse;
 
-    await fetch(`${apiBase}/${indexPath}`, {
-      method: 'PUT',
-      headers: ghHeaders,
-      body: JSON.stringify(idxPutBody)
-    }).catch(() => {});
+    // 🔁 PUT con retry (3 intentos)
+    let idxPutOk = false;
+    for (let attempt = 0; attempt < 3 && !idxPutOk; attempt++) {
+      try {
+        const r = await fetch(`${apiBase}/${indexPath}`, {
+          method: 'PUT',
+          headers: ghHeaders,
+          body: JSON.stringify(idxPutBody)
+        });
+        if (r.ok) {
+          idxPutOk = true;
+          console.log(`[índice] OK (intento ${attempt + 1})`);
+        } else {
+          const err = await r.text();
+          console.error(`[índice] Intento ${attempt + 1} falló (${r.status}):`, err.slice(0, 200));
+          if (r.status === 409) {
+            const fresh = await fetch(`${apiBase}/${indexPath}?ref=main`, { headers: ghHeaders });
+            if (fresh.ok) idxPutBody.sha = (await fresh.json()).sha;
+          }
+          await new Promise(res => setTimeout(res, 800));
+        }
+      } catch (e) {
+        console.error(`[índice] Intento ${attempt + 1} error:`, e.message);
+        await new Promise(res => setTimeout(res, 800));
+      }
+    }
+    if (!idxPutOk) console.error('[índice] ❌ No se pudo actualizar tras 3 intentos');
 
     // ---------- Regenerar sitemap.xml ----------
     await regenerateSitemap(env, ghHeaders, baseUrl, index);
