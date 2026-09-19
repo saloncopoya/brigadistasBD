@@ -99,7 +99,7 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 /* SW.JS — v8 · NO intercepta tiles ni APIs externas */
-const VERSION = 'bgd-v9';
+const VERSION = 'bgd-v10';
 const STATIC_CACHE = `${VERSION}-static`;
 const HTML_CACHE = `${VERSION}-html`;
 
@@ -108,7 +108,7 @@ const PRECACHE = [
    '/index.html', '/admin.html',
    '/index', 
    '/offline.html',
-  '/manifest.json', '/robots.txt', '/sitemap.xml',
+  '/manifest.json', 
   '/assets/icon.svg', '/js/db.js', '/js/publisher.js', '/js/app.js',
   '/vendor/leaflet/leaflet.css',
   '/vendor/leaflet/leaflet.js',
@@ -150,13 +150,18 @@ self.addEventListener('fetch', event => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
 
-  // ⚠️ NO interceptar recursos externos (tiles, firebase, etc.)
+ // ⚠️ NO interceptar recursos externos
   if (url.origin !== self.location.origin) return;
 
+  // 🚫 No interceptar APIs
+  if (url.pathname.startsWith('/api/')) return;
+
+  // 🛑 NUEVO: NO interceptar sitemap.xml ni robots.txt
+  if (url.pathname === '/sitemap.xml' || url.pathname === '/robots.txt') {
+    return; // Deja que el navegador y Google lo pidan directo a Cloudflare
+  }
 
    
-  // 🚫 No interceptar APIs (el Worker ya cachea en KV)
-  if (url.pathname.startsWith('/api/')) return;
   if (req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html')) {
     event.respondWith(htmlStrategy(req));
     return;
