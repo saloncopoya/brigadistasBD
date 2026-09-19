@@ -2808,8 +2808,28 @@ if (f.size > 20 * 1024 * 1024) {
         else toast('Guardada local (GitHub: '+(res?.error||'pendiente')+')','err');
       }catch(err){ toast('Guardada local (sin conexión)','err'); }
 
-      if(fbDB) fbDB.ref('rutas_colectivos_tgz/'+id).set(route).catch(()=>{});
+
+        // 🧹 Limpiar tombstone si existía (por si se edita con el mismo slug)
+      await clearTombstone('ruta', id);
+
+      // 🎯 Guardar en los MISMOS nodos que lee app.js
+      if (fbDB) {
+        const routeIndex = { ...route };
+        delete routeIndex.geometriaIda;
+        delete routeIndex.geometriaVuelta;
+        const routeGeo = {
+          id,
+          geometriaIda: route.geometriaIda || [],
+          geometriaVuelta: route.geometriaVuelta || []
+        };
+        Promise.all([
+          fbDB.ref('rutas_index/' + id).set(routeIndex),
+          fbDB.ref('rutas_geo/' + id).set(routeGeo)
+        ]).catch(()=>{});
+      }
+
       resetRouteForm(); loadRoutes();
+  
 
     } finally {
       btn.disabled = false;
@@ -2983,8 +3003,38 @@ if (f.size > 20 * 1024 * 1024) {
       row.querySelector('[data-act="del"]').onclick=async()=>{
         if(!confirm('¿Eliminar esta ruta?')) return;
         const pass = prompt('Contraseña admin para eliminar en GitHub:') || '';
-        await DB.delete('routes',id);
-        if(fbDB) fbDB.ref('rutas_colectivos_tgz/'+id).remove().catch(()=>{});
+
+        // 🪦 TOMBSTONE: marcar como eliminada para que NO reviva desde Firebase/GitHub
+        await markDeleted('ruta', id);
+
+        // 🗑️ Borrar local (routes + routes_geo)
+        await DB.delete('routes', id);
+        try { await DB.delete('routes_geo', id); } catch(e){}
+
+        // 🗑️ Borrar de Firebase (los MISMOS nodos que lee app.js)
+        if (fbDB) {
+          fbDB.ref('rutas_index/' + id).remove().catch(()=>{});
+          fbDB.ref('rutas_geo/' + id).remove().catch(()=>{});
+          fbDB.ref('rutas_colectivos_tgz/' + id).remove().catch(()=>{}); // compat
+        }
+
+        // 🗑️ Eliminar el HTML del repositorio GitHub
+        if (pass) {
+          try {
+            const res = await Publisher.deleteFromGitHub({
+              tipo: 'ruta', slug: id, password: pass
+            });
+            if (res.ok) toast('Ruta eliminada (GitHub ✓)');
+            else toast('Eliminado local. GitHub: ' + (res.error || 'sin borrar'), 'err');
+          } catch (e) {
+            toast('Eliminado local (sin conexión a GitHub)', 'err');
+          }
+        } else {
+          toast('Eliminado local (sin GitHub)');
+        }
+        loadRoutes();
+      };
+      
 
         // 🗑️ Eliminar también el HTML del repositorio GitHub
         if (pass) {
