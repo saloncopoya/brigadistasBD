@@ -59,7 +59,10 @@ export async function onRequest(context) {
   }
 
   if (!data || data === 'null') {
-    return new Response(JSON.stringify({ error: 'Sin datos en origen' }), { status: 502, headers: cors });
+    // Firebase vacío → devolver vacío limpio (no 502)
+    const empty = key === 'posts_index' ? '{"posts":[],"total":0}' : '{}';
+    context.waitUntil(env.INDEX_CACHE.put(kvKey, empty, { expirationTtl: 60 }));
+    return new Response(empty, { headers: { ...cors, 'X-Cache': 'EMPTY' } });
   }
 
   // ── 3) Guardar en KV con TTL ───────────────────────────────
