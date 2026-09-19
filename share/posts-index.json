@@ -2,13 +2,13 @@
   "posts": [
     {
       "slug": "lizbeth199",
-      "title": "Lizbeth",
-      "description": "Ruta Lizbeth",
+      "title": "LIZBETH 020202",
+      "description": "Ruta LIZBETH 020202",
       "image": "",
       "url": "/share/ruta/lizbeth199",
       "tipo": "ruta",
-      "timestamp": 1789845272673,
-      "updatedAt": "2026-09-19T19:14:32.673Z",
+      "timestamp": 1789845297262,
+      "updatedAt": "2026-09-19T19:14:57.262Z",
       "categoria": "urbana",
       "tarifa": "",
       "frecuencia": "",
@@ -283,7 +283,7 @@
     }
   ],
   "total": 8,
-  "updatedAt": "2026-09-19T19:14:32.673Z",
+  "updatedAt": "2026-09-19T19:14:57.262Z",
   "version": 1,
-  "__sha": "1506cc188dc18e5e98929dbb6b600184255b8b09"
+  "__sha": "1868ee0b65335ecf8022a79f9cc6431923fded92"
 }
