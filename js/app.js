@@ -1815,7 +1815,29 @@ const url = location.origin + '/share/ruta/' + route.id;
     $('#erSave').onclick = async () => {
       const nombre = $('#erName').value.trim();
       if (!nombre) { toast('El nombre es obligatorio', 'err'); goStep(1); return; }
-      const { dia, mes } = (() => { const d = new Date(); return { dia: d.getDate(), mes: d.getMonth() + 1 }; })();
+     
+
+
+        // 🔐 Validar contraseña antes de guardar
+  let pass = sessionStorage.getItem('tgz_admin') || '';
+  if (!pass) pass = prompt('Contraseña admin:') || '';
+  if (!pass) { toast('Se necesita la contraseña', 'err'); return; }
+  try {
+    const check = await fetch('/api/publish', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pass, __check: true })
+    });
+    if (!check.ok) {
+      toast('❌ Contraseña incorrecta. No se guardó nada.', 'err');
+      return;
+    }
+  } catch (e) {
+    toast('❌ Sin conexión para validar contraseña.', 'err');
+    return;
+  }
+       
+       const { dia, mes } = (() => { const d = new Date(); return { dia: d.getDate(), mes: d.getMonth() + 1 }; })();
       const id = state.editingRoute?.id || Publisher.slugify(nombre, dia, mes);
       const route = {
         id, slug: id, nombre: nombre.toUpperCase(),
