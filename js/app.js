@@ -3348,7 +3348,7 @@ const url = location.origin + '/share/m/' + id;
             addBtn.classList.add('active');
           }
         }
-        toast('Punto eliminado');
+       
         return;
       }
 
@@ -3364,7 +3364,7 @@ const url = location.origin + '/share/m/' + id;
           $$('#tripToolbar .tb').forEach(x => { if (x.dataset.tool !== 'locate') x.classList.remove('active'); });
           addBtn.classList.add('active');
         }
-        toast('Puntos limpiados');
+      
         return;
       }
 
