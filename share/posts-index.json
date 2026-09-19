@@ -1,6 +1,44 @@
 {
   "posts": [
     {
+      "slug": "ruta030199",
+      "title": "Ruta 030",
+      "description": "Ruta Ruta 030",
+      "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789850149/j588lgo58tsb2nqt7sbs.jpg",
+      "url": "/share/ruta/ruta030199",
+      "tipo": "ruta",
+      "timestamp": 1789850151580,
+      "updatedAt": "2026-09-19T20:35:51.580Z",
+      "categoria": "urbana",
+      "tarifa": "",
+      "frecuencia": "",
+      "horarioIni": "",
+      "horarioFin": "",
+      "dias": "todos",
+      "paradas": [],
+      "calles": [
+        "Calle 1a Oriente Sur",
+        "Avenida 9a Sur Oriente cerca de Calle 1a Oriente Sur",
+        "Calle Décima Tercera Oriente Sur entre Avenida 9a Sur Oriente y Avenida 4a Norte Oriente",
+        "Avenida 4a Norte Oriente entre Calle Décima Tercera Oriente Sur y Calle Décima Sexta Oriente Norte",
+        "Calle Décima Sexta Oriente Norte entre Avenida 4a Norte Oriente y Calzada Ignacio Zaragoza",
+        "Calzada Ignacio Zaragoza entre Calle Décima Sexta Oriente Norte y Avenida Laurel",
+        "Avenida Laurel entre Calzada Ignacio Zaragoza y Avenida Rosa del Poniente",
+        "Avenida Rosa del Poniente entre Avenida Laurel y Calzada de las Culturas",
+        "Calzada de las Culturas entre Avenida Rosa del Poniente y Calzada al Sumidero",
+        "Calzada al Sumidero entre Calzada de las Culturas y Avenida 5a. Norte Oriente",
+        "Avenida 5a. Norte Oriente entre Calzada al Sumidero y Prolongacion 5a Norte Poniente",
+        "Prolongacion 5a Norte Poniente entre Avenida 5a. Norte Oriente y Boulevard Doctor Belisario Domínguez",
+        "Boulevard Doctor Belisario Domínguez cerca de Prolongacion 5a Norte Poniente",
+        "Avenida Quetzales entre Boulevard Doctor Belisario Domínguez y Avenida 2a Sur Oriente",
+        "Avenida 2a Sur Oriente entre Avenida Quetzales y Calzada Emiliano Zapata",
+        "Calzada Emiliano Zapata entre Avenida 2a Sur Oriente y Avenida de los Gardenias",
+        "Avenida de los Gardenias entre Calzada Emiliano Zapata y Calle de los Tulipanes",
+        "Calle de los Tulipanes"
+      ],
+      "pois": []
+    },
+    {
       "slug": "ruta3149",
       "title": "RUTA 3",
       "description": "Ruta RUTA 3",
@@ -136,7 +174,7 @@
       ]
     }
   ],
-  "total": 2,
-  "updatedAt": "2026-09-19T20:31:02.891Z",
+  "total": 3,
+  "updatedAt": "2026-09-19T20:35:51.580Z",
   "version": 1
 }
