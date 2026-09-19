@@ -448,7 +448,6 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
         idx.posts.forEach(p => {
           const key = p.id || p.slug;
           if (!key || deleted.has(key)) return;
-          if (map.has(key)) return;
 
           // 🔧 Normalizar el item del índice al formato interno
           const normalized = {
@@ -461,8 +460,14 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
             timestamp: p.timestamp || Date.now()
           };
 
-          map.set(key, normalized);
+          const existing = map.get(key);
+          const remoteTs = new Date(normalized.updatedAt || normalized.timestamp || 0).getTime();
+          const localTs  = new Date(existing?.updatedAt || existing?.timestamp || 0).getTime();
+          if (existing && localTs >= remoteTs) return;
+
+          map.set(key, { ...(existing || {}), ...normalized });
         });
+         
         state.posts = Array.from(map.values())
           .filter(p => p.tipo === 'post' || !p.tipo)
           .filter(p => !deleted.has(p.id))
@@ -811,7 +816,13 @@ const url = location.origin + '/share/post/' + post.id;
             if (!r) return;
             const key = r.id || r.slug;
             if (!key || deleted.has(key)) return;
-            map.set(key, { ...(map.get(key) || {}), ...r, id: key });
+
+            const existing = map.get(key);
+            const remoteTs = new Date(r.updatedAt || r.timestamp || 0).getTime();
+            const localTs  = new Date(existing?.updatedAt || existing?.timestamp || 0).getTime();
+            if (existing && localTs >= remoteTs) return;
+
+            map.set(key, { ...(existing || {}), ...r, id: key });
           });
 
           state.routes = Array.from(map.values()).sort((a, b) =>
@@ -1911,7 +1922,14 @@ const url = location.origin + '/share/ruta/' + route.id;
         if (!val) return;
         const map = new Map(state.market.map(m => [m.id, m]));
         Object.values(val).forEach(m => {
-          if (m && m.id && !map.has(m.id) && !deleted.has(m.id)) map.set(m.id, m);
+          if (!m || !m.id || deleted.has(m.id)) return;
+
+          const existing = map.get(m.id);
+          const remoteTs = new Date(m.updatedAt || m.timestamp || 0).getTime();
+          const localTs  = new Date(existing?.updatedAt || existing?.timestamp || 0).getTime();
+          if (existing && localTs >= remoteTs) return;
+
+          map.set(m.id, { ...(existing || {}), ...m });
         });
         state.market = Array.from(map.values())
           .filter(m => !deleted.has(m.id))
