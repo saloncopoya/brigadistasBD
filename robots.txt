@@ -1,26 +1,19 @@
 # robots.txt para brigadistasbd.pages.dev
 User-agent: *
 Allow: /
+
+# 🔒 Bloquear rutas privadas y de backend
 Disallow: /admin.html
-Disallow: /admin
+Disallow: /admin/
 Disallow: /functions/
 Disallow: /api/
 Disallow: /assets/private/
 
-# Permitir indexación de contenido compartido
+# ✅ Permitir explícitamente el contenido público compartido
 Allow: /share/
 Allow: /share/post/
 Allow: /share/ruta/
 Allow: /share/m/
 
-# Crawlers específicos
-User-agent: Googlebot
-Allow: /share/
-Disallow: /admin.html
-
-User-agent: Bingbot
-Allow: /share/
-Disallow: /admin.html
-
-# Sitemap
+# 📄 Sitemap
 Sitemap: https://brigadistasbd.pages.dev/sitemap.xml
