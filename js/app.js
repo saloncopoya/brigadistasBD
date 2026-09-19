@@ -1202,6 +1202,7 @@ const url = location.origin + '/share/post/' + post.id;
   zoomControl: true,
   minZoom: 13,
 maxZoom: 20,
+       zoomAnimation: false,
   // 🛡️ Evita animaciones de zoom que rompen _leaflet_pos
   fadeAnimation: false,
   markerZoomAnimation: false
@@ -2081,8 +2082,16 @@ const url = location.origin + '/share/m/' + id;
     if (state.tripMap) { state.tripMap.invalidateSize(); return; }
     const el = document.getElementById('tripMap');
     if (!el) return;
-    state.tripMap = L.map(el, {       zoomControl: false,       minZoom: 13,     maxZoom: 20 }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
-    L.control.zoom({ position: 'bottomleft' }).addTo(state.tripMap);
+
+       state.tripMap = L.map(el, {
+  zoomControl: false,
+  minZoom: 13,
+  maxZoom: 20,
+  zoomAnimation: false,        // ← agregar
+  fadeAnimation: false,        // ← agregar
+  markerZoomAnimation: false   // ← agregar
+}).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+       L.control.zoom({ position: 'bottomleft' }).addTo(state.tripMap);
     // ✨ Registrar el mapa para auto-reparación (sin timers)
     registerMap(state.tripMap);
        
