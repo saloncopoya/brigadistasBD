@@ -1218,12 +1218,12 @@ const url = location.origin + '/share/post/' + post.id;
     bindFullscreenButton('routeMapFsBtn', 'routeMapWrap');
    
 
-     L.tileLayer('https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=kXZYdaMbZkD1EevhGXMI', {
+     L.tileLayer('https://api.maptiler.com/maps/bright-v2/{z}/{x}/{y}@2x.png?key=kXZYdaMbZkD1EevhGXMI', {
   tileSize: 512,
   zoomOffset: -1,
   minZoom: 13,
-  maxZoom: 19,
-  maxNativeZoom: 19,
+  maxZoom: 20,
+  maxNativeZoom: 20,
   crossOrigin: true,
   attribution: '© <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
 }).addTo(state.map);
@@ -2089,12 +2089,13 @@ const url = location.origin + '/share/m/' + id;
        
     // 🖥️ Conectar el botón de pantalla completa con este mapa (sin timers)
     bindFullscreenButton('tripMapFsBtn', 'tripMapWrap');
- L.tileLayer('https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=kXZYdaMbZkD1EevhGXMI', {
+       
+ L.tileLayer('https://api.maptiler.com/maps/bright-v2/{z}/{x}/{y}@2x.png?key=kXZYdaMbZkD1EevhGXMI', {
   tileSize: 512,
   zoomOffset: -1,
   minZoom: 13,
-  maxZoom: 19,
-  maxNativeZoom: 19,
+  maxZoom: 20,
+  maxNativeZoom: 20,
   crossOrigin: true,
   attribution: '© <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
 }).addTo(state.tripMap);
