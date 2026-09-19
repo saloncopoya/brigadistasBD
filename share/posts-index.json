@@ -1,25 +1,6 @@
 {
   "posts": [
     {
-      "slug": "99000189",
-      "title": "99000",
-      "description": "Ub este eskd",
-      "image": "",
-      "url": "/share/post/99000189",
-      "tipo": "post",
-      "timestamp": 1789783909079,
-      "updatedAt": "2026-09-19T02:11:49.079Z",
-      "categoria": "",
-      "tarifa": "",
-      "frecuencia": "",
-      "horarioIni": "",
-      "horarioFin": "",
-      "dias": "",
-      "paradas": [],
-      "calles": [],
-      "pois": []
-    },
-    {
       "slug": "jsusiw3k3j2189",
       "title": "Jsusiw 3k3j2",
       "description": "Kekek",
@@ -193,8 +174,8 @@
       ]
     }
   ],
-  "total": 5,
-  "updatedAt": "2026-09-19T02:11:49.079Z",
+  "total": 4,
+  "updatedAt": "2026-09-19T02:47:47.681Z",
   "version": 1,
   "__sha": "536522dcbf32d6d3b3e1e719ea18b43907186f0c"
 }
