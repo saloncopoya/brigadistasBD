@@ -163,8 +163,7 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
     online: navigator.onLine,
     historyStack: [],
     editingRoute: null,
-    routeDraft: { puntos: [], puntosVuelta: [], calles: [], pois: [], geometriaIda: [], geometriaVuelta: [], colorIda: '#00e5ff', colorVuelta: '#a855f7' },
-    editorMap: null,
+routeDraft: { puntos: [], puntosVuelta: [], calles: [], pois: [], geometriaIda: [], geometriaVuelta: [], colorIda: '#4285F4', colorVuelta: '#a855f7' },    editorMap: null,
     editorLayers: { ida: null, vuelta: null, markers: [] },
     drawMode: 'draw',
     drawing: false,
@@ -1230,7 +1229,7 @@ maxZoom: 20,
      
      
     const layers = [];
-    const colorIda = route.colorIda || '#00e5ff';
+    const colorIda = route.colorIda || '#4285F4';
     const colorVuelta = route.colorVuelta || '#a855f7';
 
     // --- IDA ---
@@ -1669,7 +1668,7 @@ const url = location.origin + '/share/ruta/' + route.id;
       pois: route?.pois || [],
       geometriaIda: route?.geometriaIda || [],
       geometriaVuelta: route?.geometriaVuelta || [],
-      colorIda: route?.colorIda || '#00e5ff',
+      colorIda: route?.colorIda || '#4285F4',
       colorVuelta: route?.colorVuelta || '#a855f7'
     };
 
