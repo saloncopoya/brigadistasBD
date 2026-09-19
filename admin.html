@@ -2892,30 +2892,64 @@ if (f.size > 20 * 1024 * 1024) {
   }
 
   async function loadRoutes(){
-    const list = await DB.getAll('routes');
-    list.sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
-    const el = $('#routesList');
-    if(!list.length){ el.innerHTML='<div class="empty"><p>Sin rutas registradas</p></div>'; return; }
+  let list = await DB.getAll('routes');
 
-        // Mostrar de nuevo la lista de rutas registradas
-    const listCard = document.getElementById('routesListCard');
-    if (listCard) listCard.classList.remove('hidden');
-    
-    el.innerHTML = list.map(r=>`
-      <div class="list-item" data-id="${esc(r.id)}">
-        <div class="li-info">
-          <div class="li-title">${esc(r.nombre)}</div>
-          <div class="li-sub">
-            <span class="badge badge-${r.categoria==='foranea'?'foranea':'urbana'}">${esc(r.categoria)}</span>
-            · ${(r.paradas||[]).length} paradas · ${(r.calles||[]).length} calles
-          </div>
+  // 🪦 Filtrar tombstones (igual que hace app.js)
+  let deleted = new Set();
+  try {
+    const db = await DB.openDB();
+    const all = await db.getAll('deleted');
+    const ONE_WEEK = 7 * 24 * 60 * 60 * 1000;
+    all.forEach(d => {
+      if (d && d.tipo === 'ruta' && (Date.now() - d.deletedAt) < ONE_WEEK) {
+        deleted.add(d.refId);
+      }
+    });
+  } catch(e){}
+  list = list.filter(r => !deleted.has(r.id));
+
+  // 🔄 Merge con Firebase en background (filtrando tombstones también)
+  if (fbDB && navigator.onLine) {
+    try {
+      const snap = await fbDB.ref('rutas_index').once('value');
+      const remote = snap.val() || {};
+      const map = new Map(list.map(r => [r.id, r]));
+      Object.values(remote).forEach(r => {
+        if (r && r.id && !deleted.has(r.id)) {
+          map.set(r.id, { ...(map.get(r.id) || {}), ...r });
+        }
+      });
+      list = Array.from(map.values());
+      // Persistir en IndexedDB (solo las NO eliminadas)
+      for (const r of Object.values(remote)) {
+        if (r && r.id && !deleted.has(r.id)) await DB.put('routes', r);
+      }
+    } catch(e){}
+  }
+
+  list.sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+  const el = $('#routesList');
+  if(!list.length){ el.innerHTML='<div class="empty"><p>Sin rutas registradas</p></div>'; return; }
+
+  const listCard = document.getElementById('routesListCard');
+  if (listCard) listCard.classList.remove('hidden');
+
+  el.innerHTML = list.map(r=>`
+    <div class="list-item" data-id="${esc(r.id)}">
+      <div class="li-info">
+        <div class="li-title">${esc(r.nombre)}</div>
+        <div class="li-sub">
+          <span class="badge badge-${r.categoria==='foranea'?'foranea':'urbana'}">${esc(r.categoria)}</span>
+          · ${(r.paradas||[]).length} paradas · ${(r.calles||[]).length} calles
         </div>
-        <div class="li-actions">
-          <button class="btn btn-ghost btn-sm" data-act="edit">Editar</button>
-          <button class="btn btn-danger btn-sm" data-act="del">Borrar</button>
-        </div>
-      </div>`).join('');
-    el.querySelectorAll('.list-item').forEach(row=>{
+      </div>
+      <div class="li-actions">
+        <button class="btn btn-ghost btn-sm" data-act="edit">Editar</button>
+        <button class="btn btn-danger btn-sm" data-act="del">Borrar</button>
+      </div>
+    </div>`).join('');
+  el.querySelectorAll('.list-item').forEach(row=>{
+
       const id=row.dataset.id;
           row.querySelector('[data-act="edit"]').onclick=async()=>{
         const r = await DB.get('routes',id); if(!r) return;
@@ -3012,11 +3046,15 @@ if (f.size > 20 * 1024 * 1024) {
         try { await DB.delete('routes_geo', id); } catch(e){}
 
         // 🗑️ Borrar de Firebase (los MISMOS nodos que lee app.js)
-        if (fbDB) {
-          fbDB.ref('rutas_index/' + id).remove().catch(()=>{});
-          fbDB.ref('rutas_geo/' + id).remove().catch(()=>{});
-          fbDB.ref('rutas_colectivos_tgz/' + id).remove().catch(()=>{}); // compat
-        }
+      if (fbDB) {
+  try {
+    await Promise.all([
+      fbDB.ref('rutas_index/' + id).remove(),
+      fbDB.ref('rutas_geo/' + id).remove(),
+      fbDB.ref('rutas_colectivos_tgz/' + id).remove()
+    ]);
+  } catch(e){ console.warn('[del ruta] Firebase:', e); }
+}
 
         // 🗑️ Eliminar el HTML del repositorio GitHub
         if (pass) {
@@ -3032,25 +3070,9 @@ if (f.size > 20 * 1024 * 1024) {
         } else {
           toast('Eliminado local (sin GitHub)');
         }
-        loadRoutes();
-      };
-      
 
-        // 🗑️ Eliminar también el HTML del repositorio GitHub
-        if (pass) {
-          try {
-            const res = await Publisher.deleteFromGitHub({
-              tipo: 'ruta', slug: id, password: pass
-            });
-            if (res.ok) toast('Ruta eliminada (GitHub ✓)');
-            else toast('Eliminado local. GitHub: ' + (res.error || 'sin borrar'), 'err');
-          } catch (e) {
-            toast('Eliminado local (sin conexión a GitHub)', 'err');
-          }
-        } else {
-          toast('Eliminado local (sin GitHub)');
-        }
-        loadRoutes();
+        
+             loadRoutes();
       };
     });
   }
