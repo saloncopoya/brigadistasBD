@@ -20,64 +20,6 @@ apiKey: "AIzaSyAiojpfnGUPhaoQkpAh1Yey3fp6uWU-iFQ",
 const DEFAULT_CENTER = [16.7530, -93.1150];
   const DEFAULT_ZOOM = 14;
 
-
-
-   const DEFAULT_CENTER = [16.7530, -93.1150];
-  const DEFAULT_ZOOM = 14;
-
-  // ==================== 🗺️ CONFIGURACIÓN DEL MAPA ====================
-  // 💡 CAMBIA SOLO ESTA LÍNEA para elegir el mapa.
-  //
-  //  ▶ OPCIÓN 1 — Solo estilo MapTiler (usa tu key automáticamente):
-  //      const MAP_STYLE = 'basic-v2';
-  //      const MAP_STYLE = 'streets-v2';
-  //      const MAP_STYLE = 'outdoor-v2';
-  //      const MAP_STYLE = 'satellite';
-  //      const MAP_STYLE = 'hybrid';
-  //      const MAP_STYLE = 'topo-v2';
-  //      const MAP_STYLE = 'winter-v2';
-  //      const MAP_STYLE = 'dataviz-dark';
-  //
-  //  ▶ OPCIÓN 2 — URL completa de CUALQUIER proveedor:
-  //      const MAP_STYLE = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-  //      const MAP_STYLE = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png';
-  //      const MAP_STYLE = 'https://tu-servidor.com/tiles/{z}/{x}/{y}.png';
-  //
-  //  Si empieza con "http" se usa tal cual. Si no, se trata como estilo MapTiler.
-
-  const MAP_STYLE = 'hybrid';
-
-  // Key de MapTiler (solo se usa en la Opción 1)
-  const MAPTILER_KEY = 'kXZYdaMbZkD1EevhGXMI';
-
-  // Zoom del mapa
-  const MAP_MIN_ZOOM = 13;
-  const MAP_MAX_ZOOM = 20;
-
-  // 🧠 Construye la URL final (detecta si es URL completa o nombre de estilo)
-  function getTileUrl() {
-    const s = String(MAP_STYLE || '').trim();
-    if (/^https?:\/\//i.test(s)) return s;               // URL completa
-    return `https://api.maptiler.com/maps/${s}/{z}/{x}/{y}@2x.png?key=${MAPTILER_KEY}`;
-  }
-
-  // 🧠 Crea el tile layer ya configurado, listo para .addTo(mapa)
-  function createBaseTileLayer() {
-    const isCustom = /^https?:\/\//i.test(String(MAP_STYLE || '').trim());
-    return L.tileLayer(getTileUrl(), {
-      // Si es MapTiler usamos @2x y tileSize 512. Si es URL custom, valores estándar.
-      tileSize: isCustom ? 256 : 512,
-      zoomOffset: isCustom ? 0 : -1,
-      minZoom: MAP_MIN_ZOOM,
-      maxZoom: MAP_MAX_ZOOM,
-      maxNativeZoom: MAP_MAX_ZOOM,
-      crossOrigin: true,
-      attribution: isCustom
-        ? '© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
-        : '© <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
-    });
-  }
-   
   // ==================== UTILIDADES ====================
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
@@ -1260,7 +1202,7 @@ const url = location.origin + '/share/post/' + post.id;
     state.map = L.map(container, {
   zoomControl: true,
   minZoom: 13,
-maxZoom: 20,
+maxZoom: 20
   // 🛡️ Evita animaciones de zoom que rompen _leaflet_pos
   zoomAnimation: false,
   fadeAnimation: false,
@@ -1276,7 +1218,16 @@ maxZoom: 20,
     bindFullscreenButton('routeMapFsBtn', 'routeMapWrap');
    
 
-createBaseTileLayer().addTo(state.map);
+          L.tileLayer('https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}@2x.png?key=kXZYdaMbZkD1EevhGXMI', {
+  tileSize: 512,
+  zoomOffset: -1,
+  minZoom: 13,
+ maxZoom: 20,
+
+  maxNativeZoom: 20,
+  crossOrigin: true,
+  attribution: '© <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
+}).addTo(state.map);
      
      
     const layers = [];
@@ -2140,7 +2091,15 @@ const url = location.origin + '/share/m/' + id;
     // 🖥️ Conectar el botón de pantalla completa con este mapa (sin timers)
     bindFullscreenButton('tripMapFsBtn', 'tripMapWrap');
        
-createBaseTileLayer().addTo(state.tripMap);
+      L.tileLayer('https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}@2x.png?key=kXZYdaMbZkD1EevhGXMI', {
+  tileSize: 512,
+  zoomOffset: -1,
+  minZoom: 13,
+ maxZoom: 20,
+  maxNativeZoom: 20,
+  crossOrigin: true,
+  attribution: '© <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
+}).addTo(state.tripMap);
        
 
 
