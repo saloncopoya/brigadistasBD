@@ -937,48 +937,84 @@ body.fs-active{overflow:hidden !important}
   // ================================================================
   //   POSTS
   // ================================================================
-  async function loadPosts(){
-    const list = await DB.getAll('posts');
-    list.sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
-    const el = $('#postsList');
-    if(!list.length){ el.innerHTML = '<div class="empty"><p>Sin publicaciones aún</p></div>'; return; }
-    el.innerHTML = list.map(p=>`
-      <div class="list-item" data-id="${esc(p.id)}">
-        <div class="li-info">
-          <div class="li-title">${esc(p.title||'(sin título)')}</div>
-          <div class="li-sub">${esc((p.content||'').slice(0,80))}...</div>
-        </div>
-        <div class="li-actions">
-          <button class="btn btn-ghost btn-sm" data-act="edit">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          </button>
-          <button class="btn btn-danger btn-sm" data-act="del">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
-          </button>
-        </div>
-      </div>`).join('');
-    el.querySelectorAll('.list-item').forEach(row=>{
-      const id = row.dataset.id;
-      row.querySelector('[data-act="edit"]').onclick = ()=>editPost(id);
-      row.querySelector('[data-act="del"]').onclick=async()=>{
-        if(!confirm('¿Eliminar esta ruta?')) return;
-        const pass = prompt('Contraseña admin para eliminar en GitHub:') || '';
-        if (!pass) { toast('Se necesita la contraseña para eliminar del sitemap', 'err'); return; }
-        await DB.delete('routes',id);
-        if(fbDB) fbDB.ref('rutas_colectivos_tgz/'+id).remove().catch(()=>{});
-        try {
-          const res = await Publisher.deleteFromGitHub({
-            tipo: 'ruta', slug: id, password: pass
-          });
-          if (res.ok) toast('Ruta eliminada (GitHub + sitemap ✓)');
-          else toast('Eliminado local. GitHub: ' + (res.error || 'sin borrar'), 'err');
-        } catch (e) {
-          toast('Eliminado local (sin conexión a GitHub)', 'err');
-        }
-        loadRoutes();
-      };
-    });
+
+  async function markDeleted(tipo, id) {
+    try {
+      const db = await DB.openDB();
+      const tx = db.transaction('deleted', 'readwrite');
+      tx.objectStore('deleted').put({
+        id: tipo + ':' + id, tipo, refId: id, deletedAt: Date.now()
+      });
+      await tx.done;
+    } catch(e){ console.warn('[markDeleted]', e); }
   }
+  async function clearTombstone(tipo, id) {
+    try { await DB.delete('deleted', tipo + ':' + id); } catch(e){}
+  }
+
+  async function loadPosts(){
+  const list = await DB.getAll('posts');
+  list.sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+  const el = $('#postsList');
+  if(!list.length){ el.innerHTML = '<div class="empty"><p>Sin publicaciones aún</p></div>'; return; }
+
+  el.innerHTML = list.map(p=>`
+    <div class="list-item" data-id="${esc(p.id)}">
+      <div class="li-info">
+        <div class="li-title">${esc(p.title||'(sin título)')}</div>
+        <div class="li-sub">${esc((p.content||'').slice(0,80))}...</div>
+      </div>
+      <div class="li-actions">
+        <button class="btn btn-ghost btn-sm" data-act="edit">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        <button class="btn btn-danger btn-sm" data-act="del">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+        </button>
+      </div>
+    </div>`).join('');
+
+  el.querySelectorAll('.list-item').forEach(row=>{
+    const id = row.dataset.id;
+    row.querySelector('[data-act="edit"]').onclick = ()=>editPost(id);
+
+        row.querySelector('[data-act="del"]').onclick = async () => {
+      if (!confirm('¿Eliminar esta publicación?')) return;
+
+      let pass = sessionStorage.getItem('tgz_admin') || '';
+      if (!pass) {
+        pass = prompt('Contraseña admin para eliminar en GitHub:') || '';
+      }
+      if (!pass) {
+        toast('Se necesita la contraseña para eliminar del servidor', 'err');
+        return;
+      }
+
+      await markDeleted('post', id);
+
+      await DB.delete('posts', id);
+      if (fbDB) {
+        try { await fbDB.ref('publicaciones/' + id).remove(); }
+        catch(e){ console.warn('[del post] Firebase:', e); }
+      }
+
+      try {
+        const res = await Publisher.deleteFromGitHub({
+          tipo: 'post', slug: id, password: pass
+        });
+        if (res.ok) toast('Publicación eliminada (GitHub + sitemap ✓)');
+        else toast('Eliminado local. GitHub: ' + (res.error || 'sin borrar'), 'err');
+      } catch (e) {
+        toast('Eliminado local (sin conexión a GitHub)', 'err');
+      }
+
+      loadPosts();
+    };
+    
+  });
+}
+
+  
   async function editPost(id){
     const p = await DB.get('posts', id);
     if(!p) return;
@@ -1034,6 +1070,7 @@ body.fs-active{overflow:hidden !important}
       url: `/share/post/${id}`
     };
     await DB.put('posts', post);
+    await clearTombstone('post', id);
     try{
       const res = await Publisher.publish({
         tipo:'post', slug:id, title, content, image:media,
@@ -2993,12 +3030,28 @@ if (f.size > 20 * 1024 * 1024) {
         if(m.image){ $('#mkPreview').src=m.image; $('#mkPreview').classList.remove('hidden'); }
         window.scrollTo({top:0,behavior:'smooth'});
       };
-      row.querySelector('[data-act="del"]').onclick=async()=>{
-        if(!confirm('¿Eliminar este anuncio?')) return;
-        const pass = prompt('Contraseña admin para eliminar en GitHub:') || '';
-        if (!pass) { toast('Se necesita la contraseña para eliminar del sitemap', 'err'); return; }
-        await DB.delete('market',id);
-        if(fbDB) fbDB.ref('marketplace/'+id).remove().catch(()=>{});
+
+
+            row.querySelector('[data-act="del"]').onclick = async () => {
+        if (!confirm('¿Eliminar este anuncio?')) return;
+
+        let pass = sessionStorage.getItem('tgz_admin') || '';
+        if (!pass) {
+          pass = prompt('Contraseña admin para eliminar en GitHub:') || '';
+        }
+        if (!pass) {
+          toast('Se necesita la contraseña para eliminar del servidor', 'err');
+          return;
+        }
+
+        await markDeleted('market', id);
+
+        await DB.delete('market', id);
+        if (fbDB) {
+          try { await fbDB.ref('marketplace/' + id).remove(); }
+          catch(e){ console.warn('[del market] Firebase:', e); }
+        }
+
         try {
           const res = await Publisher.deleteFromGitHub({
             tipo: 'market', slug: id, password: pass
@@ -3008,8 +3061,10 @@ if (f.size > 20 * 1024 * 1024) {
         } catch (e) {
           toast('Eliminado local (sin conexión a GitHub)', 'err');
         }
+
         loadMarket();
       };
+      
     });
   }
   $('#mkCancel').onclick=()=>{
@@ -3044,6 +3099,7 @@ if (f.size > 20 * 1024 * 1024) {
       updatedAt:Date.now(), url:`/share/m/${id}`
     };
     await DB.put('market',ad);
+    await clearTombstone('market', id);
     try{
       const res=await Publisher.publish({
         tipo:'market', slug:id, title, content:ad.description, image:ad.image,
