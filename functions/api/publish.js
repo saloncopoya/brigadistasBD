@@ -732,7 +732,7 @@ function renderRouteMapBlock(route, baseUrl) {
       window.__shareMap = map;
    
         
-          L.tileLayer('https://api.maptiler.com/maps/01a0b7f8-5f1d-700d-bf3a-e403b283343c/{z}/{x}/{y}@2x.png?key=kXZYdaMbZkD1EevhGXMI', {
+          L.tileLayer('https://api.maptiler.com/maps/basic-v2/{z}/{x}/{y}@2x.png?key=kXZYdaMbZkD1EevhGXMI', {
         tileSize: 512,
         zoomOffset: -1,
         maxZoom: 22,
