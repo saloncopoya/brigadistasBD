@@ -201,10 +201,7 @@ async function cacheFirst(req, cacheName) {
    ============================================================ */
 const TILE_CACHE = 'bgd-tiles-v1';
 const TILE_HOSTS = [
-  'tile.openstreetmap.org',
-  'a.tile.openstreetmap.org',
-  'b.tile.openstreetmap.org',
-  'c.tile.openstreetmap.org'
+  'api.maptiler.com'
 ];
 const TILE_MAX_ENTRIES = 1000;   // tope duro para no llenar el disco
 
