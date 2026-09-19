@@ -1,6 +1,25 @@
 {
   "posts": [
     {
+      "slug": "producto169",
+      "title": "Producto 1",
+      "description": "Se vende varios",
+      "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789554307/oon0yjos5lemhx73wwv4.png",
+      "url": "/share/m/producto169",
+      "tipo": "market",
+      "timestamp": 1789842190241,
+      "updatedAt": "2026-09-19T18:23:10.241Z",
+      "categoria": "",
+      "tarifa": "",
+      "frecuencia": "",
+      "horarioIni": "",
+      "horarioFin": "",
+      "dias": "",
+      "paradas": [],
+      "calles": [],
+      "pois": []
+    },
+    {
       "slug": "ppppp199",
       "title": "ppppp",
       "description": "Ruta ppppp",
@@ -244,8 +263,8 @@
       ]
     }
   ],
-  "total": 6,
-  "updatedAt": "2026-09-19T18:22:34.537Z",
+  "total": 7,
+  "updatedAt": "2026-09-19T18:23:10.241Z",
   "version": 1,
-  "__sha": "267247d2784826945fe17eb8fb0ccd57b82d3f94"
+  "__sha": "e4ad2fa0cdb0e1df0856634c905f293ca9a3d9d7"
 }
