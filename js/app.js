@@ -1202,7 +1202,7 @@ const url = location.origin + '/share/post/' + post.id;
     state.map = L.map(container, {
   zoomControl: true,
   minZoom: 13,
-maxZoom: 22, zoomSnap: 0.5, zoomDelta: 0.5,
+maxZoom: 20
   // 🛡️ Evita animaciones de zoom que rompen _leaflet_pos
   zoomAnimation: false,
   fadeAnimation: false,
@@ -1222,9 +1222,8 @@ maxZoom: 22, zoomSnap: 0.5, zoomDelta: 0.5,
   tileSize: 512,
   zoomOffset: -1,
   minZoom: 13,
- maxZoom: 22,
-  zoomSnap: 0.5,
-  zoomDelta: 0.5,
+ maxZoom: 20,
+
   maxNativeZoom: 20,
   crossOrigin: true,
   attribution: '© <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
@@ -2084,7 +2083,7 @@ const url = location.origin + '/share/m/' + id;
     if (state.tripMap) { state.tripMap.invalidateSize(); return; }
     const el = document.getElementById('tripMap');
     if (!el) return;
-    state.tripMap = L.map(el, {       zoomControl: false,       minZoom: 13,     maxZoom: 22, zoomSnap: 0.5, zoomDelta: 0.5     }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+    state.tripMap = L.map(el, {       zoomControl: false,       minZoom: 13,     maxZoom: 20 }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
     L.control.zoom({ position: 'bottomleft' }).addTo(state.tripMap);
     // ✨ Registrar el mapa para auto-reparación (sin timers)
     registerMap(state.tripMap);
@@ -2096,9 +2095,7 @@ const url = location.origin + '/share/m/' + id;
   tileSize: 512,
   zoomOffset: -1,
   minZoom: 13,
- maxZoom: 22,
-  zoomSnap: 0.5,
-  zoomDelta: 0.5,
+ maxZoom: 20,
   maxNativeZoom: 20,
   crossOrigin: true,
   attribution: '© <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
