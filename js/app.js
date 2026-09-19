@@ -2139,8 +2139,8 @@ const url = location.origin + '/share/m/' + id;
   function addTripPoint(lat, lng) {
     const idx = state.tripPoints.length;
     const letter = String.fromCharCode(65 + idx); // A, B, C, D, E
-    const color = ['#10b981', '#ef4444', '#f59e0b', '#3b82f6', '#a855f7'][idx] || '#00e5ff';
-    const name = TRIP_DEFAULT_NAMES[idx] || ('PUNTO ' + letter);
+const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#1A73E8';
+     const name = TRIP_DEFAULT_NAMES[idx] || ('PUNTO ' + letter);
     state.tripPoints.push({ lat, lng, letter, color, radius: state.tripRadius, name });
 
              const icon = L.divIcon({
@@ -2357,8 +2357,8 @@ const url = location.origin + '/share/m/' + id;
   //  - Sin OSRM, sin servicios externos
   // ============================================================
 
-  const TRIP_COLORS = ['#00e5ff','#a855f7','#10b981','#f59e0b','#ef4444','#ec4899','#3b82f6','#84cc16','#f97316','#14b8a6','#8b5cf6','#eab308'];
-
+const TRIP_COLORS = ['#1A73E8','#a855f7','#10b981','#f59e0b','#ef4444','#ec4899','#3b82f6','#84cc16','#f97316','#14b8a6','#8b5cf6','#eab308'];
+   
   // ─────── CONSTANTES DE CONFIGURACIÓN ───────
   // Tolerancia para considerar que dos trazos se "tocan" aunque no se crucen
   // exactamente (paralelas en avenidas de doble sentido, mismos carriles, etc.)
@@ -3275,8 +3275,8 @@ const url = location.origin + '/share/m/' + id;
         const color = TRIP_COLORS[(colorOffset + idx) % TRIP_COLORS.length];
 
         const chipsHtml = t.legs.map((leg, li) => {
-          const legColor = li === 0 ? '#00e5ff' : '#a855f7';
-          return `
+const legColor = li === 0 ? '#1A73E8' : '#a855f7';
+           return `
             <button class="trip-chain-item" type="button" data-trip-focus="${esc(leg.id)}" title="Abrir ruta ${esc(leg.nombre)}">
               <div class="trip-chain-chip" style="background:${legColor};border-color:${legColor};color:#ffffff">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
