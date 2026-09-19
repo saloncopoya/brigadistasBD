@@ -99,7 +99,7 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 /* SW.JS — v8 · NO intercepta tiles ni APIs externas */
-const VERSION = 'bgd-v1.3.8';
+const VERSION = 'bgd-v2';
 const STATIC_CACHE = `${VERSION}-static`;
 const HTML_CACHE = `${VERSION}-html`;
 
@@ -199,11 +199,11 @@ async function cacheFirst(req, cacheName) {
    ✔ Respeta la política de OSM (caché por uso).
    ✔ Si el usuario borra IndexedDB, el SW aún tiene los tiles.
    ============================================================ */
-const TILE_CACHE = 'bgd-tiles-v1';
+const TILE_CACHE = 'bgd-tiles-v2';
 const TILE_HOSTS = [
   'api.maptiler.com'
 ];
-const TILE_MAX_ENTRIES = 1000;   // tope duro para no llenar el disco
+const TILE_MAX_ENTRIES = 5000;  
 
 self.addEventListener('fetch', (event) => {
   const req = event.request;
