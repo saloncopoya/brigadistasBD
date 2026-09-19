@@ -1108,6 +1108,28 @@ body.fs-active{overflow:hidden !important}
     const content = $('#postContent').value.trim();
     const media = $('#postMediaUrl').value.trim();
     if(!title){ toast('El título es obligatorio','err'); return; }
+
+    // 🔐 PASO 1: Pedir y VALIDAR contraseña ANTES de tocar nada
+    let pass = sessionStorage.getItem('tgz_admin') || '';
+    if (!pass) pass = prompt('Contraseña admin para publicar en GitHub:') || '';
+    if (!pass) { toast('Se necesita la contraseña para publicar', 'err'); return; }
+
+    try {
+      const check = await fetch('/api/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pass, __check: true })
+      });
+      if (!check.ok) {
+        toast('❌ Contraseña incorrecta. No se guardó nada.', 'err');
+        return;   // ← SALE SIN TOCAR NADA
+      }
+    } catch (e) {
+      toast('❌ Sin conexión para validar contraseña. Intenta de nuevo.', 'err');
+      return;
+    }
+
+    // 🔐 PASO 2: Contraseña OK → ahora sí guardar
     const {dia,mes} = nowDM();
     const id = state.editingPost?.id || slugify(title,dia,mes);
     const post = {
@@ -1125,7 +1147,7 @@ body.fs-active{overflow:hidden !important}
     try{
       const res = await Publisher.publish({
         tipo:'post', slug:id, title, content, image:media,
-        password: prompt('Contraseña admin para publicar en GitHub:') || '',
+        password: pass,
         extra:{ dia, mes }
       });
       if(res && res.ok){ toast('Publicado en GitHub ✓'); }
@@ -2766,9 +2788,29 @@ if (f.size > 20 * 1024 * 1024) {
     const name = $('#routeName').value.trim();
     if(!name){ toast('El nombre es obligatorio','err'); goStep(1); return; }
 
+    // 🔐 PASO 1: Pedir y VALIDAR contraseña ANTES de tocar nada
+    let pass = sessionStorage.getItem('tgz_admin') || '';
+    if (!pass) pass = prompt('Contraseña admin:') || '';
+    if (!pass) { toast('Se necesita la contraseña para guardar', 'err'); return; }
+
+    try {
+      const check = await fetch('/api/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pass, __check: true })
+      });
+      if (!check.ok) {
+        toast('❌ Contraseña incorrecta. No se guardó nada.', 'err');
+        return;
+      }
+    } catch (e) {
+      toast('❌ Sin conexión para validar contraseña. Intenta de nuevo.', 'err');
+      return;
+    }
+
     const btn = $('#routeSave');
     btn.disabled = true;
-        const originalHTML = btn.innerHTML;
+    const originalHTML = btn.innerHTML;
     
     // 🖼️ Determinar qué hacer ANTES de cambiar el texto del botón
     const usingCustomImage = !!state.routeDraft.customImage;
@@ -2848,11 +2890,11 @@ if (f.size > 20 * 1024 * 1024) {
 
       btn.innerHTML = '⏳ Publicando en GitHub...';
 
-      try{
+          try{
         const res = await Publisher.publish({
           tipo:'ruta', slug:id, title:name, content:`Ruta ${name}`,
-          image: mapImage,   // ← imagen OG en el HTML de la ruta
-          password: prompt('Contraseña admin:')||'',
+          image: mapImage,
+          password: pass,        // ← reusar la ya validada, no volver a preguntar
           extra:{ route }
         });
         if(res?.ok) toast('Ruta publicada en GitHub ✓');
@@ -3287,6 +3329,27 @@ if (f.size > 20 * 1024 * 1024) {
   $('#mkSave').onclick = async ()=>{
     const title=$('#mkTitle').value.trim();
     if(!title){ toast('El título es obligatorio','err'); return; }
+
+    // 🔐 PASO 1: Pedir y VALIDAR contraseña ANTES de tocar nada
+    let pass = sessionStorage.getItem('tgz_admin') || '';
+    if (!pass) pass = prompt('Contraseña admin:') || '';
+    if (!pass) { toast('Se necesita la contraseña para guardar', 'err'); return; }
+
+    try {
+      const check = await fetch('/api/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pass, __check: true })
+      });
+      if (!check.ok) {
+        toast('❌ Contraseña incorrecta. No se guardó nada.', 'err');
+        return;
+      }
+    } catch (e) {
+      toast('❌ Sin conexión para validar contraseña. Intenta de nuevo.', 'err');
+      return;
+    }
+
     const {dia,mes}=nowDM();
     const id = state.editingMarket?.id || slugify(title,dia,mes);
     const ad = {
@@ -3301,7 +3364,7 @@ if (f.size > 20 * 1024 * 1024) {
     try{
       const res=await Publisher.publish({
         tipo:'market', slug:id, title, content:ad.description, image:ad.image,
-        password: prompt('Contraseña admin:')||'', extra:{ market:ad }
+        password: pass, extra:{ market:ad }
       });
       if(res?.ok) toast('Anuncio publicado ✓');
       else toast('Guardado local (GitHub: '+(res?.error||'pendiente')+')','err');
