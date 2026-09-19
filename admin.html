@@ -953,7 +953,40 @@ body.fs-active{overflow:hidden !important}
   }
 
   async function loadPosts(){
-  const list = await DB.getAll('posts');
+  let list = await DB.getAll('posts');
+
+  // 🪦 Filtrar tombstones
+  const deleted = new Set();
+  try {
+    const db = await DB.openDB();
+    const all = await db.getAll('deleted');
+    const ONE_WEEK = 7 * 24 * 60 * 60 * 1000;
+    all.forEach(d => {
+      if (d && d.tipo === 'post' && (Date.now() - d.deletedAt) < ONE_WEEK) {
+        deleted.add(d.refId);
+      }
+    });
+  } catch(e){}
+  list = list.filter(p => !deleted.has(p.id));
+
+  // 🔄 Merge con Firebase
+  if (fbDB && navigator.onLine) {
+    try {
+      const snap = await fbDB.ref('publicaciones').once('value');
+      const remote = snap.val() || {};
+      const map = new Map(list.map(p => [p.id, p]));
+      Object.values(remote).forEach(p => {
+        if (p && p.id && !deleted.has(p.id)) {
+          map.set(p.id, { ...(map.get(p.id) || {}), ...p });
+        }
+      });
+      list = Array.from(map.values());
+      for (const p of Object.values(remote)) {
+        if (p && p.id && !deleted.has(p.id)) await DB.put('posts', p);
+      }
+    } catch(e){}
+  }
+
   list.sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
   const el = $('#postsList');
   if(!list.length){ el.innerHTML = '<div class="empty"><p>Sin publicaciones aún</p></div>'; return; }
@@ -990,9 +1023,27 @@ body.fs-active{overflow:hidden !important}
         return;
       }
 
-      await markDeleted('post', id);
+      // 🔐 PASO 1: VALIDAR contraseña ANTES de tocar nada
+      try {
+        const check = await fetch('/api/publish', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pass, __check: true })
+        });
+        if (!check.ok) {
+          toast('❌ Contraseña incorrecta. No se eliminó nada.', 'err');
+          return;   // ← SALE SIN TOCAR NADA
+        }
+      } catch (e) {
+        // Sin red: no podemos validar → abortamos para no borrar sin autorización
+        toast('❌ Sin conexión para validar contraseña. Intenta de nuevo.', 'err');
+        return;
+      }
 
+      // 🔐 PASO 2: Contraseña OK → ahora sí borrar todo
+      await markDeleted('post', id);
       await DB.delete('posts', id);
+
       if (fbDB) {
         try { await fbDB.ref('publicaciones/' + id).remove(); }
         catch(e){ console.warn('[del post] Firebase:', e); }
@@ -3037,6 +3088,26 @@ if (f.size > 20 * 1024 * 1024) {
       row.querySelector('[data-act="del"]').onclick=async()=>{
         if(!confirm('¿Eliminar esta ruta?')) return;
         const pass = prompt('Contraseña admin para eliminar en GitHub:') || '';
+        if (!pass) {
+          toast('Se necesita la contraseña para eliminar', 'err');
+          return;
+        }
+
+        // 🔐 PASO 1: VALIDAR contraseña ANTES de tocar nada
+        try {
+          const check = await fetch('/api/publish', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: pass, __check: true })
+          });
+          if (!check.ok) {
+            toast('❌ Contraseña incorrecta. No se eliminó nada.', 'err');
+            return;   // ← SALE SIN TOCAR NADA
+          }
+        } catch (e) {
+          toast('❌ Sin conexión para validar contraseña. Intenta de nuevo.', 'err');
+          return;
+        }
 
         // 🪦 TOMBSTONE: marcar como eliminada para que NO reviva desde Firebase/GitHub
         await markDeleted('ruta', id);
@@ -3081,7 +3152,40 @@ if (f.size > 20 * 1024 * 1024) {
   //   MARKET
   // ================================================================
   async function loadMarket(){
-    const list = await DB.getAll('market');
+    let list = await DB.getAll('market');
+
+    // 🪦 Filtrar tombstones
+    const deleted = new Set();
+    try {
+      const db = await DB.openDB();
+      const all = await db.getAll('deleted');
+      const ONE_WEEK = 7 * 24 * 60 * 60 * 1000;
+      all.forEach(d => {
+        if (d && d.tipo === 'market' && (Date.now() - d.deletedAt) < ONE_WEEK) {
+          deleted.add(d.refId);
+        }
+      });
+    } catch(e){}
+    list = list.filter(m => !deleted.has(m.id));
+
+    // 🔄 Merge con Firebase
+    if (fbDB && navigator.onLine) {
+      try {
+        const snap = await fbDB.ref('marketplace').once('value');
+        const remote = snap.val() || {};
+        const map = new Map(list.map(m => [m.id, m]));
+        Object.values(remote).forEach(m => {
+          if (m && m.id && !deleted.has(m.id)) {
+            map.set(m.id, { ...(map.get(m.id) || {}), ...m });
+          }
+        });
+        list = Array.from(map.values());
+        for (const m of Object.values(remote)) {
+          if (m && m.id && !deleted.has(m.id)) await DB.put('market', m);
+        }
+      } catch(e){}
+    }
+
     list.sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
     const el=$('#marketList');
     if(!list.length){ el.innerHTML='<div class="empty"><p>Sin anuncios</p></div>'; return; }
@@ -3119,6 +3223,22 @@ if (f.size > 20 * 1024 * 1024) {
         }
         if (!pass) {
           toast('Se necesita la contraseña para eliminar del servidor', 'err');
+          return;
+        }
+
+        // 🔐 PASO 1: VALIDAR contraseña ANTES de tocar nada
+        try {
+          const check = await fetch('/api/publish', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: pass, __check: true })
+          });
+          if (!check.ok) {
+            toast('❌ Contraseña incorrecta. No se eliminó nada.', 'err');
+            return;   // ← SALE SIN TOCAR NADA
+          }
+        } catch (e) {
+          toast('❌ Sin conexión para validar contraseña. Intenta de nuevo.', 'err');
           return;
         }
 
