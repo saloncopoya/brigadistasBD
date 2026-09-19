@@ -730,14 +730,13 @@ function renderRouteMapBlock(route, baseUrl) {
       if (typeof L === 'undefined') return;
       var map = L.map('shareMapBig', { zoomControl: true, scrollWheelZoom: false });
       window.__shareMap = map;
-      // Caché de mosaicos compartida (mismo IndexedDB que la app principal)
-      // 🛡️ En páginas publicadas, usar tileLayer estándar.
-      // El SW cachea automáticamente y el navegador cachea HTTP.
-      // NO usar L.tileLayer.offline aquí para evitar dependencias de scripts.
-          L.tileLayer('https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=kXZYdaMbZkD1EevhGXMI', {
+   
+        
+           L.tileLayer('https://api.maptiler.com/maps/bright-v2/{z}/{x}/{y}@2x.png?key=kXZYdaMbZkD1EevhGXMI', {
         tileSize: 512,
         zoomOffset: -1,
-        maxZoom: 19,
+        maxZoom: 20,
+        maxNativeZoom: 20,
         crossOrigin: true,
         attribution: '© <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
       }).addTo(map);
