@@ -1,6 +1,25 @@
 {
   "posts": [
     {
+      "slug": "producto01199",
+      "title": "Producto 01",
+      "description": "Descripción 01",
+      "image": "",
+      "url": "/share/m/producto01199",
+      "tipo": "market",
+      "timestamp": 1789847758038,
+      "updatedAt": "2026-09-19T19:55:58.038Z",
+      "categoria": "",
+      "tarifa": "",
+      "frecuencia": "",
+      "horarioIni": "",
+      "horarioFin": "",
+      "dias": "",
+      "paradas": [],
+      "calles": [],
+      "pois": []
+    },
+    {
       "slug": "post1199",
       "title": "Post 1",
       "description": "Descrip 1",
@@ -155,7 +174,7 @@
       ]
     }
   ],
-  "total": 3,
-  "updatedAt": "2026-09-19T19:55:35.324Z",
+  "total": 4,
+  "updatedAt": "2026-09-19T19:55:58.038Z",
   "version": 1
 }
