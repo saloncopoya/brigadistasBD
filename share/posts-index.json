@@ -74,25 +74,6 @@
       ]
     },
     {
-      "slug": "holasd199",
-      "title": "holasd",
-      "description": "Ruta holasd",
-      "image": "",
-      "url": "/share/ruta/holasd199",
-      "tipo": "ruta",
-      "timestamp": 1789840946859,
-      "updatedAt": "2026-09-19T18:02:26.859Z",
-      "categoria": "urbana",
-      "tarifa": "",
-      "frecuencia": "",
-      "horarioIni": "",
-      "horarioFin": "",
-      "dias": "todos",
-      "paradas": [],
-      "calles": [],
-      "pois": []
-    },
-    {
       "slug": "lelek199",
       "title": "Lelek",
       "description": "Ruta Lelek",
@@ -225,8 +206,8 @@
       ]
     }
   ],
-  "total": 5,
-  "updatedAt": "2026-09-19T19:41:54.675Z",
+  "total": 4,
+  "updatedAt": "2026-09-19T19:41:57.298Z",
   "version": 1,
   "__sha": "c562eb95bc0db0ffb7cf92385e690ec164dc413b"
 }
