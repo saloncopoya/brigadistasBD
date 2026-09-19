@@ -818,6 +818,11 @@ const url = location.origin + '/share/post/' + post.id;
   // 🚀 Carga la geometría pesada de UNA ruta bajo demanda.
   // La guarda en IndexedDB para no volver a pedirla.
   async function loadRouteGeo(id) {
+
+     // 🪦 No cargar geometría de rutas eliminadas
+    const deleted = await getDeletedSet('ruta');
+    if (deleted.has(id)) return null;
+     
     // 1) IndexedDB primero
     try {
       const cached = await DB.get('routes_geo', id);
@@ -988,10 +993,43 @@ const url = location.origin + '/share/post/' + post.id;
           else if (act === 'edit') { openRouteEditor(route); }
           else if (act === 'del') {
             if (!confirm('¿Eliminar esta ruta?')) return;
+
+            const pass = sessionStorage.getItem('tgz_admin') || prompt('Contraseña admin:') || '';
+            if (!pass) { toast('Se necesita contraseña para eliminar en GitHub', 'err'); return; }
+
+            // 🪦 Tombstone
+            try {
+              const db = await DB.openDB();
+              const tx = db.transaction('deleted', 'readwrite');
+              tx.objectStore('deleted').put({
+                id: 'ruta:' + id, tipo: 'ruta', refId: id, deletedAt: Date.now()
+              });
+              await tx.done;
+            } catch(e){}
+
+            // 🗑️ Borrar local
             await DB.delete('routes', id);
-            if (fbDB && state.online) fbDB.ref('rutas_colectivos_tgz/' + id).remove().catch(() => {});
+            try { await DB.delete('routes_geo', id); } catch(e){}
+
+            // 🗑️ Borrar de Firebase (nodos NUEVOS)
+          if (fbDB && state.online) {
+  try {
+    await Promise.all([
+      fbDB.ref('rutas_index/' + id).remove(),
+      fbDB.ref('rutas_geo/' + id).remove(),
+      fbDB.ref('rutas_colectivos_tgz/' + id).remove()
+    ]);
+  } catch(e){}
+}
+
+            // 🗑️ Borrar HTML de GitHub
+            try {
+              const res = await Publisher.deleteFromGitHub({ tipo: 'ruta', slug: id, password: pass });
+              if (res.ok) toast('Ruta eliminada ✓');
+              else toast('Eliminado local. GitHub: ' + (res.error || ''), 'err');
+            } catch (e) { toast('Eliminado local (sin conexión)', 'err'); }
+
             await loadRoutes(); renderRouteContent();
-            toast('Ruta eliminada');
           }
         };
       });
@@ -2076,7 +2114,12 @@ const url = location.origin + '/share/m/' + id;
       }
       if (hayRoutes) {
         for (const id of localRouteIds) {
-          if (!remoteRouteIds.has(id) && !pendingIds.has(id)) await DB.delete('routes', id);
+          if (!remoteRouteIds.has(id) && !pendingIds.has(id) && !deletedRoutes.has(id)) {
+            // NO borrar si la ruta se acaba de crear (< 60s) — puede estar en tránsito a Firebase
+            const localRoute = localRoutes.find(r => r.id === id);
+            if (localRoute && localRoute.updatedAt && (Date.now() - localRoute.updatedAt) < 60000) continue;
+            await DB.delete('routes', id);
+          }
         }
       }
       if (hayMarket) {
