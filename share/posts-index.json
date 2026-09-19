@@ -1,6 +1,43 @@
 {
   "posts": [
     {
+      "slug": "ruta30199",
+      "title": "RUTA 30",
+      "description": "Ruta RUTA 30",
+      "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789800330/peax3qgxp32zsymzbpun.jpg",
+      "url": "/share/ruta/ruta30199",
+      "tipo": "ruta",
+      "timestamp": 1789800336345,
+      "updatedAt": "2026-09-19T06:45:36.345Z",
+      "categoria": "urbana",
+      "tarifa": "",
+      "frecuencia": "",
+      "horarioIni": "",
+      "horarioFin": "",
+      "dias": "todos",
+      "paradas": [
+        "Calle 3 Oriente Sur entre 4 y 3 Sur"
+      ],
+      "calles": [],
+      "pois": [
+        "Mercado Centro",
+        "Colonia San Roque",
+        "Escuela Secundaria del Estado",
+        "Panteón Municipal",
+        "Parque 5 de Mayo",
+        "Hospital General No. 2 IMSS",
+        "Jardín Botánico Faustino Miranda",
+        "Centro de Convivencia Infantil",
+        "Teatro de la Ciudad Emilio Rabasa",
+        "Escuela Normal del Estado",
+        "Colonia Albania Baja",
+        "Bodega Aurrerá Sumidero",
+        "Colonia Las Lajas",
+        "Colonia Las Casitas (Cruz con Casitas)",
+        "Colonia Las Granjas"
+      ]
+    },
+    {
       "slug": "ruta1149",
       "title": "RUTA 1",
       "description": "Ruta RUTA 1",
@@ -136,8 +173,8 @@
       ]
     }
   ],
-  "total": 2,
-  "updatedAt": "2026-09-19T06:31:00.126Z",
+  "total": 3,
+  "updatedAt": "2026-09-19T06:45:36.345Z",
   "version": 1,
-  "__sha": "81317815e5698fbd63aeecc9a0fdc6188f23c17d"
+  "__sha": "aee8701707bc3b7da2c4c9c28f72a5af66832250"
 }
