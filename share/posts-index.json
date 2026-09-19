@@ -1,6 +1,25 @@
 {
   "posts": [
     {
+      "slug": "hola1199",
+      "title": "Hola 1",
+      "description": "Ruta Hola 1",
+      "image": "",
+      "url": "/share/ruta/hola1199",
+      "tipo": "ruta",
+      "timestamp": 1789845169954,
+      "updatedAt": "2026-09-19T19:12:49.954Z",
+      "categoria": "urbana",
+      "tarifa": "",
+      "frecuencia": "",
+      "horarioIni": "",
+      "horarioFin": "",
+      "dias": "todos",
+      "paradas": [],
+      "calles": [],
+      "pois": []
+    },
+    {
       "slug": "producto169",
       "title": "Producto 1",
       "description": "Se vende varios",
@@ -263,8 +282,8 @@
       ]
     }
   ],
-  "total": 7,
-  "updatedAt": "2026-09-19T18:53:11.987Z",
+  "total": 8,
+  "updatedAt": "2026-09-19T19:12:49.954Z",
   "version": 1,
-  "__sha": "40b440ac70b4d4147df64e91fc3583b28b8cf896"
+  "__sha": "b9b7aa41ae7575cfa4900cc29e0e368c25085934"
 }
