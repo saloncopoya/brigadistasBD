@@ -374,7 +374,7 @@ $('#installBtn').onclick = async () => {
     try {
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') toast('App instalada ✓');
+      if (outcome === 'accepted') 
       deferredPrompt = null;
       $('#installBtn').classList.remove('show');
       return;
@@ -395,7 +395,7 @@ $('#installBtn').onclick = async () => {
 
 window.addEventListener('appinstalled', () => {
   $('#installBtn').classList.remove('show');
-  toast('¡App instalada! 🎉');
+  toast('¡App instalada 2! 🎉');
 });
 
 if (window.matchMedia('(display-mode: standalone)').matches) {
