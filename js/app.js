@@ -1218,7 +1218,7 @@ maxZoom: 22, zoomSnap: 0.5, zoomDelta: 0.5,
     bindFullscreenButton('routeMapFsBtn', 'routeMapWrap');
    
 
-     L.tileLayer('https://api.maptiler.com/maps/bright-v2/{z}/{x}/{y}@2x.png?key=kXZYdaMbZkD1EevhGXMI', {
+          L.tileLayer('https://api.maptiler.com/maps/01a0b7f8-5f1d-700d-bf3a-e403b283343c/{z}/{x}/{y}@2x.png?key=kXZYdaMbZkD1EevhGXMI', {
   tileSize: 512,
   zoomOffset: -1,
   minZoom: 13,
@@ -2092,7 +2092,7 @@ const url = location.origin + '/share/m/' + id;
     // 🖥️ Conectar el botón de pantalla completa con este mapa (sin timers)
     bindFullscreenButton('tripMapFsBtn', 'tripMapWrap');
        
- L.tileLayer('https://api.maptiler.com/maps/bright-v2/{z}/{x}/{y}@2x.png?key=kXZYdaMbZkD1EevhGXMI', {
+      L.tileLayer('https://api.maptiler.com/maps/01a0b7f8-5f1d-700d-bf3a-e403b283343c/{z}/{x}/{y}@2x.png?key=kXZYdaMbZkD1EevhGXMI', {
   tileSize: 512,
   zoomOffset: -1,
   minZoom: 13,
