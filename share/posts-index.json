@@ -20,25 +20,6 @@
       "pois": []
     },
     {
-      "slug": "post1199",
-      "title": "Post 1",
-      "description": "Descrip 1",
-      "image": "",
-      "url": "/share/post/post1199",
-      "tipo": "post",
-      "timestamp": 1789847735324,
-      "updatedAt": "2026-09-19T19:55:35.324Z",
-      "categoria": "",
-      "tarifa": "",
-      "frecuencia": "",
-      "horarioIni": "",
-      "horarioFin": "",
-      "dias": "",
-      "paradas": [],
-      "calles": [],
-      "pois": []
-    },
-    {
       "slug": "ruta3149",
       "title": "RUTA 3",
       "description": "Ruta RUTA 3",
@@ -174,7 +155,7 @@
       ]
     }
   ],
-  "total": 4,
-  "updatedAt": "2026-09-19T19:55:58.038Z",
+  "total": 3,
+  "updatedAt": "2026-09-19T19:56:28.670Z",
   "version": 1
 }
