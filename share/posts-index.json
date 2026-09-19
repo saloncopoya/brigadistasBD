@@ -1,6 +1,25 @@
 {
   "posts": [
     {
+      "slug": "zxc199",
+      "title": "zxc",
+      "description": "Ruta zxc",
+      "image": "",
+      "url": "/share/ruta/zxc199",
+      "tipo": "ruta",
+      "timestamp": 1789842212513,
+      "updatedAt": "2026-09-19T18:23:32.513Z",
+      "categoria": "urbana",
+      "tarifa": "",
+      "frecuencia": "",
+      "horarioIni": "",
+      "horarioFin": "",
+      "dias": "todos",
+      "paradas": [],
+      "calles": [],
+      "pois": []
+    },
+    {
       "slug": "producto169",
       "title": "Producto 1",
       "description": "Se vende varios",
@@ -263,8 +282,8 @@
       ]
     }
   ],
-  "total": 7,
-  "updatedAt": "2026-09-19T18:23:10.241Z",
+  "total": 8,
+  "updatedAt": "2026-09-19T18:23:32.513Z",
   "version": 1,
-  "__sha": "e4ad2fa0cdb0e1df0856634c905f293ca9a3d9d7"
+  "__sha": "99fa53f93018e326dcf8184fab2c65e450927a58"
 }
