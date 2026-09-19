@@ -1,25 +1,6 @@
 {
   "posts": [
     {
-      "slug": "brigadistasbd189",
-      "title": "Brigadistas bd",
-      "description": "Contenido",
-      "image": "",
-      "url": "/share/post/brigadistasbd189",
-      "tipo": "post",
-      "timestamp": 1789783874192,
-      "updatedAt": "2026-09-19T02:11:14.192Z",
-      "categoria": "",
-      "tarifa": "",
-      "frecuencia": "",
-      "horarioIni": "",
-      "horarioFin": "",
-      "dias": "",
-      "paradas": [],
-      "calles": [],
-      "pois": []
-    },
-    {
       "slug": "ruta3149",
       "title": "RUTA 3",
       "description": "Ruta RUTA 3",
@@ -155,8 +136,8 @@
       ]
     }
   ],
-  "total": 3,
-  "updatedAt": "2026-09-19T02:49:09.643Z",
+  "total": 2,
+  "updatedAt": "2026-09-19T02:49:20.112Z",
   "version": 1,
   "__sha": "536522dcbf32d6d3b3e1e719ea18b43907186f0c"
 }
