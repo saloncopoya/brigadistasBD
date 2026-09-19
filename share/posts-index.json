@@ -1,25 +1,6 @@
 {
   "posts": [
     {
-      "slug": "01199",
-      "title": "01",
-      "description": "Ruta 01",
-      "image": "",
-      "url": "/share/ruta/01199",
-      "tipo": "ruta",
-      "timestamp": 1789847877509,
-      "updatedAt": "2026-09-19T19:57:57.509Z",
-      "categoria": "urbana",
-      "tarifa": "",
-      "frecuencia": "",
-      "horarioIni": "",
-      "horarioFin": "",
-      "dias": "todos",
-      "paradas": [],
-      "calles": [],
-      "pois": []
-    },
-    {
       "slug": "ruta3149",
       "title": "RUTA 3",
       "description": "Ruta RUTA 3",
@@ -155,7 +136,7 @@
       ]
     }
   ],
-  "total": 3,
-  "updatedAt": "2026-09-19T19:57:57.509Z",
+  "total": 2,
+  "updatedAt": "2026-09-19T19:58:13.570Z",
   "version": 1
 }
