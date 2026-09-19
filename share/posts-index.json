@@ -74,25 +74,6 @@
       ]
     },
     {
-      "slug": "lelek199",
-      "title": "Lelek",
-      "description": "Ruta Lelek",
-      "image": "",
-      "url": "/share/ruta/lelek199",
-      "tipo": "ruta",
-      "timestamp": 1789839525349,
-      "updatedAt": "2026-09-19T17:38:45.349Z",
-      "categoria": "urbana",
-      "tarifa": "",
-      "frecuencia": "",
-      "horarioIni": "",
-      "horarioFin": "",
-      "dias": "todos",
-      "paradas": [],
-      "calles": [],
-      "pois": []
-    },
-    {
       "slug": "ruta30199",
       "title": "RUTA 30",
       "description": "Ruta RUTA 30",
@@ -206,8 +187,8 @@
       ]
     }
   ],
-  "total": 4,
-  "updatedAt": "2026-09-19T19:41:57.298Z",
+  "total": 3,
+  "updatedAt": "2026-09-19T19:41:59.905Z",
   "version": 1,
   "__sha": "c562eb95bc0db0ffb7cf92385e690ec164dc413b"
 }
