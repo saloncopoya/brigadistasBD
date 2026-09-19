@@ -1,25 +1,6 @@
 {
   "posts": [
     {
-      "slug": "suwiwiw9199",
-      "title": "SUWIWIW9",
-      "description": "Ruta SUWIWIW9",
-      "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789856935/j44pv7pcpe8uct6zhmfr.jpg",
-      "url": "/share/ruta/suwiwiw9199",
-      "tipo": "ruta",
-      "timestamp": 1789856936557,
-      "updatedAt": "2026-09-19T22:28:56.557Z",
-      "categoria": "urbana",
-      "tarifa": "",
-      "frecuencia": "",
-      "horarioIni": "",
-      "horarioFin": "",
-      "dias": "todos",
-      "paradas": [],
-      "calles": [],
-      "pois": []
-    },
-    {
       "slug": "ruta3149",
       "title": "RUTA 3",
       "description": "Ruta RUTA 3",
@@ -155,7 +136,7 @@
       ]
     }
   ],
-  "total": 3,
-  "updatedAt": "2026-09-19T22:28:56.557Z",
+  "total": 2,
+  "updatedAt": "2026-09-19T23:40:06.737Z",
   "version": 1
 }
