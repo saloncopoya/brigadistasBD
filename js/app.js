@@ -1202,7 +1202,7 @@ const url = location.origin + '/share/post/' + post.id;
     state.map = L.map(container, {
   zoomControl: true,
   minZoom: 13,
-maxZoom: 20
+maxZoom: 20,
   // 🛡️ Evita animaciones de zoom que rompen _leaflet_pos
   zoomAnimation: false,
   fadeAnimation: false,
