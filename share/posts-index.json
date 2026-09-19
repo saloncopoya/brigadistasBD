@@ -1,25 +1,6 @@
 {
   "posts": [
     {
-      "slug": "producto01199",
-      "title": "Producto 01",
-      "description": "Descripción 01",
-      "image": "",
-      "url": "/share/m/producto01199",
-      "tipo": "market",
-      "timestamp": 1789847758038,
-      "updatedAt": "2026-09-19T19:55:58.038Z",
-      "categoria": "",
-      "tarifa": "",
-      "frecuencia": "",
-      "horarioIni": "",
-      "horarioFin": "",
-      "dias": "",
-      "paradas": [],
-      "calles": [],
-      "pois": []
-    },
-    {
       "slug": "ruta3149",
       "title": "RUTA 3",
       "description": "Ruta RUTA 3",
@@ -155,7 +136,7 @@
       ]
     }
   ],
-  "total": 3,
-  "updatedAt": "2026-09-19T19:56:28.670Z",
+  "total": 2,
+  "updatedAt": "2026-09-19T19:56:58.967Z",
   "version": 1
 }
