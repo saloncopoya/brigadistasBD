@@ -1,25 +1,6 @@
 {
   "posts": [
     {
-      "slug": "zxc199",
-      "title": "Q",
-      "description": "Ruta Q",
-      "image": "",
-      "url": "/share/ruta/zxc199",
-      "tipo": "ruta",
-      "timestamp": 1789843623761,
-      "updatedAt": "2026-09-19T18:47:03.761Z",
-      "categoria": "urbana",
-      "tarifa": "",
-      "frecuencia": "",
-      "horarioIni": "",
-      "horarioFin": "",
-      "dias": "todos",
-      "paradas": [],
-      "calles": [],
-      "pois": []
-    },
-    {
       "slug": "producto169",
       "title": "Producto 1",
       "description": "Se vende varios",
@@ -282,8 +263,8 @@
       ]
     }
   ],
-  "total": 8,
-  "updatedAt": "2026-09-19T18:47:03.761Z",
+  "total": 7,
+  "updatedAt": "2026-09-19T18:53:11.987Z",
   "version": 1,
   "__sha": "40b440ac70b4d4147df64e91fc3583b28b8cf896"
 }
