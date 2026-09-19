@@ -767,10 +767,15 @@ const url = location.origin + '/share/post/' + post.id;
 
 
      async function loadRoutes() {
+    // 🪦 Filtrar rutas eliminadas (tombstones) — igual que posts y market
+    const deleted = await getDeletedSet('ruta');
+
     // ─── FASE 1: IndexedDB local (rápido) ───
     let local = [];
     try { local = await DB.getAll('routes'); } catch (e) {}
+    local = local.filter(r => !deleted.has(r.id));
     state.routes = local.sort((a, b) =>
+       
       String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es',
         { numeric: true, sensitivity: 'base' })
     );
@@ -783,12 +788,16 @@ const url = location.origin + '/share/post/' + post.id;
     if (state.online) {
       (async () => {
         try {
-          const idx = await fetchIndex('rutas_index');
+
+                     const idx = await fetchIndex('rutas_index');
           if (!idx) return;
           const map = new Map(state.routes.map(r => [r.id, r]));
           Object.values(idx).forEach(r => {
-            if (r && r.id) map.set(r.id, { ...(map.get(r.id) || {}), ...r });
+            if (r && r.id && !deleted.has(r.id)) {
+              map.set(r.id, { ...(map.get(r.id) || {}), ...r });
+            }
           });
+           
           state.routes = Array.from(map.values()).sort((a, b) =>
             String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es',
               { numeric: true, sensitivity: 'base' })
@@ -2051,10 +2060,14 @@ const url = location.origin + '/share/m/' + id;
       const localRouteIds = new Set(localRoutes.map(r => r.id));
       const localMarketIds = new Set(localMarket.map(m => m.id));
 
-      for (const p of Object.values(posts)) if (p && p.id) await DB.put('posts', p);
-      for (const r of Object.values(routes)) if (r && r.id) await DB.put('routes', r);
-      for (const m of Object.values(market)) if (m && m.id) await DB.put('market', m);
+      const deletedPosts = await getDeletedSet('post');
+      const deletedRoutes = await getDeletedSet('ruta');
+      const deletedMarket = await getDeletedSet('market');
 
+      for (const p of Object.values(posts)) if (p && p.id && !deletedPosts.has(p.id)) await DB.put('posts', p);
+      for (const r of Object.values(routes)) if (r && r.id && !deletedRoutes.has(r.id)) await DB.put('routes', r);
+      for (const m of Object.values(market)) if (m && m.id && !deletedMarket.has(m.id)) await DB.put('market', m);
+       
       // 🧹 Borrar solo si NO está pendiente de subir
       if (hayPosts) {
         for (const id of localPostIds) {
