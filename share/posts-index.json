@@ -1,25 +1,6 @@
 {
   "posts": [
     {
-      "slug": "jsusiw3k3j2189",
-      "title": "Jsusiw 3k3j2",
-      "description": "Kekek",
-      "image": "",
-      "url": "/share/post/jsusiw3k3j2189",
-      "tipo": "post",
-      "timestamp": 1789783894719,
-      "updatedAt": "2026-09-19T02:11:34.719Z",
-      "categoria": "",
-      "tarifa": "",
-      "frecuencia": "",
-      "horarioIni": "",
-      "horarioFin": "",
-      "dias": "",
-      "paradas": [],
-      "calles": [],
-      "pois": []
-    },
-    {
       "slug": "brigadistasbd189",
       "title": "Brigadistas bd",
       "description": "Contenido",
@@ -174,8 +155,8 @@
       ]
     }
   ],
-  "total": 4,
-  "updatedAt": "2026-09-19T02:48:44.217Z",
+  "total": 3,
+  "updatedAt": "2026-09-19T02:49:09.643Z",
   "version": 1,
   "__sha": "536522dcbf32d6d3b3e1e719ea18b43907186f0c"
 }
