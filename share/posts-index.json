@@ -74,57 +74,6 @@
       ]
     },
     {
-      "slug": "ruta30199",
-      "title": "RUTA 30",
-      "description": "Ruta RUTA 30",
-      "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789800330/peax3qgxp32zsymzbpun.jpg",
-      "url": "/share/ruta/ruta30199",
-      "tipo": "ruta",
-      "timestamp": 1789800525054,
-      "updatedAt": "2026-09-19T06:48:45.054Z",
-      "categoria": "urbana",
-      "tarifa": "",
-      "frecuencia": "",
-      "horarioIni": "",
-      "horarioFin": "",
-      "dias": "todos",
-      "paradas": [
-        "Calle 3 Oriente Sur entre 4 y 3 Sur"
-      ],
-      "calles": [
-        "Calle 3a Oriente Sur",
-        "Avenida 4a Sur Oriente cerca de Calle 3a Oriente Sur",
-        "Calle 11a. Oriente Norte cerca de Avenida 4a Sur Oriente",
-        "Sabinal entre Calle 11a. Oriente Norte y 15 Oriente",
-        "15 Oriente entre Sabinal y 15 Calle Oriente Norte",
-        "15 Calle Oriente Norte entre 15 Oriente y Calzada al Sumidero",
-        "Calzada al Sumidero entre 15 Calle Oriente Norte y Avenida Salvador",
-        "Avenida Salvador entre Calzada al Sumidero y Calzada al Sumidero",
-        "Avenida Coahuila cerca de Calzada al Sumidero",
-        "Calle Puebla entre Avenida Coahuila y Avenida Chihuahua",
-        "Avenida Chihuahua entre Calle Puebla y Calle Veracruz",
-        "Calle Veracruz entre Avenida Chihuahua y Avenida Colima",
-        "Avenida Colima"
-      ],
-      "pois": [
-        "Mercado Centro",
-        "Colonia San Roque",
-        "Escuela Secundaria del Estado",
-        "Panteón Municipal",
-        "Parque 5 de Mayo",
-        "Hospital General No. 2 IMSS",
-        "Jardín Botánico Faustino Miranda",
-        "Centro de Convivencia Infantil",
-        "Teatro de la Ciudad Emilio Rabasa",
-        "Escuela Normal del Estado",
-        "Colonia Albania Baja",
-        "Bodega Aurrerá Sumidero",
-        "Colonia Las Lajas",
-        "Colonia Las Casitas (Cruz con Casitas)",
-        "Colonia Las Granjas"
-      ]
-    },
-    {
       "slug": "ruta1149",
       "title": "RUTA 1",
       "description": "Ruta RUTA 1",
@@ -187,8 +136,8 @@
       ]
     }
   ],
-  "total": 3,
-  "updatedAt": "2026-09-19T19:41:59.905Z",
+  "total": 2,
+  "updatedAt": "2026-09-19T19:42:02.573Z",
   "version": 1,
   "__sha": "c562eb95bc0db0ffb7cf92385e690ec164dc413b"
 }
