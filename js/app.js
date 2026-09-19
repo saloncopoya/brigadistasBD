@@ -150,9 +150,9 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
     routeMode: 'rutas',
     routes: [],
     posts: [],
-     postsShown: 20,           
+     postsShown: 2,           
     market: [],
-       marketShown: 20,
+       marketShown: 2,
     filteredMarket: [],
     marketFilter: 'all',
     marketQuery: '',
@@ -412,7 +412,7 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
   try { local = await DB.getAll('posts'); } catch (e) {}
   local.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
   state.posts = local;
-  state.postsShown = 20;  
+  state.postsShown = 2;  
 
   // Pintar ya si estamos en home
   if (state.posts.length && state.currentPage === 'home') {
@@ -1745,7 +1745,7 @@ const url = location.origin + '/share/ruta/' + route.id;
   let local = [];
   try { local = await DB.getAll('market'); } catch (e) {}
   state.market = local.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-  state.marketShown = 20;   
+  state.marketShown = 2;   
      
 
   if (state.market.length && state.currentPage === 'market') {
@@ -1865,7 +1865,7 @@ const url = location.origin + '/share/m/' + id;
   // Búsqueda y filtros de market
   $('#marketSearch').oninput = e => {
     state.marketQuery = e.target.value;
-    state.marketShown = 20;   
+    state.marketShown = 2;   
     renderMarket();
   };
   $$('#marketCats .chip').forEach(c => {
@@ -1873,7 +1873,7 @@ const url = location.origin + '/share/m/' + id;
       $$('#marketCats .chip').forEach(x => x.classList.remove('active'));
       c.classList.add('active');
       state.marketFilter = c.dataset.cat;
-      state.marketShown = 20;   
+      state.marketShown = 2;   
       renderMarket();
     };
   });
