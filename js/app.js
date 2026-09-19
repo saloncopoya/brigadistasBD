@@ -440,13 +440,28 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
     try { renderFeed(); } catch (e) {}
   }
 
-  (async () => {
+    (async () => {
     try {
       const idx = await Publisher.fetchIndex();
       if (idx && Array.isArray(idx.posts)) {
         const map = new Map(state.posts.map(p => [p.id, p]));
         idx.posts.forEach(p => {
-          if (!map.has(p.id) && !deleted.has(p.id)) map.set(p.id, p);
+          const key = p.id || p.slug;
+          if (!key || deleted.has(key)) return;
+          if (map.has(key)) return;
+
+          // 🔧 Normalizar el item del índice al formato interno
+          const normalized = {
+            ...p,
+            id: key,
+            media: p.media || p.image || '',
+            likes: p.likes || 0,
+            likedBy: p.likedBy || [],
+            comments: p.comments || [],
+            timestamp: p.timestamp || Date.now()
+          };
+
+          map.set(key, normalized);
         });
         state.posts = Array.from(map.values())
           .filter(p => p.tipo === 'post' || !p.tipo)
@@ -786,18 +801,19 @@ const url = location.origin + '/share/post/' + post.id;
 
     // ─── FASE 2: Worker (índice compartido, cacheado en KV) ───
     if (state.online) {
-      (async () => {
+           (async () => {
         try {
 
                      const idx = await fetchIndex('rutas_index');
           if (!idx) return;
           const map = new Map(state.routes.map(r => [r.id, r]));
           Object.values(idx).forEach(r => {
-            if (r && r.id && !deleted.has(r.id)) {
-              map.set(r.id, { ...(map.get(r.id) || {}), ...r });
-            }
+            if (!r) return;
+            const key = r.id || r.slug;
+            if (!key || deleted.has(key)) return;
+            map.set(key, { ...(map.get(key) || {}), ...r, id: key });
           });
-           
+
           state.routes = Array.from(map.values()).sort((a, b) =>
             String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es',
               { numeric: true, sensitivity: 'base' })
@@ -992,45 +1008,63 @@ const url = location.origin + '/share/post/' + post.id;
           else if (act === 'share') { shareRoute(route); }
           else if (act === 'edit') { openRouteEditor(route); }
           else if (act === 'del') {
-            if (!confirm('¿Eliminar esta ruta?')) return;
+  if (!confirm('¿Eliminar esta ruta?')) return;
 
-            const pass = sessionStorage.getItem('tgz_admin') || prompt('Contraseña admin:') || '';
-            if (!pass) { toast('Se necesita contraseña para eliminar en GitHub', 'err'); return; }
+  const pass = sessionStorage.getItem('tgz_admin') || prompt('Contraseña admin:') || '';
+  if (!pass) { toast('Se necesita contraseña para eliminar', 'err'); return; }
 
-            // 🪦 Tombstone
-            try {
-              const db = await DB.openDB();
-              const tx = db.transaction('deleted', 'readwrite');
-              tx.objectStore('deleted').put({
-                id: 'ruta:' + id, tipo: 'ruta', refId: id, deletedAt: Date.now()
-              });
-              await tx.done;
-            } catch(e){}
-
-            // 🗑️ Borrar local
-            await DB.delete('routes', id);
-            try { await DB.delete('routes_geo', id); } catch(e){}
-
-            // 🗑️ Borrar de Firebase (nodos NUEVOS)
-          if (fbDB && state.online) {
+  // 🔐 Validar contraseña ANTES
   try {
-    await Promise.all([
-      fbDB.ref('rutas_index/' + id).remove(),
-      fbDB.ref('rutas_geo/' + id).remove(),
-      fbDB.ref('rutas_colectivos_tgz/' + id).remove()
-    ]);
+    const check = await fetch('/api/publish', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pass, __check: true })
+    });
+    if (!check.ok) {
+      toast('❌ Contraseña incorrecta. No se eliminó nada.', 'err');
+      return;
+    }
+  } catch (e) {
+    toast('❌ Sin conexión para validar contraseña.', 'err');
+    return;
+  }
+
+  // 🪦 Tombstone
+  try {
+    const db = await DB.openDB();
+    const tx = db.transaction('deleted', 'readwrite');
+    tx.objectStore('deleted').put({
+      id: 'ruta:' + id, tipo: 'ruta', refId: id, deletedAt: Date.now()
+    });
+    await tx.done;
   } catch(e){}
+
+  // 🗑️ Borrar local
+  await DB.delete('routes', id);
+  try { await DB.delete('routes_geo', id); } catch(e){}
+
+  // 🗑️ Borrar de Firebase
+  if (fbDB && state.online) {
+    try {
+      await Promise.all([
+        fbDB.ref('rutas_index/' + id).remove(),
+        fbDB.ref('rutas_geo/' + id).remove(),
+        fbDB.ref('rutas_colectivos_tgz/' + id).remove()
+      ]);
+    } catch(e){}
+  }
+
+  // 🗑️ Borrar de GitHub
+  try {
+    const res = await Publisher.deleteFromGitHub({ tipo: 'ruta', slug: id, password: pass });
+    if (res.ok) toast('Ruta eliminada ✓');
+    else toast('Eliminado local. GitHub: ' + (res.error || ''), 'err');
+  } catch (e) {
+    toast('Eliminado local (sin conexión)', 'err');
+  }
+
+  await loadRoutes(); renderRouteContent();
 }
-
-            // 🗑️ Borrar HTML de GitHub
-            try {
-              const res = await Publisher.deleteFromGitHub({ tipo: 'ruta', slug: id, password: pass });
-              if (res.ok) toast('Ruta eliminada ✓');
-              else toast('Eliminado local. GitHub: ' + (res.error || ''), 'err');
-            } catch (e) { toast('Eliminado local (sin conexión)', 'err'); }
-
-            await loadRoutes(); renderRouteContent();
-          }
         };
       });
       card.onclick = (e) => {
