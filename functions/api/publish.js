@@ -1069,15 +1069,31 @@ async function regenerateSitemap(env, ghHeaders, baseUrl, index) {
 
   const today = new Date().toISOString().split('T')[0];
 
+  // 🧹 Formatear fecha SIN milisegundos, ni Z, ni offset
+  // Formato resultado: 2025-09-19T19:15:53Z
+  // Si la fecha está en el futuro → usar HOY (Google rechaza fechas futuras)
   const safeLastmod = (val) => {
-    if (!val) return today;
-    const s = String(val).trim();
-    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z?$/.test(s)) return s;
-    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-    return today;
+    if (!val) return today + 'T00:00:00Z';
+    
+    let d;
+    try {
+      d = new Date(val);
+      if (isNaN(d.getTime())) return today + 'T00:00:00Z';
+    } catch (e) {
+      return today + 'T00:00:00Z';
+    }
+    
+    // 🚨 Si está en el futuro, usar "ahora mismo"
+    const ahora = new Date();
+    if (d.getTime() > ahora.getTime()) {
+      d = ahora;
+    }
+    
+    // Formato ISO sin milisegundos: YYYY-MM-DDTHH:MM:SSZ
+    return d.toISOString().split('.')[0] + 'Z';
   };
 
-  const escapeXml = (str) => String(str || '')
+  const escapeXml = (str) => String(str == null ? '' : str)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -1104,7 +1120,7 @@ async function regenerateSitemap(env, ghHeaders, baseUrl, index) {
   };
 
   const urls = [
-    { loc: baseUrl + '/', priority: '1.0', changefreq: 'daily', lastmod: today }
+    { loc: baseUrl + '/', lastmod: today + 'T00:00:00Z' }
   ];
 
   (index.posts || []).forEach(p => {
@@ -1121,35 +1137,17 @@ async function regenerateSitemap(env, ghHeaders, baseUrl, index) {
 
     urls.push({
       loc: fullUrl,
-      priority: '0.8',
-      changefreq: 'weekly',
-      lastmod: safeLastmod(p.updatedAt || p.timestamp),
-      image: p.image && String(p.image).startsWith('http') ? escapeXml(p.image) : null
+      lastmod: safeLastmod(p.updatedAt || p.timestamp)
     });
   });
 
-  const xmlEntries = urls.map(u => {
-    const lines = [
-      '  <url>',
-      `    <loc>${escapeXml(u.loc)}</loc>`,
-      `    <lastmod>${u.lastmod}</lastmod>`,
-      `    <changefreq>${u.changefreq}</changefreq>`,
-      `    <priority>${u.priority}</priority>`
-    ];
-    if (u.image) {
-      lines.push(`    <image:image>`);
-      lines.push(`      <image:loc>${u.image}</image:loc>`);
-      lines.push(`    </image:image>`);
-    }
-    lines.push('  </url>');
-    return lines.join('\n');
-  }).join('\n');
+  // ✨ Generar XML simple — igual que Blogger
+  // Sin changefreq, sin priority, sin image:image
+  const xmlEntries = urls.map(u =>
+    `  <url>\n    <loc>${escapeXml(u.loc)}</loc>\n    <lastmod>${u.lastmod}</lastmod>\n  </url>`
+  ).join('\n');
 
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
-${xmlEntries}
-</urlset>`;
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${xmlEntries}\n</urlset>`;
 
   if (!xml.startsWith('<?xml') || !xml.trim().endsWith('</urlset>')) {
     console.error('[sitemap] XML mal formado, se aborta');
@@ -1177,6 +1175,8 @@ ${xmlEntries}
     });
     if (!putRes.ok) {
       console.error('[sitemap] Error al subir:', await putRes.text());
+    } else {
+      console.log('[sitemap] Actualizado OK con', urls.length, 'URLs');
     }
   } catch (e) {
     console.error('[sitemap] Error al subir:', e);
