@@ -150,7 +150,9 @@ const DEFAULT_CENTER = [16.7530, -93.1150];
     routeMode: 'rutas',
     routes: [],
     posts: [],
+     postsShown: 20,           
     market: [],
+       marketShown: 20,
     filteredMarket: [],
     marketFilter: 'all',
     marketQuery: '',
@@ -410,6 +412,7 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
   try { local = await DB.getAll('posts'); } catch (e) {}
   local.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
   state.posts = local;
+  state.postsShown = 20;  
 
   // Pintar ya si estamos en home
   if (state.posts.length && state.currentPage === 'home') {
@@ -434,7 +437,9 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
   return state.posts;
 }
 
-  function renderFeed() {
+
+
+     function renderFeed() {
     const feed = $('#feed');
     if (!feed) return;
     if (!state.posts.length) {
@@ -446,9 +451,43 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
         </div>`;
       return;
     }
-    feed.innerHTML = state.posts.map(p => renderPostCard(p)).join('');
+
+    // 🔢 PAGINACIÓN: mostrar solo state.postsShown
+    const total = state.posts.length;
+    const shown = Math.min(state.postsShown, total);
+    const visible = state.posts.slice(0, shown);
+    const remaining = total - shown;
+
+    feed.innerHTML = visible.map(p => renderPostCard(p)).join('');
+
+    // Botón "Cargar más" (solo si quedan)
+    if (remaining > 0) {
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-ghost btn-block';
+      btn.id = 'feedLoadMore';
+      btn.style.marginTop = '14px';
+      btn.textContent = `Cargar más (${remaining} restantes)`;
+      feed.appendChild(btn);
+
+      btn.onclick = () => {
+        state.postsShown += 20;
+        renderFeed();
+      };
+    } else if (total > 20) {
+      // Mensaje de fin
+      const end = document.createElement('div');
+      end.className = 'tiny';
+      end.style.textAlign = 'center';
+      end.style.padding = '14px';
+      end.style.opacity = '.6';
+      end.textContent = `· ${total} publicaciones cargadas ·`;
+      feed.appendChild(end);
+    }
+
     bindPostEvents(feed);
   }
+
+   
 
   function renderPostCard(p) {
     const liked = (p.likedBy || []).includes(getUserId());
@@ -1706,6 +1745,8 @@ const url = location.origin + '/share/ruta/' + route.id;
   let local = [];
   try { local = await DB.getAll('market'); } catch (e) {}
   state.market = local.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+  state.marketShown = 20;   
+     
 
   if (state.market.length && state.currentPage === 'market') {
     try { renderMarket(); } catch (e) {}
@@ -1749,7 +1790,13 @@ const url = location.origin + '/share/ruta/' + route.id;
       </div>`;
       return;
     }
-    grid.innerHTML = items.map(m => `
+       // 🔢 PAGINACIÓN: mostrar solo state.marketShown
+    const total = items.length;
+    const shown = Math.min(state.marketShown, total);
+    const visible = items.slice(0, shown);
+    const remaining = total - shown;
+
+    grid.innerHTML = visible.map(m => `
       <div class="market-card" data-market-id="${esc(m.id)}">
         ${m.image
           ? `<img class="market-media" src="${esc(m.image)}" alt="${esc(m.title)}" loading="lazy">`
@@ -1771,6 +1818,32 @@ const url = location.origin + '/share/ruta/' + route.id;
         </div>
       </div>`).join('');
 
+    // Botón "Cargar más" (solo si quedan)
+    if (remaining > 0) {
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-ghost';
+      btn.id = 'marketLoadMore';
+      btn.style.gridColumn = '1 / -1';
+      btn.style.marginTop = '14px';
+      btn.textContent = `Cargar más (${remaining} restantes)`;
+      grid.appendChild(btn);
+
+      btn.onclick = () => {
+        state.marketShown += 20;
+        renderMarket();
+      };
+    } else if (total > 20) {
+      const end = document.createElement('div');
+      end.className = 'tiny';
+      end.style.gridColumn = '1 / -1';
+      end.style.textAlign = 'center';
+      end.style.padding = '14px';
+      end.style.opacity = '.6';
+      end.textContent = `· ${total} anuncios cargados ·`;
+      grid.appendChild(end);
+    }
+     
+
     grid.querySelectorAll('.market-card').forEach(card => {
       const id = card.dataset.marketId;
       const ad = state.market.find(m => m.id === id);
@@ -1790,15 +1863,21 @@ const url = location.origin + '/share/m/' + id;
   }
 
   // Búsqueda y filtros de market
-  $('#marketSearch').oninput = e => { state.marketQuery = e.target.value; renderMarket(); };
+  $('#marketSearch').oninput = e => {
+    state.marketQuery = e.target.value;
+    state.marketShown = 20;   
+    renderMarket();
+  };
   $$('#marketCats .chip').forEach(c => {
     c.onclick = () => {
       $$('#marketCats .chip').forEach(x => x.classList.remove('active'));
       c.classList.add('active');
       state.marketFilter = c.dataset.cat;
+      state.marketShown = 20;   
       renderMarket();
     };
   });
+   
 
   // ==================== ADMIN AUTH ====================
   function requestAdminAuth(cb) {
