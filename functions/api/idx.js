@@ -66,7 +66,7 @@ export async function onRequest(context) {
   }
 
   // ── 3) Guardar en KV con TTL ───────────────────────────────
-  const ttl = isGeo ? 3600 : 300; // geometría: 1h, índices: 5 min
+  const ttl = isGeo ? 300 : 300; // geometría: 5m, índices: 5 min
   context.waitUntil(env.INDEX_CACHE.put(kvKey, data, { expirationTtl: ttl }));
 
   return new Response(data, { headers: { ...cors, 'X-Cache': 'MISS' } });
