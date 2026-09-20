@@ -822,7 +822,10 @@ async function loadRoutes() {
       try {
         const idx = await fetchIndex('rutas_index');
         if (!idx) return;
-        const map = new Map(state.routes.map(r => [r.id, r]));
+
+
+                 const map = new Map(state.routes.map(r => [r.id, r]));
+        const geometriasInvalidar = [];  // ← NUEVO
         Object.values(idx).forEach(r => {
           if (!r) return;
           const key = r.id || r.slug;
@@ -833,17 +836,32 @@ async function loadRoutes() {
           const localTs  = new Date(existing?.updatedAt || existing?.timestamp || 0).getTime();
           if (existing && localTs >= remoteTs) return;
 
+          // 🔥 NUEVO: si la ruta cambió, invalidar su geometría cacheada
+          if (existing && remoteTs > localTs) {
+            geometriasInvalidar.push(key);
+          }
+
           map.set(key, { ...(existing || {}), ...r, id: key });
         });
+
+        // 🔥 NUEVO: borrar geometría vieja de IndexedDB
+        for (const id of geometriasInvalidar) {
+          try {
+            await DB.delete('routes_geo', id);
+            console.log('[loadRoutes] Geometría invalidada:', id);
+          } catch (e) {}
+        }
+         
 
         state.routes = Array.from(map.values()).sort((a, b) =>
           String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es',
             { numeric: true, sensitivity: 'base' })
         );
 
-        // 🔥 CARGAR GEOMETRÍA de rutas que la necesiten (en background)
+        // 🔥 CARGAR GEOMETRÍA de rutas que la necesiten O que acabamos de invalidar
         const needGeo = state.routes.filter(r =>
-          !r.geometriaIda || !r.geometriaIda.length
+          !r.geometriaIda || !r.geometriaIda.length ||
+          geometriasInvalidar.includes(r.id)   // ← NUEVO
         );
         // Cargar de a 3 para no saturar
         for (let i = 0; i < needGeo.length; i += 3) {
