@@ -2,13 +2,13 @@
   "posts": [
     {
       "slug": "9eieke199",
-      "title": "9eieke",
-      "description": "Ruta 9eieke",
+      "title": "9EIEKE",
+      "description": "Ruta 9EIEKE",
       "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789872032/qhqfdersq3rdhezk2ysu.jpg",
       "url": "/share/ruta/9eieke199",
       "tipo": "ruta",
-      "timestamp": 1789872035514,
-      "updatedAt": "2026-09-20T02:40:35.514Z",
+      "timestamp": 1789872131344,
+      "updatedAt": "2026-09-20T02:42:11.344Z",
       "categoria": "urbana",
       "tarifa": "",
       "frecuencia": "",
@@ -156,6 +156,6 @@
     }
   ],
   "total": 3,
-  "updatedAt": "2026-09-20T02:40:35.514Z",
+  "updatedAt": "2026-09-20T02:42:11.344Z",
   "version": 1
 }
