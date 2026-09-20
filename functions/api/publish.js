@@ -694,7 +694,7 @@ bodyContent = renderRouteMapBlock(extra.route, baseUrl) + renderRouteBody(extra.
   }
 
   return `<!DOCTYPE html>
-<html lang="es" data-theme="dark">
+<html lang="es" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
@@ -855,7 +855,7 @@ footer{margin-top:30px;padding-top:20px;border-top:1px solid var(--border);color
 footer a{color:var(--cyan)}
 </style>
 </head>
-<body data-theme="dark">
+<body data-theme="light">
 
 <!-- HEADER -->
 <header class="header">
