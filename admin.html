@@ -1758,7 +1758,7 @@ if (f.size > 20 * 1024 * 1024) {
 
 
 
-    async function detectStreets(){
+  async function detectStreets(){
     const ptsIda = state.routeDraft.puntos;
     const ptsVuelta = state.routeDraft.puntosVuelta;
     const pts = ptsIda.length >= 2 ? ptsIda : ptsVuelta;
@@ -1779,12 +1779,12 @@ if (f.size > 20 * 1024 * 1024) {
     const existingRetornosNorm = new Set(existingRetornos.map(s => s.toLowerCase().trim()));
 
     // ============================================================
-    // 📏 MUESTREO DINÁMICO: 1 muestra cada ~50 metros
+    // 📏 MUESTREO DINÁMICO: 1 muestra cada 50 metros
     //    - Mínimo 20 muestras
-    //    - Máximo 200 muestras (para no tardar horas)
+    //    - Máximo 300 muestras
     // ============================================================
-    const DIST_BETWEEN_SAMPLES_M = 100;   // 1 muestra cada 50 metros
-    const MIN_SAMPLES = 5;
+    const DIST_BETWEEN_SAMPLES_M = 50;   // 1 muestra cada 50 metros
+    const MIN_SAMPLES = 20;
     const MAX_SAMPLES = 300;
 
     // Calcular longitud total del trazado (en metros)
@@ -1944,7 +1944,8 @@ if (f.size > 20 * 1024 * 1024) {
     if (!paradaAgregada && !retornoAgregado) msg += ` (${finalStreets.length} calles en total)`;
     toast(msg);
   }
-  
+
+
                                                          
   function samplePoints(pts, n){
     if(pts.length<=n) return pts;
