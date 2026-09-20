@@ -505,9 +505,15 @@ const safeDescOG = escapeHTML(enrichedContent.slice(0, 125));
       url: pageUrl,
       image: {
         '@type': 'ImageObject',
+        '@id': `${pageUrl}#primaryimage`,
         url: safeImage,
+        contentUrl: safeImage,
+        thumbnailUrl: safeImage,
         width: 1200,
-        height: 630
+        height: 630,
+        caption: safeTitle,
+        representativeOfPage: true,
+        encodingFormat: 'image/jpeg'
       },
       provider: orgRef,
       departureTime: r.horarioIni || undefined,
@@ -543,9 +549,15 @@ const safeDescOG = escapeHTML(enrichedContent.slice(0, 125));
       description: safeDesc,
       image: {
         '@type': 'ImageObject',
+        '@id': `${pageUrl}#primaryimage`,
         url: safeImage,
+        contentUrl: safeImage,
+        thumbnailUrl: safeImage,
         width: 1200,
-        height: 630
+        height: 630,
+        caption: safeTitle,
+        representativeOfPage: true,
+        encodingFormat: 'image/jpeg'
       },
       url: pageUrl,
       offers: {
@@ -568,9 +580,15 @@ const safeDescOG = escapeHTML(enrichedContent.slice(0, 125));
       description: safeDesc,
       image: {
         '@type': 'ImageObject',
+        '@id': `${pageUrl}#primaryimage`,
         url: safeImage,
+        contentUrl: safeImage,
+        thumbnailUrl: safeImage,
         width: 1200,
-        height: 630
+        height: 630,
+        caption: safeTitle,
+        representativeOfPage: true,
+        encodingFormat: 'image/jpeg'
       },
       url: pageUrl,
       datePublished: new Date().toISOString(),
@@ -610,6 +628,7 @@ const safeDescOG = escapeHTML(enrichedContent.slice(0, 125));
         publisher: orgRef,
         inLanguage: 'es-MX'
       },
+      
       {
         '@type': 'WebPage',
         '@id': `${pageUrl}#webpage`,
@@ -618,14 +637,40 @@ const safeDescOG = escapeHTML(enrichedContent.slice(0, 125));
         description: safeDesc,
         isPartOf: websiteRef,
         inLanguage: 'es-MX',
+        datePublished: new Date().toISOString(),
+        dateModified: new Date().toISOString(),
         primaryImageOfPage: {
           '@type': 'ImageObject',
+          '@id': `${pageUrl}#primaryimage`,
           url: safeImage,
+          contentUrl: safeImage,
+          thumbnailUrl: safeImage,
           width: 1200,
-          height: 630
+          height: 630,
+          caption: safeTitle,
+          representativeOfPage: true,
+          encodingFormat: 'image/jpeg'
         },
+        image: {
+          '@type': 'ImageObject',
+          '@id': `${pageUrl}#primaryimage`,
+          url: safeImage,
+          contentUrl: safeImage,
+          thumbnailUrl: safeImage,
+          width: 1200,
+          height: 630,
+          caption: safeTitle,
+          representativeOfPage: true,
+          encodingFormat: 'image/jpeg'
+        },
+        keywords: tipo === 'ruta'
+          ? `ruta, colectivo, transporte público, Tuxtla Gutiérrez, Chiapas, ${toStrArr(extra?.route?.calles).slice(0, 5).join(', ')}`
+          : tipo === 'market'
+            ? `marketplace, ${extra?.market?.categoria || 'anuncio'}, Tuxtla Gutiérrez, Chiapas`
+            : `blog, Tuxtla Gutiérrez, Chiapas`,
         breadcrumb: {
           '@type': 'BreadcrumbList',
+          '@id': `${pageUrl}#breadcrumb`,
           itemListElement: [
             { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${baseUrl}/` },
             { '@type': 'ListItem', position: 2, name: typeLabel + 's', item: `${baseUrl}/?tab=${tipo === 'ruta' ? 'routes' : tipo === 'market' ? 'market' : 'home'}` },
@@ -676,11 +721,13 @@ bodyContent = renderRouteMapBlock(extra.route, baseUrl) + renderRouteBody(extra.
 <link rel="alternate" hreflang="x-default" href="${pageUrl}">
 
 <!-- Open Graph -->
+<!-- Open Graph -->
 <meta property="og:type" content="${tipo === 'post' ? 'article' : 'website'}">
 <meta property="og:title" content="${safeSeoTitle}">
 <meta property="og:description" content="${safeDescOG}">
 <meta property="og:image" content="${safeImage}">
 <meta property="og:image:secure_url" content="${safeImage}">
+<meta property="og:image:url" content="${safeImage}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:type" content="image/jpeg">
@@ -690,7 +737,9 @@ bodyContent = renderRouteMapBlock(extra.route, baseUrl) + renderRouteBody(extra.
 <meta property="og:locale" content="es_MX">
 <meta property="article:author" content="Rutas BGD">
 <meta property="article:published_time" content="${new Date().toISOString()}">
-
+<meta property="article:modified_time" content="${new Date().toISOString()}">
+<meta property="article:section" content="${typeLabel}s">
+${tipo === 'ruta' && toStrArr(extra?.route?.calles).length ? `<meta property="article:tag" content="${toStrArr(extra.route.calles).slice(0, 5).map(c => escapeHTML(c)).join('">\n<meta property="article:tag" content="')}">` : ''}
 
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
