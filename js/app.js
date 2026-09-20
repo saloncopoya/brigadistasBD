@@ -2549,9 +2549,8 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
   }
 
    
- 
-          // ============================================================
-  //  🧠 MOTOR DE TRANSBORDOS (v4 — directo y funcional)
+    // ============================================================
+  //  🧠 MOTOR DE TRANSBORDOS (v3 — simplificado y funcional)
   //  - Cada ruta es un conjunto de trazos (ida + vuelta), sin dirección
   //  - El transbordo se coloca lo más cerca posible del punto A
   //  - Distancia del viaje = recorrido REAL A→T sobre r1 + T→B sobre r2
@@ -2565,32 +2564,10 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
   const GRID_CELL_DEG = 0.005;
 
   let tripRouteLayers = [];
-  let tripCurrentHighlight = null;
 
   function clearTripRouteLayers() {
     tripRouteLayers.forEach(l => { try { state.tripMap.removeLayer(l); } catch(e){} });
     tripRouteLayers = [];
-  }
-
-  // ─────── UTILIDADES GEO ───────
-  function haversine(lat1, lng1, lat2, lng2) {
-    const R = 6371000;
-    const φ1 = lat1 * Math.PI / 180, φ2 = lat2 * Math.PI / 180;
-    const Δφ = (lat2 - lat1) * Math.PI / 180;
-    const Δλ = (lng2 - lng1) * Math.PI / 180;
-    const a = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
-    return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  }
-
-  function pointToSegmentDistance(p, a, b) {
-    const [px, py] = p, [ax, ay] = a, [bx, by] = b;
-    const dx = bx - ax, dy = by - ay;
-    const len2 = dx * dx + dy * dy;
-    if (len2 === 0) return Math.hypot(px - ax, py - ay);
-    let t = ((px - ax) * dx + (py - ay) * dy) / len2;
-    t = Math.max(0, Math.min(1, t));
-    const cx = ax + t * dx, cy = ay + t * dy;
-    return Math.hypot(px - cx, py - cy);
   }
 
   function projectToMeters(lat, lng, refLat) {
@@ -2747,9 +2724,6 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
   }
 
   // ─────── PUNTO MÁS CERCANO EN UNA POLYLINE ───────
-  // Devuelve { line, lineIdx, segIdx, t, point, distToPoint }
-  // Devuelve el punto sobre CUALQUIERA de las polylines de la ruta
-  // que esté más cerca del punto dado.
   function closestPointOnRoute(route, lat, lng) {
     const lines = getRoutePolylines(route);
     if (!lines.length) return null;
@@ -2775,14 +2749,7 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
         const latP = a[0] + (b[0] - a[0]) * t;
         const lngP = a[1] + (b[1] - a[1]) * t;
         if (!best || dist < best.dist) {
-          best = {
-            dist,
-            point: [latP, lngP],
-            lineIdx: li,
-            segIdx: i,
-            t,
-            line: pts
-          };
+          best = { dist, point: [latP, lngP], lineIdx: li, segIdx: i, t, line: pts };
         }
       }
     }
@@ -2790,28 +2757,18 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
   }
 
   // ─────── DISTANCIA SOBRE POLYLINE ENTRE DOS PUNTOS ───────
-  // Recibe UNA polyline (array de [lat,lng]) y dos puntos que YA
-  // están sobre esa polyline (con segIdx y t). Devuelve metros.
   function distanceAlongPolylineBetween(line, p1, p2) {
-    // p1 = {segIdx, t}, p2 = {segIdx, t}
     if (!line || line.length < 2) return Infinity;
     const seg = (i) => haversine(line[i][0], line[i][1], line[i+1][0], line[i+1][1]);
-    let total = 0;
-
-    // Mismo segmento
     if (p1.segIdx === p2.segIdx) {
       return Math.abs(p2.t - p1.t) * seg(p1.segIdx);
     }
-
-    // p1 antes que p2 en la línea
     const [first, second] = p1.segIdx < p2.segIdx ? [p1, p2] : [p2, p1];
-    // Desde p1 hasta el final de su segmento
+    let total = 0;
     total += (1 - first.t) * seg(first.segIdx);
-    // Segmentos intermedios completos
     for (let i = first.segIdx + 1; i < second.segIdx; i++) {
       total += seg(i);
     }
-    // Desde el inicio del segmento de p2 hasta p2
     total += second.t * seg(second.segIdx);
     return total;
   }
@@ -2846,13 +2803,12 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
     return { dist, mid: [midLat, midLng] };
   }
 
-  // ─────── PUNTO DE ENCUENTRO ENTRE DOS RUTAS (SIN DIRECCIÓN) ───────
   // ─────── PUNTO DE ENCUENTRO ENTRE DOS RUTAS ───────
-  // Recolecta TODOS los puntos de contacto/cercanía entre r1 y r2
-  // y elige el mejor según un score que prioriza:
-  //   1) Estar en dirección a B (proyección t ≥ 0 sobre A→B)
-  //   2) Estar lo más cerca posible de A
-  //   3) Estar cerca de la línea recta A→B
+  // Recolecta TODOS los puntos donde los trazos de r1 y r2 se tocan o están
+  // a ≤ TRANSFER_TOLERANCE_M. Elige el mejor según un score que prioriza:
+  //   1) Estar en dirección a B (proyección t ≥ 0 sobre A→B)  ← penaliza fuerte si t < 0
+  //   2) Estar lo más cerca posible de A                       ← alta prioridad
+  //   3) Estar cerca de la línea recta A→B                     ← media
   //   4) Menor distancia geométrica entre segmentos
   function findMeetingPoint(r1, r2, A, B) {
     const segs1 = getRouteSegments(r1);
@@ -2889,7 +2845,6 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
         const pt = d.mid;
         const distAtoPt = haversine(A[0], A[1], pt[0], pt[1]);
 
-        // Proyección t sobre A→B: t=0 en A, t=1 en B
         let t = 0;
         if (len2AB > 0) {
           const vAPx = pt[1] - A[1];
@@ -2899,34 +2854,17 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
 
         const distToLineAB = pointToSegmentDistance(pt, A, B) * 111320;
 
-        // SCORE (menor = mejor)
         let score = 0;
-
-        // 1) Penalización FUERTE si está detrás de A
         if (t < 0) {
           score += 500000 + Math.abs(t) * 100000;
         } else if (t > 1) {
           score += 100000 + (t - 1) * 50000;
         }
-
-        // 2) PRIORIDAD ALTA: cercanía a A
         score += distAtoPt * 1.0;
-
-        // 3) PRIORIDAD MEDIA: cercanía a la línea A→B
         score += distToLineAB * 0.3;
-
-        // 4) Distancia geométrica entre segmentos
         score += d.dist * 1.5;
 
-        candidates.push({
-          point: pt,
-          dist: d.dist,
-          seg1: s1,
-          seg2: s2,
-          score,
-          t,
-          distAtoPt
-        });
+        candidates.push({ point: pt, dist: d.dist, score, t, distAtoPt });
       }
     }
 
@@ -2949,13 +2887,11 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
 
     if (!startRoutes.length || !endRoutes.length) return chains;
 
-    // Para cada ruta de A: punto más cercano a A
     const startWithA = startRoutes.map(r => {
       const closest = closestPointOnRoute(r, A[0], A[1]);
       return { r, closest };
     }).filter(x => x.closest);
 
-    // Para cada ruta de B: punto más cercano a B
     const endWithB = endRoutes.map(r => {
       const closest = closestPointOnRoute(r, B[0], B[1]);
       return { r, closest };
@@ -2970,22 +2906,18 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
           const meet = findMeetingPoint(a.r, b.r, A, B);
           if (!meet) continue;
 
-          // Distancia de A hasta el transbordo, sobre la polyline de r1
           const closestT1 = closestPointOnRoute(a.r, meet.point[0], meet.point[1]);
           if (!closestT1) continue;
           const distAtoT = (a.closest.lineIdx === closestT1.lineIdx)
             ? distanceAlongPolylineBetween(a.closest.line, a.closest, closestT1)
             : Math.min(
-                distanceAlongPolylineBetween(a.closest.line,
-                  a.closest,
+                distanceAlongPolylineBetween(a.closest.line, a.closest,
                   { segIdx: a.closest.line.length - 2, t: 1 }) +
                 distanceAlongPolylineBetween(closestT1.line,
                   { segIdx: 0, t: 0 }, closestT1),
-                // fallback: haversine
                 haversine(A[0], A[1], meet.point[0], meet.point[1])
               );
 
-          // Distancia del transbordo hasta B, sobre la polyline de r2
           const closestT2 = closestPointOnRoute(b.r, meet.point[0], meet.point[1]);
           if (!closestT2) continue;
           const distTtoB = (b.closest.lineIdx === closestT2.lineIdx)
@@ -3000,15 +2932,13 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
 
           if (!isFinite(distAtoT) || !isFinite(distTtoB)) continue;
 
-          const distAtoTStraight = haversine(A[0], A[1], meet.point[0], meet.point[1]);
-
           chains.push({
             type: 'transfer',
             legs: [a.r, b.r],
             transferPoints: [meet.point],
             transfers: 1,
             totalDist: distAtoT + distTtoB,
-            firstTransferDistToA: distAtoTStraight
+            firstTransferDistToA: haversine(A[0], A[1], meet.point[0], meet.point[1])
           });
         }
       }
@@ -3017,7 +2947,6 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
     // ─── 2 TRANSBORDOS ───
     if (maxTransfers >= 2) {
       for (const a of startWithA) {
-        // Rutas intermedias candidatas (las que tocan a r1)
         const candidateIds = new Set();
         const segs1 = getRouteSegments(a.r);
         for (const s of segs1) {
@@ -3037,14 +2966,12 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
             const meet2 = findMeetingPoint(r2, b.r, A, B);
             if (!meet2) continue;
 
-            // A → T1 sobre r1
             const cT1_1 = closestPointOnRoute(a.r, meet1.point[0], meet1.point[1]);
             if (!cT1_1) continue;
             const distAtoT1 = (a.closest.lineIdx === cT1_1.lineIdx)
               ? distanceAlongPolylineBetween(a.closest.line, a.closest, cT1_1)
               : haversine(A[0], A[1], meet1.point[0], meet1.point[1]);
 
-            // T1 → T2 sobre r2
             const cT1_2 = closestPointOnRoute(r2, meet1.point[0], meet1.point[1]);
             const cT2_2 = closestPointOnRoute(r2, meet2.point[0], meet2.point[1]);
             if (!cT1_2 || !cT2_2) continue;
@@ -3052,7 +2979,6 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
               ? distanceAlongPolylineBetween(cT1_2.line, cT1_2, cT2_2)
               : haversine(meet1.point[0], meet1.point[1], meet2.point[0], meet2.point[1]);
 
-            // T2 → B sobre r3
             const cT2_3 = closestPointOnRoute(b.r, meet2.point[0], meet2.point[1]);
             if (!cT2_3) continue;
             const distT2toB = (b.closest.lineIdx === cT2_3.lineIdx)
@@ -3061,22 +2987,19 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
 
             if (!isFinite(distAtoT1) || !isFinite(distT1toT2) || !isFinite(distT2toB)) continue;
 
-            const distAtoT1Straight = haversine(A[0], A[1], meet1.point[0], meet1.point[1]);
-
             chains.push({
               type: 'transfer',
               legs: [a.r, r2, b.r],
               transferPoints: [meet1.point, meet2.point],
               transfers: 2,
               totalDist: distAtoT1 + distT1toT2 + distT2toB,
-              firstTransferDistToA: distAtoT1Straight
+              firstTransferDistToA: haversine(A[0], A[1], meet1.point[0], meet1.point[1])
             });
           }
         }
       }
     }
 
-    // Deduplicar
     const seen = new Set();
     const unique = chains.filter(c => {
       const key = c.legs.map(l => l.id).join('>');
@@ -3085,7 +3008,6 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
       return true;
     });
 
-    // Ordenar: menos transbordos, luego menor distancia total
     unique.sort((a, b) => {
       if (a.transfers !== b.transfers) return a.transfers - b.transfers;
       return a.totalDist - b.totalDist;
@@ -3259,7 +3181,6 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
     });
   }
 
-  // ─────── FORMATEAR DISTANCIA ───────
   function formatDistanceMeters(m) {
     if (!m || !isFinite(m) || m < 0) return '—';
     if (m < 1000) return `${Math.round(m)} m`;
@@ -3273,7 +3194,6 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
     if (!el) return;
     clearTripRouteLayers();
     if (state.tripPoints.length < 1) { el.innerHTML = ''; return; }
-
     ensureAllGeos().then(() => performTripSearchCore(el));
   }
 
@@ -3325,27 +3245,19 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
       const start = state.tripPoints[0];
       const end = state.tripPoints[state.tripPoints.length - 1];
 
-      // ─── DIRECTAS: una ruta que toca A y B ───
       state.routes.forEach(r => {
         const touchesAll = state.tripPoints.every(p => routeNearPoint(r, p, p.radius));
         if (touchesAll) {
-          // Distancia real sobre la polyline de A a B
           const cA = closestPointOnRoute(r, start.lat, start.lng);
           const cB = closestPointOnRoute(r, end.lat, end.lng);
           let distViaje = null;
           if (cA && cB && cA.lineIdx === cB.lineIdx) {
             distViaje = distanceAlongPolylineBetween(cA.line, cA, cB);
           }
-          results.direct.push({
-            route: r,
-            type: 'direct',
-            label: r.nombre,
-            distViaje: distViaje
-          });
+          results.direct.push({ route: r, type: 'direct', label: r.nombre, distViaje });
         }
       });
 
-      // ─── TRANSBORDOS ───
       if (!results.direct.length || maxTransfers >= 1) {
         if (state.tripPoints.length === 2) {
           const chains = findTransferChains(start, end, maxTransfers);
@@ -3378,7 +3290,6 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
       }
     }
 
-    // DIBUJO
     if (results.direct.length) {
       drawTripRoutesOnMap(results.direct.map(d => ({
         route: d.route, label: d.route.nombre, type: 'direct'
@@ -3391,7 +3302,6 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
       })));
     }
 
-    // RENDER HTML
     let html = '';
 
     if (results.direct.length) {
@@ -3411,10 +3321,7 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
                 <span class="trip-badge-route" style="background:${TRIP_COLORS[idx % TRIP_COLORS.length]}">${idx+1}</span>
                 ${esc(r.route.nombre)}
               </div>
-              <div class="rc-sub">
-                ${esc(r.route.categoria || 'urbana')} ·
-                <b style="color:var(--cyan)">Distancia de viaje: ${distTxt}</b>
-              </div>
+              <div class="rc-sub">${esc(r.route.categoria || 'urbana')} · <b style="color:var(--cyan)">Distancia de viaje: ${distTxt}</b></div>
             </div>
             <span class="badge badge-green">Directa</span>
           </div>
@@ -3486,7 +3393,6 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
 
     el.innerHTML = html;
 
-    // EVENTOS
     el.querySelectorAll('[data-trip-show-direct]').forEach(b => {
       b.onclick = (e) => {
         e.stopPropagation();
@@ -3552,7 +3458,8 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
         if (r) openRouteDetail(r);
       };
     });
-  }     
+  }
+             
  
   $('#tripRadius').oninput = e => {
     state.tripRadius = +e.target.value;
