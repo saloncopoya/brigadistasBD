@@ -1,25 +1,6 @@
 {
   "posts": [
     {
-      "slug": "qd12199",
-      "title": "QD12",
-      "description": "Ruta QD12",
-      "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789883826/jaitzotx9oe0oa2bqzan.jpg",
-      "url": "/share/ruta/qd12199",
-      "tipo": "ruta",
-      "timestamp": 1789885436895,
-      "updatedAt": "2026-09-20T06:23:56.895Z",
-      "categoria": "urbana",
-      "tarifa": "",
-      "frecuencia": "",
-      "horarioIni": "",
-      "horarioFin": "",
-      "dias": "todos",
-      "paradas": [],
-      "calles": [],
-      "pois": []
-    },
-    {
       "slug": "ruta1149",
       "title": "RUTA 1",
       "description": "Ruta RUTA 1",
@@ -155,7 +136,7 @@
       ]
     }
   ],
-  "total": 3,
-  "updatedAt": "2026-09-20T06:23:56.895Z",
+  "total": 2,
+  "updatedAt": "2026-09-20T07:05:05.514Z",
   "version": 1
 }
