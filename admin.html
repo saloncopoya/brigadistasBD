@@ -1666,10 +1666,14 @@ if (f.size > 20 * 1024 * 1024) {
   };
 
    // Toolbar del mapa
+   // Toolbar del mapa
   $$('.tb').forEach(b=>b.onclick=()=>{
     const tool = b.dataset.tool;
 
     if(tool==='undo'){
+      // ✅ CONFIRMACIÓN
+      if(!confirm('¿Deshacer el último punto agregado?')) return;
+
       // Quitar el último marker REALMENTE añadido (por orden cronológico)
       const meta = state.markerMeta.pop();
       const m = state.layers.markers.pop();
@@ -1684,6 +1688,9 @@ if (f.size > 20 * 1024 * 1024) {
     }
 
     if(tool==='clear'){
+      // ✅ CONFIRMACIÓN
+      if(!confirm('¿Limpiar TODO el trazado del mapa? Esta acción no se puede deshacer.')) return;
+
       state.routeDraft.puntos=[];
       state.routeDraft.puntosVuelta=[];
       state.routeDraft.calles=[];
@@ -1693,9 +1700,12 @@ if (f.size > 20 * 1024 * 1024) {
       state.routeDraft.geometriaVuelta=[];
       state.layers.markers.forEach(m=>state.map.removeLayer(m));
       state.layers.markers=[];
-            state.markerMeta=[]; 
+      state.markerMeta=[]; 
       scheduleRedraw(); updateEditorStatus(); return;
     }
+    
+
+ 
 
     if(tool==='gps'){
       toggleGPS(b); return;
@@ -1755,77 +1765,122 @@ if (f.size > 20 * 1024 * 1024) {
     const prog = $('#detectProg'); prog.classList.remove('hidden');
     const progressBar = prog.querySelector('div');
 
-    // 📌 Respetar las calles ya existentes en el textarea (NO borrarlas)
+    // 📌 Respetar las calles YA existentes (NO borrarlas)
     const existingText = $('#routeCalles').value || '';
     const existingStreets = splitList(existingText);
     const existingNorm = new Set(existingStreets.map(s => s.toLowerCase().trim()));
 
+    // 📌 Respetar los POIs YA existentes (NO borrarlos)
+    const existingPoisText = $('#routePoisIda').value || '';
+    const existingPois = splitList(existingPoisText);
+    const existingPoisNorm = new Set(existingPois.map(s => s.toLowerCase().trim()));
+
     // Muestrear más puntos para mejor detección (20 puntos)
     const samples = samplePoints(pts, 20);
 
-    // 🏘️ Estructura: mapa de "calle principal" → Set de variaciones
-    const streetMap = new Map();
+    // 🏘️ Estructuras
+    const streetMap = new Map();   // calle principal → Set de variaciones
     const seenNames = new Set();
+
+    // 🏢 NEGOCIOS / LOCALES / COLONIAS detectados en orden
+    const detectedPois = [];        // se llenará en orden A→B
+    const seenPoiKeys = new Set();  // evitar duplicados exactos
+    const seenColonias = new Set(); // evitar repetir la misma colonia
 
     for(let i=0;i<samples.length;i++){
       const [lat,lng] = samples[i];
       try{
-        // 🔍 Consulta al PROXY en Cloudflare (no directo a Nominatim)
+        // 🔍 Consulta al PROXY en Cloudflare
         const r = await fetch(`/api/geocode?lat=${lat}&lon=${lng}`);
         const j = await r.json();
         const a = j.address || {};
+
+        // ---------- 🛣️ DETECCIÓN DE CALLES (como antes) ----------
         const road = a.road || a.pedestrian || a.footway || a.path || a.street;
+        if(road && !seenNames.has(road)){
+          seenNames.add(road);
 
-        if(!road) continue;
-        if(seenNames.has(road)) continue;
-        seenNames.add(road);
+          let betweenText = '';
+          if (i > 0 && i < samples.length - 1) {
+            const prevP = samples[i - 1];
+            const nextP = samples[i + 1];
+            try {
+              await new Promise(r => setTimeout(r, 350));
+              const rPrev = await fetch(`/api/geocode?lat=${prevP[0]}&lon=${prevP[1]}`);
+              const jPrev = await rPrev.json();
+              const roadPrev = jPrev.address?.road || jPrev.address?.pedestrian || jPrev.address?.footway;
 
-        // 🔍 Consulta 2: buscar la calle anterior y siguiente para saber "entre qué calles" está
-        let betweenText = '';
-        if (i > 0 && i < samples.length - 1) {
-          const prevP = samples[i - 1];
-          const nextP = samples[i + 1];
-          try {
-            await new Promise(r => setTimeout(r, 350));
-            const rPrev = await fetch(`/api/geocode?lat=${prevP[0]}&lon=${prevP[1]}`);
-            const jPrev = await rPrev.json();
-            const roadPrev = jPrev.address?.road || jPrev.address?.pedestrian || jPrev.address?.footway;
+              await new Promise(r => setTimeout(r, 350));
+              const rNext = await fetch(`/api/geocode?lat=${nextP[0]}&lon=${nextP[1]}`);
+              const jNext = await rNext.json();
+              const roadNext = jNext.address?.road || jNext.address?.pedestrian || jNext.address?.footway;
 
-            await new Promise(r => setTimeout(r, 350));
-            const rNext = await fetch(`/api/geocode?lat=${nextP[0]}&lon=${nextP[1]}`);
-            const jNext = await rNext.json();
-            const roadNext = jNext.address?.road || jNext.address?.pedestrian || jNext.address?.footway;
+              const neighbors = [roadPrev, roadNext].filter(n => n && n !== road);
+              if (neighbors.length >= 2) {
+                betweenText = ` entre ${neighbors[0]} y ${neighbors[1]}`;
+              } else if (neighbors.length === 1) {
+                betweenText = ` cerca de ${neighbors[0]}`;
+              }
+            } catch(e) { /* ignorar */ }
+          }
 
-            const neighbors = [roadPrev, roadNext].filter(n => n && n !== road);
-            if (neighbors.length >= 2) {
-              betweenText = ` entre ${neighbors[0]} y ${neighbors[1]}`;
-            } else if (neighbors.length === 1) {
-              betweenText = ` cerca de ${neighbors[0]}`;
-            }
-          } catch(e) { /* ignorar */ }
+          const fullName = betweenText ? `${road}${betweenText}` : road;
+          const mainKey = road.toLowerCase().trim();
+          if (!streetMap.has(mainKey)) {
+            streetMap.set(mainKey, { main: road, variations: new Set() });
+          }
+          streetMap.get(mainKey).variations.add(fullName);
         }
 
-        // 📝 Formatear el nombre: "9 sur entre 1 y 6 oriente"
-        const fullName = betweenText ? `${road}${betweenText}` : road;
+        // ---------- 🏢 DETECCIÓN DE NEGOCIOS / LOCALES / POIs ----------
+        // Buscamos en varias claves típicas de OSM/Nominatim
+        const biz =
+          a.shop || a.amenity || a.craft || a.office ||
+          a.tourism || a.leisure || a.healthcare ||
+          a.building; // a veces el nombre del local está aquí
 
-        const mainKey = road.toLowerCase().trim();
-        if (!streetMap.has(mainKey)) {
-          streetMap.set(mainKey, { main: road, variations: new Set() });
+        // El nombre del local puede venir en `name`, `operator` o en el valor del tag
+        const bizName = j.name || j.display_name?.split(',')[0] || '';
+        const bizType = biz || '';
+
+        // Solo agregamos si tiene un nombre real (no "null", no vacío, no solo un número)
+        if (bizName && bizType && bizName.length > 2) {
+          const key = (bizType + '|' + bizName).toLowerCase();
+          if (!seenPoiKeys.has(key)) {
+            seenPoiKeys.add(key);
+            // Formato amigable: "Farmacia - Guadalupana"
+            const pretty = `${capitalize(bizType)} - ${bizName}`;
+            detectedPois.push(pretty);
+          }
         }
-        streetMap.get(mainKey).variations.add(fullName);
+
+        // ---------- 🏘️ DETECCIÓN DE COLONIAS / FRACCIONAMIENTOS / BARRIOS ----------
+        const colonia =
+          a.suburb || a.neighbourhood || a.quarter ||
+          a.residential || a.city_district || a.hamlet || a.village;
+
+        if (colonia && colonia.length > 2) {
+          const keyCol = colonia.toLowerCase().trim();
+          if (!seenColonias.has(keyCol)) {
+            seenColonias.add(keyCol);
+            // Formato: "Col. Centro", "Fracc. Las Palmas"
+            detectedPois.push(`Col. ${colonia}`);
+          }
+        }
 
       }catch(e){ /* continuar con el siguiente */ }
 
       if (progressBar) {
         progressBar.style.width = Math.round(((i+1)/samples.length)*100)+'%';
       }
-      // Pausa entre peticiones (el proxy cachea, pero respetamos el límite)
       await new Promise(r=>setTimeout(r,800));
     }
 
-    // 🧩 Combinar con los resultados existentes
+    // ============================================================
+    // 🧩 COMBINAR CALLES CON LAS EXISTENTES (respetar las que ya había)
+    // ============================================================
     const finalStreets = [...existingStreets];
-    const added = [];
+    const addedStreets = [];
 
     for (const [key, data] of streetMap.entries()) {
       if (existingNorm.has(key)) continue;
@@ -1833,19 +1888,42 @@ if (f.size > 20 * 1024 * 1024) {
       const best = variations.sort((a, b) => b.length - a.length)[0] || data.main;
       if (!finalStreets.includes(best)) {
         finalStreets.push(best);
-        added.push(best);
+        addedStreets.push(best);
       }
     }
 
     state.routeDraft.calles = finalStreets;
     $('#routeCalles').value = finalStreets.join(', ');
+
+    // ============================================================
+    // 🧩 COMBINAR POIs CON LOS EXISTENTES (respetar los que ya había)
+    // ============================================================
+    const finalPois = [...existingPois];
+    const addedPois = [];
+
+    for (const poi of detectedPois) {
+      const norm = poi.toLowerCase().trim();
+      if (existingPoisNorm.has(norm)) continue;   // ya estaba
+      if (finalPois.some(p => p.toLowerCase().trim() === norm)) continue; // duplicado interno
+      finalPois.push(poi);
+      addedPois.push(poi);
+    }
+
+    $('#routePoisIda').value = finalPois.join(', ');
+    state.routeDraft.pois = finalPois;
+
     updateEditorStatus();
     prog.classList.add('hidden');
     if (progressBar) progressBar.style.width='0%';
 
-    toast(`✅ ${added.length} calles nuevas detectadas (${finalStreets.length} en total)`);
+    toast(`✅ ${addedStreets.length} calles y ${addedPois.length} POIs nuevos detectados`);
   }
 
+  // 🔤 Helper: pone la primera letra en mayúscula
+  function capitalize(s){
+    if(!s) return '';
+    return String(s).charAt(0).toUpperCase() + String(s).slice(1);
+  }
   function samplePoints(pts, n){
     if(pts.length<=n) return pts;
     const out=[]; const step=(pts.length-1)/(n-1);
