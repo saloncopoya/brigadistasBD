@@ -1781,7 +1781,7 @@ async function detectStreets(){
     const existingRetornosNorm = new Set(existingRetornos.map(s => s.toLowerCase().trim()));
 
     // Muestrear más puntos para mejor detección (20 puntos)
-    const samples = samplePoints(pts, 20);
+    const samples = samplePoints(pts, 60);
 
     // 🏘️ Estructura: mapa de "calle principal" → Set de variaciones
     const streetMap = new Map();
