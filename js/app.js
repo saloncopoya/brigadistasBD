@@ -1389,8 +1389,8 @@ async function initRouteMap(route) {
     zoomControl: true,
     minZoom: 13,
     maxZoom: 20,
-    zoomAnimation: false,
-    fadeAnimation: false,
+    zoomAnimation: true,
+    fadeAnimation: true,
     markerZoomAnimation: false
   }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
 
@@ -1398,7 +1398,11 @@ async function initRouteMap(route) {
   bindFullscreenButton('routeMapFsBtn', 'routeMapWrap');
 
   L.tileLayer('https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}@2x.png?key=kXZYdaMbZkD1EevhGXMI', {
-    tileSize: 512, zoomOffset: -1, minZoom: 13, maxZoom: 20, maxNativeZoom: 20,
+    tileSize: 512, zoomOffset: -1,
+     minZoom: 13, maxZoom: 20, 
+     maxNativeZoom: 19,
+      keepBuffer: 4,             // ← NUEVO: mantiene 4 filas/columnas extra en memoria
+  updateWhenIdle: false,     // ← NUEVO: carga tiles incluso mientras arrastras
     crossOrigin: true,
     attribution: '© <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
   }).addTo(state.map);
@@ -2299,8 +2303,8 @@ const url = location.origin + '/share/m/' + id;
   zoomControl: false,
   minZoom: 13,
   maxZoom: 20,
-  zoomAnimation: false,        // ← agregar
-  fadeAnimation: false,        // ← agregar
+  zoomAnimation: true,        // ← agregar
+  fadeAnimation: true,        // ← agregar
   markerZoomAnimation: false   // ← agregar
 }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
        L.control.zoom({ position: 'bottomleft' }).addTo(state.tripMap);
@@ -2315,7 +2319,7 @@ const url = location.origin + '/share/m/' + id;
   zoomOffset: -1,
   minZoom: 13,
  maxZoom: 20,
-  maxNativeZoom: 20,
+  maxNativeZoom: 19,
   crossOrigin: true,
   attribution: '© <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
 }).addTo(state.tripMap);
