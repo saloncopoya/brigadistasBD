@@ -785,74 +785,92 @@ const url = location.origin + '/share/post/' + post.id;
       
 
 
+async function loadRoutes() {
+  const deleted = await getDeletedSet('ruta');
 
-     async function loadRoutes() {
-    // 🪦 Filtrar rutas eliminadas (tombstones) — igual que posts y market
-    const deleted = await getDeletedSet('ruta');
+  // ─── FASE 1: IndexedDB local (rápido) ───
+  let local = [];
+  try { local = await DB.getAll('routes'); } catch (e) {}
+  local = local.filter(r => !deleted.has(r.id));
+  state.routes = local.sort((a, b) =>
+    String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es',
+      { numeric: true, sensitivity: 'base' })
+  );
 
-    // ─── FASE 1: IndexedDB local (rápido) ───
-    let local = [];
-    try { local = await DB.getAll('routes'); } catch (e) {}
-    local = local.filter(r => !deleted.has(r.id));
-    state.routes = local.sort((a, b) =>
-       
-      String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es',
-        { numeric: true, sensitivity: 'base' })
-    );
+  // 🔥 FUSIONAR geometría guardada localmente en cada ruta
+  try {
+    const geos = await DB.getAll('routes_geo');
+    const geoMap = new Map(geos.map(g => [g.id, g]));
+    state.routes = state.routes.map(r => {
+      const g = geoMap.get(r.id);
+      if (!g) return r;
+      return {
+        ...r,
+        geometriaIda: (r.geometriaIda && r.geometriaIda.length) ? r.geometriaIda : (g.geometriaIda || []),
+        geometriaVuelta: (r.geometriaVuelta && r.geometriaVuelta.length) ? r.geometriaVuelta : (g.geometriaVuelta || [])
+      };
+    });
+  } catch (e) {}
 
-    if (state.routes.length && state.currentPage === 'routes') {
-      try { renderRouteContent(); } catch (e) {}
-    }
-
-    // ─── FASE 2: Worker (índice compartido, cacheado en KV) ───
-    if (state.online) {
-           (async () => {
-        try {
-
-                     const idx = await fetchIndex('rutas_index');
-          if (!idx) return;
-          const map = new Map(state.routes.map(r => [r.id, r]));
-          Object.values(idx).forEach(r => {
-            if (!r) return;
-            const key = r.id || r.slug;
-            if (!key || deleted.has(key)) return;
-
-            const existing = map.get(key);
-            const remoteTs = new Date(r.updatedAt || r.timestamp || 0).getTime();
-            const localTs  = new Date(existing?.updatedAt || existing?.timestamp || 0).getTime();
-            if (existing && localTs >= remoteTs) return;
-
-            map.set(key, {
-  ...(existing || {}),
-  ...r,
-  id: key,
-  // 🔒 Preservar geometría si el remoto no la trae
-  geometriaIda: (r.geometriaIda && r.geometriaIda.length)
-    ? r.geometriaIda
-    : (existing?.geometriaIda || []),
-  geometriaVuelta: (r.geometriaVuelta && r.geometriaVuelta.length)
-    ? r.geometriaVuelta
-    : (existing?.geometriaVuelta || [])
-});
-             
-          });
-
-          state.routes = Array.from(map.values()).sort((a, b) =>
-            String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es',
-              { numeric: true, sensitivity: 'base' })
-          );
-          if (state.currentPage === 'routes') {
-            try { renderRouteContent(); } catch (e) {}
-          }
-        } catch (e) {
-          console.warn('[loadRoutes] Worker falló:', e);
-        }
-      })();
-    }
-
-    __routeIndex = null;
-    return state.routes;
+  if (state.routes.length && state.currentPage === 'routes') {
+    try { renderRouteContent(); } catch (e) {}
   }
+
+  // ─── FASE 2: Worker (índice compartido, cacheado en KV) ───
+  if (state.online) {
+    (async () => {
+      try {
+        const idx = await fetchIndex('rutas_index');
+        if (!idx) return;
+        const map = new Map(state.routes.map(r => [r.id, r]));
+        Object.values(idx).forEach(r => {
+          if (!r) return;
+          const key = r.id || r.slug;
+          if (!key || deleted.has(key)) return;
+
+          const existing = map.get(key);
+          const remoteTs = new Date(r.updatedAt || r.timestamp || 0).getTime();
+          const localTs  = new Date(existing?.updatedAt || existing?.timestamp || 0).getTime();
+          if (existing && localTs >= remoteTs) return;
+
+          map.set(key, { ...(existing || {}), ...r, id: key });
+        });
+
+        state.routes = Array.from(map.values()).sort((a, b) =>
+          String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es',
+            { numeric: true, sensitivity: 'base' })
+        );
+
+        // 🔥 CARGAR GEOMETRÍA de rutas que la necesiten (en background)
+        const needGeo = state.routes.filter(r =>
+          !r.geometriaIda || !r.geometriaIda.length
+        );
+        // Cargar de a 3 para no saturar
+        for (let i = 0; i < needGeo.length; i += 3) {
+          const batch = needGeo.slice(i, i + 3);
+          await Promise.all(batch.map(async r => {
+            try {
+              const geo = await loadRouteGeo(r.id);
+              if (geo) {
+                r.geometriaIda = geo.geometriaIda || [];
+                r.geometriaVuelta = geo.geometriaVuelta || [];
+              }
+            } catch (e) {}
+          }));
+        }
+
+        if (state.currentPage === 'routes') {
+          try { renderRouteContent(); } catch (e) {}
+        }
+      } catch (e) {
+        console.warn('[loadRoutes] Worker falló:', e);
+      }
+    })();
+  }
+
+  __routeIndex = null;
+  return state.routes;
+}
 
   // 🚀 Carga la geometría pesada de UNA ruta bajo demanda.
   // La guarda en IndexedDB para no volver a pedirla.
