@@ -320,8 +320,8 @@ routeDraft: { puntos: [], puntosVuelta: [], calles: [], pois: [], geometriaIda: 
   });
 
   // ==================== TEMA ====================
-  const savedTheme = localStorage.getItem('tgz_theme') || 'dark';
-  document.documentElement.setAttribute('data-theme', savedTheme);
+const savedTheme = localStorage.getItem('tgz_theme') || 'light';
+   document.documentElement.setAttribute('data-theme', savedTheme);
   updateThemeIcon();
 
   function updateThemeIcon() {
