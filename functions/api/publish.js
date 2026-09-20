@@ -383,6 +383,12 @@ function generateHTML({ tipo, title, content, image, slug, pageUrl, baseUrl, ext
       cat = ` - ${pretty}`;
     }
 
+    // ✅ NUEVO: prefijo "Ruta de Colectivo" para SEO
+    seoTitle = `Ruta de Colectivo ${title}${cat}`;
+    if (seoTitle.length > 50) {
+      seoTitle = `Ruta ${title}${cat}`;
+    }
+
     // 2) Primera parada (máx 25 chars para no comerse el resto)
     const paradas = Array.isArray(r.paradas) ? r.paradas.filter(Boolean) : [];
     const firstParada = paradas.length
@@ -483,59 +489,154 @@ const safeDescOG = escapeHTML(enrichedContent.slice(0, 125));
    
   const typeLabel = tipo === 'ruta' ? 'Ruta' : tipo === 'market' ? 'Anuncio' : 'Publicación';
 
-  // Schema.org
-  let schema;
+  // ✅ Schema.org COMPLETO con @graph (Organization + WebPage + Content)
+  const orgRef = { '@id': `${baseUrl}/#organization` };
+  const websiteRef = { '@id': `${baseUrl}/#website` };
+  const webpageRef = { '@id': `${pageUrl}#webpage` };
+
+  let contentSchema;
   if (tipo === 'ruta') {
     const r = extra?.route || {};
-    schema = {
-      '@context': 'https://schema.org',
+    contentSchema = {
       '@type': 'BusTrip',
+      '@id': `${pageUrl}#bustrip`,
       name: title,
       description: enrichedContent.slice(0, 160),
       url: pageUrl,
-      image: safeImage,
-      provider: { '@type': 'Organization', name: 'Rutas BGD', url: baseUrl },
+      image: {
+        '@type': 'ImageObject',
+        url: safeImage,
+        width: 1200,
+        height: 630
+      },
+      provider: orgRef,
       departureTime: r.horarioIni || undefined,
       arrivalTime: r.horarioFin || undefined,
       offers: r.tarifa ? {
         '@type': 'Offer',
         price: String(r.tarifa).replace(/[^0-9.]/g, '') || '0',
-        priceCurrency: 'MXN'
+        priceCurrency: 'MXN',
+        availability: 'https://schema.org/InStock'
       } : undefined,
-itinerary: toStrArr(r.paradas).map(p => ({ '@type': 'Place', name: p }))
+      itinerary: toStrArr(r.paradas).map(p => ({ 
+        '@type': 'Place', 
+        name: p,
+        address: {
+          '@type': 'PostalAddress',
+          addressLocality: 'Tuxtla Gutiérrez',
+          addressRegion: 'Chiapas',
+          addressCountry: 'MX'
+        }
+      })),
+      // 🗺️ Área de servicio (para SEO local)
+      areaServed: {
+        '@type': 'City',
+        name: 'Tuxtla Gutiérrez',
+        containedInPlace: { '@type': 'State', name: 'Chiapas' }
+      }
     };
   } else if (tipo === 'market') {
-    schema = {
-      '@context': 'https://schema.org',
+    contentSchema = {
       '@type': 'Product',
+      '@id': `${pageUrl}#product`,
       name: title,
       description: safeDesc,
-      image: safeImage,
+      image: {
+        '@type': 'ImageObject',
+        url: safeImage,
+        width: 1200,
+        height: 630
+      },
       url: pageUrl,
       offers: {
         '@type': 'Offer',
         price: extra?.market?.price || '0',
         priceCurrency: 'MXN',
-        availability: 'https://schema.org/InStock'
-      }
+        availability: 'https://schema.org/InStock',
+        areaServed: {
+          '@type': 'City',
+          name: 'Tuxtla Gutiérrez'
+        }
+      },
+      seller: orgRef
     };
   } else {
-    schema = {
-      '@context': 'https://schema.org',
+    contentSchema = {
       '@type': 'BlogPosting',
+      '@id': `${pageUrl}#article`,
       headline: title,
       description: safeDesc,
-      image: safeImage,
+      image: {
+        '@type': 'ImageObject',
+        url: safeImage,
+        width: 1200,
+        height: 630
+      },
       url: pageUrl,
       datePublished: new Date().toISOString(),
-      author: { '@type': 'Organization', name: 'Rutas BGD' },
-      publisher: {
-        '@type': 'Organization',
-        name: 'Rutas BGD',
-        logo: { '@type': 'ImageObject', url: `${baseUrl}/assets/icon.svg` }
-      }
+      dateModified: new Date().toISOString(),
+      inLanguage: 'es-MX',
+      author: orgRef,
+      publisher: orgRef,
+      mainEntityOfPage: webpageRef
     };
   }
+
+  const schema = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Organization',
+        '@id': `${baseUrl}/#organization`,
+        name: 'Rutas BGD',
+        url: `${baseUrl}/`,
+        logo: {
+          '@type': 'ImageObject',
+          url: `${baseUrl}/img.png`,
+          width: 512,
+          height: 512
+        },
+        areaServed: {
+          '@type': 'City',
+          name: 'Tuxtla Gutiérrez',
+          containedInPlace: { '@type': 'State', name: 'Chiapas' }
+        }
+      },
+      {
+        '@type': 'WebSite',
+        '@id': `${baseUrl}/#website`,
+        url: `${baseUrl}/`,
+        name: 'Rutas BGD',
+        publisher: orgRef,
+        inLanguage: 'es-MX'
+      },
+      {
+        '@type': 'WebPage',
+        '@id': `${pageUrl}#webpage`,
+        url: pageUrl,
+        name: safeSeoTitle,
+        description: safeDesc,
+        isPartOf: websiteRef,
+        inLanguage: 'es-MX',
+        primaryImageOfPage: {
+          '@type': 'ImageObject',
+          url: safeImage,
+          width: 1200,
+          height: 630
+        },
+        breadcrumb: {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${baseUrl}/` },
+            { '@type': 'ListItem', position: 2, name: typeLabel + 's', item: `${baseUrl}/?tab=${tipo === 'ruta' ? 'routes' : tipo === 'market' ? 'market' : 'home'}` },
+            { '@type': 'ListItem', position: 3, name: title, item: pageUrl }
+          ]
+        }
+      },
+      contentSchema
+    ]
+  };
+   
 
   let bodyContent;
   if (tipo === 'ruta' && extra?.route) {
@@ -569,17 +670,27 @@ bodyContent = renderRouteMapBlock(extra.route, baseUrl) + renderRouteBody(extra.
 <meta name="apple-mobile-web-app-title" content="Rutas BGD">
 <link rel="preconnect" href="https://tile.openstreetmap.org">
 
+<!-- 🌍 Hreflang: contenido en español México -->
+<link rel="alternate" hreflang="es-MX" href="${pageUrl}">
+<link rel="alternate" hreflang="es" href="${pageUrl}">
+<link rel="alternate" hreflang="x-default" href="${pageUrl}">
+
 <!-- Open Graph -->
 <meta property="og:type" content="${tipo === 'post' ? 'article' : 'website'}">
 <meta property="og:title" content="${safeSeoTitle}">
 <meta property="og:description" content="${safeDescOG}">
 <meta property="og:image" content="${safeImage}">
+<meta property="og:image:secure_url" content="${safeImage}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:alt" content="${safeTitle}">
 <meta property="og:url" content="${pageUrl}">
 <meta property="og:site_name" content="Rutas BGD">
 <meta property="og:locale" content="es_MX">
+<meta property="article:author" content="Rutas BGD">
+<meta property="article:published_time" content="${new Date().toISOString()}">
+
 
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
@@ -723,10 +834,11 @@ footer a{color:var(--cyan)}
   </div>
 
   
-  <span class="badge badge-${tipo === 'ruta' ? (extra?.route?.categoria === 'foranea' ? 'foranea' : 'urbana') : tipo === 'market' ? 'green' : 'urbana'}">${typeLabel}</span>
-  <h1>${safeTitle}</h1>
+     <span class="badge badge-${tipo === 'ruta' ? (extra?.route?.categoria === 'foranea' ? 'foranea' : 'urbana') : tipo === 'market' ? 'green' : 'urbana'}">${typeLabel}</span>
+  <h1>${safeTitle}${tipo === 'ruta' ? ' · Colectivo Tuxtla Gutiérrez' : tipo === 'market' ? ' · Marketplace Tuxtla Gutiérrez' : ''}</h1>
   <div class="meta">${new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
 
+  
   <!-- 🔒 IMAGEN SEO: oculta visualmente pero indexable por Google -->
   ${image ? `<img class="seo-hero" src="${safeImage}" alt="${safeTitle}" title="${safeTitle}" width="1200" height="630" loading="eager">` : ''}
   
@@ -1010,6 +1122,9 @@ function introParagraph(route, title, baseUrl) {
 function renderRouteBody(route, baseUrl) {
   baseUrl = baseUrl || 'https://brigadistasbd.pages.dev';
   const blocks = [];
+
+  // ✅ H2 principal de la sección de datos
+  blocks.push(`<h2 style="font-size:18px;font-weight:900;margin:24px 0 12px;color:var(--text)">Información completa de la ruta</h2>`);
 
   // 📝 NOTAS primero (arriba de todo)
   if (route.notas && String(route.notas).trim()) {
