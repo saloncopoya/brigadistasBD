@@ -3086,7 +3086,7 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
     const total = routeList.length;
     const NO_ARROW_IF_CLOSER_THAN_M = 30;
     const MAX_ANGLE_FOR_ARROW_DEG = 15;
-    const ARROW_EVERY_N_METERS = 900;
+    const ARROW_EVERY_N_METERS = 500;
 
     routeList.forEach((item, idx) => {
       const route = item.route || item;
