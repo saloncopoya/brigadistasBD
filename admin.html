@@ -1757,6 +1757,7 @@ if (f.size > 20 * 1024 * 1024) {
   }
 
 
+
     async function detectStreets(){
     const ptsIda = state.routeDraft.puntos;
     const ptsVuelta = state.routeDraft.puntosVuelta;
@@ -1771,22 +1772,45 @@ if (f.size > 20 * 1024 * 1024) {
     const existingStreets = splitList(existingText);
     const existingNorm = new Set(existingStreets.map(s => s.toLowerCase().trim()));
 
-    // 📌 Respetar PARADAS y RETORNOS existentes (NO borrarlos)
+    // 📌 Respetar PARADAS y RETORNOS existentes
     const existingParadas = splitList($('#routeParadas').value || '');
     const existingParadasNorm = new Set(existingParadas.map(s => s.toLowerCase().trim()));
     const existingRetornos = splitList($('#routeRetornos').value || '');
     const existingRetornosNorm = new Set(existingRetornos.map(s => s.toLowerCase().trim()));
 
-    // Muestrear más puntos para mejor detección (20 puntos)
-    const samples = samplePoints(pts, 20);
+    // ============================================================
+    // 📏 MUESTREO DINÁMICO: 1 muestra cada ~50 metros
+    //    - Mínimo 20 muestras
+    //    - Máximo 200 muestras (para no tardar horas)
+    // ============================================================
+    const DIST_BETWEEN_SAMPLES_M = 300;   // 1 muestra cada 50 metros
+    const MIN_SAMPLES = 5;
+    const MAX_SAMPLES = 300;
+
+    // Calcular longitud total del trazado (en metros)
+    let totalDist = 0;
+    for (let i = 0; i < pts.length - 1; i++) {
+      totalDist += haversine(pts[i][0], pts[i][1], pts[i+1][0], pts[i+1][1]);
+    }
+
+    // Calcular número de muestras
+    let numSamples = Math.round(totalDist / DIST_BETWEEN_SAMPLES_M);
+    if (numSamples < MIN_SAMPLES) numSamples = MIN_SAMPLES;
+    if (numSamples > MAX_SAMPLES) numSamples = MAX_SAMPLES;
+
+    console.log(`[Detectar] Distancia total: ${(totalDist/1000).toFixed(2)} km · Muestras: ${numSamples}`);
+
+    // Muestrear equiespaciadamente sobre el trazado
+    const samples = samplePoints(pts, numSamples);
 
     // 🏘️ Estructura: mapa de "calle principal" → Set de variaciones
     const streetMap = new Map();
     const seenNames = new Set();
 
-    // 🎯 Guardaremos la calle del PRIMER punto y del ÚLTIMO punto
-    let firstStreetName = '';
-    let lastStreetName  = '';
+    // 🎯 Guardaremos las calles de los primeros/últimos puntos
+    const firstStreets = [];
+    const lastStreets  = [];
+    const LAST_IDX = samples.length - 1;
 
     for(let i=0;i<samples.length;i++){
       const [lat,lng] = samples[i];
@@ -1797,11 +1821,10 @@ if (f.size > 20 * 1024 * 1024) {
         const a = j.address || {};
         const road = a.road || a.pedestrian || a.footway || a.path || a.street;
 
-        // 📌 Guardar la calle del PRIMER punto (ida) y del ÚLTIMO punto (ida)
-        //    Solo si estamos usando puntos de IDA (no vuelta)
+        // 📌 Recolectar calles de los primeros 3 puntos y los últimos 3
         if (ptsIda.length >= 2 && road) {
-          if (i === 0 && !firstStreetName) firstStreetName = road;
-          if (i === samples.length - 1 && !lastStreetName) lastStreetName = road;
+          if (i <= 2) firstStreets.push(road);
+          if (i >= LAST_IDX - 2) lastStreets.push(road);
         }
 
         if(!road) continue;
@@ -1845,14 +1868,20 @@ if (f.size > 20 * 1024 * 1024) {
       }catch(e){ /* continuar con el siguiente */ }
 
       if (progressBar) {
-        progressBar.style.width = Math.round(((i+1)/samples.length)*100)+'%';
+        const pct = Math.round(((i+1)/samples.length)*100);
+        progressBar.style.width = pct + '%';
+        // Actualizar texto del progreso
+        const statusEl = $('#editorStatus');
+        if (statusEl) {
+          statusEl.textContent = `🔍 Detectando calles… ${i+1}/${samples.length} (${pct}%)`;
+        }
       }
-      // Pausa entre peticiones (el proxy cachea, pero respetamos el límite)
+      // ⏱️ Pausa 800ms (respeta límites de Nominatim)
       await new Promise(r=>setTimeout(r,800));
     }
 
     // ============================================================
-    // 🧩 COMBINAR CALLES CON LAS EXISTENTES (respetar las que ya había)
+    // 🧩 COMBINAR CALLES CON LAS EXISTENTES
     // ============================================================
     const finalStreets = [...existingStreets];
     const added = [];
@@ -1871,40 +1900,37 @@ if (f.size > 20 * 1024 * 1024) {
     $('#routeCalles').value = finalStreets.join(', ');
 
     // ============================================================
-    // 🚏 AGREGAR PRIMERA CALLE DE IDA A PARADAS (respetando lo existente)
-    // 🔄 AGREGAR ÚLTIMA CALLE DE IDA A RETORNOS (respetando lo existente)
+    // 🚏 PARADAS (primera calle) y 🔄 RETORNOS (última calle)
     // ============================================================
     let paradaAgregada = '';
     let retornoAgregado = '';
 
-    // Solo si estamos trabajando con puntos de IDA
     if (ptsIda.length >= 2) {
-      // --- PARADAS: primera calle del trazado ---
-      if (firstStreetName) {
-        const keyP = firstStreetName.toLowerCase().trim();
+      if (firstStreets.length > 0) {
+        const firstStreet = firstStreets[0];
+        const keyP = firstStreet.toLowerCase().trim();
         const yaExiste = existingParadasNorm.has(keyP) ||
                          existingParadas.some(p => p.toLowerCase().trim() === keyP);
         if (!yaExiste) {
-          existingParadas.push(firstStreetName);
+          existingParadas.push(firstStreet);
           existingParadasNorm.add(keyP);
-          paradaAgregada = firstStreetName;
+          paradaAgregada = firstStreet;
         }
       }
 
-      // --- RETORNOS: última calle del trazado ---
-      if (lastStreetName) {
-        const keyR = lastStreetName.toLowerCase().trim();
+      if (lastStreets.length > 0) {
+        const lastStreet = lastStreets[lastStreets.length - 1];
+        const keyR = lastStreet.toLowerCase().trim();
         const yaExiste = existingRetornosNorm.has(keyR) ||
                          existingRetornos.some(r => r.toLowerCase().trim() === keyR);
         if (!yaExiste) {
-          existingRetornos.push(lastStreetName);
+          existingRetornos.push(lastStreet);
           existingRetornosNorm.add(keyR);
-          retornoAgregado = lastStreetName;
+          retornoAgregado = lastStreet;
         }
       }
     }
 
-    // Guardar en los textbox (respetando lo que ya había)
     $('#routeParadas').value  = existingParadas.join(', ');
     $('#routeRetornos').value = existingRetornos.join(', ');
 
@@ -1912,13 +1938,13 @@ if (f.size > 20 * 1024 * 1024) {
     prog.classList.add('hidden');
     if (progressBar) progressBar.style.width='0%';
 
-    // 🎉 Mensaje final con resumen
-    let msg = `✅ ${added.length} calles nuevas detectadas`;
+    let msg = `✅ ${added.length} calles nuevas detectadas (${numSamples} muestras)`;
     if (paradaAgregada)  msg += ` · Parada: ${paradaAgregada}`;
     if (retornoAgregado) msg += ` · Retorno: ${retornoAgregado}`;
     if (!paradaAgregada && !retornoAgregado) msg += ` (${finalStreets.length} calles en total)`;
     toast(msg);
   }
+  
                                                          
   function samplePoints(pts, n){
     if(pts.length<=n) return pts;
