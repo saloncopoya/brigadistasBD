@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" data-theme="dark">
+<html lang="es" data-theme="light">
 <head>
 <meta charset="UTF-8">
   <meta name="referrer" content="strict-origin-when-cross-origin">
@@ -917,8 +917,9 @@ body.fs-active{overflow:hidden !important}
   // 🎨 Paleta: azul primero (IDA), rojo segundo (REGRESO)
   const colores = ['#3b82f6','#ef4444','#00e5ff','#a855f7','#10b981','#f59e0b','#ec4899','#84cc16'];
   // ---------- Tema ----------
-  const savedTheme = localStorage.getItem('tgz_theme') || 'dark';
-  document.documentElement.setAttribute('data-theme', savedTheme);
+ const savedTheme = localStorage.getItem('tgz_theme') || 'light';
+document.documentElement.setAttribute('data-theme', savedTheme);
+  
   $('#themeBtn').onclick = ()=>{
     const t = document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
     document.documentElement.setAttribute('data-theme', t);
