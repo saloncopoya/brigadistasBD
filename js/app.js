@@ -1199,13 +1199,28 @@ async function loadRoutes() {
 
    
 
-  function renderRouteDetail(route) {
+
+
+     function renderRouteDetail(route) {
     const hero = $('#routeHero');
+    
+    // ✅ Actualizar el H1 real (el que ve Google)
+    const h1El = document.getElementById('routeH1');
+    if (h1El) {
+      h1El.textContent = `Ruta ${route.nombre || ''} - ${route.categoria === 'foranea' ? 'Foránea' : 'Urbana'} Tuxtla Gutiérrez`;
+      h1El.classList.remove('hidden');
+    }
+    
+    // ✅ Actualizar el título del documento
+    document.title = `Ruta ${route.nombre} - Colectivo ${route.categoria === 'foranea' ? 'Foráneo' : 'Urbano'} Tuxtla Gutiérrez`;
+    
     hero.innerHTML = `
       <div>
         <div style="font-size:11.5px;color:var(--text-3);font-weight:700;letter-spacing:.4px">RUTA</div>
-        <h1>${esc(route.nombre)}</h1>
+        <h2>${esc(route.nombre)}</h2>
       </div>
+
+      
       <div class="hero-meta">
         <span class="badge ${route.categoria === 'foranea' ? 'badge-foranea' : 'badge-urbana'}">${esc(route.categoria || 'urbana')}</span>
         ${route.tarifa ? `<span class="chip mini">💰 ${esc(route.tarifa)}</span>` : ''}
