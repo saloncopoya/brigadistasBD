@@ -13,6 +13,28 @@
 <meta name="description" content="Consulta, explora y administra rutas de colectivos en Tuxtla Gutiérrez, Chiapas. Blog, marketplace, mapas interactivos, GPS en tiempo real y modo offline.">
 <link rel="canonical" href="https://brigadistasbd.pages.dev/">
 
+
+   <!-- Open Graph (Facebook, WhatsApp, LinkedIn) -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Rutas de Colectivos en Tuxtla Gutiérrez · Blog & Market | Rutas BGD">
+<meta property="og:description" content="Consulta rutas de colectivos, paradas, POIs, marketplace y blog en Tuxtla Gutiérrez, Chiapas.">
+<meta property="og:image" content="https://brigadistasbd.pages.dev/img.png">
+<meta property="og:image:secure_url" content="https://brigadistasbd.pages.dev/img.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:alt" content="Rutas BGD - Rutas de Colectivos Tuxtla Gutiérrez">
+<meta property="og:url" content="https://brigadistasbd.pages.dev/">
+<meta property="og:site_name" content="Rutas BGD">
+<meta property="og:locale" content="es_MX">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Rutas de Colectivos en Tuxtla Gutiérrez · Blog & Market | Rutas BGD">
+<meta name="twitter:description" content="Consulta rutas de colectivos, paradas, POIs, marketplace y blog en Tuxtla Gutiérrez, Chiapas.">
+<meta name="twitter:image" content="https://brigadistasbd.pages.dev/img.png">
+<meta name="twitter:image:alt" content="Rutas BGD">
+   
 <!-- 🌍 Hreflang: Indica a Google que esta página es para México en español -->
 <link rel="alternate" hreflang="es-MX" href="https://brigadistasbd.pages.dev/">
 <link rel="alternate" hreflang="es" href="https://brigadistasbd.pages.dev/">
@@ -23,16 +45,31 @@
 {
   "@context": "https://schema.org",
   "@graph": [
-    {
+     {
       "@type": "Organization",
       "@id": "https://brigadistasbd.pages.dev/#organization",
       "name": "Rutas BGD",
       "url": "https://brigadistasbd.pages.dev/",
       "logo": {
         "@type": "ImageObject",
+        "@id": "https://brigadistasbd.pages.dev/#logo",
         "url": "https://brigadistasbd.pages.dev/img.png",
+        "contentUrl": "https://brigadistasbd.pages.dev/img.png",
         "width": 512,
-        "height": 512
+        "height": 512,
+        "caption": "Rutas BGD"
+      },
+      "image": {
+        "@type": "ImageObject",
+        "@id": "https://brigadistasbd.pages.dev/#primaryimage",
+        "url": "https://brigadistasbd.pages.dev/img.png",
+        "contentUrl": "https://brigadistasbd.pages.dev/img.png",
+        "thumbnailUrl": "https://brigadistasbd.pages.dev/img.png",
+        "width": 512,
+        "height": 512,
+        "caption": "Rutas BGD - Rutas de Colectivos Tuxtla Gutiérrez",
+        "representativeOfPage": true,
+        "encodingFormat": "image/png"
       },
       "sameAs": [
         "https://brigadistasbd.pages.dev/"
@@ -62,11 +99,32 @@
         "query-input": "required name=search_term_string"
       }
     },
+    
     {
       "@type": "LocalBusiness",
       "@id": "https://brigadistasbd.pages.dev/#localbusiness",
       "name": "Rutas BGD",
-      "image": "https://brigadistasbd.pages.dev/img.png",
+      "image": {
+        "@type": "ImageObject",
+        "@id": "https://brigadistasbd.pages.dev/#primaryimage",
+        "url": "https://brigadistasbd.pages.dev/img.png",
+        "contentUrl": "https://brigadistasbd.pages.dev/img.png",
+        "thumbnailUrl": "https://brigadistasbd.pages.dev/img.png",
+        "width": 512,
+        "height": 512,
+        "caption": "Rutas BGD - Rutas de Colectivos Tuxtla Gutiérrez",
+        "representativeOfPage": true,
+        "encodingFormat": "image/png"
+      },
+      "logo": {
+        "@type": "ImageObject",
+        "@id": "https://brigadistasbd.pages.dev/#logo",
+        "url": "https://brigadistasbd.pages.dev/img.png",
+        "contentUrl": "https://brigadistasbd.pages.dev/img.png",
+        "width": 512,
+        "height": 512,
+        "caption": "Rutas BGD"
+      },
       "url": "https://brigadistasbd.pages.dev/",
       "address": {
         "@type": "PostalAddress",
