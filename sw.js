@@ -197,18 +197,28 @@ async function cacheFirst(req, cacheName) {
 }
 }
 
+
 /* ============================================================
-   🗺️ CACHÉ DE TILES OSM — capa extra sobre IndexedDB
+   🗺️ CACHÉ DE TILES OSM — v3 con validación y network-first
    ------------------------------------------------------------
-   ✔ Solo guarda tiles que el usuario VE (no prefetch).
-   ✔ Respeta la política de OSM (caché por uso).
-   ✔ Si el usuario borra IndexedDB, el SW aún tiene los tiles.
+   ✔ Intenta RED primero (tiles frescos)
+   ✔ Valida que el tile no esté vacío/negro antes de cachear
+   ✔ Si la red falla → cae al CACHÉ (offline)
+   ✔ Sin red y sin caché → tile transparente 1x1
+   ✔ Poda automática de tiles viejos
    ============================================================ */
-const TILE_CACHE = 'bgd-tiles-v2';
+const TILE_CACHE = 'bgd-tiles-v3';
 const TILE_HOSTS = [
   'api.maptiler.com'
 ];
-const TILE_MAX_ENTRIES = 5000;  
+const TILE_MAX_ENTRIES = 5000;
+const TILE_MIN_BYTES = 200;          // PNG real > 200 bytes; vacío ~100
+const TILE_FETCH_TIMEOUT_MS = 8000;  // timeout de red por tile
+
+// 🛡️ Tile transparente 1x1 (fallback final)
+const TRANSPARENT_TILE = Uint8Array.from(atob(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+), c => c.charCodeAt(0));
 
 self.addEventListener('fetch', (event) => {
   const req = event.request;
@@ -224,26 +234,61 @@ self.addEventListener('fetch', (event) => {
 async function handleTileRequest(req) {
   const cache = await caches.open(TILE_CACHE);
 
-  // 1️⃣ Cache-first (rápido y offline-friendly)
-  const cached = await cache.match(req);
-  if (cached) return cached;
-
-  // 2️⃣ No hay caché → red
+  // ─────────────────────────────────────────────
+  // 1️⃣ Intentar RED con timeout (tiles frescos)
+  // ─────────────────────────────────────────────
   try {
-    const fresh = await fetch(req, { mode: 'cors', credentials: 'omit' });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), TILE_FETCH_TIMEOUT_MS);
+
+    const fresh = await fetch(req, {
+      mode: 'cors',
+      credentials: 'omit',
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
     if (fresh && fresh.ok) {
-      // Guardar copia (sin await para no bloquear la respuesta)
-      cache.put(req, fresh.clone()).then(() => pruneTileCache(cache));
+      // 🔍 Validar que el tile NO esté vacío
+      const clone = fresh.clone();
+      const blob = await clone.blob();
+
+      if (blob.size >= TILE_MIN_BYTES) {
+        // ✅ Tile real → guardar en caché
+        cache.put(req, fresh.clone()).then(() => pruneTileCache(cache)).catch(() => {});
+        return fresh;
+      }
+
+      // ⚠️ Tile sospechosamente pequeño (negro/vacío)
+      //    NO lo cacheamos, pero SÍ lo devolvemos por si MapTiler
+      //    lo usa legítimamente (raro pero posible)
+      return fresh;
     }
-    return fresh;
+
+    // ❌ Respuesta no-ok (404, 403, 500) → NO cachear
+    //    Caer al caché si existe
+    const cached = await cache.match(req);
+    if (cached) return cached;
+    return new Response(TRANSPARENT_TILE, {
+      status: 200,
+      headers: { 'Content-Type': 'image/png' }
+    });
+
   } catch (err) {
-    // 3️⃣ Sin red y sin caché → tile vacío (transparente 1x1 PNG)
-    return new Response(
-      Uint8Array.from(atob(
-        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
-      ), c => c.charCodeAt(0)),
-      { status: 200, headers: { 'Content-Type': 'image/png' } }
-    );
+    // ─────────────────────────────────────────────
+    // 2️⃣ Red falló (offline, timeout, sin WiFi real)
+    //    → caer al CACHÉ
+    // ─────────────────────────────────────────────
+    const cached = await cache.match(req);
+    if (cached) return cached;
+
+    // ─────────────────────────────────────────────
+    // 3️⃣ Sin red y sin caché → tile transparente
+    // ─────────────────────────────────────────────
+    return new Response(TRANSPARENT_TILE, {
+      status: 200,
+      headers: { 'Content-Type': 'image/png' }
+    });
   }
 }
 
@@ -259,6 +304,7 @@ async function pruneTileCache(cache) {
     }
   } catch (e) {}
 }
+
 
 self.addEventListener('message', event => {
   if (event.data === 'SKIP_WAITING') self.skipWaiting();
