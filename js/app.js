@@ -2847,7 +2847,14 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
   }
 
   // ─────── PUNTO DE ENCUENTRO ENTRE DOS RUTAS (SIN DIRECCIÓN) ───────
-  function findMeetingPoint(r1, r2) {
+  // ─────── PUNTO DE ENCUENTRO ENTRE DOS RUTAS ───────
+  // Recolecta TODOS los puntos de contacto/cercanía entre r1 y r2
+  // y elige el mejor según un score que prioriza:
+  //   1) Estar en dirección a B (proyección t ≥ 0 sobre A→B)
+  //   2) Estar lo más cerca posible de A
+  //   3) Estar cerca de la línea recta A→B
+  //   4) Menor distancia geométrica entre segmentos
+  function findMeetingPoint(r1, r2, A, B) {
     const segs1 = getRouteSegments(r1);
     const segs2 = getRouteSegments(r2);
     if (!segs1.length || !segs2.length) return null;
@@ -2855,7 +2862,12 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
     const marginLat = TRANSFER_TOLERANCE_M / 111320;
     const marginLng = TRANSFER_TOLERANCE_M / 111320;
 
-    let best = null;
+    const vABx = B[1] - A[1];
+    const vABy = B[0] - A[0];
+    const len2AB = vABx * vABx + vABy * vABy;
+
+    const candidates = [];
+
     for (const s1 of segs1) {
       const s1minLat = Math.min(s1.a[0], s1.b[0]);
       const s1maxLat = Math.max(s1.a[0], s1.b[0]);
@@ -2874,12 +2886,53 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
         const d = segmentSegmentDistance(s1, s2);
         if (!d || d.dist > TRANSFER_TOLERANCE_M) continue;
 
-        if (!best || d.dist < best.dist) {
-          best = { point: d.mid, dist: d.dist, seg1: s1, seg2: s2 };
+        const pt = d.mid;
+        const distAtoPt = haversine(A[0], A[1], pt[0], pt[1]);
+
+        // Proyección t sobre A→B: t=0 en A, t=1 en B
+        let t = 0;
+        if (len2AB > 0) {
+          const vAPx = pt[1] - A[1];
+          const vAPy = pt[0] - A[0];
+          t = (vAPx * vABx + vAPy * vABy) / len2AB;
         }
+
+        const distToLineAB = pointToSegmentDistance(pt, A, B) * 111320;
+
+        // SCORE (menor = mejor)
+        let score = 0;
+
+        // 1) Penalización FUERTE si está detrás de A
+        if (t < 0) {
+          score += 500000 + Math.abs(t) * 100000;
+        } else if (t > 1) {
+          score += 100000 + (t - 1) * 50000;
+        }
+
+        // 2) PRIORIDAD ALTA: cercanía a A
+        score += distAtoPt * 1.0;
+
+        // 3) PRIORIDAD MEDIA: cercanía a la línea A→B
+        score += distToLineAB * 0.3;
+
+        // 4) Distancia geométrica entre segmentos
+        score += d.dist * 1.5;
+
+        candidates.push({
+          point: pt,
+          dist: d.dist,
+          seg1: s1,
+          seg2: s2,
+          score,
+          t,
+          distAtoPt
+        });
       }
     }
-    return best;
+
+    if (!candidates.length) return null;
+    candidates.sort((a, b) => a.score - b.score);
+    return candidates[0];
   }
 
   // ─────── BÚSQUEDA DE CADENAS DE TRANSBORDO ───────
@@ -2914,7 +2967,7 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
         for (const b of endWithB) {
           if (a.r.id === b.r.id) continue;
 
-          const meet = findMeetingPoint(a.r, b.r);
+          const meet = findMeetingPoint(a.r, b.r, A, B);
           if (!meet) continue;
 
           // Distancia de A hasta el transbordo, sobre la polyline de r1
@@ -2976,12 +3029,12 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
           const r2 = state.routes.find(x => x.id === r2id);
           if (!r2 || r2.id === a.r.id) continue;
 
-          const meet1 = findMeetingPoint(a.r, r2);
+          const meet1 = findMeetingPoint(a.r, r2, A, B);
           if (!meet1) continue;
 
           for (const b of endWithB) {
             if (b.r.id === a.r.id || b.r.id === r2.id) continue;
-            const meet2 = findMeetingPoint(r2, b.r);
+            const meet2 = findMeetingPoint(r2, b.r, A, B);
             if (!meet2) continue;
 
             // A → T1 sobre r1
