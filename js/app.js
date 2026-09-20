@@ -3248,7 +3248,7 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
     clearTripRouteLayers();
     if (state.tripPoints.length < 1) { el.innerHTML = ''; return; }
 
-    const maxTransfers = Math.min(MAX_TRANSFERS_HARD, +($('#tripMaxTransfers')?.value || 2));
+    let maxTransfers = Math.min(MAX_TRANSFERS_HARD, +($('#tripMaxTransfers')?.value || 1));
     const results = { direct: [], transfers: [] };
 
     if (state.tripPoints.length === 1) {
@@ -3278,9 +3278,21 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
 
       if (!results.direct.length || maxTransfers >= 1) {
         if (state.tripPoints.length === 2) {
-          const chains = findTransferChains(start, end, maxTransfers);
+          // 1er intento con maxTransfers configurado
+          let chains = findTransferChains(start, end, maxTransfers);
+          
+          // 🔁 AUTO-2T: si no hay directas NI 1T, intentar con 2T automáticamente
+          if (!results.direct.length && !chains.length && maxTransfers < 2) {
+            console.log('[Auto-2T] No hay directas ni 1T. Buscando con 2T…');
+            chains = findTransferChains(start, end, 2);
+            if (chains.length) {
+              toast('🔎 Sin rutas directas. Mostrando transbordos con 2 rutas');
+            }
+          }
+          
           results.transfers = chains.slice(0, 20);
         } else {
+           
           const pairs = [];
           for (let i = 0; i < state.tripPoints.length - 1; i++) {
             const a = state.tripPoints[i];
@@ -3360,8 +3372,9 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
     if (results.transfers.length) {
       html += `<div class="section-title">🔄 Transbordos (${results.transfers.length})</div>`;
       html += results.transfers.map((t, idx) => {
-        const chipsHtml = t.legs.map((leg, li) => {
-          const legColor = li === 0 ? '#1A73E8' : '#a855f7';
+      const chipsHtml = t.legs.map((leg, li) => {
+  const legColor = li === 0 ? '#1A73E8' : (li === 1 ? '#a855f7' : '#10b981');
+         
           return `
             <button class="trip-chain-item" type="button" data-trip-focus="${esc(leg.id)}" title="Abrir ruta ${esc(leg.nombre)}">
               <div class="trip-chain-chip" style="background:${legColor};border-color:${legColor};color:#ffffff">
