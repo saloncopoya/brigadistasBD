@@ -3391,17 +3391,20 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
             </button>`;
         }).join('<span class="trip-chain-sep">›</span>');
 
-        return `
+             return `
         <div class="result-card transbordo" data-result-idx="${idx}" data-result-type="transfer">
-          <div class="rc-head">
-            <div style="flex:1">
-              <div class="trip-chain">${chipsHtml}</div>
-              <div class="rc-sub" style="margin-top:6px;line-height:1.6">
-                <div>🚏 <b>Transbordo más próximo:</b> a ${formatDistanceMeters(t.firstTransferDistToA)} de A</div>
-                <div>📏 <b>Distancia de viaje:</b> ${formatDistanceMeters(t.totalDist)}</div>
+          <div class="rc-head" style="flex-direction:column;align-items:stretch;gap:6px">
+            <!-- 🔗 Chips a todo el ancho -->
+            <div class="trip-chain" style="width:100%">${chipsHtml}</div>
+
+            <!-- 📊 Info + badge 1T/2T en una fila -->
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+              <div class="rc-sub" style="line-height:1.6;flex:1;min-width:0">
+                <div> <b>Transbordo a:</b> ${formatDistanceMeters(t.firstTransferDistToA)} </div>
+                <div> <b>Distancia total:</b> ${formatDistanceMeters(t.totalDist)}</div>
               </div>
+              <span class="badge badge-amber" style="flex-shrink:0">${t.transfers}T</span>
             </div>
-            <span class="badge badge-amber">${t.transfers}T</span>
           </div>
           <div class="trip-result-actions">
             <button class="btn btn-primary btn-sm" data-trip-show="${idx}">
