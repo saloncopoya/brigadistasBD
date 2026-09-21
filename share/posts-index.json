@@ -7,8 +7,8 @@
       "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789955936/tb3cs0uvshje4fdxssnk.jpg",
       "url": "/share/ruta/nuevasrutas209",
       "tipo": "ruta",
-      "timestamp": 1789970906567,
-      "updatedAt": "2026-09-21T06:08:26.567Z",
+      "timestamp": 1789972702793,
+      "updatedAt": "2026-09-21T06:38:22.793Z",
       "categoria": "urbana",
       "tarifa": "10",
       "frecuencia": "15",
@@ -164,6 +164,6 @@
     }
   ],
   "total": 3,
-  "updatedAt": "2026-09-21T06:08:26.567Z",
+  "updatedAt": "2026-09-21T06:38:22.793Z",
   "version": 1
 }
