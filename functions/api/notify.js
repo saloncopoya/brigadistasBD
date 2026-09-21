@@ -25,7 +25,8 @@ export async function onRequest(context) {
 
   try {
     const body = await request.json();
-    const { titulo, mensaje, url, imagen, tipo } = body;
+    const { titulo, mensaje, url, imagen, tipo, letra1, boton1, letra2, boton2, letra3, boton3 } = body;
+     
 
     if (!titulo || !mensaje) {
       return new Response(JSON.stringify({ error: 'Faltan título o mensaje' }), { status: 400, headers });
@@ -86,7 +87,13 @@ export async function onRequest(context) {
                 image: imagen || '',
                 url: url || '/Comunidad',
                 tipo: tipo || 'comentario',
-                timestamp: String(Date.now())
+                timestamp: String(Date.now()),
+                letra1: letra1 || '',
+                boton1: boton1 || '',
+                letra2: letra2 || '',
+                boton2: boton2 || '',
+                letra3: letra3 || '',
+                boton3: boton3 || ''
               },
               webpush: {
                 headers: {
