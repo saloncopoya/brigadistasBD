@@ -1014,7 +1014,6 @@ img{max-width:100%;display:block}
 
     window.scrollTo({top:0,behavior:'smooth'});
 
-    if(tabId==='reportar') initReportMap();
   }
 
   $$('.tab-pill[data-tab]').forEach(p=>{
@@ -1468,12 +1467,13 @@ img{max-width:100%;display:block}
     buildRpColorSwatches();
     goRpStep(1);
 
-    // Refrescar mapa si está listo
+    // 🗺️ Refrescar mapa si ya existe (sin forzar su creación)
     setTimeout(() => {
       if(rpState.map){
         drawRpRoute(route);
+        rpState.map.invalidateSize();
       }
-    }, 200);
+    }, 250);
   }
 
   function buildRpColorSwatches(){
@@ -1502,7 +1502,12 @@ img{max-width:100%;display:block}
     $('#rpNext').classList.toggle('hidden', n!==3);
     $('#rpSave').classList.toggle('hidden', n!==3);
     $('#rpWhatsApp').classList.toggle('hidden', n!==3);
-
+    // 🗺️ Si vamos al paso 3, forzar invalidateSize tras el render
+    if(n===3){
+      setTimeout(() => {
+        if(rpState.map) rpState.map.invalidateSize();
+      }, 350);
+    }
     if(n===3){
       requestAnimationFrame(()=>{
         requestAnimationFrame(()=>{
