@@ -1,19 +1,52 @@
 # robots.txt para brigadistasbd.pages.dev
+# Última actualización: 2026-09-20
+
 User-agent: *
 Allow: /
 
+# ✅ Contenido público (prioridad de rastreo)
+Allow: /share/
+Allow: /share/post/
+Allow: /share/ruta/
+Allow: /share/m/
+Allow: /Comunidad
+Allow: /metodologia
+Allow: /acerca
+Allow: /politica-privacidad
+Allow: /terminos
+
 # 🔒 Bloquear rutas privadas y de backend
+# (contienen datos internos, tokens o endpoints de administración)
 Disallow: /admin.html
 Disallow: /admin/
 Disallow: /functions/
 Disallow: /api/
 Disallow: /assets/private/
+Disallow: /*?__check=
+Disallow: /*?__delete=
 
-# ✅ Permitir explícitamente el contenido público compartido
-Allow: /share/
-Allow: /share/post/
-Allow: /share/ruta/
-Allow: /share/m/
+# 🤖 Bots de IA (permitir explícitamente)
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
 
 # 📄 Sitemap
 Sitemap: https://brigadistasbd.pages.dev/sitemap.xml
+Sitemap: https://brigadistasbd.pages.dev/sitemap-index.xml
+
+# 🔗 Ubicación de llms.txt (para IA)
+# https://brigadistasbd.pages.dev/llms.txt
