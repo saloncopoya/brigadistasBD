@@ -1,0 +1,1889 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0e1a">
+<title>Comunidad · Rutas BGD Tuxtla Gutiérrez</title>
+<meta name="description" content="Comunidad Rutas BGD: comentarios, reportes de actualización de rutas, redes sociales y contacto. Participa en la mejora del transporte público de Tuxtla Gutiérrez, Chiapas.">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="geo.region" content="MX-CHP">
+<meta name="geo.placename" content="Tuxtla Gutiérrez">
+<link rel="canonical" href="https://brigadistasbd.pages.dev/Comunidad">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" type="image/svg+xml" href="/assets/icon.svg">
+<link rel="apple-touch-icon" href="/assets/icon.svg">
+<link rel="preconnect" href="https://api.maptiler.com">
+<link rel="preconnect" href="https://res.cloudinary.com">
+<link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
+
+<style>
+/* ============================================================
+   VARIABLES Y TEMAS — clon de index.html
+   ============================================================ */
+:root{
+  --cyan:#0167ff;
+  --cyan-d:#0574a2;
+  --cyan-glow:rgba(0,229,255,.35);
+  --purple:#a855f7;
+  --green:#10b981;
+  --amber:#f59e0b;
+  --red:#ef4444;
+  --pink:#ec4899;
+  --radius:14px;
+  --radius-sm:10px;
+  --radius-lg:22px;
+  --shadow:0 10px 30px rgba(0,0,0,.35);
+  --shadow-sm:0 4px 12px rgba(0,0,0,.25);
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --nav-h:64px;
+  --header-h:58px;
+  --transition:.25s cubic-bezier(.4,0,.2,1);
+}
+[data-theme="dark"]{
+  --bg:#0a0e1a;--bg-2:#0f1526;--bg-3:#161e33;
+  --surface:#141c30;--surface-2:#1c2540;--surface-3:#242f4d;
+  --border:#26314f;--border-2:#334066;
+  --text:#e8edf7;--text-2:#a9b4cc;--text-3:#6b7793;
+  --input-bg:#0f1626;--overlay:rgba(5,8,16,.85);--map-filter:none;
+}
+[data-theme="light"]{
+  --bg:#f4f6fb;--bg-2:#ffffff;--bg-3:#eef1f8;
+  --surface:#ffffff;--surface-2:#f4f6fb;--surface-3:#e8ecf5;
+  --border:#dde3ee;--border-2:#c5cfe2;
+  --text:#0c1322;--text-2:#4a5773;--text-3:#8a95ad;
+  --input-bg:#f8fafd;--overlay:rgba(15,20,35,.55);--map-filter:none;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:var(--font);background:var(--bg);color:var(--text);
+  overflow-x:hidden;overscroll-behavior-y:none;
+  transition:background var(--transition),color var(--transition);
+  -webkit-font-smoothing:antialiased;
+}
+button,input,textarea,select{font-family:inherit;font-size:inherit;color:inherit}
+button{cursor:pointer;border:none;background:none}
+a{color:var(--cyan);text-decoration:none}
+img{max-width:100%;display:block}
+.hidden{display:none!important}
+::selection{background:var(--cyan);color:#00121a}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:8px}
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+.header{
+  position:fixed;top:0;left:0;right:0;height:var(--header-h);
+  background:color-mix(in srgb,var(--surface) 92%,transparent);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 14px;z-index:1000;
+}
+.header-brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px;letter-spacing:-.3px;color:var(--text);text-decoration:none}
+.header-brand .logo{
+  width:32px;height:32px;border-radius:9px;
+  background:linear-gradient(135deg,var(--cyan),var(--cyan-d));
+  display:grid;place-items:center;color:#00121a;font-size:17px;
+  box-shadow:0 0 18px var(--cyan-glow);
+}
+.header-brand .logo svg{width:20px;height:20px}
+.header-brand .brand-txt{background:linear-gradient(90deg,var(--cyan),#7dd3fc);-webkit-background-clip:text;background-clip:text;color:transparent}
+.header-actions{display:flex;align-items:center;gap:6px}
+.icon-btn{
+  width:40px;height:40px;border-radius:11px;display:grid;place-items:center;
+  color:var(--text-2);transition:var(--transition);text-decoration:none;
+}
+.icon-btn:hover{background:var(--surface-2);color:var(--cyan)}
+.icon-btn svg{width:20px;height:20px}
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.app{
+  padding-top:var(--header-h);
+  padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom));
+  min-height:100vh;
+}
+.container{max-width:900px;margin:0 auto;padding:14px}
+
+/* ============================================================
+   NAV INFERIOR (5 botones) — clon de index
+   ============================================================ */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav-h) + env(safe-area-inset-bottom));
+  padding-bottom:env(safe-area-inset-bottom);
+  background:color-mix(in srgb,var(--surface) 92%,transparent);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border-top:1px solid var(--text-2);
+  display:grid;grid-template-columns:repeat(5,1fr);z-index:1000;
+}
+.nav-item{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;color:var(--text);font-size:11px;font-weight:600;
+  transition:var(--transition);position:relative;text-decoration:none;
+}
+.nav-item svg{width:23px;height:23px;transition:var(--transition)}
+.nav-item.active{color:var(--cyan)}
+.nav-item.active svg{transform:translateY(-2px) scale(1.08)}
+.nav-item.active::before{
+  content:"";position:absolute;top:6px;width:44px;height:3px;border-radius:0 0 4px 4px;
+  background:var(--cyan);box-shadow:0 0 14px var(--cyan-glow);
+}
+.nav-item:active{transform:scale(.94)}
+
+/* ============================================================
+   TABS FLOTANTES
+   ============================================================ */
+.tabs-float{
+  position:sticky;top:var(--header-h);
+  z-index:900;
+  background:color-mix(in srgb,var(--bg) 92%,transparent);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  padding:12px 14px;
+  margin:0 -14px 14px;
+  display:flex;gap:8px;
+  overflow-x:auto;scrollbar-width:none;
+  border-bottom:1px solid var(--border);
+}
+.tabs-float::-webkit-scrollbar{display:none}
+.tab-pill{
+  flex-shrink:0;
+  display:inline-flex;align-items:center;gap:7px;
+  padding:10px 16px;
+  border-radius:99px;
+  background:var(--surface);
+  border:1.5px solid var(--border);
+  color:var(--text-2);
+  font-size:13px;font-weight:800;
+  letter-spacing:.3px;
+  transition:var(--transition);
+  white-space:nowrap;
+  box-shadow:0 3px 10px -4px rgba(0,0,0,.25);
+}
+.tab-pill svg{width:16px;height:16px;flex-shrink:0}
+.tab-pill:hover{border-color:var(--border-2);color:var(--text);transform:translateY(-1px)}
+.tab-pill.active{
+  background:linear-gradient(135deg,var(--cyan),var(--cyan-d));
+  color:#00121a;border-color:transparent;
+  box-shadow:0 6px 18px -6px var(--cyan-glow);
+}
+.tab-pill.active svg{color:#00121a}
+
+/* ============================================================
+   CARDS / UI GENERAL
+   ============================================================ */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;transition:var(--transition)}
+.section-title{font-size:15px;font-weight:800;letter-spacing:.3px;margin:18px 0 10px;display:flex;align-items:center;gap:8px;color:var(--text)}
+.section-title svg{width:18px;height:18px;color:var(--cyan)}
+.muted{color:var(--text-2);font-size:13px}
+.tiny{color:var(--text-3);font-size:11.5px}
+
+/* Botones */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 16px;border-radius:var(--radius-sm);font-weight:700;font-size:13.5px;transition:var(--transition);border:1px solid transparent;text-decoration:none}
+.btn svg{width:17px;height:17px}
+.btn:active{transform:scale(.96)}
+.btn-primary{background:linear-gradient(135deg,var(--cyan),var(--cyan-d));color:#00121a;box-shadow:0 6px 18px -6px var(--cyan-glow)}
+.btn-primary:hover{filter:brightness(1.08)}
+.btn-ghost{background:var(--surface-2);color:var(--text);border-color:var(--border)}
+.btn-ghost:hover{background:var(--surface-3);border-color:var(--border-2)}
+.btn-danger{background:color-mix(in srgb,var(--red) 18%,transparent);color:var(--red);border-color:color-mix(in srgb,var(--red) 35%,transparent)}
+.btn-block{width:100%}
+.btn-sm{padding:8px 12px;font-size:12.5px}
+.btn-icon{padding:9px;width:38px;height:38px}
+
+/* Inputs */
+.input,.textarea,.select{
+  width:100%;padding:12px 14px;border-radius:var(--radius-sm);
+  background:var(--input-bg);border:1px solid var(--border);color:var(--text);
+  font-size:14px;transition:var(--transition);
+}
+.input:focus,.textarea:focus,.select:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px color-mix(in srgb,var(--cyan) 18%,transparent)}
+.textarea{resize:vertical;min-height:90px;line-height:1.5}
+.select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7793' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;background-size:16px;padding-right:38px}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.field label{font-size:12.5px;font-weight:700;color:var(--text-2);letter-spacing:.2px}
+.form-grid{display:grid;grid-template-columns:1fr;gap:0}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;font-size:10.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase}
+.badge-urbana{background:color-mix(in srgb,var(--cyan) 16%,transparent);color:var(--cyan);border:1px solid color-mix(in srgb,var(--cyan) 30%,transparent)}
+.badge-foranea{background:color-mix(in srgb,var(--purple) 18%,transparent);color:var(--purple);border:1px solid color-mix(in srgb,var(--purple) 32%,transparent)}
+.badge-green{background:color-mix(in srgb,var(--green) 16%,transparent);color:var(--green);border:1px solid color-mix(in srgb,var(--green) 30%,transparent)}
+.badge-amber{background:color-mix(in srgb,var(--amber) 18%,transparent);color:var(--amber);border:1px solid color-mix(in srgb,var(--amber) 32%,transparent)}
+.badge-red{background:color-mix(in srgb,var(--red) 16%,transparent);color:var(--red);border:1px solid color-mix(in srgb,var(--red) 30%,transparent)}
+
+/* Empty state */
+.empty{text-align:center;padding:40px 20px;color:var(--text-3)}
+.empty svg{width:56px;height:56px;margin-bottom:12px;opacity:.4}
+.empty h3{font-size:15px;margin-bottom:6px;color:var(--text-2)}
+.empty p{font-size:13px;max-width:300px;margin:0 auto}
+
+/* Toast */
+.toast-wrap{position:fixed;top:calc(var(--header-h) + 10px);left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;width:calc(100% - 24px);max-width:400px}
+.toast{background:var(--surface-3);color:var(--text);padding:12px 16px;border-radius:var(--radius-sm);border:1px solid var(--border-2);box-shadow:var(--shadow);font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:10px;pointer-events:auto;animation:toastIn .3s cubic-bezier(.4,0,.2,1)}
+.toast.ok{border-color:color-mix(in srgb,var(--green) 50%,transparent)}
+.toast.err{border-color:color-mix(in srgb,var(--red) 50%,transparent)}
+.toast svg{width:18px;height:18px;flex-shrink:0}
+.toast.ok svg{color:var(--green)}
+.toast.err svg{color:var(--red)}
+@keyframes toastIn{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:none}}
+
+/* ============================================================
+   TAB 1: COMENTARIOS (muro tipo Facebook)
+   ============================================================ */
+.composer{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px;margin-bottom:14px;
+}
+.composer-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.composer-avatar{
+  width:40px;height:40px;border-radius:50%;
+  background:linear-gradient(135deg,var(--cyan),var(--cyan-d));
+  display:grid;place-items:center;color:#00121a;font-weight:800;font-size:15px;flex-shrink:0;
+}
+.composer-input{
+  flex:1;background:var(--input-bg);border:1px solid var(--border);border-radius:22px;
+  padding:11px 16px;color:var(--text);font-size:14px;transition:var(--transition);
+  font-family:inherit;
+}
+.composer-input:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px color-mix(in srgb,var(--cyan) 18%,transparent)}
+.composer-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
+
+.comment{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:12px 14px;margin-bottom:10px;transition:var(--transition);
+}
+.comment:hover{border-color:var(--border-2)}
+.comment-head{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+.comment-avatar{
+  width:34px;height:34px;border-radius:50%;
+  background:linear-gradient(135deg,var(--purple),#7e22ce);
+  display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px;flex-shrink:0;
+}
+.comment-meta{flex:1;min-width:0}
+.comment-name{font-size:13px;font-weight:800;color:var(--text)}
+.comment-time{font-size:11px;color:var(--text-3)}
+.comment-actions-top{display:flex;gap:4px;flex-shrink:0}
+.comment-actions-top button{
+  width:28px;height:28px;border-radius:8px;display:grid;place-items:center;
+  color:var(--text-3);transition:var(--transition);
+}
+.comment-actions-top button:hover{background:var(--surface-2);color:var(--cyan)}
+.comment-actions-top button.del:hover{color:var(--red)}
+.comment-actions-top svg{width:14px;height:14px}
+
+.comment-body{
+  font-size:14.5px;line-height:1.55;color:var(--text);
+  white-space:pre-wrap;word-break:break-word;
+  margin-bottom:8px;
+}
+.comment-edit-area{
+  display:flex;flex-direction:column;gap:6px;margin-bottom:8px;
+}
+.comment-edit-area textarea{
+  width:100%;padding:10px 12px;border-radius:10px;
+  background:var(--input-bg);border:1px solid var(--cyan);
+  color:var(--text);font-size:14px;font-family:inherit;
+  resize:vertical;min-height:60px;
+}
+.comment-edit-area textarea:focus{outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--cyan) 18%,transparent)}
+.comment-edit-actions{display:flex;gap:6px;justify-content:flex-end}
+
+.comment-bar{
+  display:flex;gap:4px;padding-top:6px;border-top:1px solid var(--border);
+  align-items:center;
+}
+.comment-bar button{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:6px 11px;border-radius:8px;
+  font-size:12px;font-weight:700;color:var(--text-2);
+  transition:var(--transition);
+}
+.comment-bar button:hover{background:var(--surface-2);color:var(--text)}
+.comment-bar button.liked{color:var(--pink)}
+.comment-bar button.liked svg{fill:currentColor}
+.comment-bar button svg{width:15px;height:15px}
+.comment-bar .spacer{flex:1}
+.comment-bar .like-count{font-size:11px;color:var(--text-3);font-weight:700}
+
+.replies{
+  margin-left:22px;margin-top:10px;
+  padding-left:14px;border-left:2px solid var(--border);
+}
+.reply{
+  background:var(--surface-2);border:1px solid var(--border);
+  border-radius:10px;padding:10px 12px;margin-bottom:8px;
+}
+.reply-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.reply-avatar{
+  width:26px;height:26px;border-radius:50%;
+  background:linear-gradient(135deg,var(--green),#059669);
+  display:grid;place-items:center;color:#fff;font-weight:800;font-size:11px;flex-shrink:0;
+}
+.reply-body{font-size:13.5px;line-height:1.5;color:var(--text);white-space:pre-wrap;word-break:break-word;margin-bottom:6px}
+.reply-bar{display:flex;gap:4px;align-items:center}
+.reply-bar button{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:4px 9px;border-radius:7px;
+  font-size:11px;font-weight:700;color:var(--text-2);
+  transition:var(--transition);
+}
+.reply-bar button:hover{background:var(--surface-3);color:var(--text)}
+.reply-bar button.liked{color:var(--pink)}
+.reply-bar button.liked svg{fill:currentColor}
+.reply-bar button svg{width:13px;height:13px}
+
+.reply-composer{
+  display:flex;gap:6px;margin-top:8px;
+}
+.reply-composer input{
+  flex:1;padding:8px 12px;border-radius:18px;
+  background:var(--input-bg);border:1px solid var(--border);
+  color:var(--text);font-size:13px;font-family:inherit;
+}
+.reply-composer input:focus{outline:none;border-color:var(--cyan)}
+.reply-composer button{
+  padding:8px 14px;border-radius:18px;
+  background:linear-gradient(135deg,var(--cyan),var(--cyan-d));
+  color:#00121a;font-weight:800;font-size:12px;
+}
+
+/* ============================================================
+   TAB 3: FACEBOOK
+   ============================================================ */
+.social-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+  gap:10px;margin-top:14px;
+}
+.social-btn{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:14px 16px;border-radius:14px;
+  font-weight:800;font-size:13.5px;letter-spacing:.2px;
+  color:#fff;text-decoration:none;
+  transition:var(--transition);
+  box-shadow:0 6px 18px -6px rgba(0,0,0,.4);
+}
+.social-btn svg{width:20px;height:20px}
+.social-btn:hover{transform:translateY(-2px);filter:brightness(1.08)}
+.social-btn.fb{background:linear-gradient(135deg,#1877F2,#166FE5)}
+.social-btn.ig{background:linear-gradient(135deg,#E1306C,#C13584,#833AB4)}
+.social-btn.tt{background:linear-gradient(135deg,#000,#25F4EE)}
+.social-btn.wa{background:linear-gradient(135deg,#25D366,#128C7E)}
+.social-btn.tel{background:linear-gradient(135deg,#10b981,#059669)}
+.social-btn.mail{background:linear-gradient(135deg,#ef4444,#b91c1c)}
+
+/* ============================================================
+   PÁGINAS INDIVIDUALES (Reportar / Contacto)
+   ============================================================ */
+.subpage-header{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 0 16px;
+}
+.subpage-header h1{
+  font-size:22px;font-weight:900;letter-spacing:-.4px;line-height:1.2;
+  flex:1;
+}
+
+/* Reporte — 3 columnas como admin */
+.admin-cols-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:8px}
+.admin-col{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;display:flex;flex-direction:column;gap:8px}
+.admin-col-title{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--cyan);padding-bottom:8px;margin-bottom:4px;border-bottom:1px solid var(--border)}
+.admin-col .field{margin-bottom:0}
+.admin-col .field label{font-size:11px}
+.admin-col .input,.admin-col .select{padding:8px 10px;font-size:12.5px}
+.admin-col .select{padding-right:28px;background-size:14px}
+
+@media(max-width:720px){
+  .admin-cols-3{grid-template-columns:repeat(3,1fr);gap:6px}
+  .admin-col{padding:8px 6px}
+  .admin-col-title{font-size:9.5px;letter-spacing:.2px;gap:4px;padding-bottom:6px;margin-bottom:2px}
+  .admin-col-title svg{width:12px;height:12px}
+  .admin-col .field label{font-size:9.5px}
+  .admin-col .input,.admin-col .select{padding:6px 8px;font-size:11px;border-radius:8px}
+  .admin-col .select{padding-right:22px;background-size:12px;background-position:right 6px center}
+}
+
+/* Mapa */
+.map-wrap{position:relative;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);background:var(--surface-2)}
+#reportMap{width:100%;height:44vh;min-height:300px;z-index:1}
+.map-toolbar{position:absolute;top:10px;left:10px;right:10px;z-index:500;display:flex;gap:6px;flex-wrap:wrap}
+.tb{background:color-mix(in srgb,var(--surface) 94%,transparent);backdrop-filter:blur(10px);border:1px solid var(--border-2);border-radius:10px;padding:8px 11px;font-size:12px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:5px;box-shadow:var(--shadow-sm);transition:var(--transition)}
+.tb svg{width:15px;height:15px}
+.tb:hover{border-color:var(--cyan);color:var(--cyan)}
+.tb.active{background:var(--cyan);color:#00121a;border-color:transparent}
+
+.color-swatches{display:flex;gap:8px;flex-wrap:wrap}
+.swatch{width:36px;height:36px;border-radius:10px;border:2px solid var(--border);cursor:pointer;transition:var(--transition)}
+.swatch:hover{transform:scale(1.08)}
+.swatch.active{border-color:var(--cyan);box-shadow:0 0 0 3px color-mix(in srgb,var(--cyan) 30%,transparent)}
+
+.steps{display:flex;gap:6px;margin-bottom:16px}
+.step-dot{flex:1;height:5px;border-radius:99px;background:var(--border);transition:var(--transition)}
+.step-dot.done{background:var(--green)}
+.step-dot.active{background:var(--cyan);box-shadow:0 0 10px var(--cyan-glow)}
+
+/* Contacto grid */
+.contact-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:12px;margin-top:14px;
+}
+.contact-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:20px 16px;text-align:center;text-decoration:none;color:inherit;
+  transition:var(--transition);display:flex;flex-direction:column;align-items:center;gap:10px;
+}
+.contact-card:hover{border-color:var(--cyan);transform:translateY(-3px);box-shadow:var(--shadow)}
+.contact-card .cc-icon{
+  width:54px;height:54px;border-radius:14px;
+  display:grid;place-items:center;color:#fff;
+}
+.contact-card .cc-icon svg{width:26px;height:26px}
+.contact-card .cc-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text-3)}
+.contact-card .cc-value{font-size:13.5px;font-weight:700;color:var(--text);word-break:break-word;line-height:1.3}
+
+/* Vista tab */
+.tab-view{display:none;animation:fadeIn .3s ease}
+.tab-view.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* Responsive */
+@media(min-width:1000px){
+  .bottom-nav{max-width:720px;left:50%;transform:translateX(-50%);border-radius:18px 18px 0 0;border-left:1px solid var(--border);border-right:1px solid var(--border)}
+}
+@media(max-width:380px){
+  .header-brand .brand-txt{font-size:14px}
+  .tab-pill{padding:9px 13px;font-size:12px}
+  .tab-pill svg{width:14px;height:14px}
+}
+</style>
+</head>
+<body>
+
+<!-- ============================ HEADER ============================ -->
+<header class="header">
+  <a class="header-brand" href="/">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+        <circle cx="12" cy="10" r="3"/>
+      </svg>
+    </div>
+    <span class="brand-txt">Rutas BGD</span>
+  </a>
+  <div class="header-actions">
+    <button class="icon-btn" id="themeBtn" title="Cambiar tema">
+      <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <a class="icon-btn" href="/" title="Ir al inicio">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </a>
+  </div>
+</header>
+
+<!-- ============================ APP ============================ -->
+<main class="app">
+  <div class="container">
+
+    <!-- TABS FLOTANTES -->
+    <div class="tabs-float">
+      <button class="tab-pill active" data-tab="comentarios">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        COMENTARIOS
+      </button>
+      <button class="tab-pill" id="tabReportar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        ACTUALIZAR / REPORTAR
+      </button>
+      <button class="tab-pill" data-tab="facebook">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+        FACEBOOK
+      </button>
+      <button class="tab-pill" id="tabContacto">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        CONTACTO
+      </button>
+    </div>
+
+    <!-- ===================== TAB 1: COMENTARIOS ===================== -->
+    <section class="tab-view active" id="view-comentarios">
+      <div class="composer">
+        <div class="composer-head">
+          <div class="composer-avatar" id="composerAvatar">T</div>
+          <input class="composer-input" id="composerInput" placeholder="¿Qué opinas sobre las rutas?" maxlength="800">
+        </div>
+        <div class="composer-foot">
+          <button class="btn btn-primary btn-sm" id="composerSend">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            Publicar
+          </button>
+        </div>
+      </div>
+
+      <div id="commentsList"></div>
+    </section>
+
+    <!-- ===================== TAB 3: FACEBOOK ===================== -->
+    <section class="tab-view" id="view-facebook">
+      <div class="card">
+        <h2 class="section-title" style="margin-top:0">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+          Nuestra página de Facebook
+        </h2>
+        <p class="muted" style="margin-bottom:14px">Síguenos para ver novedades, actualizaciones de rutas y contenido de la comunidad.</p>
+        <div style="border-radius:12px;overflow:hidden;border:1px solid var(--border)">
+          <iframe
+            src="https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2Fbrigadistasbd&tabs=timeline&width=500&height=600&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true"
+            width="100%" height="600"
+            style="border:none;overflow:hidden;display:block"
+            scrolling="no" frameborder="0" allowfullscreen="true"
+            allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+            loading="lazy">
+          </iframe>
+        </div>
+      </div>
+
+      <h2 class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+        Síguenos en redes
+      </h2>
+      <div class="social-grid">
+        <a class="social-btn fb" href="https://www.facebook.com/brigadistasbd" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+          Facebook
+        </a>
+        <a class="social-btn ig" href="https://www.instagram.com/brigadistasbd" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          Instagram
+        </a>
+        <a class="social-btn tt" href="https://www.tiktok.com/@brigadistasbd" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></svg>
+          TikTok
+        </a>
+        <a class="social-btn wa" href="https://wa.me/521234567890" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          WhatsApp
+        </a>
+      </div>
+    </section>
+
+    <!-- ===================== TAB 2: REPORTAR (página individual) ===================== -->
+    <section class="tab-view" id="view-reportar">
+      <div class="subpage-header">
+        <button class="btn btn-ghost btn-sm" id="backFromReportar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          Regresar
+        </button>
+        <h1>🛠️ Actualizar / Reportar</h1>
+      </div>
+
+      <div class="card">
+        <div class="field">
+          <label>Tipo de reporte *</label>
+          <select class="select" id="rpTipo">
+            <option value="actualizar_datos">📝 Actualizar datos de ruta</option>
+            <option value="cambio_trazo">🗺️ Cambio de trazo / recorrido</option>
+            <option value="nueva_ruta">🆕 Reportar nueva ruta</option>
+            <option value="parada_nueva">➕ Nueva parada</option>
+            <option value="parada_eliminada">➖ Parada eliminada</option>
+            <option value="tarifa">💰 Cambio de tarifa</option>
+            <option value="horario">🕐 Cambio de horario</option>
+            <option value="poi">📍 POI nuevo o corregido</option>
+            <option value="error">⚠️ Error en los datos</option>
+            <option value="sugerencia">💡 Sugerencia</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Ruta a reportar</label>
+          <select class="select" id="rpRuta">
+            <option value="">— Cargando rutas… —</option>
+          </select>
+        </div>
+
+        <div id="rpEditor" class="hidden">
+          <div class="steps">
+            <div class="step-dot active" data-step="1"></div>
+            <div class="step-dot" data-step="2"></div>
+            <div class="step-dot" data-step="3"></div>
+          </div>
+
+          <!-- PASO 1: Datos -->
+          <div class="rp-step" data-step="1">
+            <div class="field full">
+              <label>Nombre de la ruta</label>
+              <input class="input" id="rpNombre" readonly>
+            </div>
+
+            <div class="form-grid" style="margin-bottom:12px">
+              <div class="field">
+                <label>Color de ida</label>
+                <div class="color-swatches" id="rpColorIda"></div>
+              </div>
+              <div class="field">
+                <label>Color de regreso</label>
+                <div class="color-swatches" id="rpColorVuelta"></div>
+              </div>
+            </div>
+
+            <div class="admin-cols-3">
+              <div class="admin-col">
+                <div class="admin-col-title">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                  Información
+                </div>
+                <div class="field">
+                  <label>Categoría</label>
+                  <select class="select" id="rpCat">
+                    <option value="urbana">Urbana</option>
+                    <option value="foranea">Foránea</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Tarifa</label>
+                  <input class="input" id="rpTarifa" placeholder="$10">
+                </div>
+                <div class="field">
+                  <label>Frecuencia</label>
+                  <input class="input" id="rpFrec" placeholder="Cada 15 min">
+                </div>
+              </div>
+
+              <div class="admin-col">
+                <div class="admin-col-title">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  Horario
+                </div>
+                <div class="field">
+                  <label>Hora inicio</label>
+                  <input class="input" id="rpHoraIni" placeholder="05:00">
+                </div>
+                <div class="field">
+                  <label>Hora fin</label>
+                  <input class="input" id="rpHoraFin" placeholder="22:00">
+                </div>
+                <div class="field">
+                  <label>Días</label>
+                  <select class="select" id="rpDias">
+                    <option value="todos">Todos</option>
+                    <option value="l-v">L-V</option>
+                    <option value="l-s">L-S</option>
+                    <option value="finde">Finde</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="admin-col">
+                <div class="admin-col-title">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg>
+                  Detalles
+                </div>
+                <div class="field">
+                  <label>Accesibilidad</label>
+                  <select class="select" id="rpAcces">
+                    <option value="no">No</option>
+                    <option value="si">Sí</option>
+                    <option value="parcial">Parcial</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="field full" style="margin-top:12px">
+              <label>Notas adicionales</label>
+              <textarea class="textarea" id="rpNotas" placeholder="Notas sobre la ruta..."></textarea>
+            </div>
+          </div>
+
+          <!-- PASO 2: Paradas -->
+          <div class="rp-step hidden" data-step="2">
+            <div class="field full">
+              <label>Paradas (separadas por coma)</label>
+              <textarea class="textarea" id="rpParadas"></textarea>
+            </div>
+            <div class="field full">
+              <label>Retornos</label>
+              <textarea class="textarea" id="rpRetornos"></textarea>
+            </div>
+            <div class="field full">
+              <label>POIs de ida</label>
+              <textarea class="textarea" id="rpPoisIda"></textarea>
+            </div>
+            <div class="field full">
+              <label>POIs de regreso</label>
+              <textarea class="textarea" id="rpPoisVuelta"></textarea>
+            </div>
+          </div>
+
+          <!-- PASO 3: Mapa -->
+          <div class="rp-step hidden" data-step="3">
+            <div class="field full">
+              <label>Calles por donde pasa</label>
+              <textarea class="textarea" id="rpCalles"></textarea>
+            </div>
+
+            <div class="field full" style="margin-top:14px">
+              <label>🗺️ Mapa — trazar recorrido (ida / regreso)</label>
+            </div>
+            <div class="map-wrap" id="rpMapWrap" style="margin:0 0 12px">
+              <div id="reportMap"></div>
+              <div class="map-toolbar">
+                <button class="tb" data-rp-tool="draw-ida">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
+                  Ida
+                </button>
+                <button class="tb" data-rp-tool="draw-vuelta">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
+                  Regreso
+                </button>
+                <button class="tb" data-rp-tool="gps">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+                  GPS
+                </button>
+                <button class="tb" data-rp-tool="undo">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 3-7.7L3 8"/></svg>
+                  Deshacer
+                </button>
+                <button class="tb" data-rp-tool="clear">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+                  Limpiar
+                </button>
+                <button class="tb" data-rp-tool="detect">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  Detectar
+                </button>
+              </div>
+            </div>
+            <div class="muted tiny" id="rpStatus" style="margin-top:6px">Puntos: 0 · Calles: 0</div>
+
+            <div class="field full" style="margin-top:14px">
+              <label>Comentario adicional del reporte</label>
+              <textarea class="textarea" id="rpComentario" placeholder="Describe con detalle qué cambió y por qué..."></textarea>
+            </div>
+
+            <div class="field full">
+              <label>Tu nombre (opcional)</label>
+              <input class="input" id="rpAutor" placeholder="Anónimo">
+            </div>
+          </div>
+
+          <div style="display:flex;gap:8px;margin-top:16px">
+            <button class="btn btn-ghost" id="rpPrev">← Anterior</button>
+            <button class="btn btn-primary" style="flex:1" id="rpNext">Siguiente →</button>
+            <button class="btn btn-primary hidden" style="flex:1" id="rpSave">Enviar reporte</button>
+          </div>
+          <button class="btn btn-ghost btn-block hidden" id="rpWhatsApp" style="margin-top:8px;background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;border-color:transparent">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884"/></svg>
+            Enviar también por WhatsApp
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== TAB 4: CONTACTO (página individual) ===================== -->
+    <section class="tab-view" id="view-contacto">
+      <div class="subpage-header">
+        <button class="btn btn-ghost btn-sm" id="backFromContacto">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          Regresar
+        </button>
+        <h1>📞 Contacto</h1>
+      </div>
+
+      <p class="muted" style="margin-bottom:14px">¿Tienes dudas, sugerencias o quieres colaborar? Contáctanos por cualquiera de estos medios.</p>
+
+      <div class="contact-grid">
+        <a class="contact-card" href="https://wa.me/521234567890" target="_blank" rel="noopener">
+          <div class="cc-icon" style="background:linear-gradient(135deg,#25D366,#128C7E)">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          </div>
+          <div class="cc-label">WhatsApp</div>
+          <div class="cc-value">+52 123 456 7890</div>
+        </a>
+
+        <a class="contact-card" href="tel:+521234567890">
+          <div class="cc-icon" style="background:linear-gradient(135deg,#10b981,#059669)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          </div>
+          <div class="cc-label">Teléfono</div>
+          <div class="cc-value">+52 123 456 7890</div>
+        </a>
+
+        <a class="contact-card" href="mailto:contacto@brigadistasbd.pages.dev">
+          <div class="cc-icon" style="background:linear-gradient(135deg,#ef4444,#b91c1c)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </div>
+          <div class="cc-label">Correo</div>
+          <div class="cc-value">contacto@brigadistasbd.pages.dev</div>
+        </a>
+
+        <a class="contact-card" href="https://www.facebook.com/brigadistasbd" target="_blank" rel="noopener">
+          <div class="cc-icon" style="background:linear-gradient(135deg,#1877F2,#166FE5)">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+          </div>
+          <div class="cc-label">Facebook</div>
+          <div class="cc-value">/brigadistasbd</div>
+        </a>
+
+        <a class="contact-card" href="https://www.instagram.com/brigadistasbd" target="_blank" rel="noopener">
+          <div class="cc-icon" style="background:linear-gradient(135deg,#E1306C,#833AB4)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          </div>
+          <div class="cc-label">Instagram</div>
+          <div class="cc-value">@brigadistasbd</div>
+        </a>
+
+        <a class="contact-card" href="https://www.tiktok.com/@brigadistasbd" target="_blank" rel="noopener">
+          <div class="cc-icon" style="background:linear-gradient(135deg,#000,#25F4EE)">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></svg>
+          </div>
+          <div class="cc-label">TikTok</div>
+          <div class="cc-value">@brigadistasbd</div>
+        </a>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<!-- ============================ NAV INFERIOR (5 botones) ============================ -->
+<nav class="bottom-nav">
+  <a class="nav-item" href="/" style="text-decoration:none;color:inherit">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>Inicio</span>
+  </a>
+  <a class="nav-item" href="/?tab=market" style="text-decoration:none;color:inherit">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+    <span>Market</span>
+  </a>
+  <a class="nav-item" href="/?tab=routes" style="text-decoration:none;color:inherit">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M4.5 5C4.5 3.62 5.62 2.5 7 2.5h10c1.38 0 2.5 1.12 2.5 2.5v11c0 1.1-.9 2-2 2H17v3c0 .28-.22.5-.5.5h-2c-.28 0-.5-.22-.5-.5v-3h-4v3c0 .28-.22.5-.5.5h-2c-.28 0-.5-.22-.5-.5v-3H6.5c-1.1 0-2-.9-2-2V5Zm2 .5v2h11v-2h-11Zm0 4V13h5V9.5h-5Zm6 0V13h5V9.5h-5ZM8 15a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm2.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm3.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm2.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/></svg>
+    <span>Rutas</span>
+  </a>
+  <a class="nav-item" href="/?tab=routes&openList=1" style="text-decoration:none;color:inherit">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+    <span>Lista</span>
+  </a>
+  <a class="nav-item active" href="/Comunidad" style="text-decoration:none;color:inherit">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    <span>Comunidad</span>
+  </a>
+</nav>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- ============================ SCRIPTS ============================ -->
+<script src="/vendor/leaflet/leaflet.js"></script>
+<script src="/vendor/idb/umd.js"></script>
+<script src="/vendor/firebase/firebase-app-compat.js"></script>
+<script src="/vendor/firebase/firebase-database-compat.js"></script>
+<script src="/js/db.js"></script>
+
+<script>
+/* ==========================================================================
+   COMUNIDAD.JS — Lógica embebida
+   - Comentarios globales (Firebase + fallback localStorage)
+   - Reportes con mapa (Firebase actualizaciones_rutas/)
+   - Navegación tabs/páginas individuales
+   ========================================================================== */
+(function(){
+  'use strict';
+
+  // ==================== CONFIG ====================
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyAiojpfnGUPhaoQkpAh1Yey3fp6uWU-iFQ",
+    authDomain: "aplicacion-2c1c8.firebaseapp.com",
+    databaseURL: "https://aplicacion-2c1c8.firebaseio.com",
+    projectId: "aplicacion-2c1c8",
+    storageBucket: "aplicacion-2c1c8.firebasestorage.app",
+    messagingSenderId: "837629411067",
+    appId: "1:837629411067:web:6c96cfcd7490b049787a5e",
+    measurementId: "G-SFP1SEY20W"
+  };
+  const DEFAULT_CENTER = [16.7530, -93.1150];
+  const DEFAULT_ZOOM = 13;
+  const WHATSAPP_ADMIN = '521234567890'; // ← cambia por tu número real
+
+  // ==================== UTILIDADES ====================
+  const $ = (s,r=document)=>r.querySelector(s);
+  const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
+  const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const splitList = v => String(v||'').split(/[\n,;]+/).map(s=>s.trim()).filter(Boolean);
+  const norm = s => String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[',.\s]+/g,' ').trim();
+
+  function toast(msg, type='ok'){
+    const w = $('#toastWrap'); if(!w) return;
+    const t = document.createElement('div');
+    t.className = 'toast '+type;
+    const icon = type==='ok'
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+    t.innerHTML = icon + '<span>' + esc(msg) + '</span>';
+    w.appendChild(t);
+    setTimeout(()=>{
+      t.style.opacity='0'; t.style.transform='translateY(-10px)'; t.style.transition='all .3s';
+      setTimeout(()=>t.remove(),300);
+    },2800);
+  }
+
+  function getDeviceId(){
+    let id = localStorage.getItem('bgd_device_id');
+    if(!id){
+      id = 'dev_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,8);
+      localStorage.setItem('bgd_device_id', id);
+    }
+    return id;
+  }
+  function getUserName(){
+    let n = localStorage.getItem('bgd_user_name');
+    if(!n){
+      n = 'Vecino ' + Math.floor(1000 + Math.random()*9000);
+      localStorage.setItem('bgd_user_name', n);
+    }
+    return n;
+  }
+
+  function fmtTime(ts){
+    const diff = (Date.now()-ts)/1000;
+    if(diff < 60) return 'ahora';
+    if(diff < 3600) return Math.floor(diff/60)+' min';
+    if(diff < 86400) return Math.floor(diff/3600)+' h';
+    if(diff < 604800) return Math.floor(diff/86400)+' d';
+    return new Date(ts).toLocaleDateString('es-MX');
+  }
+
+  function sanitize(text){
+    // Solo texto plano: sin HTML, sin URLs, sin scripts
+    let s = String(text||'');
+    s = s.replace(/<[^>]*>/g,'');                // quitar tags HTML
+    s = s.replace(/https?:\/\/\S+/gi,'[enlace]');// quitar URLs
+    s = s.replace(/www\.\S+/gi,'[enlace]');
+    s = s.replace(/\s+/g,' ').trim();
+    return s.slice(0, 800);
+  }
+
+  // ==================== TEMA ====================
+  const savedTheme = localStorage.getItem('tgz_theme') || 'light';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  updateThemeIcon();
+
+  function updateThemeIcon(){
+    const t = document.documentElement.getAttribute('data-theme');
+    const icon = $('#themeIcon'); if(!icon) return;
+    icon.innerHTML = t==='dark'
+      ? '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'
+      : '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+  }
+  $('#themeBtn').onclick = () => {
+    const cur = document.documentElement.getAttribute('data-theme');
+    const next = cur==='dark'?'light':'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('tgz_theme', next);
+    updateThemeIcon();
+    if(window.__rpMap){
+      window.__rpMap.eachLayer(l=>{ if(l instanceof L.TileLayer) l.redraw(); });
+    }
+  };
+
+  // ==================== FIREBASE ====================
+  let fbDB = null;
+  try {
+    if(typeof firebase !== 'undefined'){
+      if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+      fbDB = firebase.database();
+    }
+  } catch(e){ console.warn('[FB]', e); }
+
+  // ==================== TABS ====================
+  function showTab(tabId){
+    $$('.tab-view').forEach(v=>v.classList.remove('active'));
+    const el = $('#view-'+tabId);
+    if(el) el.classList.add('active');
+    $$('.tab-pill[data-tab]').forEach(p=>{
+      p.classList.toggle('active', p.dataset.tab===tabId);
+    });
+    // Reset estilos de botones-página
+    $('#tabReportar').classList.remove('active');
+    $('#tabContacto').classList.remove('active');
+    if(tabId==='reportar') $('#tabReportar').classList.add('active');
+    if(tabId==='contacto') $('#tabContacto').classList.add('active');
+
+    window.scrollTo({top:0,behavior:'smooth'});
+
+    if(tabId==='reportar') initReportMap();
+  }
+
+  $$('.tab-pill[data-tab]').forEach(p=>{
+    p.onclick = () => showTab(p.dataset.tab);
+  });
+  $('#tabReportar').onclick = () => showTab('reportar');
+  $('#tabContacto').onclick = () => showTab('contacto');
+  $('#backFromReportar').onclick = () => showTab('comentarios');
+  $('#backFromContacto').onclick = () => showTab('comentarios');
+
+  // ==================== COMENTARIOS ====================
+  const COMMENTS_PATH = 'comentarios_comunidad';
+  const LOCAL_KEY = 'bgd_comments_local';
+  let commentsCache = [];
+  let unsubscribeComments = null;
+
+  function loadLocalComments(){
+    try { return JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]'); }
+    catch(e){ return []; }
+  }
+  function saveLocalComments(arr){
+    try { localStorage.setItem(LOCAL_KEY, JSON.stringify(arr)); } catch(e){}
+  }
+
+  async function loadComments(){
+    const list = $('#commentsList');
+    if(!list) return;
+    list.innerHTML = '<div class="empty" style="padding:20px"><p>Cargando comentarios…</p></div>';
+
+    // 🔥 Firebase primero
+    if(fbDB){
+      if(unsubscribeComments) unsubscribeComments();
+      unsubscribeComments = fbDB.ref(COMMENTS_PATH).limitToLast(200).on('value', snap => {
+        const val = snap.val() || {};
+        commentsCache = Object.values(val).sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+        renderComments();
+      }, err => {
+        console.warn('[Comments] Firebase error, usando local:', err);
+        commentsCache = loadLocalComments();
+        renderComments();
+      });
+    } else {
+      commentsCache = loadLocalComments();
+      renderComments();
+    }
+  }
+
+  function renderComments(){
+    const list = $('#commentsList');
+    if(!list) return;
+    if(!commentsCache.length){
+      list.innerHTML = `
+        <div class="empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <h3>Sé el primero en comentar</h3>
+          <p>Comparte tu experiencia o sugerencia sobre las rutas.</p>
+        </div>`;
+      return;
+    }
+
+    const uid = getDeviceId();
+
+    list.innerHTML = commentsCache.map(c => {
+      const isOwner = c.deviceId === uid;
+      const liked = (c.likes||[]).includes(uid);
+      const likeCount = (c.likes||[]).length;
+      const replies = c.replies || [];
+
+      return `
+        <div class="comment" data-cid="${esc(c.id)}">
+          <div class="comment-head">
+            <div class="comment-avatar">${esc((c.author||'A')[0].toUpperCase())}</div>
+            <div class="comment-meta">
+              <div class="comment-name">${esc(c.author||'Anónimo')}</div>
+              <div class="comment-time">${fmtTime(c.timestamp)}${c.updatedAt ? ' · editado' : ''}</div>
+            </div>
+            ${isOwner ? `
+              <div class="comment-actions-top">
+                <button data-act="edit" title="Editar">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button data-act="del" class="del" title="Eliminar">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+                </button>
+              </div>` : ''}
+          </div>
+          <div class="comment-body" data-body>${esc(c.text)}</div>
+          <div class="comment-bar">
+            <button data-act="like" class="${liked?'liked':''}">
+              <svg viewBox="0 0 24 24" fill="${liked?'currentColor':'none'}" stroke="currentColor" stroke-width="2.2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+              <span>Me gusta</span>
+            </button>
+            ${likeCount ? `<span class="like-count">${likeCount}</span>` : ''}
+            <button data-act="reply">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>
+              <span>Responder</span>
+            </button>
+            <span class="spacer"></span>
+            ${replies.length ? `<span class="like-count">${replies.length} respuesta${replies.length>1?'s':''}</span>` : ''}
+          </div>
+          ${replies.length ? `
+            <div class="replies">
+              ${replies.map(r => {
+                const rLiked = (r.likes||[]).includes(uid);
+                const rOwner = r.deviceId === uid;
+                return `
+                  <div class="reply" data-rid="${esc(r.id)}">
+                    <div class="reply-head">
+                      <div class="reply-avatar">${esc((r.author||'A')[0].toUpperCase())}</div>
+                      <div class="comment-meta">
+                        <div class="comment-name" style="font-size:12px">${esc(r.author||'Anónimo')}</div>
+                        <div class="comment-time">${fmtTime(r.timestamp)}</div>
+                      </div>
+                      ${rOwner ? `
+                        <button data-ract="del" style="width:24px;height:24px;border-radius:6px;display:grid;place-items:center;color:var(--text-3)">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="12" height="12"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>` : ''}
+                    </div>
+                    <div class="reply-body">${esc(r.text)}</div>
+                    <div class="reply-bar">
+                      <button data-ract="like" class="${rLiked?'liked':''}">
+                        <svg viewBox="0 0 24 24" fill="${rLiked?'currentColor':'none'}" stroke="currentColor" stroke-width="2.2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        ${(r.likes||[]).length || ''}
+                      </button>
+                    </div>
+                  </div>`;
+              }).join('')}
+            </div>` : ''}
+          <div class="reply-composer hidden">
+            <input type="text" placeholder="Escribe una respuesta..." maxlength="500">
+            <button data-act="send-reply">Enviar</button>
+          </div>
+        </div>`;
+    }).join('');
+
+    // Bind eventos
+    list.querySelectorAll('.comment').forEach(card => {
+      const cid = card.dataset.cid;
+      const comment = commentsCache.find(c => c.id === cid);
+      if(!comment) return;
+
+      card.querySelectorAll('[data-act]').forEach(btn => {
+        btn.onclick = async (e) => {
+          e.stopPropagation();
+          const act = btn.dataset.act;
+
+          if(act==='like') await toggleCommentLike(comment);
+          else if(act==='del') await deleteComment(comment);
+          else if(act==='edit') editComment(comment, card);
+          else if(act==='reply') toggleReplyComposer(card);
+          else if(act==='send-reply'){
+            const inp = card.querySelector('.reply-composer input');
+            const txt = sanitize(inp.value);
+            if(!txt){ toast('Escribe una respuesta','err'); return; }
+            await addReply(comment, txt);
+            inp.value = '';
+          }
+        };
+      });
+
+      card.querySelectorAll('[data-ract]').forEach(btn => {
+        btn.onclick = async (e) => {
+          e.stopPropagation();
+          const rid = btn.closest('.reply').dataset.rid;
+          const reply = (comment.replies||[]).find(r=>r.id===rid);
+          if(!reply) return;
+          if(btn.dataset.ract==='like') await toggleReplyLike(comment, reply);
+          else if(btn.dataset.ract==='del') await deleteReply(comment, reply);
+        };
+      });
+    });
+  }
+
+  async function addComment(text){
+    const uid = getDeviceId();
+    const author = getUserName();
+    const id = 'c_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+    const comment = {
+      id, text, author, deviceId: uid,
+      timestamp: Date.now(),
+      likes: [], replies: []
+    };
+
+    if(fbDB){
+      try { await fbDB.ref(COMMENTS_PATH + '/' + id).set(comment); }
+      catch(e){
+        const local = loadLocalComments();
+        local.unshift(comment);
+        saveLocalComments(local);
+        toast('Guardado localmente (sin conexión)', 'err');
+      }
+    } else {
+      const local = loadLocalComments();
+      local.unshift(comment);
+      saveLocalComments(local);
+    }
+
+    if(!fbDB){
+      commentsCache.unshift(comment);
+      renderComments();
+    }
+  }
+
+  async function deleteComment(comment){
+    if(!confirm('¿Eliminar este comentario?')) return;
+    if(fbDB){
+      try { await fbDB.ref(COMMENTS_PATH + '/' + comment.id).remove(); }
+      catch(e){ toast('No se pudo eliminar','err'); return; }
+    } else {
+      const local = loadLocalComments().filter(c=>c.id!==comment.id);
+      saveLocalComments(local);
+      commentsCache = commentsCache.filter(c=>c.id!==comment.id);
+      renderComments();
+    }
+    toast('Comentario eliminado');
+  }
+
+  function editComment(comment, card){
+    const bodyEl = card.querySelector('[data-body]');
+    const original = comment.text;
+    const wrap = document.createElement('div');
+    wrap.className = 'comment-edit-area';
+    wrap.innerHTML = `
+      <textarea maxlength="800">${esc(original)}</textarea>
+      <div class="comment-edit-actions">
+        <button class="btn btn-ghost btn-sm" data-cact="cancel">Cancelar</button>
+        <button class="btn btn-primary btn-sm" data-cact="save">Guardar</button>
+      </div>`;
+    bodyEl.style.display = 'none';
+    bodyEl.parentNode.insertBefore(wrap, bodyEl.nextSibling);
+
+    wrap.querySelector('[data-cact="cancel"]').onclick = () => {
+      wrap.remove(); bodyEl.style.display = '';
+    };
+    wrap.querySelector('[data-cact="save"]').onclick = async () => {
+      const nv = sanitize(wrap.querySelector('textarea').value);
+      if(!nv){ toast('El comentario no puede estar vacío','err'); return; }
+      comment.text = nv;
+      comment.updatedAt = Date.now();
+      if(fbDB){
+        try { await fbDB.ref(COMMENTS_PATH + '/' + comment.id).update({ text: nv, updatedAt: comment.updatedAt }); }
+        catch(e){ toast('No se pudo guardar','err'); return; }
+      } else {
+        const local = loadLocalComments();
+        const i = local.findIndex(c=>c.id===comment.id);
+        if(i>=0){ local[i].text = nv; local[i].updatedAt = comment.updatedAt; saveLocalComments(local); }
+        renderComments();
+      }
+      wrap.remove(); bodyEl.style.display = '';
+      toast('Comentario actualizado');
+    };
+  }
+
+  function toggleReplyComposer(card){
+    const comp = card.querySelector('.reply-composer');
+    comp.classList.toggle('hidden');
+    if(!comp.classList.contains('hidden')) comp.querySelector('input').focus();
+  }
+
+  async function toggleCommentLike(comment){
+    const uid = getDeviceId();
+    comment.likes = comment.likes || [];
+    const i = comment.likes.indexOf(uid);
+    if(i>=0) comment.likes.splice(i,1);
+    else comment.likes.push(uid);
+
+    if(fbDB){
+      try { await fbDB.ref(COMMENTS_PATH + '/' + comment.id + '/likes').set(comment.likes); }
+      catch(e){}
+    } else {
+      const local = loadLocalComments();
+      const idx = local.findIndex(c=>c.id===comment.id);
+      if(idx>=0){ local[idx].likes = comment.likes; saveLocalComments(local); }
+      renderComments();
+    }
+  }
+
+  async function addReply(comment, text){
+    const uid = getDeviceId();
+    const author = getUserName();
+    const reply = {
+      id: 'r_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+      text, author, deviceId: uid,
+      timestamp: Date.now(), likes: []
+    };
+    comment.replies = comment.replies || [];
+    comment.replies.push(reply);
+
+    if(fbDB){
+      try { await fbDB.ref(COMMENTS_PATH + '/' + comment.id + '/replies').set(comment.replies); }
+      catch(e){ toast('No se pudo enviar','err'); return; }
+    } else {
+      const local = loadLocalComments();
+      const idx = local.findIndex(c=>c.id===comment.id);
+      if(idx>=0){ local[idx].replies = comment.replies; saveLocalComments(local); }
+      renderComments();
+    }
+    toast('Respuesta enviada');
+  }
+
+  async function deleteReply(comment, reply){
+    if(!confirm('¿Eliminar esta respuesta?')) return;
+    comment.replies = (comment.replies||[]).filter(r=>r.id!==reply.id);
+    if(fbDB){
+      try { await fbDB.ref(COMMENTS_PATH + '/' + comment.id + '/replies').set(comment.replies); }
+      catch(e){ toast('No se pudo eliminar','err'); return; }
+    } else {
+      const local = loadLocalComments();
+      const idx = local.findIndex(c=>c.id===comment.id);
+      if(idx>=0){ local[idx].replies = comment.replies; saveLocalComments(local); }
+      renderComments();
+    }
+    toast('Respuesta eliminada');
+  }
+
+  async function toggleReplyLike(comment, reply){
+    const uid = getDeviceId();
+    reply.likes = reply.likes || [];
+    const i = reply.likes.indexOf(uid);
+    if(i>=0) reply.likes.splice(i,1);
+    else reply.likes.push(uid);
+
+    if(fbDB){
+      try { await fbDB.ref(COMMENTS_PATH + '/' + comment.id + '/replies').set(comment.replies); }
+      catch(e){}
+    } else {
+      const local = loadLocalComments();
+      const idx = local.findIndex(c=>c.id===comment.id);
+      if(idx>=0){ local[idx].replies = comment.replies; saveLocalComments(local); }
+      renderComments();
+    }
+  }
+
+  // Composer
+  const composerInput = $('#composerInput');
+  const composerSend = $('#composerSend');
+  const composerAvatar = $('#composerAvatar');
+  if(composerAvatar) composerAvatar.textContent = getUserName()[0].toUpperCase();
+
+  if(composerSend){
+    composerSend.onclick = async () => {
+      const raw = composerInput.value.trim();
+      const txt = sanitize(raw);
+      if(!txt){ toast('Escribe algo primero','err'); return; }
+      composerSend.disabled = true;
+      await addComment(txt);
+      composerInput.value = '';
+      composerSend.disabled = false;
+      toast('Comentario publicado');
+    };
+    composerInput.addEventListener('keydown', e => {
+      if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); composerSend.click(); }
+    });
+  }
+
+  // ==================== REPORTES ====================
+  let rpState = {
+    step: 1,
+    map: null,
+    drawMode: null,
+    drawing: false,
+    puntos: [],
+    puntosVuelta: [],
+    calles: [],
+    markers: [],
+    markerMeta: [],
+    layers: { ida: null, vuelta: null },
+    colorIda: '#3b82f6',
+    colorVuelta: '#ef4444',
+    gpsWatch: null,
+    editingRoute: null
+  };
+  const rpColors = ['#3b82f6','#ef4444','#00e5ff','#a855f7','#10b981','#f59e0b','#ec4899','#84cc16'];
+
+  // Cargar rutas al selector
+  async function loadRoutesIntoSelect(){
+    const sel = $('#rpRuta');
+    if(!sel) return;
+    sel.innerHTML = '<option value="">— Cargando rutas… —</option>';
+
+    let rutas = [];
+
+    // 1) IndexedDB
+    try {
+      if(typeof DB !== 'undefined' && DB.getAll){
+        rutas = await DB.getAll('routes');
+      }
+    } catch(e){}
+
+    // 2) Firebase si está vacío
+    if((!rutas || !rutas.length) && fbDB){
+      try {
+        const snap = await fbDB.ref('rutas_index').once('value');
+        const val = snap.val() || {};
+        rutas = Object.values(val).filter(r=>r && r.id);
+      } catch(e){}
+    }
+
+    rutas = (rutas||[]).sort((a,b)=>
+      String(a.nombre||'').localeCompare(String(b.nombre||''), 'es', {numeric:true, sensitivity:'base'})
+    );
+
+    if(!rutas.length){
+      sel.innerHTML = '<option value="">— Sin rutas disponibles —</option>';
+      return;
+    }
+
+    sel.innerHTML = '<option value="">— Selecciona una ruta —</option>' +
+      rutas.map(r => `<option value="${esc(r.id)}">${esc(r.nombre||'RUTA')} · ${esc(r.categoria||'urbana')}</option>`).join('');
+
+    sel.onchange = async () => {
+      const id = sel.value;
+      if(!id){
+        $('#rpEditor').classList.add('hidden');
+        return;
+      }
+      let route = rutas.find(r=>r.id===id);
+      // Intentar cargar geometría completa
+      try {
+        const geo = await DB.get('routes_geo', id);
+        if(geo) route = { ...route, ...geo };
+      } catch(e){}
+      loadRouteIntoReport(route);
+    };
+  }
+
+  function loadRouteIntoReport(route){
+    rpState.editingRoute = route;
+    $('#rpEditor').classList.remove('hidden');
+    $('#rpNombre').value = route.nombre || '';
+    $('#rpCat').value = route.categoria || 'urbana';
+    $('#rpTarifa').value = route.tarifa || '';
+    $('#rpFrec').value = route.frecuencia || '';
+    $('#rpHoraIni').value = route.horarioIni || '';
+    $('#rpHoraFin').value = route.horarioFin || '';
+    $('#rpDias').value = route.dias || 'todos';
+    $('#rpAcces').value = route.accesibilidad || 'no';
+    $('#rpNotas').value = route.notas || '';
+    $('#rpParadas').value = (route.paradas||[]).join(', ');
+    $('#rpRetornos').value = (route.retornos||[]).join(', ');
+    $('#rpPoisIda').value = (route.pois||[]).join(', ');
+    $('#rpPoisVuelta').value = (route.poisVuelta||[]).join(', ');
+    $('#rpCalles').value = (route.calles||[]).join(', ');
+
+    rpState.colorIda = route.colorIda || rpColors[0];
+    rpState.colorVuelta = route.colorVuelta || rpColors[1];
+    rpState.puntos = route.puntos || [];
+    rpState.puntosVuelta = route.puntosVuelta || [];
+    rpState.calles = route.calles || [];
+
+    buildRpColorSwatches();
+    goRpStep(1);
+
+    // Refrescar mapa si está listo
+    setTimeout(() => {
+      if(rpState.map){
+        drawRpRoute(route);
+      }
+    }, 200);
+  }
+
+  function buildRpColorSwatches(){
+    const build = (elId, current, onPick) => {
+      const el = $(elId); if(!el) return;
+      el.innerHTML = rpColors.map(c=>`<button class="swatch${c===current?' active':''}" data-color="${c}" style="background:${c}"></button>`).join('');
+      el.querySelectorAll('.swatch').forEach(s=>s.onclick=()=>{
+        el.querySelectorAll('.swatch').forEach(x=>x.classList.remove('active'));
+        s.classList.add('active');
+        onPick(s.dataset.color);
+      });
+    };
+    build('#rpColorIda', rpState.colorIda, c=>{ rpState.colorIda=c; redrawRpLines(); });
+    build('#rpColorVuelta', rpState.colorVuelta, c=>{ rpState.colorVuelta=c; redrawRpLines(); });
+  }
+
+  function goRpStep(n){
+    rpState.step = n;
+    $$('.rp-step').forEach(s=>s.classList.toggle('hidden', +s.dataset.step!==n));
+    $$('.steps .step-dot').forEach(d=>{
+      const s = +d.dataset.step;
+      d.classList.toggle('active', s===n);
+      d.classList.toggle('done', s<n);
+    });
+    $('#rpPrev').style.visibility = n===1?'hidden':'visible';
+    $('#rpNext').classList.toggle('hidden', n!==3);
+    $('#rpSave').classList.toggle('hidden', n!==3);
+    $('#rpWhatsApp').classList.toggle('hidden', n!==3);
+
+    if(n===3){
+      requestAnimationFrame(()=>{
+        requestAnimationFrame(()=>{
+          initReportMap();
+          redrawRpLines();
+        });
+      });
+    }
+  }
+  $('#rpPrev').onclick = () => goRpStep(Math.max(1, rpState.step-1));
+  $('#rpNext').onclick = () => goRpStep(Math.min(3, rpState.step+1));
+
+  function initReportMap(){
+    if(rpState.map) {
+      rpState.map.invalidateSize();
+      return;
+    }
+    const el = document.getElementById('reportMap');
+    if(!el) return;
+
+    rpState.map = L.map('reportMap', { zoomControl: true }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+    window.__rpMap = rpState.map;
+
+    L.tileLayer('https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}@2x.png?key=kXZYdaMbZkD1EevhGXMI', {
+      tileSize: 512, zoomOffset: -1, maxZoom: 20, maxNativeZoom: 20,
+      crossOrigin: true,
+      attribution: '© <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
+    }).addTo(rpState.map);
+
+    rpState.map.on('click', async e => {
+      if(!rpState.drawing) return;
+      const snapped = await rpSnapToRoad(e.latlng.lat, e.latlng.lng);
+      if(rpState.drawMode === 'draw-vuelta'){
+        rpState.puntosVuelta.push(snapped);
+        rpAddMarker(snapped[0], snapped[1], rpState.colorVuelta, 'vuelta');
+      } else {
+        rpState.puntos.push(snapped);
+        rpAddMarker(snapped[0], snapped[1], rpState.colorIda, 'ida');
+      }
+      rpScheduleRedraw();
+      rpUpdateStatus();
+    });
+  }
+
+  function rpAddMarker(lat, lng, color, tipo){
+    const m = L.circleMarker([lat,lng], { radius:2.3, color, fillColor:color, fillOpacity:1, weight:1.3 }).addTo(rpState.map);
+    rpState.markers.push(m);
+    rpState.markerMeta.push({ tipo });
+  }
+
+  async function rpSnapToRoad(lat, lng){
+    try {
+      const r = await fetch(`https://router.project-osrm.org/nearest/v1/driving/${lng},${lat}?number=1`);
+      const j = await r.json();
+      if(j.code==='Ok' && j.waypoints && j.waypoints[0]){
+        const [sLng, sLat] = j.waypoints[0].location;
+        return [sLat, sLng];
+      }
+    } catch(e){}
+    return [lat, lng];
+  }
+
+  function rpOffsetPolyline(coords, offsetMeters){
+    if(!coords || coords.length < 2) return coords;
+    const out = [];
+    const R = 6371000;
+    for(let i=0;i<coords.length;i++){
+      const p = coords[i];
+      const prev = coords[Math.max(0,i-1)];
+      const next = coords[Math.min(coords.length-1,i+1)];
+      const dLat = next[0]-prev[0];
+      const dLng = next[1]-prev[1];
+      const len = Math.hypot(dLat,dLng) || 1;
+      const perpLat = -dLng/len;
+      const perpLng =  dLat/len;
+      const dLatDeg = (offsetMeters / R) * (180/Math.PI);
+      const dLngDeg = (offsetMeters / (R*Math.cos(p[0]*Math.PI/180))) * (180/Math.PI);
+      out.push([p[0] + perpLat*dLatDeg, p[1] + perpLng*dLngDeg]);
+    }
+    return out;
+  }
+
+  async function rpGetRouteGeometry(points){
+    if(points.length < 2) return points;
+    try {
+      const coords = points.map(p => `${p[1]},${p[0]}`).join(';');
+      const r = await fetch(`https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`);
+      const j = await r.json();
+      if(j.code==='Ok' && j.routes && j.routes[0]){
+        return j.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+      }
+    } catch(e){}
+    return points;
+  }
+
+  let rpRedrawTimer = null;
+  function rpScheduleRedraw(){
+    if(rpRedrawTimer) clearTimeout(rpRedrawTimer);
+    rpRedrawTimer = setTimeout(() => redrawRpLines(), 250);
+  }
+
+  async function redrawRpLines(){
+    if(!rpState.map) return;
+    if(rpState.layers.ida) rpState.map.removeLayer(rpState.layers.ida);
+    if(rpState.layers.vuelta) rpState.map.removeLayer(rpState.layers.vuelta);
+    rpState.layers.ida = null;
+    rpState.layers.vuelta = null;
+
+    const pts = rpState.puntos;
+    const pv = rpState.puntosVuelta;
+
+    if(pts.length > 1){
+      const geom = await rpGetRouteGeometry(pts);
+      const offsetGeom = rpOffsetPolyline(geom, 4);
+      rpState.layers.ida = L.polyline(offsetGeom, {
+        color: rpState.colorIda, weight: 4, opacity: .95
+      }).addTo(rpState.map);
+    }
+    if(pv.length > 1){
+      const geomV = await rpGetRouteGeometry(pv);
+      const offsetGeomV = rpOffsetPolyline(geomV, -4);
+      rpState.layers.vuelta = L.polyline(offsetGeomV, {
+        color: rpState.colorVuelta, weight: 4, opacity: .95, dashArray: '10,6'
+      }).addTo(rpState.map);
+    }
+  }
+
+  function rpUpdateStatus(){
+    const el = $('#rpStatus'); if(!el) return;
+    el.textContent = `Ida: ${rpState.puntos.length} · Regreso: ${rpState.puntosVuelta.length} · Calles: ${rpState.calles.length}`;
+  }
+
+  function drawRpRoute(route){
+    if(!rpState.map) return;
+    // Limpiar
+    rpState.markers.forEach(m=>rpState.map.removeLayer(m));
+    rpState.markers = []; rpState.markerMeta = [];
+    if(rpState.layers.ida){ rpState.map.removeLayer(rpState.layers.ida); rpState.layers.ida = null; }
+    if(rpState.layers.vuelta){ rpState.map.removeLayer(rpState.layers.vuelta); rpState.layers.vuelta = null; }
+
+    const pts = route.puntos || [];
+    const pv = route.puntosVuelta || [];
+    const gIda = route.geometriaIda || [];
+    const gV = route.geometriaVuelta || [];
+
+    if(gIda.length > 1){
+      const offsetGeom = rpOffsetPolyline(gIda, 4);
+      rpState.layers.ida = L.polyline(offsetGeom, { color: rpState.colorIda, weight: 4, opacity:.95 }).addTo(rpState.map);
+    } else if(pts.length > 1){
+      rpState.layers.ida = L.polyline(pts, { color: rpState.colorIda, weight: 4, opacity:.95, dashArray:'6,6' }).addTo(rpState.map);
+    }
+    if(gV.length > 1){
+      const offsetGeomV = rpOffsetPolyline(gV, -4);
+      rpState.layers.vuelta = L.polyline(offsetGeomV, { color: rpState.colorVuelta, weight: 4, opacity:.95, dashArray:'10,6' }).addTo(rpState.map);
+    } else if(pv.length > 1){
+      rpState.layers.vuelta = L.polyline(pv, { color: rpState.colorVuelta, weight: 4, opacity:.95, dashArray:'10,6' }).addTo(rpState.map);
+    }
+
+    const allCoords = [...pts, ...pv, ...gIda, ...gV];
+    if(allCoords.length > 1){
+      try { rpState.map.fitBounds(L.latLngBounds(allCoords).pad(0.15)); } catch(e){}
+    }
+    rpUpdateStatus();
+  }
+
+  // Toolbar del mapa de reporte
+  $$('.tb[data-rp-tool]').forEach(b => {
+    b.onclick = () => {
+      const tool = b.dataset.rpTool;
+      if(!rpState.map) initReportMap();
+
+      if(tool==='undo'){
+        if(!rpState.markers.length){ toast('Nada que deshacer','err'); return; }
+        const meta = rpState.markerMeta.pop();
+        const m = rpState.markers.pop();
+        if(m) rpState.map.removeLayer(m);
+        if(meta){
+          if(meta.tipo==='vuelta') rpState.puntosVuelta.pop();
+          else rpState.puntos.pop();
+        }
+        rpScheduleRedraw(); rpUpdateStatus();
+        return;
+      }
+      if(tool==='clear'){
+        if(!confirm('¿Limpiar todo el trazado?')) return;
+        rpState.markers.forEach(m=>rpState.map.removeLayer(m));
+        rpState.markers = []; rpState.markerMeta = [];
+        rpState.puntos = []; rpState.puntosVuelta = [];
+        if(rpState.layers.ida){ rpState.map.removeLayer(rpState.layers.ida); rpState.layers.ida = null; }
+        if(rpState.layers.vuelta){ rpState.map.removeLayer(rpState.layers.vuelta); rpState.layers.vuelta = null; }
+        rpUpdateStatus();
+        return;
+      }
+      if(tool==='gps'){
+        rpToggleGPS(b);
+        return;
+      }
+      if(tool==='detect'){
+        rpDetectStreets();
+        return;
+      }
+      // draw-ida / draw-vuelta
+      if(rpState.drawMode === tool){
+        b.classList.remove('active');
+        rpState.drawing = false;
+        rpState.drawMode = null;
+        return;
+      }
+      $$('.tb[data-rp-tool]').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      rpState.drawing = true;
+      rpState.drawMode = tool;
+    };
+  });
+
+  function rpToggleGPS(btn){
+    if(rpState.gpsWatch){
+      navigator.geolocation.clearWatch(rpState.gpsWatch);
+      rpState.gpsWatch = null;
+      btn.classList.remove('active');
+      toast('GPS detenido');
+      return;
+    }
+    if(!navigator.geolocation){ toast('GPS no disponible','err'); return; }
+    if(!rpState.drawMode){ rpState.drawMode = 'draw-ida'; rpState.drawing = true; }
+    btn.classList.add('active');
+    toast('Grabando GPS en modo ' + (rpState.drawMode==='draw-vuelta'?'REGRESO':'IDA'));
+
+    rpState.gpsWatch = navigator.geolocation.watchPosition(pos => {
+      const {latitude:lat, longitude:lng} = pos.coords;
+      if(rpState.drawMode === 'draw-vuelta'){
+        rpState.puntosVuelta.push([lat,lng]);
+        rpAddMarker(lat, lng, rpState.colorVuelta, 'vuelta');
+      } else {
+        rpState.puntos.push([lat,lng]);
+        rpAddMarker(lat, lng, rpState.colorIda, 'ida');
+      }
+      rpScheduleRedraw(); rpUpdateStatus();
+    }, err => {
+      toast('GPS: ' + err.message, 'err');
+    }, { enableHighAccuracy:true, maximumAge:0, timeout:15000 });
+  }
+
+  async function rpDetectStreets(){
+    const pts = rpState.puntos.length >= 2 ? rpState.puntos : rpState.puntosVuelta;
+    if(pts.length < 2){ toast('Traza al menos 2 puntos','err'); return; }
+
+    const existing = splitList($('#rpCalles').value);
+    const existingNorm = new Set(existing.map(s=>s.toLowerCase().trim()));
+
+    const samples = rpSamplePoints(pts, 20);
+    const streetMap = new Map();
+    const seen = new Set();
+
+    toast('Detectando calles…');
+
+    for(let i=0;i<samples.length;i++){
+      const [lat,lng] = samples[i];
+      try {
+        const r = await fetch(`/api/geocode?lat=${lat}&lon=${lng}`);
+        const j = await r.json();
+        const a = j.address || {};
+        const road = a.road || a.pedestrian || a.footway || a.path || a.street;
+        if(road && !seen.has(road)){
+          seen.add(road);
+          streetMap.set(road.toLowerCase().trim(), road);
+        }
+      } catch(e){}
+      await new Promise(r=>setTimeout(r, 600));
+    }
+
+    const nuevas = Array.from(streetMap.entries())
+      .filter(([k]) => !existingNorm.has(k))
+      .map(([,v]) => v);
+
+    const final = [...existing, ...nuevas];
+    $('#rpCalles').value = final.join(', ');
+    rpState.calles = final;
+    rpUpdateStatus();
+    toast(`✅ ${nuevas.length} calles nuevas detectadas`);
+  }
+
+  function rpSamplePoints(pts, n){
+    if(pts.length <= n) return pts;
+    const out = []; const step = (pts.length-1)/(n-1);
+    for(let i=0;i<n;i++) out.push(pts[Math.round(i*step)]);
+    return out;
+  }
+
+  // ==================== ENVIAR REPORTE ====================
+  async function sendReport(){
+    const tipo = $('#rpTipo').value;
+    const rutaId = $('#rpRuta').value;
+    const nombreRuta = $('#rpNombre').value.trim();
+    if(!rutaId && !nombreRuta){ toast('Selecciona una ruta','err'); return; }
+
+    const reporte = {
+      tipo,
+      rutaId: rutaId || null,
+      rutaNombre: nombreRuta,
+      categoria: $('#rpCat').value,
+      tarifa: $('#rpTarifa').value.trim(),
+      frecuencia: $('#rpFrec').value.trim(),
+      horarioIni: $('#rpHoraIni').value.trim(),
+      horarioFin: $('#rpHoraFin').value.trim(),
+      dias: $('#rpDias').value,
+      accesibilidad: $('#rpAcces').value,
+      notas: $('#rpNotas').value.trim(),
+      paradas: splitList($('#rpParadas').value),
+      retornos: splitList($('#rpRetornos').value),
+      pois: splitList($('#rpPoisIda').value),
+      poisVuelta: splitList($('#rpPoisVuelta').value),
+      calles: splitList($('#rpCalles').value),
+      colorIda: rpState.colorIda,
+      colorVuelta: rpState.colorVuelta,
+      puntos: rpState.puntos,
+      puntosVuelta: rpState.puntosVuelta,
+      comentario: $('#rpComentario').value.trim(),
+      autor: $('#rpAutor').value.trim() || 'Anónimo',
+      deviceId: getDeviceId(),
+      timestamp: Date.now(),
+      estado: 'pendiente'
+    };
+
+    const id = 'rep_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+
+    if(fbDB){
+      try {
+        await fbDB.ref('actualizaciones_rutas/' + id).set({ id, ...reporte });
+        toast('✅ Reporte enviado. ¡Gracias por contribuir!');
+      } catch(e){
+        toast('No se pudo enviar a Firebase','err');
+        return;
+      }
+    } else {
+      // Fallback localStorage
+      try {
+        const arr = JSON.parse(localStorage.getItem('bgd_reports_local') || '[]');
+        arr.unshift({ id, ...reporte });
+        localStorage.setItem('bgd_reports_local', JSON.stringify(arr));
+        toast('✅ Reporte guardado localmente (sin conexión)');
+      } catch(e){
+        toast('No se pudo guardar','err');
+        return;
+      }
+    }
+
+    // Reset
+    $('#rpComentario').value = '';
+  }
+
+  $('#rpSave').onclick = sendReport;
+
+  $('#rpWhatsApp').onclick = () => {
+    const tipo = $('#rpTipo').value;
+    const ruta = $('#rpNombre').value;
+    const comentario = $('#rpComentario').value.trim();
+    const msg = encodeURIComponent(
+      `🛠️ Reporte de ruta\n\n` +
+      `Tipo: ${tipo}\n` +
+      `Ruta: ${ruta}\n` +
+      `Comentario: ${comentario || '(sin comentario)'}\n` +
+      `Calles: ${$('#rpCalles').value.slice(0,200)}\n`
+    );
+    window.open(`https://wa.me/${WHATSAPP_ADMIN}?text=${msg}`, '_blank');
+  };
+
+  // ==================== INIT ====================
+  (async () => {
+    // Cargar comentarios
+    loadComments();
+    // Cargar rutas al selector de reporte
+    loadRoutesIntoSelect();
+
+    // Si la URL trae ?tab=reportar o ?tab=contacto, abrir directo
+    const params = new URLSearchParams(location.search);
+    const t = params.get('tab');
+    if(t === 'reportar' || t === 'contacto') showTab(t);
+  })();
+
+})();
+</script>
+</body>
+</html>
