@@ -1136,7 +1136,7 @@ footer a{color:var(--cyan)}
         <circle cx="12" cy="10" r="3"/>
       </svg>
     </div>
-    <span class="brand-txt">TUXRUTAS</span>
+    <span class="brand-txt">Rutas BGD</span>
     </a>
   <div class="header-actions">
     <a class="icon-btn" href="${baseUrl}/" title="Ir al inicio">
@@ -1247,8 +1247,16 @@ ${image ? `
     <span>Rutas</span>
   </a>
   <a class="nav-item" href="${baseUrl}/Comunidad">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-    <span>Comunidad</span>
+<svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  <!-- Burbuja superior derecha (más pequeña) -->
+  <path d="M25 11.5a2 2 0 0 1-2 2h-5l-3 3V4.5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2z" opacity="0.45"/>
+  <!-- Burbuja inferior izquierda (más grande) -->
+  <path d="M20 19a2.5 2.5 0 0 1-2.5 2.5H8l-4.5 4.5V8A2.5 2.5 0 0 1 6 5.5h11.5A2.5 2.5 0 0 1 20 8z"/>
+  <!-- Badge XL -->
+  <circle cx="22" cy="6" r="6" fill="#ef4444" stroke="#0a0e1a" stroke-width="1.8"/>
+  <text x="22" y="9" font-size="7.5" font-weight="900" text-anchor="middle" fill="#ffffff" font-family="Arial, Helvetica, sans-serif">3</text>
+</svg>
+<span>Comunidad</span>
   </a>
 </nav>
 
