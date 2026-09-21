@@ -217,12 +217,18 @@ async function getFcmAccessToken(env) {
    ============================================================ */
 async function removeToken(token, FIREBASE_DB) {
   try {
-    // Buscar el deviceId asociado al token
-    const res = await fetch(`${FIREBASE_DB}/pushTokens.json?orderBy="token"&equalTo="${token}"`);
+    // Leer TODOS los tokens y buscar el que coincida
+    // (más lento pero funciona sin índice)
+    const res = await fetch(`${FIREBASE_DB}/pushTokens.json`);
     const data = await res.json();
-    if (data && typeof data === 'object') {
-      for (const deviceId of Object.keys(data)) {
-        await fetch(`${FIREBASE_DB}/pushTokens/${deviceId}.json`, { method: 'DELETE' });
+    if (!data || typeof data !== 'object') return;
+
+    for (const [deviceId, info] of Object.entries(data)) {
+      if (info && info.token === token) {
+        await fetch(`${FIREBASE_DB}/pushTokens/${deviceId}.json`, {
+          method: 'DELETE'
+        });
+        console.log(`[FCM] Token muerto eliminado: ${deviceId}`);
       }
     }
   } catch (e) {
