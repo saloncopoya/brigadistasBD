@@ -771,16 +771,17 @@ img{max-width:100%;display:block}
             </div>
           </div>
 
+          <!-- Botones de navegación del wizard (dentro del editor) -->
           <div style="display:flex;gap:8px;margin-top:16px">
-            <button class="btn btn-ghost" id="rpPrev">← Anterior</button>
-            <button class="btn btn-primary" style="flex:1" id="rpNext">Siguiente →</button>
-            <button class="btn btn-primary hidden" style="flex:1" id="rpSave">Enviar reporte</button>
+            <button type="button" class="btn btn-ghost" id="rpPrev">← Anterior</button>
+            <button type="button" class="btn btn-primary" style="flex:1" id="rpNext">Siguiente →</button>
+            <button type="button" class="btn btn-primary hidden" style="flex:1" id="rpSave">Enviar reporte</button>
           </div>
-          <button class="btn btn-ghost btn-block hidden" id="rpWhatsApp" style="margin-top:8px;background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;border-color:transparent">
+          <button type="button" class="btn btn-ghost btn-block hidden" id="rpWhatsApp" style="margin-top:8px;background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;border-color:transparent">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884"/></svg>
             Enviar también por WhatsApp
           </button>
-        </div>
+        </div>  <!-- ← cierra #rpEditor -->
       </div>
     </section>
 
@@ -1440,8 +1441,8 @@ img{max-width:100%;display:block}
     };
   }
 
-  function loadRouteIntoReport(route){
-    rpState.editingRoute = route;
+  let loadRouteIntoReport = function(route){
+     rpState.editingRoute = route;
     $('#rpEditor').classList.remove('hidden');
     $('#rpNombre').value = route.nombre || '';
     $('#rpCat').value = route.categoria || 'urbana';
@@ -1474,7 +1475,7 @@ img{max-width:100%;display:block}
         rpState.map.invalidateSize();
       }
     }, 250);
-  }
+  };
 
   function buildRpColorSwatches(){
     const build = (elId, current, onPick) => {
@@ -1490,35 +1491,92 @@ img{max-width:100%;display:block}
     build('#rpColorVuelta', rpState.colorVuelta, c=>{ rpState.colorVuelta=c; redrawRpLines(); });
   }
 
-  function goRpStep(n){
+
+
+     function goRpStep(n){
+    n = Math.max(1, Math.min(3, n));
     rpState.step = n;
-    $$('.rp-step').forEach(s=>s.classList.toggle('hidden', +s.dataset.step!==n));
+    console.log('[goRpStep] Navegando al paso:', n);  // ← debug
+
+    // Mostrar solo el paso actual
+    $$('.rp-step').forEach(s=>{
+      s.classList.toggle('hidden', +s.dataset.step !== n);
+    });
+
+    // Actualizar indicadores de paso
     $$('.steps .step-dot').forEach(d=>{
       const s = +d.dataset.step;
-      d.classList.toggle('active', s===n);
-      d.classList.toggle('done', s<n);
+      d.classList.toggle('active', s === n);
+      d.classList.toggle('done', s < n);
     });
-    $('#rpPrev').style.visibility = n===1?'hidden':'visible';
-    $('#rpNext').classList.toggle('hidden', n!==3);
-    $('#rpSave').classList.toggle('hidden', n!==3);
-    $('#rpWhatsApp').classList.toggle('hidden', n!==3);
-    // 🗺️ Si vamos al paso 3, forzar invalidateSize tras el render
-    if(n===3){
-      setTimeout(() => {
-        if(rpState.map) rpState.map.invalidateSize();
-      }, 350);
-    }
-    if(n===3){
-      requestAnimationFrame(()=>{
-        requestAnimationFrame(()=>{
+
+    // Actualizar botones según el paso
+    const btnPrev = $('#rpPrev');
+    const btnNext = $('#rpNext');
+    const btnSave = $('#rpSave');
+    const btnWa   = $('#rpWhatsApp');
+
+    if (btnPrev) btnPrev.style.visibility = n === 1 ? 'hidden' : 'visible';
+    if (btnNext) btnNext.classList.toggle('hidden', n === 3);
+    if (btnSave) btnSave.classList.toggle('hidden', n !== 3);
+    if (btnWa)   btnWa.classList.toggle('hidden', n !== 3);
+
+    // 🗺️ Al llegar al Paso 3, inicializar/refrescar el mapa
+    if (n === 3) {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
           initReportMap();
-          redrawRpLines();
+          setTimeout(() => {
+            if (rpState.map) {
+              rpState.map.invalidateSize();
+              redrawRpLines();
+            }
+          }, 350);
         });
       });
     }
   }
-  $('#rpPrev').onclick = () => goRpStep(Math.max(1, rpState.step-1));
-  $('#rpNext').onclick = () => goRpStep(Math.min(3, rpState.step+1));
+
+  // 🎯 Bind de botones con protección contra doble binding
+  // 🎯 Bind de botones — versión robusta con delegación de eventos
+  // Usa addEventListener directamente sobre los botones, sin depender del orden.
+  function _bindRpNav() {
+    const btnPrev = document.getElementById('rpPrev');
+    const btnNext = document.getElementById('rpNext');
+
+    if (btnPrev && !btnPrev.__navBound) {
+      btnPrev.__navBound = true;
+      btnPrev.addEventListener('click', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        goRpStep(rpState.step - 1);
+      });
+    }
+
+    if (btnNext && !btnNext.__navBound) {
+      btnNext.__navBound = true;
+      btnNext.addEventListener('click', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        goRpStep(rpState.step + 1);
+      });
+    }
+  }
+
+  // Ejecutar inmediatamente y también al final del init
+  _bindRpNav();
+
+  // 🔄 Re-bind automático cada vez que se selecciona una ruta
+  // (Envolvemos loadRouteIntoReport SIN reasignarla con const/let)
+  const __originalLoadRouteIntoReport = loadRouteIntoReport;
+  loadRouteIntoReport = function(route) {
+    __originalLoadRouteIntoReport(route);
+    // Re-bind por si acaso los botones cambiaron
+    _bindRpNav();
+    // Asegurar que empezamos en el paso 1
+    setTimeout(() => goRpStep(1), 30);
+  };
+   
 
   function initReportMap(){
     if(rpState.map) {
@@ -1798,6 +1856,7 @@ img{max-width:100%;display:block}
   }
 
   // ==================== ENVIAR REPORTE ====================
+  // ==================== ENVIAR REPORTE ====================
   async function sendReport(){
     const tipo = $('#rpTipo').value;
     const rutaId = $('#rpRuta').value;
@@ -1834,47 +1893,123 @@ img{max-width:100%;display:block}
 
     const id = 'rep_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
 
+    // 1️⃣ Guardar en Firebase (o localStorage si falla)
+    let guardadoOK = false;
     if(fbDB){
       try {
         await fbDB.ref('actualizaciones_rutas/' + id).set({ id, ...reporte });
-        toast('✅ Reporte enviado. ¡Gracias por contribuir!');
+        guardadoOK = true;
+        toast('✅ Reporte enviado a la base de datos');
       } catch(e){
-        toast('No se pudo enviar a Firebase','err');
-        return;
+        console.warn('[sendReport] Firebase falló:', e);
       }
-    } else {
-      // Fallback localStorage
+    }
+
+    if(!guardadoOK){
       try {
         const arr = JSON.parse(localStorage.getItem('bgd_reports_local') || '[]');
         arr.unshift({ id, ...reporte });
         localStorage.setItem('bgd_reports_local', JSON.stringify(arr));
         toast('✅ Reporte guardado localmente (sin conexión)');
       } catch(e){
-        toast('No se pudo guardar','err');
+        toast('No se pudo guardar el reporte','err');
         return;
       }
     }
 
-    // Reset
+    // 2️⃣ ABRIR WHATSAPP automáticamente para avisar al admin
+    const tipoLabel = {
+      actualizar_datos: '📝 Actualizar datos',
+      cambio_trazo: '🗺️ Cambio de trazo',
+      nueva_ruta: '🆕 Nueva ruta',
+      parada_nueva: '➕ Nueva parada',
+      parada_eliminada: '➖ Parada eliminada',
+      tarifa: '💰 Cambio de tarifa',
+      horario: '🕐 Cambio de horario',
+      poi: '📍 POI nuevo/corregido',
+      error: '⚠️ Error en datos',
+      sugerencia: '💡 Sugerencia'
+    }[tipo] || tipo;
+
+    const lineas = [
+      '🛠️ *NUEVO REPORTE DE RUTA*',
+      '',
+      `📋 *Tipo:* ${tipoLabel}`,
+      `🚌 *Ruta:* ${nombreRuta || '(sin nombre)'}`,
+      `👤 *Reportado por:* ${reporte.autor}`,
+      `🆔 *ID:* ${id}`
+    ];
+
+    if(reporte.comentario) {
+      lineas.push('', `💬 *Comentario:*`, reporte.comentario);
+    }
+
+    if(reporte.paradas.length || reporte.retornos.length) {
+      lineas.push('', '*Cambios en paradas/retornos:*');
+      if(reporte.paradas.length) lineas.push(`🚏 Paradas: ${reporte.paradas.slice(0,5).join(', ')}${reporte.paradas.length>5?'...':''}`);
+      if(reporte.retornos.length) lineas.push(`↩️ Retornos: ${reporte.retornos.slice(0,5).join(', ')}${reporte.retornos.length>5?'...':''}`);
+    }
+
+    if(reporte.calles.length) {
+      lineas.push('', `🛣️ *Calles:* ${reporte.calles.slice(0,5).join(', ')}${reporte.calles.length>5?'...':''}`);
+    }
+
+    if(reporte.puntos.length || reporte.puntosVuelta.length) {
+      lineas.push('', `🗺️ *Trazado:* ${reporte.puntos.length} pts IDA · ${reporte.puntosVuelta.length} pts REGRESO`);
+    }
+
+    if(reporte.tarifa)   lineas.push(`💰 *Tarifa:* ${reporte.tarifa}`);
+    if(reporte.frecuencia) lineas.push(`⏱️ *Frecuencia:* ${reporte.frecuencia}`);
+    if(reporte.horarioIni) lineas.push(`🕐 *Horario:* ${reporte.horarioIni} - ${reporte.horarioFin || '?'}`);
+
+    lineas.push('', `🕒 ${new Date().toLocaleString('es-MX')}`);
+    lineas.push('', `_Reporte guardado en actualizaciones_rutas/${id}_`);
+
+    const mensaje = lineas.join('\n');
+    const waUrl = `https://wa.me/${WHATSAPP_ADMIN}?text=${encodeURIComponent(mensaje)}`;
+
+    // Abrir WhatsApp en nueva pestaña
+    setTimeout(() => {
+      const win = window.open(waUrl, '_blank');
+      if(!win) {
+        // Fallback si el navegador bloquea popups
+        toast('⚠️ Permite popups para abrir WhatsApp', 'err');
+      } else {
+        toast('📲 Abriendo WhatsApp para avisar al admin...');
+      }
+    }, 400);
+
+    // 3️⃣ Reset del formulario
     $('#rpComentario').value = '';
   }
 
-  $('#rpSave').onclick = sendReport;
+  // 🎯 Bind del botón Enviar (con protección)
+  const btnSave = $('#rpSave');
+  if (btnSave && !btnSave.dataset.bound) {
+    btnSave.dataset.bound = '1';
+    btnSave.onclick = sendReport;
+  }
 
-  $('#rpWhatsApp').onclick = () => {
-    const tipo = $('#rpTipo').value;
-    const ruta = $('#rpNombre').value;
-    const comentario = $('#rpComentario').value.trim();
-    const msg = encodeURIComponent(
-      `🛠️ Reporte de ruta\n\n` +
-      `Tipo: ${tipo}\n` +
-      `Ruta: ${ruta}\n` +
-      `Comentario: ${comentario || '(sin comentario)'}\n` +
-      `Calles: ${$('#rpCalles').value.slice(0,200)}\n`
-    );
-    window.open(`https://wa.me/${WHATSAPP_ADMIN}?text=${msg}`, '_blank');
-  };
+  // 🎯 Bind del botón WhatsApp (envío manual alternativo)
+  const btnWa = $('#rpWhatsApp');
+  if (btnWa && !btnWa.dataset.bound) {
+    btnWa.dataset.bound = '1';
+    btnWa.onclick = () => {
+      const tipo = $('#rpTipo').value;
+      const ruta = $('#rpNombre').value;
+      const comentario = $('#rpComentario').value.trim();
+      const msg = encodeURIComponent(
+        `🛠️ Reporte de ruta (envío manual)\n\n` +
+        `Tipo: ${tipo}\n` +
+        `Ruta: ${ruta}\n` +
+        `Comentario: ${comentario || '(sin comentario)'}\n` +
+        `Calles: ${$('#rpCalles').value.slice(0,200)}\n`
+      );
+      window.open(`https://wa.me/${WHATSAPP_ADMIN}?text=${msg}`, '_blank');
+    };
+  }
 
+  // ==================== INIT ====================
   // ==================== INIT ====================
   (async () => {
     // Cargar comentarios
@@ -1882,10 +2017,18 @@ img{max-width:100%;display:block}
     // Cargar rutas al selector de reporte
     loadRoutesIntoSelect();
 
+    // 🔧 Re-bind de botones del wizard (por si acaso)
+    _bindRpNav();
+
     // Si la URL trae ?tab=reportar o ?tab=contacto, abrir directo
     const params = new URLSearchParams(location.search);
     const t = params.get('tab');
     if(t === 'reportar' || t === 'contacto') showTab(t);
+
+    // 🔧 Bind del botón "Siguiente" con setTimeout por si el DOM tarda en montar
+    setTimeout(() => {
+      _bindRpNav();
+    }, 500);
   })();
 
 })();
