@@ -3297,23 +3297,43 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
         }
       });
 
-      if (!results.direct.length || maxTransfers >= 1) {
+      // 🎯 SOLO buscar transbordos si NO hay directas, o si el usuario pidió explícitamente 1T/2T
+      const quiereTransbordos = maxTransfers >= 1;
+      const hayDirectas = results.direct.length > 0;
+
+      if (!hayDirectas || quiereTransbordos) {
         if (state.tripPoints.length === 2) {
-          // 1er intento con maxTransfers configurado
-          let chains = findTransferChains(start, end, maxTransfers);
-          
-          // 🔁 AUTO-2T: si no hay directas NI 1T, intentar con 2T automáticamente
-          if (!results.direct.length && !chains.length && maxTransfers < 2) {
-            console.log('[Auto-2T] No hay directas ni 1T. Buscando con 2T…');
-            chains = findTransferChains(start, end, 2);
+          let chains = [];
+
+          // Sub-paso 1: si el usuario pidió 1T o 2T, respetar eso
+          if (quiereTransbordos) {
+            chains = findTransferChains(start, end, maxTransfers);
+          }
+
+          // Sub-paso 2: si NO hay directas y NO hay transbordos → probar con 1T
+          if (!hayDirectas && !chains.length && maxTransfers < 1) {
+            console.log('[Auto-1T] Sin directas. Probando con 1 transbordo…');
+            chains = findTransferChains(start, end, 1);
             if (chains.length) {
-              toast('🔎 Sin rutas directas. Mostrando transbordos con 2 rutas');
+              const sel = document.getElementById('tripMaxTransfers');
+              if (sel) sel.value = '1';
+              toast('🔎 Sin rutas directas. Mostrando transbordos con 1 ruta');
             }
           }
-          
+
+          // Sub-paso 3: si aún no hay → probar con 2T (esto YA lo tenías)
+          if (!chains.length && !hayDirectas && maxTransfers < 2) {
+            console.log('[Auto-2T] No hay 1T. Buscando con 2 transbordos…');
+            chains = findTransferChains(start, end, 2);
+            if (chains.length) {
+              const sel = document.getElementById('tripMaxTransfers');
+              if (sel) sel.value = '2';
+              toast('🔎 Sin transbordos con 1 ruta. Mostrando transbordos con 2 rutas');
+            }
+          }
+
           results.transfers = chains.slice(0, 20);
         } else {
-           
           const pairs = [];
           for (let i = 0; i < state.tripPoints.length - 1; i++) {
             const a = state.tripPoints[i];
