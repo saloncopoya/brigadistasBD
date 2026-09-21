@@ -887,6 +887,8 @@ async function loadRoutes() {
   }
 
   __routeIndex = null;
+  // 🔄 Refrescar el panel lateral si está abierto
+  if (global.__refreshSidePanel) global.__refreshSidePanel();
   return state.routes;
 }
 
@@ -3771,10 +3773,137 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
     }
   }
 
-  // ==================== BOTTOM NAV ====================
-  $$('.nav-item').forEach(n => {
-    n.onclick = () => navigateTo(n.dataset.page);
+  // ==================== BOTTOM NAV (5 botones) ====================
+  // Los botones con data-page navegan normal.
+  // "Lista" abre el panel lateral.
+  // "Comunidad" es un <a href="/Comunidad"> (no necesita handler).
+  $$('.nav-item[data-page]').forEach(n => {
+    if (n.dataset.page === 'lista') {
+      n.onclick = () => openSidePanel();
+    } else {
+      n.onclick = () => navigateTo(n.dataset.page);
+    }
   });
+
+  // ==================== 📋 PANEL LATERAL: LISTA DE RUTAS ====================
+  const sidePanel        = $('#sidePanel');
+  const sidePanelBackdrop= $('#sidePanelBackdrop');
+  const sidePanelList    = $('#sidePanelList');
+  const sidePanelSearch  = $('#sidePanelSearch');
+  const sidePanelClose   = $('#sidePanelClose');
+
+  function openSidePanel() {
+    if (!sidePanel) return;
+    sidePanel.classList.add('open');
+    sidePanelBackdrop.classList.add('open');
+    sidePanel.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    renderSidePanelList();
+  }
+
+  function closeSidePanel() {
+    if (!sidePanel) return;
+    sidePanel.classList.remove('open');
+    sidePanelBackdrop.classList.remove('open');
+    sidePanel.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  }
+
+  if (sidePanelClose)   sidePanelClose.onclick   = closeSidePanel;
+  if (sidePanelBackdrop)sidePanelBackdrop.onclick= closeSidePanel;
+
+  // Cerrar con tecla ESC
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && sidePanel && sidePanel.classList.contains('open')) {
+      closeSidePanel();
+    }
+  });
+
+  // Buscador interno
+  if (sidePanelSearch) {
+    sidePanelSearch.oninput = () => renderSidePanelList();
+  }
+
+  function renderSidePanelList() {
+    if (!sidePanelList) return;
+
+    const q = norm(sidePanelSearch ? sidePanelSearch.value : '');
+
+    // Filtrar rutas
+    let rutas = state.routes || [];
+
+    if (q) {
+      rutas = rutas.filter(r => {
+        const campos = [
+          r.nombre || '',
+          r.categoria || '',
+          ...(r.paradas || []),
+          ...(r.retornos || []),
+          ...(r.calles || []),
+          ...(r.pois || []),
+          ...(r.poisVuelta || [])
+        ];
+        return campos.some(c => norm(c).includes(q));
+      });
+    }
+
+    // Orden alfabético
+    rutas = [...rutas].sort((a, b) =>
+      String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es',
+        { numeric: true, sensitivity: 'base' })
+    );
+
+    if (!rutas.length) {
+      sidePanelList.innerHTML = `
+        <div class="sp-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <p>${q ? 'Sin resultados para "' + esc(sidePanelSearch.value) + '"' : 'No hay rutas registradas'}</p>
+        </div>`;
+      return;
+    }
+
+    sidePanelList.innerHTML = rutas.map(r => {
+      const primeraParada = (r.paradas || [])[0] || '';
+      const primerRetorno = (r.retornos || [])[0] || '';
+      const categoria = (r.categoria || 'urbana');
+      const badgeClass = categoria === 'foranea' ? 'badge-foranea' : 'badge-urbana';
+
+      return `
+        <a class="sp-route-item" href="/share/ruta/${esc(r.id || r.slug)}">
+          <div class="sp-route-icon">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M4.5 5C4.5 3.62 5.62 2.5 7 2.5h10c1.38 0 2.5 1.12 2.5 2.5v11c0 1.1-.9 2-2 2H17v3c0 .28-.22.5-.5.5h-2c-.28 0-.5-.22-.5-.5v-3h-4v3c0 .28-.22.5-.5.5h-2c-.28 0-.5-.22-.5-.5v-3H6.5c-1.1 0-2-.9-2-2V5Zm2 .5v2h11v-2h-11Zm0 4V13h5V9.5h-5Zm6 0V13h5V9.5h-5ZM8 15a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm2.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm3.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm2.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/>
+            </svg>
+          </div>
+          <div class="sp-route-info">
+            <div class="sp-route-name">${esc(r.nombre || 'RUTA')}</div>
+            <div class="sp-route-cat"><span class="badge ${badgeClass}" style="font-size:9px;padding:2px 7px">${esc(categoria)}</span></div>
+            ${(primeraParada || primerRetorno) ? `
+              <div class="sp-route-meta">
+                ${primeraParada ? `
+                  <div class="sp-meta-row" title="Parada: ${esc(primeraParada)}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    <span>${esc(primeraParada)}</span>
+                  </div>` : ''}
+                ${primerRetorno ? `
+                  <div class="sp-meta-row" title="Retorno: ${esc(primerRetorno)}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+                    <span>${esc(primerRetorno)}</span>
+                  </div>` : ''}
+              </div>` : ''}
+          </div>
+        </a>`;
+    }).join('');
+  }
+
+  // Exponer para que loadRoutes() pueda refrescar el panel si está abierto
+  global.__refreshSidePanel = () => {
+    if (sidePanel && sidePanel.classList.contains('open')) {
+      renderSidePanelList();
+    }
+  };
 
   // ==================== INIT ====================
   async function init() {
@@ -3865,6 +3994,9 @@ await Promise.all([
     state,
     navigateTo,
     goBack,
+    openSidePanel,
+    closeSidePanel,
+    renderSidePanelList,
 
       async migrateToSplit() {
       if (!state.isAdmin) { toast('Necesitas ser admin primero', 'err'); return; }
