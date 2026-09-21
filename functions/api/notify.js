@@ -80,28 +80,25 @@ export async function onRequest(context) {
           body: JSON.stringify({
             message: {
               token: token,
-              notification: {
+              data: {
                 title: titulo,
                 body: mensaje,
-                image: imagen || undefined
-              },
-              data: {
+                image: imagen || '',
                 url: url || '/Comunidad',
                 tipo: tipo || 'comentario',
                 timestamp: String(Date.now())
               },
               webpush: {
+                headers: {
+                  Urgency: 'high',
+                  TTL: '86400'
+                },
                 fcm_options: {
                   link: url || '/Comunidad'
-                },
-                notification: {
-                  icon: '/img.png',
-                  badge: '/img.png',
-                  vibrate: [200, 100, 200],
-                  requireInteraction: false,
-                  tag: 'bgd_comentario_' + Date.now()
                 }
-              }
+              },
+              android: { priority: 'high' },
+              apns: { headers: { 'apns-priority': '10' } }
             }
           })
         })
