@@ -967,7 +967,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:
 .icon-btn:hover{background:var(--surface-2);color:var(--cyan)}
 .icon-btn svg{width:20px;height:20px}
 
-//* NAV INFERIOR (idéntico a index.html) */
+/* NAV INFERIOR (idéntico a index.html) */
 .bottom-nav{
   position:fixed;bottom:0;left:0;right:0;
   height:calc(var(--nav-h) + env(safe-area-inset-bottom));
