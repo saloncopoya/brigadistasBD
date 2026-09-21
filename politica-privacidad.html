@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0e1a">
+<meta name="description" content="Política de Privacidad de Rutas BGD. Conoce cómo protegemos tus datos personales y qué información recopilamos.">
+<meta name="robots" content="index, follow, max-snippet:-1">
+<link rel="canonical" href="https://brigadistasbd.pages.dev/politica-privacidad">
+<link rel="icon" type="image/svg+xml" href="/assets/icon.svg">
+<link rel="apple-touch-icon" href="/assets/icon.svg">
+<link rel="manifest" href="/manifest.json">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Política de Privacidad · Rutas BGD">
+<meta property="og:description" content="Cómo protegemos tus datos personales en Rutas BGD.">
+<meta property="og:image" content="https://brigadistasbd.pages.dev/img.png">
+<meta property="og:url" content="https://brigadistasbd.pages.dev/politica-privacidad">
+<meta property="og:site_name" content="Rutas BGD">
+<meta property="og:locale" content="es_MX">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Política de Privacidad · Rutas BGD">
+<meta name="twitter:image" content="https://brigadistasbd.pages.dev/img.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Política de Privacidad",
+  "url": "https://brigadistasbd.pages.dev/politica-privacidad",
+  "inLanguage": "es-MX",
+  "datePublished": "2026-09-20",
+  "dateModified": "2026-09-20"
+}
+</script>
+
+<style>
+:root{
+  --cyan:#0167ff;--cyan-d:#0574a2;--cyan-glow:rgba(0,229,255,.35);
+  --purple:#a855f7;--green:#10b981;--amber:#f59e0b;--red:#ef4444;
+  --radius:14px;--radius-sm:10px;
+  --shadow:0 10px 30px rgba(0,0,0,.35);--shadow-sm:0 4px 12px rgba(0,0,0,.25);
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --nav-h:64px;--header-h:58px;--transition:.25s cubic-bezier(.4,0,.2,1);
+}
+[data-theme="dark"]{
+  --bg:#0a0e1a;--bg-2:#0f1526;--surface:#141c30;--surface-2:#1c2540;--surface-3:#242f4d;
+  --border:#26314f;--border-2:#334066;
+  --text:#e8edf7;--text-2:#a9b4cc;--text-3:#6b7793;--input-bg:#0f1626;
+}
+[data-theme="light"]{
+  --bg:#f4f6fb;--bg-2:#fff;--surface:#fff;--surface-2:#f4f6fb;--surface-3:#e8ecf5;
+  --border:#dde3ee;--border-2:#c5cfe2;
+  --text:#0c1322;--text-2:#4a5773;--text-3:#8a95ad;--input-bg:#f8fafd;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:var(--font);background:var(--bg);color:var(--text);
+  overflow-x:hidden;overscroll-behavior-y:none;
+  transition:background var(--transition),color var(--transition);
+  -webkit-font-smoothing:antialiased;line-height:1.7;
+}
+button,input,textarea,select{font-family:inherit;font-size:inherit;color:inherit}
+button{cursor:pointer;border:none;background:none}
+a{color:var(--cyan);text-decoration:none}
+a:hover{text-decoration:underline}
+img{max-width:100%;display:block}
+.hidden{display:none!important}
+::selection{background:var(--cyan);color:#00121a}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:8px}
+
+.header{
+  position:fixed;top:0;left:0;right:0;height:var(--header-h);
+  background:color-mix(in srgb,var(--surface) 92%,transparent);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 14px;z-index:1000;
+}
+.header-brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px;letter-spacing:-.3px;color:var(--text);text-decoration:none}
+.header-brand .logo{
+  width:32px;height:32px;border-radius:9px;
+  background:linear-gradient(135deg,var(--cyan),var(--cyan-d));
+  display:grid;place-items:center;color:#00121a;
+  box-shadow:0 0 18px var(--cyan-glow);
+}
+.header-brand .logo svg{width:20px;height:20px}
+.header-brand .brand-txt{background:linear-gradient(90deg,var(--cyan),#7dd3fc);-webkit-background-clip:text;background-clip:text;color:transparent}
+.header-actions{display:flex;align-items:center;gap:6px}
+.icon-btn{
+  width:40px;height:40px;border-radius:11px;display:grid;place-items:center;
+  color:var(--text-2);transition:var(--transition);text-decoration:none;
+}
+.icon-btn:hover{background:var(--surface-2);color:var(--cyan)}
+.icon-btn svg{width:20px;height:20px}
+
+.app{
+  padding-top:var(--header-h);
+  padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom));
+  min-height:100vh;
+}
+.wrap{max-width:820px;margin:0 auto;padding:20px}
+
+.breadcrumb{
+  display:flex;align-items:center;gap:6px;
+  font-size:12px;color:var(--text-3);margin-bottom:16px;flex-wrap:wrap;
+}
+.breadcrumb a{color:var(--text-2)}
+.breadcrumb a:hover{color:var(--cyan)}
+.breadcrumb .sep{opacity:.5}
+
+.page-hero{
+  padding:20px 0 24px;border-bottom:1px solid var(--border);margin-bottom:28px;
+}
+.page-hero h1{
+  font-size:clamp(26px,4vw,38px);font-weight:900;letter-spacing:-.6px;
+  line-height:1.15;margin-bottom:12px;
+  background:linear-gradient(135deg,var(--cyan),#7dd3fc 60%,var(--cyan-d));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.page-hero .subtitle{font-size:16px;color:var(--text-2);line-height:1.6}
+.page-hero .meta{
+  display:flex;gap:14px;flex-wrap:wrap;margin-top:16px;
+  font-size:12.5px;color:var(--text-3);
+}
+.page-hero .meta span{display:inline-flex;align-items:center;gap:5px}
+.page-hero .meta svg{width:14px;height:14px}
+
+.toc{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:18px 20px;margin-bottom:28px;
+}
+.toc h2{
+  font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;
+  color:var(--cyan);margin-bottom:12px;
+}
+.toc ol{padding-left:20px;margin:0}
+.toc li{padding:5px 0;font-size:14px}
+.toc a{color:var(--text-2)}
+.toc a:hover{color:var(--cyan)}
+
+.article h2{
+  font-size:clamp(20px,2.5vw,24px);font-weight:900;letter-spacing:-.4px;
+  margin:36px 0 14px;color:var(--text);line-height:1.3;
+  scroll-margin-top:calc(var(--header-h) + 20px);
+}
+.article h3{
+  font-size:17px;font-weight:800;
+  margin:24px 0 10px;color:var(--cyan);
+}
+.article p{font-size:15.5px;color:var(--text-2);margin-bottom:14px}
+.article p strong{color:var(--text);font-weight:700}
+.article ul,.article ol{padding-left:24px;margin-bottom:16px}
+.article li{font-size:15px;color:var(--text-2);margin-bottom:8px}
+.article blockquote{
+  border-left:4px solid var(--cyan);background:var(--surface);
+  padding:14px 18px;margin:18px 0;border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+  font-style:italic;color:var(--text-2);font-size:15px;
+}
+.article code{
+  background:var(--surface-2);padding:2px 7px;border-radius:5px;
+  font-family:ui-monospace,Menlo,monospace;font-size:13px;color:var(--cyan);
+}
+.info-box{
+  background:var(--surface);border:1px solid var(--border);
+  border-left:4px solid var(--cyan);
+  padding:16px 20px;border-radius:0 var(--radius) var(--radius) 0;
+  margin:20px 0;
+}
+.info-box h4{margin:0 0 8px;color:var(--cyan);font-size:14px}
+.info-box p:last-child{margin-bottom:0}
+
+.contact-block{
+  background:linear-gradient(135deg,color-mix(in srgb,var(--cyan) 8%,var(--surface)),var(--surface));
+  border:1px solid var(--border);border-radius:var(--radius);
+  padding:24px;margin:36px 0;text-align:center;
+}
+.contact-block h2{font-size:18px;font-weight:900;margin-bottom:10px;color:var(--text)}
+.contact-block p{font-size:14px;color:var(--text-2);margin-bottom:16px}
+.contact-block a{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:11px 20px;border-radius:10px;
+  background:linear-gradient(135deg,var(--cyan),var(--cyan-d));
+  color:#00121a;font-weight:800;font-size:13.5px;
+  text-decoration:none;transition:var(--transition);
+}
+.contact-block a:hover{filter:brightness(1.08);transform:translateY(-2px);text-decoration:none}
+
+footer{
+  margin-top:40px;padding:24px 0;border-top:1px solid var(--border);
+  color:var(--text-3);font-size:12px;text-align:center;line-height:1.9;
+}
+footer a{color:var(--cyan)}
+
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav-h) + env(safe-area-inset-bottom));
+  padding-bottom:env(safe-area-inset-bottom);
+  background:color-mix(in srgb,var(--surface) 92%,transparent);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border-top:1px solid var(--text-2);
+  display:grid;grid-template-columns:repeat(5,1fr);z-index:1000;
+}
+.nav-item{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;color:var(--text);font-size:11px;font-weight:600;
+  transition:var(--transition);position:relative;text-decoration:none;
+}
+.nav-item svg{width:23px;height:23px;transition:var(--transition)}
+.nav-item.active{color:var(--cyan)}
+.nav-item.active svg{transform:translateY(-2px) scale(1.08)}
+.nav-item.active::before{
+  content:"";position:absolute;top:6px;width:44px;height:3px;border-radius:0 0 4px 4px;
+  background:var(--cyan);box-shadow:0 0 14px var(--cyan-glow);
+}
+.nav-item:active{transform:scale(.94)}
+
+@media(min-width:1000px){
+  .bottom-nav{max-width:720px;left:50%;transform:translateX(-50%);border-radius:18px 18px 0 0;border-left:1px solid var(--border);border-right:1px solid var(--border)}
+}
+@media(max-width:380px){
+  .header-brand .brand-txt{font-size:14px}
+  .nav-item span{font-size:10px}
+  .nav-item svg{width:20px;height:20px}
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <a class="header-brand" href="/">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+        <circle cx="12" cy="10" r="3"/>
+      </svg>
+    </div>
+    <span class="brand-txt">Rutas BGD</span>
+  </a>
+  <div class="header-actions">
+    <button class="icon-btn" id="themeBtn" title="Cambiar tema">
+      <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <a class="icon-btn" href="/" title="Ir al inicio">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </a>
+  </div>
+</header>
+
+<main class="app">
+  <div class="wrap">
+
+    <nav class="breadcrumb">
+      <a href="/">Inicio</a>
+      <span class="sep">›</span>
+      <span aria-current="page">Política de Privacidad</span>
+    </nav>
+
+    <div class="page-hero">
+      <h1>Política de Privacidad</h1>
+      <p class="subtitle">En Rutas BGD respetamos tu privacidad y protegemos tus datos personales. Aquí te explicamos qué información recopilamos, cómo la usamos y cuáles son tus derechos.</p>
+      <div class="meta">
+        <span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Vigente desde: Septiembre 2026
+        </span>
+        <span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Cumple con LFPDPPP
+        </span>
+      </div>
+    </div>
+
+    <nav class="toc">
+      <h2>📋 Contenido</h2>
+      <ol>
+        <li><a href="#introduccion">Introducción</a></li>
+        <li><a href="#datos-recopilados">Datos que recopilamos</a></li>
+        <li><a href="#finalidad">Finalidad del tratamiento</a></li>
+        <li><a href="#cookies">Cookies y tecnologías similares</a></li>
+        <li><a href="#compartir">Compartir información con terceros</a></li>
+        <li><a href="#seguridad">Seguridad de los datos</a></li>
+        <li><a href="#derechos">Tus derechos (ARCO)</a></li>
+        <li><a href="#menores">Menores de edad</a></li>
+        <li><a href="#cambios">Cambios a esta política</a></li>
+        <li><a href="#contacto">Contacto</a></li>
+      </ol>
+    </nav>
+
+    <article class="article">
+
+      <h2 id="introduccion">1. Introducción</h2>
+      <p>La presente <strong>Política de Privacidad</strong> describe cómo <strong>Rutas BGD</strong> ("nosotros", "nuestro" o "la plataforma"), accesible desde <a href="https://brigadistasbd.pages.dev">brigadistasbd.pages.dev</a>, recopila, usa, almacena y protege la información de los usuarios ("tú" o "el usuario").</p>
+      <p>Al utilizar nuestra plataforma, aceptas las prácticas descritas en este documento. Si no estás de acuerdo, te pedimos que no utilices el sitio.</p>
+      <p>Esta política cumple con lo establecido en la <strong>Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP)</strong> de México y sus lineamientos.</p>
+
+      <div class="info-box">
+        <h4>📌 Resumen rápido</h4>
+        <p><strong>No vendemos tus datos. No rastreamos tu ubicación sin permiso. No compartimos tu información con anunciantes.</strong> Solo usamos los datos estrictamente necesarios para que la plataforma funcione.</p>
+      </div>
+
+      <h2 id="datos-recopilados">2. Datos que recopilamos</h2>
+
+      <h3>2.1. Datos que NO recopilamos</h3>
+      <ul>
+        <li>❌ No pedimos nombre real, dirección, teléfono ni correo electrónico para usar la app.</li>
+        <li>❌ No recopilamos datos biométricos.</li>
+        <li>❌ No accedemos a tus contactos, mensajes ni archivos personales.</li>
+        <li>❌ No rastreamos tu ubicación en segundo plano.</li>
+      </ul>
+
+      <h3>2.2. Datos que SÍ recopilamos (mínimos)</h3>
+      <ul>
+        <li><strong>Identificador anónimo de dispositivo:</strong> un código aleatorio generado localmente que se guarda en tu navegador. Se usa para identificar tus comentarios y likes. No revela tu identidad.</li>
+        <li><strong>Nombre de usuario local:</strong> si publicas un comentario, se te asigna un nombre genérico ("Vecino XXXX") que puedes cambiar. Se guarda solo en tu dispositivo.</li>
+        <li><strong>Coordenadas GPS:</strong> SOLO cuando tú pulsas el botón "Mi ubicación" o usas una función de mapa que lo requiera. Nunca en segundo plano.</li>
+        <li><strong>Contenido que publicas:</strong> comentarios, reportes de rutas, anuncios del marketplace. Esta información es pública por diseño.</li>
+        <li><strong>Datos de uso anónimos:</strong> páginas vistas, rutas consultadas. Se almacenan de forma agregada para mejorar la plataforma.</li>
+      </ul>
+
+      <h3>2.3. Datos técnicos automáticos</h3>
+      <ul>
+        <li>Tipo de navegador y sistema operativo.</li>
+        <li>Idioma del navegador.</li>
+        <li>Registro de errores (para depuración).</li>
+      </ul>
+
+      <h2 id="finalidad">3. Finalidad del tratamiento</h2>
+      <p>Los datos que recopilamos se utilizan exclusivamente para:</p>
+      <ul>
+        <li><strong>Proporcionar el servicio:</strong> mostrar rutas, mapas, comentarios y marketplace.</li>
+        <li><strong>Identificar tus contribuciones:</strong> para que puedas editar o eliminar tus propios comentarios.</li>
+        <li><strong>Mejorar la plataforma:</strong> analizar qué rutas son más consultadas para optimizar el contenido.</li>
+        <li><strong>Prevenir abuso:</strong> detectar spam o contenido inapropiado.</li>
+        <li><strong>Cumplir obligaciones legales:</strong> cuando sea requerido por autoridad competente.</li>
+      </ul>
+
+      <blockquote>
+        <strong>Nunca usamos tus datos para:</strong> publicidad personalizada, venta a terceros, perfilado comercial, ni rastreo entre sitios.
+      </blockquote>
+
+      <h2 id="cookies">4. Cookies y tecnologías similares</h2>
+      <p>Rutas BGD utiliza las siguientes tecnologías de almacenamiento local:</p>
+
+      <h3>4.1. LocalStorage</h3>
+      <p>Se usa para guardar:</p>
+      <ul>
+        <li>Preferencia de tema (claro/oscuro).</li>
+        <li>Identificador anónimo del dispositivo.</li>
+        <li>Nombre de usuario local.</li>
+        <li>Token de notificaciones push (si las activas).</li>
+      </ul>
+
+      <h3>4.2. IndexedDB</h3>
+      <p>Base de datos local del navegador que se usa para:</p>
+      <ul>
+        <li>Cachear rutas para uso offline.</li>
+        <li>Almacenar mosaicos de mapas para navegación sin conexión.</li>
+        <li>Cola de sincronización cuando estás offline.</li>
+      </ul>
+
+      <h3>4.3. Service Worker Cache</h3>
+      <p>Almacena recursos estáticos (HTML, CSS, JS, imágenes) para que la app funcione sin conexión.</p>
+
+      <h3>4.4. Cookies de terceros</h3>
+      <p>No usamos cookies de rastreo publicitario. Los servicios externos que usamos (MapTiler, Cloudinary, Firebase) pueden establecer sus propias cookies técnicas, sujetas a sus respectivas políticas.</p>
+
+      <h2 id="compartir">5. Compartir información con terceros</h2>
+      <p><strong>No vendemos, alquilamos ni compartimos tus datos personales con terceros</strong>, salvo en los siguientes casos:</p>
+
+      <h3>5.1. Servicios técnicos necesarios</h3>
+      <ul>
+        <li><strong>Cloudflare Pages:</strong> hosting del sitio.</li>
+        <li><strong>Firebase (Google):</strong> base de datos en tiempo real para comentarios y rutas.</li>
+        <li><strong>Cloudinary:</strong> almacenamiento de imágenes.</li>
+        <li><strong>MapTiler:</strong> proveedor de mosaicos de mapas.</li>
+        <li><strong>GitHub:</strong> almacenamiento del código fuente y contenido estático.</li>
+      </ul>
+      <p>Todos estos proveedores cumplen con estándares internacionales de protección de datos.</p>
+
+      <h3>5.2. Obligación legal</h3>
+      <p>Podemos divulgar información si somos requeridos por:</p>
+      <ul>
+        <li>Orden judicial o administrativa.</li>
+        <li>Autoridad fiscal o de investigación.</li>
+        <li>Requerimiento de protección de derechos de terceros.</li>
+      </ul>
+
+      <h2 id="seguridad">6. Seguridad de los datos</h2>
+      <p>Implementamos medidas técnicas y organizativas para proteger la información:</p>
+      <ul>
+        <li>🔒 <strong>Cifrado HTTPS</strong> en todas las comunicaciones.</li>
+        <li>🔒 <strong>Sanitización</strong> de todo el contenido que publican los usuarios (sin HTML, sin scripts, sin URLs).</li>
+        <li>🔒 <strong>Validación</strong> de todas las entradas del usuario.</li>
+        <li>🔒 <strong>Tokens de administrador</strong> protegidos, con verificación en servidor.</li>
+        <li>🔒 <strong>Control de acceso</strong> a funciones administrativas.</li>
+        <li>🔒 <strong>Backups periódicos</strong> de los datos.</li>
+      </ul>
+
+      <blockquote>
+        ⚠️ <strong>Advertencia:</strong> Ningún sistema es 100% seguro. Si detectas una vulnerabilidad, repórtala a <a href="mailto:contacto@brigadistasbd.pages.dev">contacto@brigadistasbd.pages.dev</a> para que la corrijamos.
+      </blockquote>
+
+      <h2 id="derechos">7. Tus derechos (ARCO)</h2>
+      <p>De acuerdo con la LFPDPPP, tienes derecho a:</p>
+      <ul>
+        <li><strong>Acceso:</strong> conocer qué datos tenemos sobre ti.</li>
+        <li><strong>Rectificación:</strong> corregir datos inexactos.</li>
+        <li><strong>Cancelación:</strong> solicitar la eliminación de tus datos.</li>
+        <li><strong>Oposición:</strong> oponerte al tratamiento de tus datos para fines específicos.</li>
+      </ul>
+
+      <h3>7.1. Cómo ejercer tus derechos</h3>
+      <p>Envía un correo a <a href="mailto:contacto@brigadistasbd.pages.dev">contacto@brigadistasbd.pages.dev</a> con:</p>
+      <ol>
+        <li>Asunto: "Ejercicio de derechos ARCO".</li>
+        <li>Descripción clara de tu solicitud.</li>
+        <li>Cualquier elemento que ayude a identificarte (por ejemplo, el contenido que publicaste).</li>
+      </ol>
+      <p>Responderemos en un plazo máximo de <strong>20 días hábiles</strong>.</p>
+
+      <h3>7.2. Eliminación de contenido</h3>
+      <p>Puedes eliminar tus propios comentarios directamente desde la plataforma, en cualquier momento. Para eliminar un reporte o anuncio, contáctanos.</p>
+
+      <h2 id="menores">8. Menores de edad</h2>
+      <p>Rutas BGD está diseñada para usuarios de todas las edades, pero <strong>no recopilamos intencionalmente datos de menores de 13 años</strong>. Si eres padre o tutor y detectas que tu hijo menor ha publicado información personal, contáctanos para eliminarla.</p>
+
+      <h2 id="cambios">9. Cambios a esta política</h2>
+      <p>Podemos actualizar esta Política de Privacidad para reflejar cambios en nuestras prácticas o requisitos legales. Los cambios se publicarán en esta página con la fecha de "Vigente desde" actualizada.</p>
+      <p>Te recomendamos revisarla periódicamente. El uso continuado del sitio tras una actualización constituye aceptación de los cambios.</p>
+
+      <h2 id="contacto">10. Contacto</h2>
+      <p>Si tienes dudas, sugerencias o comentarios sobre esta Política de Privacidad, puedes contactarnos:</p>
+      <ul>
+        <li>📧 Correo: <a href="mailto:contacto@brigadistasbd.pages.dev">contacto@brigadistasbd.pages.dev</a></li>
+        <li>🌐 Sitio: <a href="https://brigadistasbd.pages.dev">brigadistasbd.pages.dev</a></li>
+      </ul>
+
+      <div class="contact-block">
+        <h2>¿Preguntas sobre tu privacidad?</h2>
+        <p>Estamos comprometidos con la transparencia. Escríbenos.</p>
+        <a href="mailto:contacto@brigadistasbd.pages.dev">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="16" height="16"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          contacto@brigadistasbd.pages.dev
+        </a>
+      </div>
+
+    </article>
+
+    <footer>
+      <div style="margin-bottom:14px">
+        <a href="/" style="margin:0 8px">Inicio</a>·
+        <a href="/?tab=routes" style="margin:0 8px">Rutas</a>·
+        <a href="/?tab=market" style="margin:0 8px">Marketplace</a>·
+        <a href="/Comunidad" style="margin:0 8px">Comunidad</a>
+      </div>
+      <div style="margin-bottom:14px">
+        <a href="/metodologia" style="margin:0 8px">Metodología</a>·
+        <a href="/acerca" style="margin:0 8px">Acerca de</a>·
+        <a href="/politica-privacidad" style="margin:0 8px">Privacidad</a>·
+        <a href="/terminos" style="margin:0 8px">Términos</a>
+      </div>
+      © <span id="year"></span> Rutas BGD · <a href="https://brigadistasbd.pages.dev">brigadistasbd.pages.dev</a>
+    </footer>
+
+  </div>
+</main>
+
+<nav class="bottom-nav">
+  <a class="nav-item" href="/" style="text-decoration:none;color:inherit">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>Inicio</span>
+  </a>
+  <a class="nav-item" href="/?tab=market" style="text-decoration:none;color:inherit">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+    <span>Market</span>
+  </a>
+  <a class="nav-item" href="/?tab=routes" style="text-decoration:none;color:inherit">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M4.5 5C4.5 3.62 5.62 2.5 7 2.5h10c1.38 0 2.5 1.12 2.5 2.5v11c0 1.1-.9 2-2 2H17v3c0 .28-.22.5-.5.5h-2c-.28 0-.5-.22-.5-.5v-3h-4v3c0 .28-.22.5-.5.5h-2c-.28 0-.5-.22-.5-.5v-3H6.5c-1.1 0-2-.9-2-2V5Zm2 .5v2h11v-2h-11Zm0 4V13h5V9.5h-5Zm6 0V13h5V9.5h-5ZM8 15a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm2.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm3.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm2.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/></svg>
+    <span>Rutas</span>
+  </a>
+  <a class="nav-item" href="/?tab=routes&openList=1" style="text-decoration:none;color:inherit">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+    <span>Lista</span>
+  </a>
+  <a class="nav-item" href="/Comunidad" style="text-decoration:none;color:inherit">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    <span>Comunidad</span>
+  </a>
+</nav>
+
+<script>
+(function(){
+  'use strict';
+  document.getElementById('year').textContent = new Date().getFullYear();
+  const savedTheme = localStorage.getItem('tgz_theme') || 'light';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  updateThemeIcon();
+
+  function updateThemeIcon(){
+    const t = document.documentElement.getAttribute('data-theme');
+    const icon = document.getElementById('themeIcon');
+    if(!icon) return;
+    icon.innerHTML = t==='dark'
+      ? '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'
+      : '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+  }
+  document.getElementById('themeBtn').onclick = () => {
+    const cur = document.documentElement.getAttribute('data-theme');
+    const next = cur==='dark'?'light':'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('tgz_theme', next);
+    updateThemeIcon();
+  };
+
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const id = a.getAttribute('href').slice(1);
+      const el = document.getElementById(id);
+      if(el){
+        e.preventDefault();
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>
