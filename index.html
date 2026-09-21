@@ -1080,7 +1080,7 @@ body.fs-active{overflow:hidden !important}
 
 .side-panel{
   position:fixed;top:0;right:0;bottom:0;
-  width:78vw;max-width:520px;
+  width:52vw;max-width:380px;
   background:var(--surface);
   border-left:1px solid var(--border-2);
   z-index:2500;
@@ -1137,8 +1137,8 @@ body.fs-active{overflow:hidden !important}
 }
 
 .sp-route-item{
-  display:flex;align-items:center;gap:10px;
-  padding:11px 12px;
+  display:flex;align-items:flex-start;gap:9px;
+  padding:10px 11px;
   border-radius:12px;
   background:var(--surface-2);
   border:1px solid var(--border);
@@ -1155,38 +1155,67 @@ body.fs-active{overflow:hidden !important}
 .sp-route-item:active{transform:scale(.98)}
 
 .sp-route-icon{
-  width:40px;height:40px;border-radius:10px;
+  width:38px;height:38px;border-radius:10px;
   background:linear-gradient(135deg,var(--cyan),var(--cyan-d));
-  display:grid;place-items:center;color:#00121a;
+  display:grid;place-items:center;
+  color:#ffffff;
   flex-shrink:0;
 }
-.sp-route-icon svg{width:22px;height:22px}
+.sp-route-icon svg{
+  width:22px;height:22px;
+  fill:#ffffff;
+  color:#ffffff;
+}
 
 .sp-route-info{flex:1;min-width:0}
 
+/* Fila 1: nombre + categoría al lado */
+.sp-route-row-1{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:6px;margin-bottom:5px;
+}
 .sp-route-name{
-  font-weight:800;font-size:13.5px;
+  font-weight:800;font-size:12.5px;
   text-transform:uppercase;letter-spacing:.2px;
-  line-height:1.25;margin-bottom:2px;
+  line-height:1.2;
   overflow:hidden;text-overflow:ellipsis;
-  display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;
+  white-space:nowrap;
+  flex:1;min-width:0;
 }
 .sp-route-cat{
-  font-size:10.5px;font-weight:700;
-  color:var(--text-3);text-transform:uppercase;
-  letter-spacing:.3px;
+  font-size:9px;font-weight:800;
+  text-transform:uppercase;letter-spacing:.3px;
+  padding:2px 7px;border-radius:99px;
+  flex-shrink:0;
 }
-.sp-route-meta{
-  display:flex;flex-direction:column;gap:2px;
-  margin-top:4px;font-size:11px;
-  color:var(--text-2);
+.sp-route-cat.urbana{
+  background:color-mix(in srgb,var(--cyan) 16%,transparent);
+  color:var(--cyan);
+  border:1px solid color-mix(in srgb,var(--cyan) 30%,transparent);
 }
-.sp-route-meta .sp-meta-row{
-  display:flex;align-items:center;gap:5px;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+.sp-route-cat.foranea{
+  background:color-mix(in srgb,var(--purple) 18%,transparent);
+  color:var(--purple);
+  border:1px solid color-mix(in srgb,var(--purple) 32%,transparent);
 }
-.sp-route-meta .sp-meta-row svg{
-  width:11px;height:11px;color:var(--cyan);flex-shrink:0;
+
+/* Fila 2: parada + retorno lado a lado */
+.sp-route-row-2{
+  display:grid;grid-template-columns:1fr 1fr;gap:6px;
+}
+.sp-route-cell{
+  display:flex;align-items:center;gap:4px;
+  font-size:10px;color:var(--text-2);
+  min-width:0;
+}
+.sp-route-cell svg{
+  width:11px;height:11px;flex-shrink:0;
+}
+.sp-route-cell.parada svg{color:var(--green)}
+.sp-route-cell.retorno svg{color:var(--amber)}
+.sp-route-cell span{
+  overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;min-width:0;
 }
 
 .sp-empty{
@@ -1198,7 +1227,7 @@ body.fs-active{overflow:hidden !important}
 }
 
 @media(max-width:520px){
-  .side-panel{width:88vw}
+  .side-panel{width:72vw;max-width:340px}
 }
    
 </style>
