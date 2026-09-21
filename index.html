@@ -383,7 +383,7 @@ img{max-width:100%;display:block}
 }
 .btn svg{width:17px;height:17px}
 .btn:active{transform:scale(.96)}
-.btn-primary{background:linear-gradient(135deg,var(--cyan),var(--cyan-d));color:#00121a;box-shadow:0 6px 18px -6px var(--cyan-glow)}
+.btn-primary{background:linear-gradient(135deg,var(--cyan),var(--cyan-d));color:var(--text);box-shadow:0 6px 18px -6px var(--cyan-glow)}
 .btn-primary:hover{filter:brightness(1.08);box-shadow:0 8px 22px -6px var(--cyan-glow)}
 .btn-ghost{background:var(--surface-2);color:var(--text);border-color:var(--border)}
 .btn-ghost:hover{background:var(--surface-3);border-color:var(--border-2)}
@@ -1299,6 +1299,11 @@ body.fs-active{overflow:hidden !important}
       Instalar APP
     </button>
 
+
+     <button class="icon-btn" id="themeBtn" title="Cambiar tema">
+      <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+     
      <button class="icon-btn" id="notifBtn" title="Activar notificaciones">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
@@ -1306,9 +1311,7 @@ body.fs-active{overflow:hidden !important}
   </svg>
 </button>
      
-    <button class="icon-btn" id="themeBtn" title="Cambiar tema">
-      <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-    </button>
+    
 
   </div>
 </header>
