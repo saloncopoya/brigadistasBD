@@ -6,11 +6,14 @@
 export async function onRequest(context) {
   const { request, env } = context;
   const headers = {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type'
-  };
+  'Content-Type': 'application/json',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'X-Robots-Tag': 'index, follow, max-snippet:-1, max-image-preview:large',
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'strict-origin-when-cross-origin'
+};
 
   if (request.method === 'OPTIONS') {
     return new Response(null, { headers });
@@ -600,87 +603,147 @@ const safeDescOG = escapeHTML(enrichedContent.slice(0, 125));
     };
   }
 
-  const schema = {
-    '@context': 'https://schema.org',
-    '@graph': [
-      {
-        '@type': 'Organization',
-        '@id': `${baseUrl}/#organization`,
-        name: 'Rutas BGD',
-        url: `${baseUrl}/`,
-        logo: {
-          '@type': 'ImageObject',
-          url: `${baseUrl}/img.png`,
-          width: 512,
-          height: 512
-        },
-        areaServed: {
-          '@type': 'City',
-          name: 'Tuxtla Gutiérrez',
-          containedInPlace: { '@type': 'State', name: 'Chiapas' }
-        }
-      },
-      {
-        '@type': 'WebSite',
-        '@id': `${baseUrl}/#website`,
-        url: `${baseUrl}/`,
-        name: 'Rutas BGD',
-        publisher: orgRef,
-        inLanguage: 'es-MX'
-      },
-      
-      {
-        '@type': 'WebPage',
-        '@id': `${pageUrl}#webpage`,
-        url: pageUrl,
-        name: safeSeoTitle,
-        description: safeDesc,
-        isPartOf: websiteRef,
-        inLanguage: 'es-MX',
-        datePublished: new Date().toISOString(),
-        dateModified: new Date().toISOString(),
-        primaryImageOfPage: {
-          '@type': 'ImageObject',
-          '@id': `${pageUrl}#primaryimage`,
-          url: safeImage,
-          contentUrl: safeImage,
-          thumbnailUrl: safeImage,
-          width: 1200,
-          height: 630,
-          caption: safeTitle,
-          representativeOfPage: true,
-          encodingFormat: 'image/jpeg'
-        },
-        image: {
-          '@type': 'ImageObject',
-          '@id': `${pageUrl}#primaryimage`,
-          url: safeImage,
-          contentUrl: safeImage,
-          thumbnailUrl: safeImage,
-          width: 1200,
-          height: 630,
-          caption: safeTitle,
-          representativeOfPage: true,
-          encodingFormat: 'image/jpeg'
-        },
-        keywords: tipo === 'ruta'
-          ? `ruta, colectivo, transporte público, Tuxtla Gutiérrez, Chiapas, ${toStrArr(extra?.route?.calles).slice(0, 5).join(', ')}`
-          : tipo === 'market'
-            ? `marketplace, ${extra?.market?.categoria || 'anuncio'}, Tuxtla Gutiérrez, Chiapas`
-            : `blog, Tuxtla Gutiérrez, Chiapas`,
-        breadcrumb: {
-          '@type': 'BreadcrumbList',
-          '@id': `${pageUrl}#breadcrumb`,
-          itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${baseUrl}/` },
-            { '@type': 'ListItem', position: 2, name: typeLabel + 's', item: `${baseUrl}/?tab=${tipo === 'ruta' ? 'routes' : tipo === 'market' ? 'market' : 'home'}` },
-            { '@type': 'ListItem', position: 3, name: title, item: pageUrl }
-          ]
-        }
-      },
-      contentSchema
-    ]
-  };
+  // ✅ FAQ Schema para mejorar visibilidad en IA (ChatGPT, Gemini, Perplexity)
+const faqSchema = tipo === 'ruta' ? {
+  '@type': 'FAQPage',
+  '@id': `${pageUrl}#faq`,
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: `¿Cuánto cuesta el pasaje de la ${title}?`,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: extra?.route?.tarifa
+          ? `El costo del pasaje de la ${title} es de ${extra.route.tarifa}.`
+          : `El costo del pasaje de la ${title} puede variar. Consulta la información actualizada en esta página.`
+      }
+    },
+    {
+      '@type': 'Question',
+      name: `¿Cuál es el horario de operación de la ${title}?`,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: extra?.route?.horarioIni
+          ? `La ${title} opera desde las ${extra.route.horarioIni} hasta las ${extra.route.horarioFin || 'última hora'}.`
+          : `La ${title} opera en horarios habituales de transporte público en Tuxtla Gutiérrez.`
+      }
+    },
+    {
+      '@type': 'Question',
+      name: `¿Qué paradas tiene la ${title}?`,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: extra?.route?.paradas?.length
+          ? `La ${title} cuenta con ${extra.route.paradas.length} paradas, entre ellas: ${extra.route.paradas.slice(0, 5).join(', ')}.`
+          : `Consulta el listado completo de paradas en esta página.`
+      }
+    },
+    {
+      '@type': 'Question',
+      name: `¿La ${title} es urbana o foránea?`,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: `La ${title} es una ruta de categoría ${extra?.route?.categoria || 'urbana'} en Tuxtla Gutiérrez, Chiapas.`
+      }
+    }
+  ]
+} : null;
+
+const graphNodes = [
+  {
+    '@type': 'Organization',
+    '@id': `${baseUrl}/#organization`,
+    name: 'Rutas BGD',
+    url: `${baseUrl}/`,
+    logo: {
+      '@type': 'ImageObject',
+      url: `${baseUrl}/img.png`,
+      width: 512,
+      height: 512
+    },
+    contactPoint: {
+      '@type': 'ContactPoint',
+      contactType: 'customer service',
+      email: 'contacto@brigadistasbd.pages.dev',
+      availableLanguage: ['Spanish', 'es-MX']
+    },
+    areaServed: {
+      '@type': 'City',
+      name: 'Tuxtla Gutiérrez',
+      containedInPlace: { '@type': 'State', name: 'Chiapas' }
+    }
+  },
+  {
+    '@type': 'WebSite',
+    '@id': `${baseUrl}/#website`,
+    url: `${baseUrl}/`,
+    name: 'Rutas BGD',
+    publisher: orgRef,
+    inLanguage: 'es-MX'
+  },
+  {
+    '@type': 'WebPage',
+    '@id': `${pageUrl}#webpage`,
+    url: pageUrl,
+    name: safeSeoTitle,
+    description: safeDesc,
+    isPartOf: websiteRef,
+    inLanguage: 'es-MX',
+    datePublished: new Date().toISOString(),
+    dateModified: new Date().toISOString(),
+    reviewedBy: {
+      '@type': 'Organization',
+      name: 'Rutas BGD'
+    },
+    lastReviewed: new Date().toISOString(),
+    primaryImageOfPage: {
+      '@type': 'ImageObject',
+      '@id': `${pageUrl}#primaryimage`,
+      url: safeImage,
+      contentUrl: safeImage,
+      thumbnailUrl: safeImage,
+      width: 1200,
+      height: 630,
+      caption: safeTitle,
+      representativeOfPage: true,
+      encodingFormat: 'image/jpeg'
+    },
+    image: {
+      '@type': 'ImageObject',
+      '@id': `${pageUrl}#primaryimage`,
+      url: safeImage,
+      contentUrl: safeImage,
+      thumbnailUrl: safeImage,
+      width: 1200,
+      height: 630,
+      caption: safeTitle,
+      representativeOfPage: true,
+      encodingFormat: 'image/jpeg'
+    },
+    keywords: tipo === 'ruta'
+      ? `ruta, colectivo, transporte público, Tuxtla Gutiérrez, Chiapas, ${toStrArr(extra?.route?.calles).slice(0, 5).join(', ')}`
+      : tipo === 'market'
+        ? `marketplace, ${extra?.market?.categoria || 'anuncio'}, Tuxtla Gutiérrez, Chiapas`
+        : `blog, Tuxtla Gutiérrez, Chiapas`,
+    breadcrumb: {
+      '@type': 'BreadcrumbList',
+      '@id': `${pageUrl}#breadcrumb`,
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${baseUrl}/` },
+        { '@type': 'ListItem', position: 2, name: typeLabel + 's', item: `${baseUrl}/?tab=${tipo === 'ruta' ? 'routes' : tipo === 'market' ? 'market' : 'home'}` },
+        { '@type': 'ListItem', position: 3, name: title, item: pageUrl }
+      ]
+    }
+  },
+  contentSchema
+];
+
+if (faqSchema) graphNodes.push(faqSchema);
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@graph': graphNodes
+};
    
 
   let bodyContent;
@@ -704,10 +767,19 @@ bodyContent = renderRouteMapBlock(extra.route, baseUrl) + renderRouteBody(extra.
 <meta name="description" content="${safeDesc}">
 <link rel="canonical" href="${pageUrl}">
 <link rel="manifest" href="/manifest.json">
-<link rel="icon" type="image/svg+xml" href="/assets/icon.svg">
-<link rel="apple-touch-icon" sizes="180x180" href="/assets/icon.svg">
-<link rel="apple-touch-icon" sizes="152x152" href="/assets/icon.svg">
-<link rel="apple-touch-icon" sizes="120x120" href="/assets/icon.svg">
+<!-- 🌐 FAVICON COMPLETO (multi-resolución para todos los dispositivos) -->
+<link rel="icon" type="image/svg+xml" href="${baseUrl}/assets/icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="${baseUrl}/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="${baseUrl}/favicon-16x16.png">
+<link rel="icon" type="image/x-icon" href="${baseUrl}/favicon.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="${baseUrl}/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="152x152" href="${baseUrl}/apple-touch-icon-152x152.png">
+<link rel="apple-touch-icon" sizes="120x120" href="${baseUrl}/apple-touch-icon-120x120.png">
+<link rel="mask-icon" href="${baseUrl}/assets/icon.svg" color="#0167ff">
+<meta name="msapplication-TileColor" content="#0167ff">
+<meta name="msapplication-config" content="${baseUrl}/browserconfig.xml">
+
+
 <meta name="format-detection" content="telephone=no">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -778,7 +850,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:
 .icon-btn svg{width:20px;height:20px}
 
 /* NAV INFERIOR */
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav-h) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:color-mix(in srgb,var(--surface) 96%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(3,1fr);z-index:1000}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav-h) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:color-mix(in srgb,var(--surface) 96%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(4,1fr);z-index:1000}
 .nav-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--text-3);font-size:11px;font-weight:600;transition:var(--transition);text-decoration:none;position:relative}
 .nav-item svg{width:23px;height:23px}
 .nav-item.active{color:var(--cyan)}
@@ -853,7 +925,71 @@ body.fs-active{overflow:hidden!important}
 
 footer{margin-top:30px;padding-top:20px;border-top:1px solid var(--border);color:var(--text-2);font-size:12px;text-align:center}
 footer a{color:var(--cyan)}
+
+/* ============================================================
+   📱 RESPONSIVE REAL (media queries — audit SEO requirement)
+   ============================================================ */
+@media (max-width: 768px) {
+  h1{font-size:22px}
+  .wrap{padding:14px}
+  .route-map-hero{height:38vh;min-height:260px}
+  .intro-paragraphs p{font-size:14px;line-height:1.65}
+  .block{padding:14px}
+  .block h3{font-size:13px}
+  .block li{font-size:13.5px;padding:6px 0}
+  .meta{font-size:12px}
+  .btn{padding:10px 14px;font-size:13px}
+  .price{font-size:19px}
+}
+
+@media (max-width: 480px) {
+  h1{font-size:20px;line-height:1.25}
+  .wrap{padding:12px}
+  .route-map-hero{height:34vh;min-height:220px}
+  .intro-paragraphs p{font-size:13.5px}
+  .block{padding:12px}
+  .badge{font-size:10px;padding:3px 8px}
+  .nav-item span{font-size:10px}
+  .nav-item svg{width:20px;height:20px}
+}
+
+@media (min-width: 1024px) {
+  .wrap{max-width:820px;padding:28px}
+  .route-map-hero{height:56vh}
+  h1{font-size:30px}
+}
+
+/* ♿ Prefers-reduced-motion (accesibilidad) */
+@media (prefers-reduced-motion: reduce) {
+  *{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+
+/* 🌙 Prefers-color-scheme (auto dark para no-JS) */
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme]) {
+    --bg:#0a0e1a;--bg-2:#0f1526;--surface:#141c30;
+    --text:#e8edf7;--text-2:#a9b4cc;--text-3:#6b7793;
+    --border:#26314f;--border-2:#334066;
+  }
+}
+
+
+.seo-hero{
+  position:absolute;
+  width:1px;
+  height:1px;
+  padding:0;
+  margin:-1px;
+  overflow:hidden;
+  clip:rect(0,0,0,0);
+  white-space:nowrap;
+  border:0;
+  /* ✅ Responsive-friendly: no rompe layout en ningún viewport */
+  max-width:100%;
+  height:auto;
+}
 </style>
+
 </head>
 <body data-theme="light">
 
@@ -879,17 +1015,56 @@ footer a{color:var(--cyan)}
 
  <div class="cta">
     <a class="btn btn-primary" href="${baseUrl}/">🚌 Ver todas las rutas</a>
-    <a class="btn btn-ghost" href="${baseUrl}/?tab=market" rel="nofollow">🛒 Marketplace</a>
-  </div>
+<a class="btn btn-ghost" href="${baseUrl}/?tab=market">🛒 Marketplace</a>
+</div>
 
   
      <span class="badge badge-${tipo === 'ruta' ? (extra?.route?.categoria === 'foranea' ? 'foranea' : 'urbana') : tipo === 'market' ? 'green' : 'urbana'}">${typeLabel}</span>
   <h1>${safeTitle}${tipo === 'ruta' ? ' · Colectivo Tuxtla Gutiérrez' : tipo === 'market' ? ' · Marketplace Tuxtla Gutiérrez' : ''}</h1>
-  <div class="meta">${new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
 
-  
-  <!-- 🔒 IMAGEN SEO: oculta visualmente pero indexable por Google -->
-  ${image ? `<img class="seo-hero" src="${safeImage}" alt="${safeTitle}" title="${safeTitle}" width="1200" height="630" loading="eager">` : ''}
+
+<div class="meta">
+  <time datetime="${new Date().toISOString()}" title="Fecha de publicación">
+    📅 Publicado: ${new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}
+  </time>
+  <span style="margin:0 8px;opacity:.4">·</span>
+  <time datetime="${new Date().toISOString()}" title="Última actualización" style="color:var(--cyan);font-weight:700">
+    🔄 Actualizado: ${new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}
+  </time>
+</div>
+
+<!-- ✅ BLOQUE DE CONFIANZA (E-E-A-T para Google e IA) -->
+<div class="trust-block" style="margin:16px 0 24px;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);font-size:12.5px;line-height:1.7;color:var(--text-2)">
+  <div style="display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-start">
+    <div style="flex:1;min-width:200px">
+      <strong style="color:var(--cyan);display:block;margin-bottom:4px">✅ Datos verificados por</strong>
+      Rutas BGD · Tuxtla Gutiérrez, Chiapas
+    </div>
+    <div style="flex:1;min-width:200px">
+      <strong style="color:var(--cyan);display:block;margin-bottom:4px">📧 Contacto</strong>
+      <a href="mailto:contacto@brigadistasbd.pages.dev" style="color:var(--cyan)">contacto@brigadistasbd.pages.dev</a>
+    </div>
+    <div style="flex:1;min-width:200px">
+      <strong style="color:var(--cyan);display:block;margin-bottom:4px">📋 Metodología</strong>
+      <a href="${baseUrl}/metodologia" style="color:var(--cyan)">Cómo recopilamos y verificamos los datos</a>
+    </div>
+  </div>
+</div>
+
+
+  <!-- 🔒 IMAGEN SEO: oculta visualmente pero indexable por Google y accesible para IA -->
+${image ? `
+  <img class="seo-hero"
+       src="${safeImage}"
+       alt="Mapa y recorrido de la ${safeTitle} — Tuxtla Gutiérrez, Chiapas"
+       title="${safeTitle} — Rutas BGD"
+       width="1200"
+       height="630"
+       sizes="(max-width: 480px) 100vw, (max-width: 768px) 90vw, (max-width: 1024px) 80vw, 760px"
+       loading="eager"
+       decoding="async"
+       fetchpriority="high">` : ''}
+       
   
   ${bodyContent}
 
@@ -899,24 +1074,48 @@ footer a{color:var(--cyan)}
 
   
   
-  <footer>© ${new Date().getFullYear()} Rutas BGD · <a href="${baseUrl}">${cleanDomain(baseUrl)}</a></footer>
+<footer style="margin-top:40px;padding-top:24px;border-top:1px solid var(--border);color:var(--text-2);font-size:12px;text-align:center;line-height:1.9">
+  <div style="margin-bottom:14px">
+    <a href="${baseUrl}/" style="color:var(--cyan);margin:0 8px">Inicio</a>·
+    <a href="${baseUrl}/?tab=routes" style="color:var(--cyan);margin:0 8px">Rutas</a>·
+    <a href="${baseUrl}/?tab=market" style="color:var(--cyan);margin:0 8px">Marketplace</a>·
+    <a href="${baseUrl}/Comunidad" style="color:var(--cyan);margin:0 8px">Comunidad</a>
+  </div>
+  <div style="margin-bottom:14px">
+    <a href="${baseUrl}/politica-privacidad" style="color:var(--cyan);margin:0 8px">Privacidad</a>·
+    <a href="${baseUrl}/terminos" style="color:var(--cyan);margin:0 8px">Términos</a>·
+    <a href="${baseUrl}/metodologia" style="color:var(--cyan);margin:0 8px">Metodología</a>·
+    <a href="${baseUrl}/acerca" style="color:var(--cyan);margin:0 8px">Acerca de</a>
+  </div>
+  <div style="color:var(--text-3);font-size:11px">
+    © ${new Date().getFullYear()} Rutas BGD · <a href="${baseUrl}" style="color:var(--cyan)">${cleanDomain(baseUrl)}</a>
+    <br>
+    <span style="opacity:.7">Información actualizada periódicamente. Verifica siempre antes de viajar.</span>
+  </div>
+</footer>
+
 </div>
 
-<!-- NAV INFERIOR -->
-<nav class="bottom-nav">
-  <a class="nav-item" href="${baseUrl}/?tab=home" rel="nofollow">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+<!-- NAV INFERIOR (4 botones — clon de index) -->
+<nav class="bottom-nav" aria-label="Navegación principal">
+  <a class="nav-item" href="${baseUrl}/" rel="noopener">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     <span>Inicio</span>
   </a>
-  <a class="nav-item ${tipo === 'ruta' ? 'active' : ''}" href="${baseUrl}/?tab=routes" rel="nofollow">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M6 16V9a4 4 0 0 1 4-4h4"/><path d="M18 8v7a4 4 0 0 1-4 4H9"/></svg>
-    <span>Rutas</span>
-  </a>
-  <a class="nav-item ${tipo === 'market' ? 'active' : ''}" href="${baseUrl}/?tab=market" rel="nofollow">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+  <a class="nav-item ${tipo === 'market' ? 'active' : ''}" href="${baseUrl}/?tab=market">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
     <span>Market</span>
   </a>
+  <a class="nav-item ${tipo === 'ruta' ? 'active' : ''}" href="${baseUrl}/?tab=routes">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M6 16V9a4 4 0 0 1 4-4h4"/><path d="M18 8v7a4 4 0 0 1-4 4H9"/></svg>
+    <span>Rutas</span>
+  </a>
+  <a class="nav-item" href="${baseUrl}/Comunidad">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    <span>Comunidad</span>
+  </a>
 </nav>
+
 
 <script>
 // 🖥️ Botón pantalla completa del mapa
@@ -995,8 +1194,8 @@ function renderRouteMapBlock(route, baseUrl) {
         maxZoom: 22,
         maxNativeZoom: 20,
         crossOrigin: true,
-        attribution: '© <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
-      }).addTo(map);
+attribution: '© <a href="https://www.maptiler.com/copyright/" target="_blank" rel="noopener noreferrer">MapTiler</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>'
+}).addTo(map);
 
       var allCoords = [];
          function drawLine(coords, color, dashed){
@@ -1222,7 +1421,7 @@ function renderMarketBody(market) {
   return `
     ${market.price ? `<div class="price">${escapeHTML(market.price)}</div>` : ''}
     <div class="post-content">${escapeHTML(market.description || '').replace(/\n/g, '<br>')}</div>
-    ${market.phone ? `<div class="block"><h3>📞 Contacto</h3><a class="btn btn-primary" href="https://wa.me/${market.phone.replace(/\D/g, '')}?text=${encodeURIComponent('Hola, me interesa: ' + market.title)}" target="_blank" rel="noopener">💬 WhatsApp</a></div>` : ''}
+    ${market.phone ? `<div class="block"><h3>📞 Contacto</h3><a class="btn btn-primary" href="https://wa.me/${market.phone.replace(/\D/g, '')}?text=${encodeURIComponent('Hola, me interesa: ' + market.title)}" target="_blank" rel="noopener noreferrer">💬 WhatsApp</a></div>` : ''}
   `;
 }
 
