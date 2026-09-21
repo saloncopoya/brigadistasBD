@@ -1,0 +1,2101 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0e1a">
+<meta name="robots" content="index, follow">
+<title>Comentarios · Comunidad · Actualizar Rutas — Rutas BGD</title>
+<meta name="description" content="Comunidad de usuarios: comenta, responde, actualiza rutas, reporta cambios y contacta. Espacio colaborativo para usuarios de colectivos en Tuxtla Gutiérrez.">
+<link rel="canonical" href="https://brigadistasbd.pages.dev/comentarios">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Comentarios · Comunidad — Rutas BGD">
+<meta property="og:description" content="Comenta, responde y actualiza rutas en comunidad.">
+<meta property="og:image" content="https://brigadistasbd.pages.dev/img.png">
+<meta property="og:url" content="https://brigadistasbd.pages.dev/comentarios">
+<meta property="og:locale" content="es_MX">
+
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" type="image/svg+xml" href="/assets/icon.svg">
+<link rel="apple-touch-icon" href="/assets/icon.svg">
+<link rel="preconnect" href="https://api.maptiler.com">
+<link rel="preconnect" href="https://res.cloudinary.com">
+<link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
+
+<style>
+:root{
+  --cyan:#0167ff;
+  --cyan-d:#0574a2;
+  --cyan-glow:rgba(0,229,255,.35);
+  --purple:#a855f7;
+  --green:#10b981;
+  --amber:#f59e0b;
+  --red:#ef4444;
+  --pink:#ec4899;
+  --orange:#f97316;
+  --radius:14px;
+  --radius-sm:10px;
+  --radius-lg:22px;
+  --shadow:0 10px 30px rgba(0,0,0,.35);
+  --shadow-sm:0 4px 12px rgba(0,0,0,.25);
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --header-h:58px;
+  --nav-h:64px;
+  --transition:.25s cubic-bezier(.4,0,.2,1);
+}
+[data-theme="dark"]{
+  --bg:#0a0e1a;--bg-2:#0f1526;--bg-3:#161e33;
+  --surface:#141c30;--surface-2:#1c2540;--surface-3:#242f4d;
+  --border:#26314f;--border-2:#334066;
+  --text:#e8edf7;--text-2:#a9b4cc;--text-3:#6b7793;
+  --input-bg:#0f1626;--overlay:rgba(5,8,16,.85);
+}
+[data-theme="light"]{
+  --bg:#f4f6fb;--bg-2:#ffffff;--bg-3:#eef1f8;
+  --surface:#ffffff;--surface-2:#f4f6fb;--surface-3:#e8ecf5;
+  --border:#dde3ee;--border-2:#c5cfe2;
+  --text:#0c1322;--text-2:#4a5773;--text-3:#8a95ad;
+  --input-bg:#f8fafd;--overlay:rgba(15,20,35,.55);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:var(--font);background:var(--bg);color:var(--text);
+  overflow-x:hidden;overscroll-behavior-y:none;
+  transition:background var(--transition),color var(--transition);
+  -webkit-font-smoothing:antialiased;
+  padding-top:var(--header-h);
+  padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom));
+}
+button,input,textarea,select{font-family:inherit;font-size:inherit;color:inherit}
+button{cursor:pointer;border:none;background:none}
+a{color:var(--cyan);text-decoration:none}
+img{max-width:100%;display:block}
+.hidden{display:none!important}
+::selection{background:var(--cyan);color:#00121a}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:8px}
+::-webkit-scrollbar-thumb:hover{background:var(--cyan-d)}
+
+/* HEADER */
+.header{
+  position:fixed;top:0;left:0;right:0;height:var(--header-h);
+  background:color-mix(in srgb,var(--surface) 92%,transparent);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 14px;z-index:1000;
+}
+.header-left{display:flex;align-items:center;gap:8px}
+.back-btn{
+  width:38px;height:38px;border-radius:11px;display:grid;place-items:center;
+  color:var(--text);transition:var(--transition);
+  background:var(--surface-2);border:1px solid var(--border);
+}
+.back-btn:hover{background:var(--surface-3);color:var(--cyan);border-color:var(--border-2)}
+.back-btn svg{width:20px;height:20px}
+.header-brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:16px;letter-spacing:-.3px;color:var(--text)}
+.header-brand .logo{
+  width:32px;height:32px;border-radius:9px;
+  background:linear-gradient(135deg,#ec4899,#f97316);
+  display:grid;place-items:center;color:#fff;
+  box-shadow:0 0 18px rgba(236,72,153,.45);
+}
+.header-brand .logo svg{width:20px;height:20px}
+.header-brand .brand-txt{
+  background:linear-gradient(90deg,#ec4899,#f97316);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.header-actions{display:flex;align-items:center;gap:6px}
+.icon-btn{
+  width:40px;height:40px;border-radius:11px;display:grid;place-items:center;
+  color:var(--text-2);transition:var(--transition);
+}
+.icon-btn:hover{background:var(--surface-2);color:var(--cyan)}
+.icon-btn:active{transform:scale(.92)}
+.icon-btn svg{width:20px;height:20px}
+
+/* NAV INFERIOR */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav-h) + env(safe-area-inset-bottom));
+  padding-bottom:env(safe-area-inset-bottom);
+  background:color-mix(in srgb,var(--surface) 92%,transparent);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border-top:1px solid var(--border);
+  display:grid;grid-template-columns:repeat(3,1fr);z-index:1000;
+}
+.nav-item{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;color:var(--text-3);font-size:11px;font-weight:600;
+  transition:var(--transition);position:relative;text-decoration:none;
+}
+.nav-item svg{width:23px;height:23px}
+.nav-item.active{color:#ec4899}
+.nav-item.active::before{
+  content:"";position:absolute;top:6px;width:44px;height:3px;border-radius:0 0 4px 4px;
+  background:linear-gradient(90deg,#ec4899,#f97316);
+  box-shadow:0 0 14px rgba(236,72,153,.45);
+}
+
+/* WRAP */
+.wrap{max-width:820px;margin:0 auto;padding:16px}
+
+/* HERO */
+.com-hero{
+  background:linear-gradient(135deg,#ec4899 0%,#f97316 100%);
+  color:#fff;border-radius:var(--radius-lg);
+  padding:22px 20px;margin-bottom:16px;
+  box-shadow:0 16px 40px -12px rgba(236,72,153,.5);
+  position:relative;overflow:hidden;
+}
+.com-hero::after{
+  content:"";position:absolute;right:-30px;bottom:-30px;
+  width:150px;height:150px;border-radius:50%;
+  background:rgba(255,255,255,.08);pointer-events:none;
+}
+.com-hero h1{font-size:21px;font-weight:900;letter-spacing:-.4px;margin-bottom:6px;line-height:1.2}
+.com-hero p{font-size:13px;line-height:1.5;opacity:.95;max-width:520px}
+.com-hero .hero-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.com-hero .hero-badges span{
+  background:rgba(255,255,255,.18);backdrop-filter:blur(6px);
+  border:1px solid rgba(255,255,255,.25);
+  padding:4px 10px;border-radius:99px;
+  font-size:10.5px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;
+}
+
+/* TABS */
+.tabs-wrap{
+  position:sticky;top:var(--header-h);z-index:80;
+  background:var(--bg);
+  padding:8px 0;
+  margin:0 -16px 14px;
+}
+.tabs{
+  display:flex;gap:6px;background:var(--surface);
+  border:1px solid var(--border);border-radius:var(--radius);
+  padding:6px;overflow-x:auto;scrollbar-width:none;
+  box-shadow:var(--shadow-sm);
+  max-width:820px;margin:0 auto;padding-left:20px;padding-right:20px;
+}
+.tabs::-webkit-scrollbar{display:none}
+.tab{
+  flex:1;min-width:105px;padding:11px 12px;border-radius:10px;
+  font-weight:700;font-size:12px;color:var(--text-2);
+  transition:var(--transition);white-space:nowrap;
+  display:flex;align-items:center;justify-content:center;gap:5px;
+}
+.tab svg{width:15px;height:15px}
+.tab:hover{background:var(--surface-2);color:var(--text)}
+.tab.active{
+  background:linear-gradient(135deg,#ec4899,#f97316);
+  color:#fff;
+  box-shadow:0 4px 14px -4px rgba(236,72,153,.5);
+}
+
+.panel{display:none;animation:fadeIn .3s ease}
+.panel.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* CARD */
+.card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px;margin-bottom:14px;
+}
+.card-title{
+  font-size:14.5px;font-weight:800;margin-bottom:12px;
+  display:flex;align-items:center;gap:8px;color:var(--text);
+}
+.card-title svg{width:17px;height:17px;color:#ec4899}
+.card-title .sub{font-size:11.5px;color:var(--text-3);font-weight:600;margin-left:auto}
+
+/* FIELDS */
+.form-grid{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:640px){.form-grid{grid-template-columns:1fr 1fr}.form-grid .full{grid-column:1/-1}}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{
+  font-size:12.5px;font-weight:700;color:var(--text-2);
+  letter-spacing:.2px;display:flex;align-items:center;gap:5px;
+}
+.field label .req{color:var(--red)}
+.input,.textarea,.select{
+  width:100%;padding:12px 14px;border-radius:var(--radius-sm);
+  background:var(--input-bg);border:1px solid var(--border);
+  color:var(--text);font-size:14px;transition:var(--transition);
+}
+.input:focus,.textarea:focus,.select:focus{
+  outline:none;border-color:#ec4899;
+  box-shadow:0 0 0 3px rgba(236,72,153,.18);
+}
+.textarea{resize:vertical;min-height:100px;line-height:1.5}
+.select{
+  appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7793' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;
+  background-size:16px;padding-right:38px;
+}
+
+/* BUTTONS */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:12px 18px;border-radius:var(--radius-sm);
+  font-weight:700;font-size:13.5px;transition:var(--transition);
+  border:1px solid transparent;cursor:pointer;
+}
+.btn svg{width:17px;height:17px}
+.btn:active{transform:scale(.97)}
+.btn-primary{
+  background:linear-gradient(135deg,#ec4899,#f97316);
+  color:#fff;box-shadow:0 6px 18px -6px rgba(236,72,153,.55);
+}
+.btn-primary:hover{filter:brightness(1.08)}
+.btn-ghost{background:var(--surface-2);color:var(--text);border-color:var(--border)}
+.btn-ghost:hover{background:var(--surface-3);border-color:var(--border-2)}
+.btn-block{width:100%}
+.btn-sm{padding:8px 12px;font-size:12px}
+
+/* COMENTARIOS */
+.comment-composer{
+  display:flex;gap:10px;align-items:flex-start;
+  background:var(--surface-2);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:12px;margin-bottom:14px;
+}
+.comment-composer .avatar{
+  width:42px;height:42px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,#ec4899,#f97316);
+  display:grid;place-items:center;color:#fff;font-weight:800;font-size:16px;
+}
+.comment-composer .fields{flex:1;display:flex;flex-direction:column;gap:8px;min-width:0}
+
+.comment-item{
+  display:flex;gap:10px;padding:12px;
+  background:var(--surface-2);border:1px solid var(--border);
+  border-radius:var(--radius-sm);margin-bottom:8px;
+  animation:fadeIn .3s ease;
+}
+.comment-item .avatar{
+  width:38px;height:38px;border-radius:50%;flex-shrink:0;
+  display:grid;place-items:center;color:#fff;font-weight:800;font-size:15px;
+}
+.comment-item .body{flex:1;min-width:0}
+.comment-item .meta{
+  font-size:11.5px;color:var(--text-3);margin-bottom:3px;
+  display:flex;align-items:center;gap:5px;flex-wrap:wrap;
+}
+.comment-item .meta b{color:var(--text-2)}
+.comment-item .text{
+  font-size:13.5px;line-height:1.55;color:var(--text);
+  white-space:pre-wrap;word-break:break-word;
+}
+.comment-item .actions{
+  display:flex;gap:4px;margin-top:6px;flex-wrap:wrap;
+}
+.comment-item .actions button{
+  font-size:11px;font-weight:700;color:var(--text-3);
+  padding:4px 9px;border-radius:6px;transition:var(--transition);
+  display:inline-flex;align-items:center;gap:4px;
+}
+.comment-item .actions button:hover{background:var(--surface-3);color:#ec4899}
+.comment-item .actions button.liked{color:#ec4899}
+
+/* Edición inline */
+.comment-edit{
+  display:flex;flex-direction:column;gap:6px;margin-top:6px;
+}
+.comment-edit textarea{
+  width:100%;min-height:70px;padding:10px;
+  border-radius:8px;background:var(--input-bg);
+  border:1px solid var(--border);color:var(--text);
+  font-size:13.5px;line-height:1.5;resize:vertical;
+}
+.comment-edit .row{display:flex;gap:6px;justify-content:flex-end}
+
+/* Respuestas */
+.replies{
+  margin-top:10px;padding-left:14px;
+  border-left:2px solid var(--border);
+  display:flex;flex-direction:column;gap:8px;
+}
+.reply-item{
+  display:flex;gap:8px;padding:9px 10px;
+  background:var(--surface-3);border-radius:10px;
+  animation:fadeIn .3s ease;
+}
+.reply-item .avatar{
+  width:30px;height:30px;border-radius:50%;flex-shrink:0;
+  display:grid;place-items:center;color:#fff;font-weight:800;font-size:12px;
+}
+.reply-item .body{flex:1;min-width:0}
+.reply-item .meta{font-size:10.5px;color:var(--text-3);margin-bottom:2px}
+.reply-item .meta b{color:var(--text-2)}
+.reply-item .text{font-size:12.5px;line-height:1.5;color:var(--text);white-space:pre-wrap;word-break:break-word}
+.reply-item .actions{display:flex;gap:4px;margin-top:5px}
+.reply-item .actions button{font-size:10.5px;color:var(--text-3);padding:2px 6px;border-radius:5px;font-weight:700}
+.reply-item .actions button:hover{background:var(--surface-2);color:#ec4899}
+
+.reply-composer{
+  margin-top:8px;padding:8px 10px;
+  background:var(--surface-3);border-radius:10px;
+  display:flex;gap:6px;align-items:flex-start;
+}
+.reply-composer textarea{
+  flex:1;min-height:44px;padding:8px;
+  border-radius:8px;background:var(--input-bg);
+  border:1px solid var(--border);color:var(--text);
+  font-size:12.5px;resize:vertical;
+}
+
+/* REPORT TYPE */
+.report-types{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;
+}
+.report-type{
+  padding:14px 12px;border-radius:var(--radius-sm);
+  background:var(--surface-2);border:1.5px solid var(--border);
+  cursor:pointer;transition:var(--transition);
+  text-align:center;font-size:12.5px;font-weight:700;color:var(--text-2);
+}
+.report-type:hover{border-color:var(--border-2);color:var(--text)}
+.report-type.active{
+  background:linear-gradient(135deg,rgba(236,72,153,.12),rgba(249,115,22,.12));
+  border-color:#ec4899;color:#ec4899;
+}
+.report-type .rt-emoji{font-size:22px;display:block;margin-bottom:4px}
+
+/* SUCCESS */
+.success-box{
+  background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(16,185,129,.05));
+  border:1.5px solid rgba(16,185,129,.35);
+  border-radius:var(--radius);padding:24px;
+  text-align:center;animation:fadeIn .4s ease;
+}
+.success-box svg{width:56px;height:56px;color:var(--green);margin-bottom:10px}
+.success-box h3{font-size:17px;font-weight:900;margin-bottom:6px;color:var(--text)}
+.success-box p{font-size:13.5px;color:var(--text-2);line-height:1.6}
+
+/* CONTACT GRID */
+.contact-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;
+}
+.contact-card{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:8px;padding:16px 12px;border-radius:var(--radius);
+  background:var(--surface-2);border:1px solid var(--border);
+  text-decoration:none;color:var(--text);transition:var(--transition);
+  text-align:center;cursor:pointer;
+}
+.contact-card:hover{
+  transform:translateY(-3px);border-color:#ec4899;
+  box-shadow:0 10px 24px -10px rgba(236,72,153,.4);
+}
+.contact-card .cc-icon{
+  width:46px;height:46px;border-radius:14px;
+  display:grid;place-items:center;color:#fff;
+}
+.contact-card .cc-icon svg{width:23px;height:23px}
+.contact-card .cc-name{font-weight:800;font-size:13px}
+.contact-card .cc-sub{font-size:11px;color:var(--text-3);font-weight:600}
+.wa .cc-icon{background:linear-gradient(135deg,#25D366,#128C7E)}
+.tel .cc-icon{background:linear-gradient(135deg,#3b82f6,#1e40af)}
+.mail .cc-icon{background:linear-gradient(135deg,#ef4444,#b91c1c)}
+.fb .cc-icon{background:linear-gradient(135deg,#1877F2,#0e5fd8)}
+.ig .cc-icon{background:linear-gradient(135deg,#f58529,#dd2a7b,#8134af)}
+.tk .cc-icon{background:linear-gradient(135deg,#000,#333)}
+
+/* MAPA EN ACTUALIZAR */
+.map-wrap{
+  position:relative;border-radius:var(--radius);overflow:hidden;
+  border:1px solid var(--border);background:var(--surface-2);
+}
+#updateMap{width:100%;height:42vh;min-height:280px;z-index:1}
+.map-fs-btn{
+  position:absolute;bottom:12px;right:12px;z-index:600;
+  background:color-mix(in srgb,var(--surface) 96%,transparent);
+  border:1px solid var(--border-2);border-radius:12px;
+  width:42px;height:42px;display:grid;place-items:center;
+  color:var(--text);box-shadow:var(--shadow);
+  backdrop-filter:blur(10px);
+}
+.map-fs-btn svg{width:20px;height:20px}
+.map-toolbar{
+  position:absolute;top:10px;left:10px;right:10px;z-index:500;
+  display:flex;gap:6px;flex-wrap:wrap;
+}
+.tb{
+  background:color-mix(in srgb,var(--surface) 94%,transparent);
+  backdrop-filter:blur(10px);
+  border:1px solid var(--border-2);border-radius:10px;
+  padding:8px 11px;font-size:12px;font-weight:700;color:var(--text);
+  display:flex;align-items:center;gap:5px;box-shadow:var(--shadow-sm);
+  transition:var(--transition);
+}
+.tb svg{width:15px;height:15px}
+.tb:hover{border-color:#ec4899;color:#ec4899}
+.tb.active{background:#ec4899;color:#fff;border-color:transparent}
+
+.map-wrap.is-fullscreen{
+  position:fixed!important;inset:0!important;z-index:9500!important;
+  margin:0!important;border-radius:0!important;border:none!important;
+}
+.map-wrap.is-fullscreen #updateMap{height:100vh!important;width:100vw!important}
+body.fs-active{overflow:hidden!important}
+
+/* FACEBOOK EMBED */
+.fb-embed{
+  background:var(--surface-2);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px;text-align:center;
+}
+.fb-embed iframe{
+  width:100%;max-width:500px;height:520px;border:none;
+  border-radius:12px;background:#fff;
+}
+
+/* EMPTY */
+.empty{text-align:center;padding:30px 20px;color:var(--text-3)}
+.empty svg{width:48px;height:48px;margin-bottom:10px;opacity:.4}
+.empty h3{font-size:14px;margin-bottom:4px;color:var(--text-2)}
+.empty p{font-size:12.5px}
+
+/* TOAST */
+.toast-wrap{
+  position:fixed;top:calc(var(--header-h) + 10px);left:50%;
+  transform:translateX(-50%);z-index:9999;
+  display:flex;flex-direction:column;gap:8px;pointer-events:none;
+  width:calc(100% - 24px);max-width:400px;
+}
+.toast{
+  background:var(--surface-3);color:var(--text);
+  padding:12px 16px;border-radius:var(--radius-sm);
+  border:1px solid var(--border-2);box-shadow:var(--shadow);
+  font-size:13.5px;font-weight:600;
+  display:flex;align-items:center;gap:10px;
+  pointer-events:auto;animation:toastIn .3s ease;
+}
+.toast.ok{border-color:rgba(16,185,129,.5)}
+.toast.err{border-color:rgba(239,68,68,.5)}
+.toast svg{width:18px;height:18px;flex-shrink:0}
+.toast.ok svg{color:var(--green)}
+.toast.err svg{color:var(--red)}
+@keyframes toastIn{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:none}}
+
+/* PILL BADGE */
+.pill{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:4px 10px;border-radius:99px;font-size:10.5px;
+  font-weight:800;letter-spacing:.4px;text-transform:uppercase;
+}
+.pill-pink{background:rgba(236,72,153,.15);color:#ec4899;border:1px solid rgba(236,72,153,.3)}
+.pill-orange{background:rgba(249,115,22,.15);color:#f97316;border:1px solid rgba(249,115,22,.3)}
+.pill-green{background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.3)}
+
+/* UPLOAD */
+.upload-btn{
+  display:flex;align-items:center;gap:8px;padding:12px 14px;
+  border-radius:10px;background:var(--surface-2);
+  border:1px dashed var(--border-2);color:var(--text-2);
+  font-weight:700;font-size:13px;cursor:pointer;
+  justify-content:center;transition:var(--transition);
+}
+.upload-btn:hover{border-color:#ec4899;color:#ec4899;background:var(--surface-3)}
+.upload-btn svg{width:17px;height:17px}
+.thumb-preview{
+  width:100%;max-height:220px;object-fit:cover;
+  border-radius:10px;border:1px solid var(--border);margin-top:8px;
+}
+.progress{height:6px;border-radius:99px;background:var(--surface-3);overflow:hidden;margin-top:8px}
+.progress>div{height:100%;background:linear-gradient(90deg,#ec4899,#f97316);transition:width .3s ease;border-radius:99px}
+
+/* ADMIN GRID (para actualizar) */
+.admin-cols-3{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px;
+}
+.admin-col{
+  background:var(--surface-2);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:10px;
+  display:flex;flex-direction:column;gap:6px;
+}
+.admin-col-title{
+  display:flex;align-items:center;gap:5px;
+  font-size:10.5px;font-weight:800;text-transform:uppercase;
+  letter-spacing:.4px;color:#ec4899;padding-bottom:6px;
+  margin-bottom:2px;border-bottom:1px solid var(--border);
+}
+.admin-col .field{margin-bottom:0}
+.admin-col .field label{font-size:10.5px}
+.admin-col .input,.admin-col .select{padding:7px 9px;font-size:12px;border-radius:8px}
+@media(max-width:720px){
+  .admin-cols-3{gap:5px}
+  .admin-col{padding:7px 5px}
+  .admin-col-title{font-size:9px;letter-spacing:.2px;gap:3px}
+  .admin-col-title svg{width:11px;height:11px}
+  .admin-col .field label{font-size:9px}
+  .admin-col .input,.admin-col .select{padding:5px 7px;font-size:10.5px}
+}
+
+.color-swatches{display:flex;gap:6px;flex-wrap:wrap}
+.swatch{
+  width:30px;height:30px;border-radius:8px;
+  border:2px solid var(--border);cursor:pointer;transition:var(--transition);
+}
+.swatch:hover{transform:scale(1.08)}
+.swatch.active{border-color:#ec4899;box-shadow:0 0 0 3px rgba(236,72,153,.3)}
+</style>
+</head>
+<body>
+
+<!-- ================= HEADER ================= -->
+<header class="header">
+  <div class="header-left">
+    <a class="back-btn" href="/" title="Volver al inicio" aria-label="Regresar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    </a>
+    <div class="header-brand">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+      </div>
+      <span class="brand-txt">Comentarios</span>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button class="icon-btn" id="themeBtn" title="Cambiar tema">
+      <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<!-- ================= CONTENIDO ================= -->
+<main class="wrap">
+
+  <!-- HERO -->
+  <div class="com-hero">
+    <h1>💬 Comunidad · Comentarios · Actualizaciones</h1>
+    <p>Comenta, responde, edita y borra tus aportes. También puedes actualizar rutas, reportar cambios y contactarnos directamente. Todo en un solo lugar.</p>
+    <div class="hero-badges">
+      <span>💬 Comenta</span>
+      <span>↩️ Responde</span>
+      <span>🛠️ Actualiza rutas</span>
+      <span>📘 Facebook</span>
+      <span>📞 Contacto</span>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs-wrap">
+    <div class="tabs" id="tabsWrap">
+      <button class="tab active" data-tab="community">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Comunidad
+      </button>
+      <button class="tab" data-tab="update">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        Actualizar / Reportar
+      </button>
+      <button class="tab" data-tab="facebook">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"/></svg>
+        Facebook
+      </button>
+      <button class="tab" data-tab="contact">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        Contacto
+      </button>
+    </div>
+  </div>
+
+  <!-- ====================================================== -->
+  <!-- PANEL 1: COMUNIDAD (comentarios globales) -->
+  <!-- ====================================================== -->
+  <section class="panel active" id="panel-community">
+
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Muro comunitario
+        <span class="sub" id="commentsCount">0 comentarios</span>
+      </div>
+
+      <div class="comment-composer">
+        <div class="avatar" id="myAvatar">?</div>
+        <div class="fields">
+          <input class="input" id="cName" placeholder="Tu nombre (o apodo)" maxlength="40">
+          <textarea class="textarea" id="cText" placeholder="Comparte tu experiencia, pregunta, tip o sugerencia... Puedes responder a otros con el botón Responder." style="min-height:80px;font-size:14px"></textarea>
+          <div style="display:flex;gap:6px;justify-content:space-between;align-items:center;flex-wrap:wrap">
+            <span style="font-size:11px;color:var(--text-3)">Ctrl+Enter para publicar rápido</span>
+            <button class="btn btn-primary" id="cSend" style="padding:9px 16px;font-size:13px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="15" height="15"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              Publicar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="commentsList">
+        <div class="empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <h3>Cargando comentarios…</h3>
+          <p>Espera un momento mientras obtenemos la conversación.</p>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ====================================================== -->
+  <!-- PANEL 2: ACTUALIZAR / REPORTAR -->
+  <!-- ====================================================== -->
+  <section class="panel" id="panel-update">
+
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        ¿Qué quieres hacer?
+      </div>
+
+      <div class="report-types" id="reportTypes">
+        <button class="report-type active" data-type="actualizar_ruta">
+          <span class="rt-emoji">🛠️</span>
+          Actualizar datos
+        </button>
+        <button class="report-type" data-type="cambio_ruta">
+          <span class="rt-emoji">🔄</span>
+          Cambio de trazo
+        </button>
+        <button class="report-type" data-type="nueva_ruta">
+          <span class="rt-emoji">🆕</span>
+          Nueva ruta
+        </button>
+        <button class="report-type" data-type="parada_nueva">
+          <span class="rt-emoji">🚏</span>
+          Parada nueva
+        </button>
+        <button class="report-type" data-type="parada_removida">
+          <span class="rt-emoji">🗑️</span>
+          Parada eliminada
+        </button>
+        <button class="report-type" data-type="tarifa">
+          <span class="rt-emoji">💰</span>
+          Tarifa
+        </button>
+        <button class="report-type" data-type="horario">
+          <span class="rt-emoji">🕐</span>
+          Horario
+        </button>
+        <button class="report-type" data-type="poi">
+          <span class="rt-emoji">📍</span>
+          POI nuevo
+        </button>
+        <button class="report-type" data-type="error">
+          <span class="rt-emoji">⚠️</span>
+          Error
+        </button>
+        <button class="report-type" data-type="sugerencia">
+          <span class="rt-emoji">💡</span>
+          Sugerencia
+        </button>
+      </div>
+    </div>
+
+    <!-- Datos generales -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        Datos de contacto
+      </div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label>Tu nombre <span class="req">*</span></label>
+          <input class="input" id="upName" placeholder="Ej: María López">
+        </div>
+        <div class="field">
+          <label>WhatsApp / Teléfono</label>
+          <input class="input" id="upPhone" placeholder="+52 961 123 4567">
+        </div>
+
+        <div class="field full">
+          <label>Ruta a actualizar <span class="req">*</span></label>
+          <select class="select" id="upRouteSelect">
+            <option value="">— Selecciona una ruta —</option>
+          </select>
+          <input class="input" id="upRouteCustom" placeholder="...o escribe el nombre de una nueva ruta" style="margin-top:8px">
+        </div>
+
+        <div class="field full">
+          <label>Describe la actualización <span class="req">*</span></label>
+          <textarea class="textarea" id="upDescription" placeholder="¿Qué cambió? ¿desde cuándo? ¿qué información debería actualizarse?" style="min-height:110px"></textarea>
+        </div>
+
+        <div class="field full">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600">
+            <input type="checkbox" id="upUrgent" style="width:auto;margin:0;transform:scale(1.2);accent-color:#ec4899">
+            <span>Marcar como <b style="color:#ec4899">urgente</b></span>
+          </label>
+        </div>
+
+        <div class="field full">
+          <label>Foto / Captura (opcional)</label>
+          <label class="upload-btn" for="upFile">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Subir imagen
+          </label>
+          <input type="file" id="upFile" accept="image/*" class="hidden">
+          <div class="progress hidden" id="upProg"><div style="width:0%"></div></div>
+          <img class="thumb-preview hidden" id="upPreview" alt="">
+        </div>
+      </div>
+    </div>
+
+    <!-- Actualización de campos (como admin) -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 20h16"/><path d="M4 4h16"/><path d="M12 4v16"/></svg>
+        Actualizar campos específicos (opcional)
+      </div>
+
+      <div class="admin-cols-3">
+        <div class="admin-col">
+          <div class="admin-col-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="13" height="13"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            Información
+          </div>
+          <div class="field">
+            <label>Categoría</label>
+            <select class="select" id="upCat">
+              <option value="">— igual —</option>
+              <option value="urbana">Urbana</option>
+              <option value="foranea">Foránea</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Tarifa</label>
+            <input class="input" id="upTarifa" placeholder="$10">
+          </div>
+          <div class="field">
+            <label>Frecuencia</label>
+            <input class="input" id="upFrec" placeholder="Cada 15 min">
+          </div>
+        </div>
+
+        <div class="admin-col">
+          <div class="admin-col-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="13" height="13"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Horario
+          </div>
+          <div class="field">
+            <label>Hora inicio</label>
+            <input class="input" id="upHoraIni" placeholder="05:00">
+          </div>
+          <div class="field">
+            <label>Hora fin</label>
+            <input class="input" id="upHoraFin" placeholder="22:00">
+          </div>
+          <div class="field">
+            <label>Días</label>
+            <select class="select" id="upDias">
+              <option value="">— igual —</option>
+              <option value="todos">Todos</option>
+              <option value="l-v">L-V</option>
+              <option value="l-s">L-S</option>
+              <option value="finde">Finde</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="admin-col">
+          <div class="admin-col-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="13" height="13"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg>
+            Accesibilidad
+          </div>
+          <div class="field">
+            <label>Nivel</label>
+            <select class="select" id="upAcces">
+              <option value="">— igual —</option>
+              <option value="si">Accesible</option>
+              <option value="no">No accesible</option>
+              <option value="parcial">Parcial</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-grid" style="margin-top:12px">
+        <div class="field full">
+          <label>Paradas (separadas por coma)</label>
+          <textarea class="textarea" id="upParadas" placeholder="Parada 1, Parada 2, Parada 3" style="min-height:70px"></textarea>
+        </div>
+        <div class="field full">
+          <label>Retornos (separados por coma)</label>
+          <textarea class="textarea" id="upRetornos" placeholder="Retorno 1, Retorno 2" style="min-height:70px"></textarea>
+        </div>
+        <div class="field full">
+          <label>Calles (separadas por coma)</label>
+          <textarea class="textarea" id="upCalles" placeholder="Calle 1, Avenida 2" style="min-height:70px"></textarea>
+        </div>
+        <div class="field full">
+          <label>POIs de Ida</label>
+          <textarea class="textarea" id="upPois" placeholder="Hospital, Plaza, Escuela" style="min-height:70px"></textarea>
+        </div>
+        <div class="field full">
+          <label>POIs de Regreso</label>
+          <textarea class="textarea" id="upPoisVuelta" placeholder="Hospital, Plaza, Escuela" style="min-height:70px"></textarea>
+        </div>
+        <div class="field full">
+          <label>Notas adicionales</label>
+          <textarea class="textarea" id="upNotas" placeholder="Notas sobre la ruta..." style="min-height:70px"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Trazo en mapa (como admin) -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/></svg>
+        Proponer trazo en el mapa (opcional)
+      </div>
+
+      <div class="form-grid" style="margin-bottom:12px">
+        <div class="field">
+          <label>Color de Ida</label>
+          <div class="color-swatches" id="colorIdaUpdate"></div>
+        </div>
+        <div class="field">
+          <label>Color de Regreso</label>
+          <div class="color-swatches" id="colorVueltaUpdate"></div>
+        </div>
+      </div>
+
+      <div class="map-wrap" id="updateMapWrap">
+        <div id="updateMap"></div>
+        <button class="map-fs-btn" id="updateMapFsBtn" title="Pantalla completa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3"/>
+            <path d="M21 8V5a2 2 0 0 0-2-2h-3"/>
+            <path d="M3 16v3a2 2 0 0 0 2 2h3"/>
+            <path d="M16 21h3a2 2 0 0 0 2-2v-3"/>
+          </svg>
+        </button>
+        <div class="map-toolbar">
+          <button class="tb" data-tool="draw-ida">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
+            Ida
+          </button>
+          <button class="tb" data-tool="draw-vuelta">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
+            Regreso
+          </button>
+          <button class="tb" data-tool="gps">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+            GPS
+          </button>
+          <button class="tb" data-tool="undo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 3-7.7L3 8"/></svg>
+            Deshacer
+          </button>
+          <button class="tb" data-tool="clear">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+            Limpiar
+          </button>
+        </div>
+      </div>
+      <div style="margin-top:8px;font-size:11.5px;color:var(--text-3)" id="updateMapStatus">
+        Puntos ida: 0 · Puntos regreso: 0
+      </div>
+    </div>
+
+    <!-- Botón enviar -->
+    <div class="card">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-ghost" id="upClear">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Limpiar
+        </button>
+        <button class="btn btn-primary" style="flex:1;min-width:180px" id="upSend">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Enviar actualización
+        </button>
+      </div>
+    </div>
+
+    <!-- Éxito -->
+    <div class="card hidden" id="updateSuccess">
+      <div class="success-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg>
+        <h3>¡Actualización enviada!</h3>
+        <p>Tu aporte será revisado por el administrador. Si se aprueba, se aplicará a la ruta correspondiente. ¡Gracias por colaborar!</p>
+        <div style="display:flex;gap:8px;justify-content:center;margin-top:16px;flex-wrap:wrap">
+          <button class="btn btn-ghost" id="upAnother">Enviar otra</button>
+          <a class="btn btn-primary" href="/">Volver al inicio</a>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ====================================================== -->
+  <!-- PANEL 3: FACEBOOK -->
+  <!-- ====================================================== -->
+  <section class="panel" id="panel-facebook">
+
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"/></svg>
+        Nuestra página de Facebook
+      </div>
+      <p style="font-size:13.5px;line-height:1.6;color:var(--text-2);margin-bottom:14px">
+        Síguenos para ver las últimas publicaciones, actualizaciones de rutas y novedades de la comunidad.
+      </p>
+
+      <div class="fb-embed">
+        <div id="fbEmbedWrap">
+          <div class="empty" style="padding:16px 0">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+            <h3>Cargando…</h3>
+            <p>Si no carga, ábrela directamente.</p>
+          </div>
+        </div>
+        <a class="btn btn-primary" id="fbOpenBtn" href="#" target="_blank" rel="noopener" style="margin-top:14px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Abrir en Facebook
+        </a>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ====================================================== -->
+  <!-- PANEL 4: CONTACTO -->
+  <!-- ====================================================== -->
+  <section class="panel" id="panel-contact">
+
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        Contacto directo
+      </div>
+
+      <div class="contact-grid">
+        <a class="contact-card wa" id="ccWhatsapp" href="#" target="_blank" rel="noopener">
+          <div class="cc-icon">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+          </div>
+          <div class="cc-name">WhatsApp</div>
+          <div class="cc-sub">Respuesta rápida</div>
+        </a>
+
+        <a class="contact-card tel" id="ccPhone" href="#">
+          <div class="cc-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          </div>
+          <div class="cc-name">Llamar</div>
+          <div class="cc-sub">Atención directa</div>
+        </a>
+
+        <a class="contact-card mail" id="ccEmail" href="#">
+          <div class="cc-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </div>
+          <div class="cc-name">Correo</div>
+          <div class="cc-sub">Escríbenos</div>
+        </a>
+
+        <a class="contact-card fb" id="ccFacebook" href="#" target="_blank" rel="noopener">
+          <div class="cc-icon">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"/></svg>
+          </div>
+          <div class="cc-name">Facebook</div>
+          <div class="cc-sub">Página oficial</div>
+        </a>
+
+        <a class="contact-card ig" id="ccInstagram" href="#" target="_blank" rel="noopener">
+          <div class="cc-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          </div>
+          <div class="cc-name">Instagram</div>
+          <div class="cc-sub">Fotos</div>
+        </a>
+
+        <a class="contact-card tk" id="ccTiktok" href="#" target="_blank" rel="noopener">
+          <div class="cc-icon">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5.8 20.1a6.34 6.34 0 0 0 10.86-4.43V9.16a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.84-.59z"/></svg>
+          </div>
+          <div class="cc-name">TikTok</div>
+          <div class="cc-sub">Videos</div>
+        </a>
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+<!-- ================= NAV INFERIOR (3 botones: Inicio, Rutas, Comentarios) ================= -->
+<nav class="bottom-nav">
+  <a class="nav-item" href="/?tab=home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>HOME</span>
+  </a>
+  <a class="nav-item" href="/?tab=routes">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M6 16V9a4 4 0 0 1 4-4h4"/><path d="M18 8v7a4 4 0 0 1-4 4H9"/></svg>
+    <span>RUTAS</span>
+  </a>
+  <a class="nav-item active" href="/comentarios">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+      <circle cx="9" cy="7" r="4"/>
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+      <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+    </svg>
+    <span>COMENTARIOS</span>
+  </a>
+</nav>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- ================= SCRIPTS ================= -->
+<script src="/vendor/leaflet/leaflet.js"></script>
+<script src="/vendor/firebase/firebase-app-compat.js"></script>
+<script src="/vendor/firebase/firebase-database-compat.js"></script>
+
+<script>
+/* ============================================================
+   COMENTARIOS.HTML — Comunidad · Actualizar · Facebook · Contacto
+   ============================================================ */
+(function(){
+  'use strict';
+
+  // ============================================================
+  //  ⚙️ CONFIGURACIÓN — EDITA ESTOS DATOS
+  // ============================================================
+  const CONFIG = {
+    whatsapp: '529611234567',                    // sin "+"
+    phone: '+52 961 123 4567',
+    email: 'contacto@brigadistasbd.pages.dev',
+    facebook: 'https://www.facebook.com/TuPaginaAqui',
+    instagram: 'https://www.instagram.com/TuUsuarioAqui',
+    tiktok: 'https://www.tiktok.com/@TuUsuarioAqui',
+    appName: 'Rutas BGD',
+    site: 'https://brigadistasbd.pages.dev',
+    mapTilerKey: 'kXZYdaMbZkD1EevhGXMI'
+  };
+
+  const $  = (s,r=document)=>r.querySelector(s);
+  const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
+  const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const norm = s => String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+  const splitList = v => String(v||'').split(/[\n,;]+/).map(s=>s.trim()).filter(Boolean);
+
+  // ============================================================
+  //  🎨 TEMA
+  // ============================================================
+  const savedTheme = localStorage.getItem('tgz_theme') || 'light';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  updateThemeIcon();
+  $('#themeBtn').onclick = () => {
+    const t = document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    localStorage.setItem('tgz_theme', t);
+    updateThemeIcon();
+  };
+  function updateThemeIcon(){
+    const t = document.documentElement.getAttribute('data-theme');
+    const icon = $('#themeIcon');
+    if(!icon) return;
+    icon.innerHTML = t === 'dark'
+      ? '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'
+      : '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+  }
+
+  // ============================================================
+  //  🍞 TOAST
+  // ============================================================
+  function toast(msg, type='ok'){
+    const w = $('#toastWrap'); if(!w) return;
+    const t = document.createElement('div');
+    t.className = 'toast ' + type;
+    const icon = type === 'ok'
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+    t.innerHTML = icon + '<span>' + esc(msg) + '</span>';
+    w.appendChild(t);
+    setTimeout(()=>{
+      t.style.opacity='0'; t.style.transform='translateY(-10px)';
+      setTimeout(()=>t.remove(), 300);
+    }, 2800);
+  }
+
+  // ============================================================
+  //  🆔 UTILIDADES DE USUARIO
+  // ============================================================
+  function getDeviceId(){
+    let id = localStorage.getItem('tgz_device_id');
+    if (!id) {
+      id = 'dev_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+      localStorage.setItem('tgz_device_id', id);
+    }
+    return id;
+  }
+  function getMyName(){ return localStorage.getItem('tgz_user_name') || ''; }
+  function setMyName(n){ if (n) localStorage.setItem('tgz_user_name', n); }
+  function avatarLetter(name){ return (name || '?').trim().charAt(0).toUpperCase() || '?'; }
+  function avatarColor(seed){
+    const colors = ['#ec4899','#f97316','#a855f7','#3b82f6','#10b981','#f59e0b','#ef4444','#06b6d4'];
+    let h = 0;
+    const s = String(seed || 'anon');
+    for (let i = 0; i < s.length; i++) h = (h*31 + s.charCodeAt(i)) | 0;
+    return colors[Math.abs(h) % colors.length];
+  }
+  function timeAgo(ts){
+    const d = Date.now() - ts;
+    if (d < 60000) return 'hace unos segundos';
+    if (d < 3600000) return 'hace ' + Math.floor(d/60000) + ' min';
+    if (d < 86400000) return 'hace ' + Math.floor(d/3600000) + ' h';
+    if (d < 604800000) return 'hace ' + Math.floor(d/86400000) + ' d';
+    return new Date(ts).toLocaleDateString('es-MX');
+  }
+
+  // ============================================================
+  //  🔥 FIREBASE
+  // ============================================================
+  let fbDB = null;
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyAiojpfnGUPhaoQkpAh1Yey3fp6uWU-iFQ",
+    authDomain: "aplicacion-2c1c8.firebaseapp.com",
+    databaseURL: "https://aplicacion-2c1c8.firebaseio.com",
+    projectId: "aplicacion-2c1c8",
+    storageBucket: "aplicacion-2c1c8.firebasestorage.app",
+    messagingSenderId: "837629411067",
+    appId: "1:837629411067:web:6c96cfcd7490b049787a5e"
+  };
+  try {
+    if (typeof firebase !== 'undefined') {
+      if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+      fbDB = firebase.database();
+    }
+  } catch(e){ console.warn('[Firebase] No inicializado:', e); }
+
+  // ============================================================
+  //  📑 TABS
+  // ============================================================
+  $$('.tab').forEach(tab => {
+    tab.onclick = () => {
+      $$('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      $$('.panel').forEach(p => p.classList.remove('active'));
+      const target = document.getElementById('panel-' + tab.dataset.tab);
+      if (target) target.classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (tab.dataset.tab === 'update' && !state.map) initUpdateMap();
+    };
+  });
+
+  // ============================================================
+  //  💬 COMUNIDAD — Comentarios globales con respuestas
+  // ============================================================
+  const state = {
+    comments: [],
+    pendingReplyTo: null,
+    editingId: null,
+    map: null,
+    draft: {
+      puntos: [],
+      puntosVuelta: [],
+      colorIda: '#3b82f6',
+      colorVuelta: '#ef4444'
+    },
+    markers: [],
+    markerMeta: [],
+    lineIda: null,
+    lineVuelta: null,
+    drawMode: null,
+    drawing: false,
+    gpsWatch: null
+  };
+  window.__STATE__ = state;
+
+  // ---------- INIT comunidad ----------
+  function initCommunity(){
+    const saved = getMyName();
+    if (saved) {
+      $('#cName').value = saved;
+      $('#myAvatar').textContent = avatarLetter(saved);
+      $('#myAvatar').style.background = avatarColor(saved);
+    }
+    $('#cName').oninput = (e) => {
+      const v = e.target.value.trim();
+      $('#myAvatar').textContent = avatarLetter(v || '?');
+      $('#myAvatar').style.background = avatarColor(v || 'anon');
+    };
+    $('#cSend').onclick = sendComment;
+    $('#cText').addEventListener('keydown', e => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        sendComment();
+      }
+    });
+    loadComments();
+  }
+
+  async function loadComments(){
+    try {
+      if (fbDB) {
+        fbDB.ref('comentarios_comunidad').orderByChild('timestamp').limitToLast(100).on('value', snap => {
+          const val = snap.val() || {};
+          state.comments = Object.values(val).sort((a,b)=>(a.timestamp||0)-(b.timestamp||0));
+          renderComments();
+        });
+      } else {
+        const local = JSON.parse(localStorage.getItem('tgz_local_comments') || '[]');
+        state.comments = local.sort((a,b)=>(a.timestamp||0)-(b.timestamp||0));
+        renderComments();
+      }
+    } catch(e){
+      console.warn('[comments] Error:', e);
+      $('#commentsList').innerHTML = '<div class="empty"><p>No se pudieron cargar los comentarios.</p></div>';
+    }
+  }
+
+  function renderComments(){
+    const list = $('#commentsList');
+    const count = $('#commentsCount');
+    const myId = getDeviceId();
+
+    const total = state.comments.reduce((acc, c) => acc + 1 + (c.replies ? c.replies.length : 0), 0);
+    if (count) count.textContent = total + (total === 1 ? ' comentario' : ' comentarios');
+
+    if (!state.comments.length) {
+      list.innerHTML = `
+        <div class="empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <h3>Sé el primero en comentar</h3>
+          <p>Comparte tu opinión, duda o sugerencia sobre las rutas.</p>
+        </div>`;
+      return;
+    }
+
+    list.innerHTML = state.comments.map(c => renderComment(c, myId)).join('');
+    bindCommentEvents();
+  }
+
+  function renderComment(c, myId){
+    const isMine = c.deviceId === myId;
+    const liked = (c.likedBy || []).includes(myId);
+    const likes = (c.likedBy || []).length;
+    const isEditing = state.editingId === c.id;
+    const replies = c.replies || [];
+
+    return `
+      <div class="comment-item" data-id="${esc(c.id)}">
+        <div class="avatar" style="background:${avatarColor(c.nombre || 'anon')}">${esc(avatarLetter(c.nombre))}</div>
+        <div class="body">
+          <div class="meta">
+            <b>${esc(c.nombre || 'Anónimo')}</b>
+            ${isMine ? ' · <span style="color:#ec4899">(tú)</span>' : ''}
+            · ${timeAgo(c.timestamp)}
+            ${c.editedAt ? ' · editado' : ''}
+          </div>
+
+          ${isEditing ? `
+            <div class="comment-edit">
+              <textarea data-edit-text>${esc(c.texto)}</textarea>
+              <div class="row">
+                <button class="btn btn-ghost btn-sm" data-act="cancel-edit">Cancelar</button>
+                <button class="btn btn-primary btn-sm" data-act="save-edit">Guardar</button>
+              </div>
+            </div>
+          ` : `
+            <div class="text">${esc(c.texto)}</div>
+          `}
+
+          <div class="actions">
+            <button data-act="like" class="${liked ? 'liked' : ''}">
+              ${liked ? '❤️' : '🤍'} ${likes}
+            </button>
+            <button data-act="reply">💬 Responder</button>
+            ${isMine ? `
+              <button data-act="edit">✏️ Editar</button>
+              <button data-act="delete">🗑️ Eliminar</button>
+            ` : ''}
+          </div>
+
+          ${replies.length ? `
+            <div class="replies">
+              ${replies.map(r => renderReply(r, myId, c.id)).join('')}
+            </div>
+          ` : ''}
+
+          ${state.pendingReplyTo === c.id ? `
+            <div class="reply-composer">
+              <div class="avatar" style="width:30px;height:30px;font-size:12px;background:${avatarColor(getMyName() || 'anon')}">${esc(avatarLetter(getMyName() || '?'))}</div>
+              <textarea data-reply-text placeholder="Escribe tu respuesta..."></textarea>
+              <div style="display:flex;flex-direction:column;gap:4px">
+                <button class="btn btn-primary btn-sm" data-act="send-reply">↩️</button>
+                <button class="btn btn-ghost btn-sm" data-act="cancel-reply">✕</button>
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderReply(r, myId, parentId){
+    const isMine = r.deviceId === myId;
+    const liked = (r.likedBy || []).includes(myId);
+    const likes = (r.likedBy || []).length;
+    return `
+      <div class="reply-item" data-reply-id="${esc(r.id)}">
+        <div class="avatar" style="background:${avatarColor(r.nombre || 'anon')}">${esc(avatarLetter(r.nombre))}</div>
+        <div class="body">
+          <div class="meta">
+            <b>${esc(r.nombre || 'Anónimo')}</b>
+            ${isMine ? ' · <span style="color:#ec4899">(tú)</span>' : ''}
+            · ${timeAgo(r.timestamp)}
+          </div>
+          <div class="text">${esc(r.texto)}</div>
+          <div class="actions">
+            <button data-reply-act="like" data-parent="${esc(parentId)}" data-reply="${esc(r.id)}" class="${liked ? 'liked' : ''}">
+              ${liked ? '❤️' : '🤍'} ${likes}
+            </button>
+            ${isMine ? `<button data-reply-act="delete" data-parent="${esc(parentId)}" data-reply="${esc(r.id)}">🗑️</button>` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function bindCommentEvents(){
+    const list = $('#commentsList');
+
+    // Eventos de comentarios principales
+    list.querySelectorAll('.comment-item').forEach(item => {
+      const id = item.dataset.id;
+      const c = state.comments.find(x => x.id === id);
+      if (!c) return;
+
+      item.querySelectorAll('[data-act]').forEach(btn => {
+        btn.onclick = () => handleCommentAction(btn.dataset.act, c, item);
+      });
+    });
+
+    // Eventos de respuestas
+    list.querySelectorAll('[data-reply-act]').forEach(btn => {
+      btn.onclick = () => {
+        const parentId = btn.dataset.parent;
+        const replyId = btn.dataset.reply;
+        handleReplyAction(btn.dataset.replyAct, parentId, replyId);
+      };
+    });
+  }
+
+  async function handleCommentAction(act, c, itemEl){
+    const myId = getDeviceId();
+
+    if (act === 'like') {
+      c.likedBy = c.likedBy || [];
+      const i = c.likedBy.indexOf(myId);
+      if (i >= 0) c.likedBy.splice(i, 1);
+      else c.likedBy.push(myId);
+      await saveComment(c);
+      renderComments();
+
+    } else if (act === 'reply') {
+      state.pendingReplyTo = (state.pendingReplyTo === c.id) ? null : c.id;
+      renderComments();
+
+    } else if (act === 'cancel-reply') {
+      state.pendingReplyTo = null;
+      renderComments();
+
+    } else if (act === 'send-reply') {
+      const textarea = itemEl.querySelector('[data-reply-text]');
+      const texto = (textarea?.value || '').trim();
+      if (!texto) { toast('Escribe una respuesta', 'err'); return; }
+      const nombre = getMyName() || 'Anónimo';
+      c.replies = c.replies || [];
+      c.replies.push({
+        id: 'r_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+        nombre,
+        texto: texto.slice(0, 600),
+        deviceId: myId,
+        timestamp: Date.now(),
+        likedBy: []
+      });
+      await saveComment(c);
+      state.pendingReplyTo = null;
+      renderComments();
+      toast('Respuesta publicada');
+
+    } else if (act === 'edit') {
+      state.editingId = c.id;
+      renderComments();
+
+    } else if (act === 'cancel-edit') {
+      state.editingId = null;
+      renderComments();
+
+    } else if (act === 'save-edit') {
+      const textarea = itemEl.querySelector('[data-edit-text]');
+      const texto = (textarea?.value || '').trim();
+      if (!texto) { toast('El comentario no puede estar vacío', 'err'); return; }
+      c.texto = texto.slice(0, 800);
+      c.editedAt = Date.now();
+      await saveComment(c);
+      state.editingId = null;
+      renderComments();
+      toast('Comentario actualizado');
+
+    } else if (act === 'delete') {
+      if (!confirm('¿Eliminar este comentario y sus respuestas?')) return;
+      try {
+        if (fbDB) {
+          await fbDB.ref('comentarios_comunidad/' + c.id).remove();
+        } else {
+          const local = JSON.parse(localStorage.getItem('tgz_local_comments') || '[]').filter(x => x.id !== c.id);
+          localStorage.setItem('tgz_local_comments', JSON.stringify(local));
+          state.comments = state.comments.filter(x => x.id !== c.id);
+          renderComments();
+        }
+        toast('Comentario eliminado');
+      } catch(e){
+        toast('No se pudo eliminar', 'err');
+      }
+    }
+  }
+
+  async function handleReplyAction(act, parentId, replyId){
+    const myId = getDeviceId();
+    const parent = state.comments.find(x => x.id === parentId);
+    if (!parent || !parent.replies) return;
+    const reply = parent.replies.find(r => r.id === replyId);
+    if (!reply) return;
+
+    if (act === 'like') {
+      reply.likedBy = reply.likedBy || [];
+      const i = reply.likedBy.indexOf(myId);
+      if (i >= 0) reply.likedBy.splice(i, 1);
+      else reply.likedBy.push(myId);
+      await saveComment(parent);
+      renderComments();
+
+    } else if (act === 'delete') {
+      if (!confirm('¿Eliminar esta respuesta?')) return;
+      parent.replies = parent.replies.filter(r => r.id !== replyId);
+      await saveComment(parent);
+      renderComments();
+      toast('Respuesta eliminada');
+    }
+  }
+
+  async function saveComment(c){
+    try {
+      if (fbDB) {
+        await fbDB.ref('comentarios_comunidad/' + c.id).set(c);
+      } else {
+        const local = JSON.parse(localStorage.getItem('tgz_local_comments') || '[]');
+        const idx = local.findIndex(x => x.id === c.id);
+        if (idx >= 0) local[idx] = c;
+        else local.push(c);
+        localStorage.setItem('tgz_local_comments', JSON.stringify(local));
+        const i = state.comments.findIndex(x => x.id === c.id);
+        if (i >= 0) state.comments[i] = c;
+        else state.comments.push(c);
+      }
+    } catch(e){
+      console.warn('[saveComment]', e);
+    }
+  }
+
+  async function sendComment(){
+    const name = $('#cName').value.trim();
+    const text = $('#cText').value.trim();
+
+    if (!name) { toast('Ingresa tu nombre', 'err'); $('#cName').focus(); return; }
+    if (!text || text.length < 2) { toast('Escribe un comentario', 'err'); $('#cText').focus(); return; }
+
+    setMyName(name);
+
+    const comment = {
+      id: 'c_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+      nombre: name,
+      texto: text.slice(0, 800),
+      deviceId: getDeviceId(),
+      timestamp: Date.now(),
+      likedBy: [],
+      replies: []
+    };
+
+    try {
+      await saveComment(comment);
+      $('#cText').value = '';
+      toast('Comentario publicado ✓');
+    } catch(e){
+      toast('No se pudo publicar', 'err');
+    }
+  }
+
+  // ============================================================
+  //  🛠️ ACTUALIZAR / REPORTAR
+  // ============================================================
+  const UPDATE_TYPE_LABELS = {
+    actualizar_ruta: 'Actualizar datos',
+    cambio_ruta: 'Cambio de trazo',
+    nueva_ruta: 'Nueva ruta',
+    parada_nueva: 'Parada nueva',
+    parada_removida: 'Parada eliminada',
+    tarifa: 'Cambio de tarifa',
+    horario: 'Cambio de horario',
+    poi: 'POI nuevo',
+    error: 'Error',
+    sugerencia: 'Sugerencia'
+  };
+  let updateType = 'actualizar_ruta';
+
+  function initUpdate(){
+    $$('#reportTypes .report-type').forEach(btn => {
+      btn.onclick = () => {
+        $$('#reportTypes .report-type').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        updateType = btn.dataset.type;
+      };
+    });
+
+    // Precargar nombre
+    const saved = getMyName();
+    if (saved) $('#upName').value = saved;
+
+    // Cargar rutas al select
+    loadRoutesIntoSelect();
+
+    // Preview de imagen
+    $('#upFile').onchange = (e) => {
+      const f = e.target.files[0];
+      if (!f) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        $('#upPreview').src = ev.target.result;
+        $('#upPreview').classList.remove('hidden');
+      };
+      reader.readAsDataURL(f);
+    };
+
+    // Al elegir una ruta del select, precargar sus datos en el formulario
+    $('#upRouteSelect').onchange = (e) => {
+      const id = e.target.value;
+      if (!id) return;
+      prefillRouteData(id);
+    };
+
+    // Limpiar
+    $('#upClear').onclick = () => {
+      if (!confirm('¿Limpiar el formulario?')) return;
+      resetUpdateForm();
+    };
+
+    // Enviar
+    $('#upSend').onclick = sendUpdate;
+
+    // Enviar otra
+    $('#upAnother').onclick = () => {
+      $('#updateSuccess').classList.add('hidden');
+      $('#upSend').closest('.card').classList.remove('hidden');
+      $$('#panel-update .card').forEach(c => c.classList.remove('hidden'));
+      resetUpdateForm();
+    };
+
+    // Inicializar mapa
+    initUpdateMap();
+    initUpdateColorSwatches();
+  }
+
+  async function loadRoutesIntoSelect(){
+    const sel = $('#upRouteSelect');
+    if (!sel) return;
+    try {
+      let rutas = [];
+      if (fbDB) {
+        const snap = await fbDB.ref('rutas_index').once('value');
+        const val = snap.val() || {};
+        rutas = Object.values(val).filter(r => r && r.nombre && r.id);
+      } else {
+        // Fallback: localStorage
+        try {
+          const stored = JSON.parse(localStorage.getItem('tgz_routes_cache') || '[]');
+          rutas = stored.filter(r => r && r.nombre);
+        } catch(e){}
+      }
+      sel.innerHTML = '<option value="">— Selecciona una ruta —</option>' +
+        rutas.sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre), 'es', {numeric:true}))
+          .map(r => `<option value="${esc(r.id)}">${esc(r.nombre)} (${esc(r.categoria || 'urbana')})</option>`)
+          .join('');
+
+      // Guardar cache para prefills
+      window.__ROUTES_CACHE__ = rutas;
+    } catch(e){
+      console.warn('[loadRoutesIntoSelect]', e);
+    }
+  }
+
+  function prefillRouteData(id){
+    const rutas = window.__ROUTES_CACHE__ || [];
+    const r = rutas.find(x => x.id === id);
+    if (!r) return;
+
+    if (r.categoria) $('#upCat').value = r.categoria;
+    if (r.tarifa) $('#upTarifa').value = r.tarifa;
+    if (r.frecuencia) $('#upFrec').value = r.frecuencia;
+    if (r.horarioIni) $('#upHoraIni').value = r.horarioIni;
+    if (r.horarioFin) $('#upHoraFin').value = r.horarioFin;
+    if (r.dias) $('#upDias').value = r.dias;
+    if (r.accesibilidad) $('#upAcces').value = r.accesibilidad;
+    if (r.paradas) $('#upParadas').value = r.paradas.join(', ');
+    if (r.retornos) $('#upRetornos').value = r.retornos.join(', ');
+    if (r.calles) $('#upCalles').value = r.calles.join(', ');
+    if (r.pois) $('#upPois').value = r.pois.join(', ');
+    if (r.poisVuelta) $('#upPoisVuelta').value = r.poisVuelta.join(', ');
+    if (r.notas) $('#upNotas').value = r.notas;
+    if (r.colorIda) state.draft.colorIda = r.colorIda;
+    if (r.colorVuelta) state.draft.colorVuelta = r.colorVuelta;
+    if (r.puntos) state.draft.puntos = r.puntos;
+    if (r.puntosVuelta) state.draft.puntosVuelta = r.puntosVuelta;
+
+    // Dibujar los puntos existentes en el mapa
+    if (state.map && (r.puntos || r.puntosVuelta)) {
+      // Limpiar
+      state.markers.forEach(m => state.map.removeLayer(m));
+      state.markers = [];
+      state.markerMeta = [];
+      if (state.lineIda) { state.map.removeLayer(state.lineIda); state.lineIda = null; }
+      if (state.lineVuelta) { state.map.removeLayer(state.lineVuelta); state.lineVuelta = null; }
+
+      (r.puntos || []).forEach(p => addMarkerToMap(p[0], p[1], state.draft.colorIda, 'ida'));
+      (r.puntosVuelta || []).forEach(p => addMarkerToMap(p[0], p[1], state.draft.colorVuelta, 'vuelta'));
+      redrawUpdateLines();
+      updateMapStatus();
+
+      const all = [...(r.puntos||[]), ...(r.puntosVuelta||[])];
+      if (all.length) {
+        try { state.map.fitBounds(L.latLngBounds(all).pad(0.15)); } catch(e){}
+      }
+    }
+
+    initUpdateColorSwatches();
+    toast('Datos de la ruta precargados');
+  }
+
+  function resetUpdateForm(){
+    updateType = 'actualizar_ruta';
+    $$('#reportTypes .report-type').forEach(b => b.classList.remove('active'));
+    const first = $('#reportTypes .report-type');
+    if (first) first.classList.add('active');
+
+    ['upName','upPhone','upRouteCustom','upDescription',
+     'upTarifa','upFrec','upHoraIni','upHoraFin',
+     'upParadas','upRetornos','upCalles','upPois','upPoisVuelta','upNotas']
+      .forEach(id => { const el = $('#'+id); if (el) el.value = ''; });
+
+    $('#upRouteSelect').value = '';
+    $('#upCat').value = '';
+    $('#upDias').value = '';
+    $('#upAcces').value = '';
+    $('#upUrgent').checked = false;
+    $('#upFile').value = '';
+    $('#upPreview').classList.add('hidden');
+    $('#upPreview').src = '';
+
+    // Limpiar mapa
+    if (state.map) {
+      state.markers.forEach(m => state.map.removeLayer(m));
+      state.markers = [];
+      state.markerMeta = [];
+      if (state.lineIda) { state.map.removeLayer(state.lineIda); state.lineIda = null; }
+      if (state.lineVuelta) { state.map.removeLayer(state.lineVuelta); state.lineVuelta = null; }
+    }
+    state.draft.puntos = [];
+    state.draft.puntosVuelta = [];
+    state.draft.colorIda = '#3b82f6';
+    state.draft.colorVuelta = '#ef4444';
+    initUpdateColorSwatches();
+    updateMapStatus();
+
+    const saved = getMyName();
+    if (saved) $('#upName').value = saved;
+  }
+
+  async function sendUpdate(){
+    const name = $('#upName').value.trim();
+    const phone = $('#upPhone').value.trim();
+    const routeId = $('#upRouteSelect').value;
+    const routeCustom = $('#upRouteCustom').value.trim();
+    const description = $('#upDescription').value.trim();
+    const urgent = $('#upUrgent').checked;
+
+    if (!name) { toast('Ingresa tu nombre', 'err'); $('#upName').focus(); return; }
+    if (!routeId && !routeCustom) { toast('Selecciona o escribe una ruta', 'err'); $('#upRouteSelect').focus(); return; }
+    if (!description || description.length < 10) { toast('Describe la actualización (mín. 10 caracteres)', 'err'); $('#upDescription').focus(); return; }
+
+    setMyName(name);
+
+    // Nombre de la ruta (por id o por nombre custom)
+    let routeName = routeCustom;
+    if (routeId && window.__ROUTES_CACHE__) {
+      const r = window.__ROUTES_CACHE__.find(x => x.id === routeId);
+      if (r) routeName = r.nombre;
+    }
+
+    // Campos específicos (solo los que el usuario cambió)
+    const changes = {};
+    const catVal = $('#upCat').value;
+    if (catVal) changes.categoria = catVal;
+    const tarifaVal = $('#upTarifa').value.trim();
+    if (tarifaVal) changes.tarifa = tarifaVal;
+    const frecVal = $('#upFrec').value.trim();
+    if (frecVal) changes.frecuencia = frecVal;
+    const horaIniVal = $('#upHoraIni').value.trim();
+    if (horaIniVal) changes.horarioIni = horaIniVal;
+    const horaFinVal = $('#upHoraFin').value.trim();
+    if (horaFinVal) changes.horarioFin = horaFinVal;
+    const diasVal = $('#upDias').value;
+    if (diasVal) changes.dias = diasVal;
+    const accesVal = $('#upAcces').value;
+    if (accesVal) changes.accesibilidad = accesVal;
+    const paradasVal = $('#upParadas').value.trim();
+    if (paradasVal) changes.paradas = splitList(paradasVal);
+    const retornosVal = $('#upRetornos').value.trim();
+    if (retornosVal) changes.retornos = splitList(retornosVal);
+    const callesVal = $('#upCalles').value.trim();
+    if (callesVal) changes.calles = splitList(callesVal);
+    const poisVal = $('#upPois').value.trim();
+    if (poisVal) changes.pois = splitList(poisVal);
+    const poisVueltaVal = $('#upPoisVuelta').value.trim();
+    if (poisVueltaVal) changes.poisVuelta = splitList(poisVueltaVal);
+    const notasVal = $('#upNotas').value.trim();
+    if (notasVal) changes.notas = notasVal;
+
+    const update = {
+      id: 'upd_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+      tipo: updateType,
+      tipoLabel: UPDATE_TYPE_LABELS[updateType] || updateType,
+      nombre: name,
+      telefono: phone,
+      routeId: routeId || '',
+      routeName: routeName,
+      descripcion: description,
+      cambios: changes,
+      trazo: (state.draft.puntos.length || state.draft.puntosVuelta.length) ? {
+        puntos: state.draft.puntos,
+        puntosVuelta: state.draft.puntosVuelta,
+        colorIda: state.draft.colorIda,
+        colorVuelta: state.draft.colorVuelta
+      } : null,
+      urgente: urgent,
+      deviceId: getDeviceId(),
+      timestamp: Date.now(),
+      estado: 'pendiente'
+    };
+
+    try {
+      if (fbDB) {
+        await fbDB.ref('actualizaciones_rutas/' + update.id).set(update);
+        toast('Actualización enviada ✓');
+      } else {
+        const local = JSON.parse(localStorage.getItem('tgz_pending_updates') || '[]');
+        local.push(update);
+        localStorage.setItem('tgz_pending_updates', JSON.stringify(local));
+        toast('Guardado localmente ✓');
+      }
+    } catch(e) {
+      console.warn('[update] Firebase falló:', e);
+      const local = JSON.parse(localStorage.getItem('tgz_pending_updates') || '[]');
+      local.push(update);
+      localStorage.setItem('tgz_pending_updates', JSON.stringify(local));
+      toast('Guardado localmente ✓');
+    }
+
+    // Enviar por WhatsApp también (opcional)
+    const sendWA = confirm('¿Quieres enviar también la actualización por WhatsApp para atención más rápida?');
+    if (sendWA) {
+      const waText =
+        `*🛠️ NUEVA ACTUALIZACIÓN · ${CONFIG.appName}*\n\n` +
+        `📋 *Tipo:* ${update.tipoLabel}\n` +
+        `👤 *De:* ${name}\n` +
+        (phone ? `📱 *Contacto:* ${phone}\n` : '') +
+        (routeName ? `🚌 *Ruta:* ${routeName}\n` : '') +
+        (urgent ? `⚠️ *URGENTE*\n` : '') +
+        `\n*Descripción:*\n${description}\n` +
+        (Object.keys(changes).length ? `\n*Cambios:*\n${JSON.stringify(changes, null, 2)}\n` : '') +
+        (update.trazo ? `\n*Trazo incluido:* ${state.draft.puntos.length} pts ida, ${state.draft.puntosVuelta.length} pts regreso\n` : '');
+
+      window.open(`https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(waText)}`, '_blank');
+    }
+
+    // Mostrar éxito
+    $$('#panel-update .card').forEach(c => c.classList.add('hidden'));
+    $('#updateSuccess').classList.remove('hidden');
+    $('#updateSuccess').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  // ============================================================
+  //  🗺️ MAPA DE ACTUALIZACIÓN (como admin)
+  // ============================================================
+  const UPDATE_COLORS = ['#3b82f6','#ef4444','#00e5ff','#a855f7','#10b981','#f59e0b','#ec4899','#84cc16'];
+
+  function initUpdateColorSwatches(){
+    buildSwatches('#colorIdaUpdate', state.draft.colorIda, c => { state.draft.colorIda = c; redrawUpdateLines(); });
+    buildSwatches('#colorVueltaUpdate', state.draft.colorVuelta, c => { state.draft.colorVuelta = c; redrawUpdateLines(); });
+  }
+  function buildSwatches(sel, current, onPick){
+    const el = $(sel); if(!el) return;
+    el.innerHTML = UPDATE_COLORS.map(c =>
+      `<button class="swatch${c === current ? ' active' : ''}" data-color="${c}" style="background:${c}"></button>`
+    ).join('');
+    el.querySelectorAll('.swatch').forEach(s => s.onclick = () => {
+      el.querySelectorAll('.swatch').forEach(x => x.classList.remove('active'));
+      s.classList.add('active');
+      onPick(s.dataset.color);
+    });
+  }
+
+  function initUpdateMap(){
+    if (state.map) { try { state.map.invalidateSize(); } catch(e){} return; }
+    const el = document.getElementById('updateMap');
+    if (!el) return;
+
+    state.map = L.map(el, { zoomControl: true }).setView([16.7530, -93.1150], 13);
+
+    L.tileLayer(`https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}@2x.png?key=${CONFIG.mapTilerKey}`, {
+      tileSize: 512, zoomOffset: -1, maxZoom: 20, maxNativeZoom: 19,
+      crossOrigin: true,
+      attribution: '© <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
+    }).addTo(state.map);
+
+    // Botón pantalla completa
+    bindFsButton('updateMapFsBtn', 'updateMapWrap');
+
+    // Click en el mapa
+    state.map.on('click', async e => {
+      if (!state.drawing) return;
+      const snapped = await snapToRoad(e.latlng.lat, e.latlng.lng);
+      if (state.drawMode === 'draw-vuelta') {
+        state.draft.puntosVuelta.push(snapped);
+        addMarkerToMap(snapped[0], snapped[1], state.draft.colorVuelta, 'vuelta');
+      } else {
+        state.draft.puntos.push(snapped);
+        addMarkerToMap(snapped[0], snapped[1], state.draft.colorIda, 'ida');
+      }
+      redrawUpdateLines();
+      updateMapStatus();
+    });
+
+    // Toolbar
+    $$('#panel-update .tb').forEach(b => b.onclick = () => handleUpdateTool(b));
+  }
+
+  function addMarkerToMap(lat, lng, color, tipo){
+    if (!state.map) return;
+    const m = L.circleMarker([lat, lng], {
+      radius: 5, color, fillColor: color, fillOpacity: 1, weight: 2
+    }).addTo(state.map);
+    state.markers.push(m);
+    state.markerMeta.push({ tipo });
+  }
+
+  function handleUpdateTool(btn){
+    const tool = btn.dataset.tool;
+
+    if (tool === 'undo') {
+      if (!state.markers.length) { toast('No hay puntos para deshacer', 'err'); return; }
+      const meta = state.markerMeta.pop();
+      const m = state.markers.pop();
+      if (m) state.map.removeLayer(m);
+      if (meta) {
+        if (meta.tipo === 'vuelta') state.draft.puntosVuelta.pop();
+        else state.draft.puntos.pop();
+      }
+      redrawUpdateLines();
+      updateMapStatus();
+      return;
+    }
+
+    if (tool === 'clear') {
+      if (!confirm('¿Limpiar TODO el trazado?')) return;
+      state.markers.forEach(m => state.map.removeLayer(m));
+      state.markers = [];
+      state.markerMeta = [];
+      state.draft.puntos = [];
+      state.draft.puntosVuelta = [];
+      if (state.lineIda) { state.map.removeLayer(state.lineIda); state.lineIda = null; }
+      if (state.lineVuelta) { state.map.removeLayer(state.lineVuelta); state.lineVuelta = null; }
+      updateMapStatus();
+      return;
+    }
+
+    if (tool === 'gps') {
+      toggleGPS(btn);
+      return;
+    }
+
+    // draw-ida / draw-vuelta
+    if (state.drawMode === tool) {
+      btn.classList.remove('active');
+      state.drawing = false;
+      state.drawMode = null;
+      return;
+    }
+    $$('#panel-update .tb').forEach(x => x.classList.remove('active'));
+    btn.classList.add('active');
+    state.drawing = true;
+    state.drawMode = tool;
+  }
+
+  function toggleGPS(btn){
+    if (state.gpsWatch) {
+      navigator.geolocation.clearWatch(state.gpsWatch);
+      state.gpsWatch = null;
+      btn.classList.remove('active');
+      toast('GPS detenido');
+      return;
+    }
+    if (!navigator.geolocation) { toast('GPS no disponible', 'err'); return; }
+    if (!state.drawMode) state.drawMode = 'draw-ida';
+
+    btn.classList.add('active');
+    toast('Grabando GPS en modo ' + (state.drawMode === 'draw-vuelta' ? 'REGRESO' : 'IDA'));
+
+    state.gpsWatch = navigator.geolocation.watchPosition(pos => {
+      const { latitude: lat, longitude: lng } = pos.coords;
+      if (state.drawMode === 'draw-vuelta') {
+        state.draft.puntosVuelta.push([lat, lng]);
+        addMarkerToMap(lat, lng, state.draft.colorVuelta, 'vuelta');
+      } else {
+        state.draft.puntos.push([lat, lng]);
+        addMarkerToMap(lat, lng, state.draft.colorIda, 'ida');
+      }
+      redrawUpdateLines();
+      updateMapStatus();
+    }, err => toast('GPS: ' + err.message, 'err'), {
+      enableHighAccuracy: true, maximumAge: 0, timeout: 15000
+    });
+  }
+
+  async function redrawUpdateLines(){
+    if (!state.map) return;
+    if (state.lineIda) { state.map.removeLayer(state.lineIda); state.lineIda = null; }
+    if (state.lineVuelta) { state.map.removeLayer(state.lineVuelta); state.lineVuelta = null; }
+
+    const ida = state.draft.puntos;
+    const vuelta = state.draft.puntosVuelta;
+
+    if (ida.length > 1) {
+      const geom = await getRouteGeometryOSRM(ida);
+      state.lineIda = L.polyline(geom, {
+        color: state.draft.colorIda, weight: 5, opacity: .95,
+        lineJoin: 'round', lineCap: 'round'
+      }).addTo(state.map);
+    }
+    if (vuelta.length > 1) {
+      const geom = await getRouteGeometryOSRM(vuelta);
+      state.lineVuelta = L.polyline(geom, {
+        color: state.draft.colorVuelta, weight: 5, opacity: .95,
+        lineJoin: 'round', lineCap: 'round', dashArray: '10,6'
+      }).addTo(state.map);
+    }
+  }
+
+  async function getRouteGeometryOSRM(points){
+    if (!points || points.length < 2) return points;
+    try {
+      const coords = points.map(p => `${p[1]},${p[0]}`).join(';');
+      const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
+      const r = await fetch(url);
+      const j = await r.json();
+      if (j.code === 'Ok' && j.routes && j.routes[0]) {
+        return j.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+      }
+    } catch(e){}
+    return points;
+  }
+
+  async function snapToRoad(lat, lng){
+    try {
+      const url = `https://router.project-osrm.org/nearest/v1/driving/${lng},${lat}?number=1`;
+      const r = await fetch(url);
+      const j = await r.json();
+      if (j.code === 'Ok' && j.waypoints && j.waypoints[0]) {
+        const [sLng, sLat] = j.waypoints[0].location;
+        return [sLat, sLng];
+      }
+    } catch(e){}
+    return [lat, lng];
+  }
+
+  function updateMapStatus(){
+    const el = $('#updateMapStatus');
+    if (el) el.textContent = `Puntos ida: ${state.draft.puntos.length} · Puntos regreso: ${state.draft.puntosVuelta.length}`;
+  }
+
+  function bindFsButton(btnId, wrapId){
+    const btn = document.getElementById(btnId);
+    const wrap = document.getElementById(wrapId);
+    if (!btn || !wrap) return;
+    const ENTER = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>`;
+    const EXIT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 3v3a2 2 0 0 1-2 2H4"/><path d="M21 9h-3a2 2 0 0 0-2 2v3"/><path d="M3 15h3a2 2 0 0 1 2 2v3"/><path d="M15 21v-3a2 2 0 0 1 2-2h3"/></svg>`;
+    btn.innerHTML = ENTER;
+    btn.onclick = () => {
+      const isFs = wrap.classList.toggle('is-fullscreen');
+      document.body.classList.toggle('fs-active', isFs);
+      btn.innerHTML = isFs ? EXIT : ENTER;
+      setTimeout(() => state.map && state.map.invalidateSize(), 250);
+    };
+  }
+
+  // ============================================================
+  //  📘 FACEBOOK
+  // ============================================================
+  function initFacebook(){
+    $('#fbOpenBtn').href = CONFIG.facebook;
+    const wrap = $('#fbEmbedWrap');
+    if (wrap && CONFIG.facebook) {
+      const iframeSrc = `https://www.facebook.com/plugins/page.php?href=${encodeURIComponent(CONFIG.facebook)}&tabs=timeline&width=500&height=520&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true`;
+      wrap.innerHTML = `<iframe src="${iframeSrc}" width="500" height="520" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share" loading="lazy"></iframe>`;
+    }
+  }
+
+  // ============================================================
+  //  📞 CONTACTO
+  // ============================================================
+  function initContact(){
+    $('#ccWhatsapp').href = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent('Hola, quiero contactar al equipo de ' + CONFIG.appName)}`;
+    $('#ccPhone').href = 'tel:' + CONFIG.phone.replace(/\s/g,'');
+    $('#ccEmail').href = 'mailto:' + CONFIG.email + '?subject=' + encodeURIComponent('Contacto ' + CONFIG.appName);
+    $('#ccFacebook').href = CONFIG.facebook;
+    $('#ccInstagram').href = CONFIG.instagram;
+    $('#ccTiktok').href = CONFIG.tiktok;
+  }
+
+  // ============================================================
+  //  🚀 INIT
+  // ============================================================
+  function init(){
+    initCommunity();
+    initUpdate();
+    initFacebook();
+    initContact();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  window.ComentariosPage = { init, toast, CONFIG, state };
+
+})();
+</script>
+</body>
+</html>
