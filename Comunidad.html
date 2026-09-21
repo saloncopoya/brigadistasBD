@@ -1225,9 +1225,9 @@ img{max-width:100%;display:block}
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          titulo: '💬 Nuevo comentario en Comunidad',
-          mensaje: `${author}: ${text.slice(0, 80)}${text.length > 80 ? '…' : ''}`,
-          url: '/Comunidad',
+          titulo: `💬 ${author}`,
+mensaje: `${text.slice(0, 80)}${text.length > 80 ? '…' : ''}`,
+           url: '/Comunidad',
           imagen: '/img.png',
           tipo: 'comentario'
         })
