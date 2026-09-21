@@ -1247,15 +1247,12 @@ ${image ? `
     <span>Rutas</span>
   </a>
   <a class="nav-item" href="${baseUrl}/Comunidad">
-<svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-  <!-- Burbuja superior derecha (más pequeña) -->
-  <path d="M25 11.5a2 2 0 0 1-2 2h-5l-3 3V4.5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2z" opacity="0.45"/>
-  <!-- Burbuja inferior izquierda (más grande) -->
-  <path d="M20 19a2.5 2.5 0 0 1-2.5 2.5H8l-4.5 4.5V8A2.5 2.5 0 0 1 6 5.5h11.5A2.5 2.5 0 0 1 20 8z"/>
-  <!-- Badge XL -->
-  <circle cx="22" cy="6" r="6" fill="#ef4444" stroke="#0a0e1a" stroke-width="1.8"/>
-  <text x="22" y="9" font-size="7.5" font-weight="900" text-anchor="middle" fill="#ffffff" font-family="Arial, Helvetica, sans-serif">3</text>
-</svg>
+  <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M27 13a2 2 0 0 1-2 2h-5l-3 3V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2z" opacity="0.4"/>
+      <path d="M22 21a2.5 2.5 0 0 1-2.5 2.5H9l-5 5V9A2.5 2.5 0 0 1 6.5 6.5h13A2.5 2.5 0 0 1 22 9z"/>
+      <circle cx="25" cy="7" r="6.5" fill="#ef4444" stroke="var(--bg)" stroke-width="2"/>
+      <text x="25" y="10" font-size="8" font-weight="900" text-anchor="middle" fill="#ffffff" font-family="Arial, Helvetica, sans-serif">3</text>
+    </svg>
 <span>Comunidad</span>
   </a>
 </nav>
