@@ -1219,17 +1219,24 @@ img{max-width:100%;display:block}
       renderComments();
     }
 
-    // 🔔 NOTIFICAR A TODOS LOS SUSCRIPTORES (silencioso, sin bloquear)
+       // 🔔 NOTIFICAR A TODOS LOS SUSCRIPTORES (silencioso, sin bloquear)
     try {
       fetch('/api/notify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          titulo: `💬 ${author}`,
-mensaje: `${text.slice(0, 80)}${text.length > 80 ? '…' : ''}`,
-           url: '/Comunidad',
-          imagen: '/img.png',
-          tipo: 'comentario'
+          titulo: `💬Comentario de: ${author}`,
+          mensaje: `${text.slice(0, 80)}${text.length > 80 ? '…' : ''}`,
+          url: '/Comunidad',
+          imagen: 'https://sub-legadoavicola.pages.dev/miniatura2.png',
+          tipo: 'comentario',
+          // 🔘 Botones personalizados (solo para comentarios)
+          letra1: '👁️ VER',
+          boton1: '/Comunidad',
+          letra2: '✍️ COMENTAR',
+          boton2: '/Comunidad',
+          letra3: '🏠 INICIO',
+          boton3: '/'
         })
       }).catch(() => {
         // Silencioso: si falla, no rompe la experiencia
@@ -1238,6 +1245,7 @@ mensaje: `${text.slice(0, 80)}${text.length > 80 ? '…' : ''}`,
     } catch(e) {
       console.warn('[notify] Error:', e);
     }
+   
   }
    
 
