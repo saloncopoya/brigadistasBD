@@ -1,33 +1,6 @@
 {
   "posts": [
     {
-      "slug": "nuevasrutas209",
-      "title": "NUEVAS RUTAS",
-      "description": "Ruta NUEVAS RUTAS",
-      "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789955936/tb3cs0uvshje4fdxssnk.jpg",
-      "url": "/share/ruta/nuevasrutas209",
-      "tipo": "ruta",
-      "timestamp": 1789972702793,
-      "updatedAt": "2026-09-21T06:38:22.793Z",
-      "categoria": "urbana",
-      "tarifa": "10",
-      "frecuencia": "15",
-      "horarioIni": "5",
-      "horarioFin": "22",
-      "dias": "todos",
-      "paradas": [
-        "Parada 1",
-        "Avenida Primavera"
-      ],
-      "calles": [
-        "Avenida Primavera",
-        "Avenida 19 Sur Oriente"
-      ],
-      "pois": [
-        "Pois ids 1"
-      ]
-    },
-    {
       "slug": "ruta3149",
       "title": "RUTA 3",
       "description": "Ruta RUTA 3",
@@ -163,7 +136,7 @@
       ]
     }
   ],
-  "total": 3,
-  "updatedAt": "2026-09-21T06:38:22.793Z",
+  "total": 2,
+  "updatedAt": "2026-09-21T07:03:55.023Z",
   "version": 1
 }
