@@ -46,7 +46,6 @@ Allow: /
 
 # 📄 Sitemap
 Sitemap: https://brigadistasbd.pages.dev/sitemap.xml
-Sitemap: https://brigadistasbd.pages.dev/sitemap-index.xml
 
 # 🔗 Ubicación de llms.txt (para IA)
 # https://brigadistasbd.pages.dev/llms.txt
