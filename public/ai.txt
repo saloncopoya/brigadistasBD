@@ -1,0 +1,14 @@
+# ai.txt
+User-Agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /api/
+Disallow: /functions/
+
+# Contacto para IA
+Contact: contacto@brigadistasbd.pages.dev
+
+# Preferencias
+Preferred-Language: es-MX
+Content-License: CC-BY-4.0
+Attribution: Rutas BGD (brigadistasbd.pages.dev)
