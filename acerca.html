@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0e1a">
+<meta name="description" content="Acerca de Rutas BGD: quiénes somos, nuestra misión, visión e historia. Plataforma de consulta de rutas de colectivos en Tuxtla Gutiérrez, Chiapas.">
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+<meta name="geo.region" content="MX-CHP">
+<meta name="geo.placename" content="Tuxtla Gutiérrez">
+<link rel="canonical" href="https://brigadistasbd.pages.dev/acerca">
+<link rel="icon" type="image/svg+xml" href="/assets/icon.svg">
+<link rel="apple-touch-icon" href="/assets/icon.svg">
+<link rel="manifest" href="/manifest.json">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Acerca de · Rutas BGD">
+<meta property="og:description" content="Conoce más sobre Rutas BGD, la plataforma de rutas de colectivos en Tuxtla Gutiérrez.">
+<meta property="og:image" content="https://brigadistasbd.pages.dev/img.png">
+<meta property="og:url" content="https://brigadistasbd.pages.dev/acerca">
+<meta property="og:site_name" content="Rutas BGD">
+<meta property="og:locale" content="es_MX">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Acerca de · Rutas BGD">
+<meta name="twitter:image" content="https://brigadistasbd.pages.dev/img.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "AboutPage",
+      "name": "Acerca de Rutas BGD",
+      "url": "https://brigadistasbd.pages.dev/acerca",
+      "inLanguage": "es-MX",
+      "mainEntity": {
+        "@type": "Organization",
+        "name": "Rutas BGD",
+        "url": "https://brigadistasbd.pages.dev/",
+        "logo": "https://brigadistasbd.pages.dev/img.png",
+        "description": "Plataforma de consulta de rutas de colectivos en Tuxtla Gutiérrez, Chiapas.",
+        "foundingDate": "2024",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Tuxtla Gutiérrez",
+          "addressRegion": "Chiapas",
+          "addressCountry": "MX"
+        },
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "contactType": "customer service",
+          "email": "contacto@brigadistasbd.pages.dev"
+        }
+      }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Inicio", "item": "https://brigadistasbd.pages.dev/" },
+        { "@type": "ListItem", "position": 2, "name": "Acerca de", "item": "https://brigadistasbd.pages.dev/acerca" }
+      ]
+    }
+  ]
+}
+</script>
+
+<style>
+/* ============================================================
+   VARIABLES Y TEMAS — clon de index
+   ============================================================ */
+:root{
+  --cyan:#0167ff;--cyan-d:#0574a2;--cyan-glow:rgba(0,229,255,.35);
+  --purple:#a855f7;--green:#10b981;--amber:#f59e0b;--red:#ef4444;--pink:#ec4899;
+  --radius:14px;--radius-sm:10px;--radius-lg:22px;
+  --shadow:0 10px 30px rgba(0,0,0,.35);--shadow-sm:0 4px 12px rgba(0,0,0,.25);
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --nav-h:64px;--header-h:58px;--transition:.25s cubic-bezier(.4,0,.2,1);
+}
+[data-theme="dark"]{
+  --bg:#0a0e1a;--bg-2:#0f1526;--bg-3:#161e33;
+  --surface:#141c30;--surface-2:#1c2540;--surface-3:#242f4d;
+  --border:#26314f;--border-2:#334066;
+  --text:#e8edf7;--text-2:#a9b4cc;--text-3:#6b7793;
+  --input-bg:#0f1626;--overlay:rgba(5,8,16,.85);
+}
+[data-theme="light"]{
+  --bg:#f4f6fb;--bg-2:#fff;--bg-3:#eef1f8;
+  --surface:#fff;--surface-2:#f4f6fb;--surface-3:#e8ecf5;
+  --border:#dde3ee;--border-2:#c5cfe2;
+  --text:#0c1322;--text-2:#4a5773;--text-3:#8a95ad;
+  --input-bg:#f8fafd;--overlay:rgba(15,20,35,.55);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:var(--font);background:var(--bg);color:var(--text);
+  overflow-x:hidden;overscroll-behavior-y:none;
+  transition:background var(--transition),color var(--transition);
+  -webkit-font-smoothing:antialiased;line-height:1.7;
+}
+button,input,textarea,select{font-family:inherit;font-size:inherit;color:inherit}
+button{cursor:pointer;border:none;background:none}
+a{color:var(--cyan);text-decoration:none}
+a:hover{text-decoration:underline}
+img{max-width:100%;display:block}
+.hidden{display:none!important}
+::selection{background:var(--cyan);color:#00121a}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:8px}
+
+/* HEADER */
+.header{
+  position:fixed;top:0;left:0;right:0;height:var(--header-h);
+  background:color-mix(in srgb,var(--surface) 92%,transparent);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 14px;z-index:1000;
+}
+.header-brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px;letter-spacing:-.3px;color:var(--text);text-decoration:none}
+.header-brand .logo{
+  width:32px;height:32px;border-radius:9px;
+  background:linear-gradient(135deg,var(--cyan),var(--cyan-d));
+  display:grid;place-items:center;color:#00121a;
+  box-shadow:0 0 18px var(--cyan-glow);
+}
+.header-brand .logo svg{width:20px;height:20px}
+.header-brand .brand-txt{background:linear-gradient(90deg,var(--cyan),#7dd3fc);-webkit-background-clip:text;background-clip:text;color:transparent}
+.header-actions{display:flex;align-items:center;gap:6px}
+.icon-btn{
+  width:40px;height:40px;border-radius:11px;display:grid;place-items:center;
+  color:var(--text-2);transition:var(--transition);text-decoration:none;
+}
+.icon-btn:hover{background:var(--surface-2);color:var(--cyan)}
+.icon-btn svg{width:20px;height:20px}
+
+/* LAYOUT */
+.app{
+  padding-top:var(--header-h);
+  padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom));
+  min-height:100vh;
+}
+.wrap{max-width:820px;margin:0 auto;padding:20px}
+
+/* Breadcrumb */
+.breadcrumb{
+  display:flex;align-items:center;gap:6px;
+  font-size:12px;color:var(--text-3);margin-bottom:16px;flex-wrap:wrap;
+}
+.breadcrumb a{color:var(--text-2)}
+.breadcrumb a:hover{color:var(--cyan)}
+.breadcrumb .sep{opacity:.5}
+
+/* Hero */
+.page-hero{
+  padding:20px 0 24px;border-bottom:1px solid var(--border);margin-bottom:28px;
+}
+.page-hero h1{
+  font-size:clamp(26px,4vw,38px);font-weight:900;letter-spacing:-.6px;
+  line-height:1.15;margin-bottom:12px;
+  background:linear-gradient(135deg,var(--cyan),#7dd3fc 60%,var(--cyan-d));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.page-hero .subtitle{
+  font-size:16px;color:var(--text-2);line-height:1.6;
+}
+
+/* Article */
+.article h2{
+  font-size:clamp(20px,2.5vw,24px);font-weight:900;letter-spacing:-.4px;
+  margin:36px 0 14px;color:var(--text);line-height:1.3;
+  scroll-margin-top:calc(var(--header-h) + 20px);
+}
+.article h3{
+  font-size:17px;font-weight:800;letter-spacing:-.2px;
+  margin:24px 0 10px;color:var(--cyan);
+}
+.article p{
+  font-size:15.5px;color:var(--text-2);margin-bottom:14px;
+}
+.article p strong{color:var(--text);font-weight:700}
+.article ul,.article ol{padding-left:24px;margin-bottom:16px}
+.article li{font-size:15px;color:var(--text-2);margin-bottom:8px}
+
+/* Stat grid */
+.stat-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+  gap:12px;margin:24px 0;
+}
+.stat-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:18px 16px;text-align:center;
+  transition:var(--transition);
+}
+.stat-card:hover{border-color:var(--cyan);transform:translateY(-2px)}
+.stat-card .num{
+  font-size:28px;font-weight:900;letter-spacing:-1px;
+  background:linear-gradient(135deg,var(--cyan),#7dd3fc);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  line-height:1;
+}
+.stat-card .lbl{
+  font-size:11.5px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.5px;color:var(--text-3);margin-top:6px;
+}
+
+/* Value cards */
+.value-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:14px;margin:22px 0;
+}
+.value-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:20px;
+  transition:var(--transition);
+}
+.value-card:hover{border-color:var(--cyan)}
+.value-card .vc-icon{
+  width:44px;height:44px;border-radius:12px;
+  background:linear-gradient(135deg,var(--cyan),var(--cyan-d));
+  display:grid;place-items:center;color:#00121a;margin-bottom:12px;
+}
+.value-card .vc-icon svg{width:22px;height:22px}
+.value-card h3{
+  font-size:15px;font-weight:800;margin:0 0 8px;color:var(--text);
+}
+.value-card p{
+  font-size:13.5px;color:var(--text-2);line-height:1.6;margin:0;
+}
+
+/* Info box */
+.info-box{
+  background:var(--surface);border:1px solid var(--border);
+  border-left:4px solid var(--cyan);
+  padding:16px 20px;border-radius:0 var(--radius) var(--radius) 0;
+  margin:20px 0;
+}
+.info-box h4{margin:0 0 8px;color:var(--cyan);font-size:14px}
+.info-box p:last-child{margin-bottom:0}
+
+/* Contact block */
+.contact-block{
+  background:linear-gradient(135deg,color-mix(in srgb,var(--cyan) 8%,var(--surface)),var(--surface));
+  border:1px solid var(--border);border-radius:var(--radius);
+  padding:24px;margin:36px 0;text-align:center;
+}
+.contact-block h2{
+  font-size:18px;font-weight:900;margin-bottom:10px;color:var(--text);
+}
+.contact-block p{font-size:14px;color:var(--text-2);margin-bottom:16px}
+.contact-block a{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:11px 20px;border-radius:10px;
+  background:linear-gradient(135deg,var(--cyan),var(--cyan-d));
+  color:#00121a;font-weight:800;font-size:13.5px;
+  text-decoration:none;transition:var(--transition);
+}
+.contact-block a:hover{filter:brightness(1.08);transform:translateY(-2px);text-decoration:none}
+
+/* Footer */
+footer{
+  margin-top:40px;padding:24px 0;border-top:1px solid var(--border);
+  color:var(--text-3);font-size:12px;text-align:center;line-height:1.9;
+}
+footer a{color:var(--cyan)}
+
+/* NAV INFERIOR (5 botones) */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav-h) + env(safe-area-inset-bottom));
+  padding-bottom:env(safe-area-inset-bottom);
+  background:color-mix(in srgb,var(--surface) 92%,transparent);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border-top:1px solid var(--text-2);
+  display:grid;grid-template-columns:repeat(5,1fr);z-index:1000;
+}
+.nav-item{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;color:var(--text);font-size:11px;font-weight:600;
+  transition:var(--transition);position:relative;text-decoration:none;
+}
+.nav-item svg{width:23px;height:23px;transition:var(--transition)}
+.nav-item.active{color:var(--cyan)}
+.nav-item.active svg{transform:translateY(-2px) scale(1.08)}
+.nav-item.active::before{
+  content:"";position:absolute;top:6px;width:44px;height:3px;border-radius:0 0 4px 4px;
+  background:var(--cyan);box-shadow:0 0 14px var(--cyan-glow);
+}
+.nav-item:active{transform:scale(.94)}
+
+@media(min-width:1000px){
+  .bottom-nav{max-width:720px;left:50%;transform:translateX(-50%);border-radius:18px 18px 0 0;border-left:1px solid var(--border);border-right:1px solid var(--border)}
+}
+@media(max-width:380px){
+  .header-brand .brand-txt{font-size:14px}
+  .nav-item span{font-size:10px}
+  .nav-item svg{width:20px;height:20px}
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <a class="header-brand" href="/">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+        <circle cx="12" cy="10" r="3"/>
+      </svg>
+    </div>
+    <span class="brand-txt">Rutas BGD</span>
+  </a>
+  <div class="header-actions">
+    <button class="icon-btn" id="themeBtn" title="Cambiar tema">
+      <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <a class="icon-btn" href="/" title="Ir al inicio">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </a>
+  </div>
+</header>
+
+<main class="app">
+  <div class="wrap">
+
+    <nav class="breadcrumb" aria-label="Ruta de navegación">
+      <a href="/">Inicio</a>
+      <span class="sep">›</span>
+      <span aria-current="page">Acerca de</span>
+    </nav>
+
+    <div class="page-hero">
+      <h1>Acerca de Rutas BGD</h1>
+      <p class="subtitle">Somos una plataforma independiente dedicada a facilitar el acceso a la información de rutas de colectivos en Tuxtla Gutiérrez, Chiapas.</p>
+    </div>
+
+    <article class="article">
+
+      <h2>Nuestra historia</h2>
+      <p><strong>Rutas BGD</strong> nació de una necesidad muy concreta: en Tuxtla Gutiérrez, la información sobre rutas de colectivos estaba dispersa, desactualizada o simplemente no existía en formato digital. Los usuarios dependían del conocimiento empírico de vecinos, conductores o de prueba y error.</p>
+      <p>Un grupo de vecinos y desarrolladores decidió crear una herramienta que centralizara toda la información disponible, la verificara y la presentara de forma clara, accesible y siempre disponible —incluso sin conexión a internet.</p>
+      <p>Así nació Rutas BGD: una <strong>Progressive Web App (PWA)</strong> que funciona en cualquier dispositivo, con mapas interactivos, búsqueda de rutas, planificador de viajes con transbordos y un marketplace local para la comunidad.</p>
+
+      <div class="info-box">
+        <h4>🎯 Nuestra misión</h4>
+        <p>Facilitar el acceso a información confiable, actualizada y gratuita sobre el transporte público de Tuxtla Gutiérrez, mejorando la experiencia diaria de miles de usuarios.</p>
+      </div>
+
+      <h2>Nuestra visión</h2>
+      <p>Queremos convertirnos en la <strong>plataforma de referencia</strong> para consultar rutas de colectivos en Tuxtla Gutiérrez y, con el tiempo, expandirnos a otras ciudades de Chiapas. Aspiramos a que cualquier persona —residente, visitante o turista— pueda planear su viaje en transporte público con la misma facilidad con la que usa un mapa digital.</p>
+
+      <h2>Nuestros valores</h2>
+
+      <div class="value-grid">
+        <div class="value-card">
+          <div class="vc-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <h3>Precisión</h3>
+          <p>Solo publicamos información verificada. Preferimos no publicar un dato a publicar uno incorrecto.</p>
+        </div>
+        <div class="value-card">
+          <div class="vc-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <h3>Comunidad</h3>
+          <p>Creemos en el poder de la colaboración. Cada reporte de un usuario mejora la información para todos.</p>
+        </div>
+        <div class="value-card">
+          <div class="vc-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          </div>
+          <h3>Gratuidad</h3>
+          <p>Rutas BGD es y seguirá siendo gratuito. No cobramos por consultar información de transporte público.</p>
+        </div>
+        <div class="value-card">
+          <div class="vc-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <h3>Privacidad</h3>
+          <p>No vendemos datos personales. No rastreamos a los usuarios. Tu información es tuya.</p>
+        </div>
+        <div class="value-card">
+          <div class="vc-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          </div>
+          <h3>Rendimiento</h3>
+          <p>Optimizamos cada byte para que la app cargue rápido incluso en conexiones lentas o sin datos.</p>
+        </div>
+        <div class="value-card">
+          <div class="vc-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          </div>
+          <h3>Accesibilidad</h3>
+          <p>Diseñamos pensando en todos: personas con discapacidad, adultos mayores y usuarios sin experiencia técnica.</p>
+        </div>
+      </div>
+
+      <h2>¿Qué ofrecemos?</h2>
+
+      <h3>🚌 Catálogo de rutas</h3>
+      <p>Información detallada de cada ruta de colectivo de Tuxtla Gutiérrez: recorrido completo, paradas, calles, retornos, tarifas, horarios, frecuencia y puntos de interés.</p>
+
+      <h3>🗺️ Mapas interactivos</h3>
+      <p>Visualización del trazado de cada ruta con mapas interactivos que muestran el recorrido de ida y regreso, paradas, y puntos de referencia.</p>
+
+      <h3>🧭 Planificador de viajes</h3>
+      <p>Buscador de rutas por origen y destino, con soporte para <strong>transbordos inteligentes</strong> entre múltiples rutas para llegar a tu destino.</p>
+
+      <h3>🛒 Marketplace local</h3>
+      <p>Espacio para que la comunidad publique y consulte anuncios clasificados: autos, terrenos, casas, servicios y más.</p>
+
+      <h3>💬 Comunidad</h3>
+      <p>Muro de comentarios y sistema de reportes para que los usuarios contribuyan a mejorar la información.</p>
+
+      <h3>📴 Modo offline</h3>
+      <p>Al ser una PWA, la app funciona parcialmente sin conexión: puedes consultar rutas previamente cargadas y usar el mapa con mosaicos en caché.</p>
+
+      <h2>Nuestros números</h2>
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="num">100%</div>
+          <div class="lbl">Gratuito</div>
+        </div>
+        <div class="stat-card">
+          <div class="num">24/7</div>
+          <div class="lbl">Disponible</div>
+        </div>
+        <div class="stat-card">
+          <div class="num">PWA</div>
+          <div class="lbl">Instalable</div>
+        </div>
+        <div class="stat-card">
+          <div class="num">Offline</div>
+          <div class="lbl">Funcional</div>
+        </div>
+      </div>
+
+      <h2>Nuestro equipo</h2>
+      <p>Rutas BGD es un proyecto colaborativo desarrollado por vecinos de Tuxtla Gutiérrez. Combinamos experiencia en desarrollo web, cartografía, transporte urbano y diseño de producto para crear una herramienta útil y accesible para todos.</p>
+      <p>No somos una empresa. Somos una iniciativa comunitaria sin fines de lucro que busca resolver un problema real de nuestra ciudad.</p>
+
+      <h2>¿Cómo puedes colaborar?</h2>
+      <ul>
+        <li><strong>Reporta errores:</strong> si encuentras información incorrecta, repórtala en la sección <a href="/Comunidad">Comunidad</a>.</li>
+        <li><strong>Comparte la app:</strong> mientras más usuarios la conozcan, más útil se vuelve para todos.</li>
+        <li><strong>Aporta datos:</strong> si conoces alguna ruta no registrada, cuéntanos.</li>
+        <li><strong>Difunde:</strong> comparte en redes sociales y con tus conocidos.</li>
+      </ul>
+
+      <div class="contact-block">
+        <h2>¿Quieres contactarnos?</h2>
+        <p>Estamos abiertos a sugerencias, colaboraciones y comentarios.</p>
+        <a href="mailto:contacto@brigadistasbd.pages.dev">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="16" height="16"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          contacto@brigadistasbd.pages.dev
+        </a>
+      </div>
+
+    </article>
+
+    <footer>
+      <div style="margin-bottom:14px">
+        <a href="/" style="margin:0 8px">Inicio</a>·
+        <a href="/?tab=routes" style="margin:0 8px">Rutas</a>·
+        <a href="/?tab=market" style="margin:0 8px">Marketplace</a>·
+        <a href="/Comunidad" style="margin:0 8px">Comunidad</a>
+      </div>
+      <div style="margin-bottom:14px">
+        <a href="/metodologia" style="margin:0 8px">Metodología</a>·
+        <a href="/acerca" style="margin:0 8px">Acerca de</a>·
+        <a href="/politica-privacidad" style="margin:0 8px">Privacidad</a>·
+        <a href="/terminos" style="margin:0 8px">Términos</a>
+      </div>
+      © <span id="year"></span> Rutas BGD · <a href="https://brigadistasbd.pages.dev">brigadistasbd.pages.dev</a>
+    </footer>
+
+  </div>
+</main>
+
+<nav class="bottom-nav">
+  <a class="nav-item" href="/" style="text-decoration:none;color:inherit">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>Inicio</span>
+  </a>
+  <a class="nav-item" href="/?tab=market" style="text-decoration:none;color:inherit">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+    <span>Market</span>
+  </a>
+  <a class="nav-item" href="/?tab=routes" style="text-decoration:none;color:inherit">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M4.5 5C4.5 3.62 5.62 2.5 7 2.5h10c1.38 0 2.5 1.12 2.5 2.5v11c0 1.1-.9 2-2 2H17v3c0 .28-.22.5-.5.5h-2c-.28 0-.5-.22-.5-.5v-3h-4v3c0 .28-.22.5-.5.5h-2c-.28 0-.5-.22-.5-.5v-3H6.5c-1.1 0-2-.9-2-2V5Zm2 .5v2h11v-2h-11Zm0 4V13h5V9.5h-5Zm6 0V13h5V9.5h-5ZM8 15a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm2.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm3.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm2.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/></svg>
+    <span>Rutas</span>
+  </a>
+  <a class="nav-item" href="/?tab=routes&openList=1" style="text-decoration:none;color:inherit">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+    <span>Lista</span>
+  </a>
+  <a class="nav-item" href="/Comunidad" style="text-decoration:none;color:inherit">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    <span>Comunidad</span>
+  </a>
+</nav>
+
+<script>
+(function(){
+  'use strict';
+  document.getElementById('year').textContent = new Date().getFullYear();
+  const savedTheme = localStorage.getItem('tgz_theme') || 'light';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  updateThemeIcon();
+
+  function updateThemeIcon(){
+    const t = document.documentElement.getAttribute('data-theme');
+    const icon = document.getElementById('themeIcon');
+    if(!icon) return;
+    icon.innerHTML = t==='dark'
+      ? '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'
+      : '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+  }
+  document.getElementById('themeBtn').onclick = () => {
+    const cur = document.documentElement.getAttribute('data-theme');
+    const next = cur==='dark'?'light':'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('tgz_theme', next);
+    updateThemeIcon();
+  };
+})();
+</script>
+</body>
+</html>
