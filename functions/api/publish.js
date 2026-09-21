@@ -1167,23 +1167,7 @@ footer a{color:var(--cyan)}
   </time>
 </div>
 
-<!-- ✅ BLOQUE DE CONFIANZA (E-E-A-T para Google e IA) -->
-<div class="trust-block" style="margin:16px 0 24px;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);font-size:12.5px;line-height:1.7;color:var(--text-2)">
-  <div style="display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-start">
-    <div style="flex:1;min-width:200px">
-      <strong style="color:var(--cyan);display:block;margin-bottom:4px">✅ Datos verificados por</strong>
-      Rutas BGD · Tuxtla Gutiérrez, Chiapas
-    </div>
-    <div style="flex:1;min-width:200px">
-      <strong style="color:var(--cyan);display:block;margin-bottom:4px">📧 Contacto</strong>
-      <a href="mailto:contacto@brigadistasbd.pages.dev" style="color:var(--cyan)">contacto@brigadistasbd.pages.dev</a>
-    </div>
-    <div style="flex:1;min-width:200px">
-      <strong style="color:var(--cyan);display:block;margin-bottom:4px">📋 Metodología</strong>
-      <a href="${baseUrl}/metodologia" style="color:var(--cyan)">Cómo recopilamos y verificamos los datos</a>
-    </div>
-  </div>
-</div>
+
 
 
   <!-- 🔒 IMAGEN SEO: oculta visualmente pero indexable por Google y accesible para IA -->
@@ -1206,7 +1190,25 @@ ${image ? `
   ${introParagraph(extra?.route, title, baseUrl)}
 
 
-  
+  <!-- ✅ BLOQUE DE CONFIANZA (E-E-A-T para Google e IA) -->
+<div class="trust-block" style="margin:16px 0 24px;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);font-size:12.5px;line-height:1.7;color:var(--text-2)">
+  <div style="display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-start">
+    <div style="flex:1;min-width:200px">
+      <strong style="color:var(--cyan);display:block;margin-bottom:4px">✅ Datos verificados por</strong>
+      Rutas BGD · Tuxtla Gutiérrez, Chiapas
+    </div>
+    <div style="flex:1;min-width:200px">
+      <strong style="color:var(--cyan);display:block;margin-bottom:4px">📧 Contacto</strong>
+      <a href="mailto:contacto@brigadistasbd.pages.dev" style="color:var(--cyan)">contacto@brigadistasbd.pages.dev</a>
+    </div>
+    <div style="flex:1;min-width:200px">
+      <strong style="color:var(--cyan);display:block;margin-bottom:4px">📋 Metodología</strong>
+      <a href="${baseUrl}/metodologia" style="color:var(--cyan)">Cómo recopilamos y verificamos los datos</a>
+    </div>
+  </div>
+</div>
+
+
   
 <footer style="margin-top:40px;padding-top:24px;border-top:1px solid var(--border);color:var(--text-2);font-size:12px;text-align:center;line-height:1.9">
   <div style="margin-bottom:14px">
