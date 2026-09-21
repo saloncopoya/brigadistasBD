@@ -1278,13 +1278,18 @@ L.tileLayer('https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}@2x.png?key=kXZ
   if(state.drawMode === 'draw-vuelta'){
     state.routeDraft.puntosVuelta.push(snapped);
     addMarker(snapped[0], snapped[1], state.routeDraft.colorVuelta || '#a855f7', 'vuelta');
+    // 🔓 Al agregar un punto nuevo, la geometría guardada deja de ser válida
+    state.routeDraft.__geomVueltaInvalidada = true;
   } else {
     state.routeDraft.puntos.push(snapped);
     addMarker(snapped[0], snapped[1], state.routeDraft.colorIda || '#ef4444', 'ida');
+    // 🔓 Al agregar un punto nuevo, la geometría guardada deja de ser válida
+    state.routeDraft.__geomIdaInvalidada = true;
   }
   scheduleRedraw();
   updateEditorStatus();
 });
+    
   }
 
   // Snap-to-road usando OSRM (gratuito, sin API key)
@@ -1336,10 +1341,21 @@ L.tileLayer('https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}@2x.png?key=kXZ
     const pts = state.routeDraft.puntos;
     const pv = state.routeDraft.puntosVuelta;
 
+    // 🔒 Si ya tenemos geometría válida (de la ruta original) y NO fue invalidada,
+    //    la reutilizamos SIN pedirla a OSRM. Esto evita perder el trazado.
+    const tieneGeomIda = state.routeDraft.geometriaIda &&
+                         state.routeDraft.geometriaIda.length > 1 &&
+                         !state.routeDraft.__geomIdaInvalidada;
+    const tieneGeomVuelta = state.routeDraft.geometriaVuelta &&
+                            state.routeDraft.geometriaVuelta.length > 1 &&
+                            !state.routeDraft.__geomVueltaInvalidada;
+
     if(pts.length>1){
-      const geom = await getRouteGeometry(pts);
-      state.routeDraft.geometriaIda = geom;
-      // Offset hacia la derecha (ida) — 4 metros
+      let geom = state.routeDraft.geometriaIda;
+      if(!tieneGeomIda){
+        geom = await getRouteGeometry(pts);
+        state.routeDraft.geometriaIda = geom;
+      }
       const offsetGeom = offsetPolyline(geom, 4);
       state.layers.ida = L.polyline(offsetGeom,{
         color: state.routeDraft.colorIda || '#00e5ff',
@@ -1348,14 +1364,16 @@ L.tileLayer('https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}@2x.png?key=kXZ
     }
 
     if(pv.length>1){
-      const geomV = await getRouteGeometry(pv);
-      state.routeDraft.geometriaVuelta = geomV;
-      // Offset hacia la izquierda (regreso) — -4 metros
+      let geomV = state.routeDraft.geometriaVuelta;
+      if(!tieneGeomVuelta){
+        geomV = await getRouteGeometry(pv);
+        state.routeDraft.geometriaVuelta = geomV;
+      }
       const offsetGeomV = offsetPolyline(geomV, -4);
       state.layers.vuelta = L.polyline(offsetGeomV,{
         color: state.routeDraft.colorVuelta || '#a855f7',
         weight: 4, opacity: .95,
-                dashArray: '10,6'
+        dashArray: '10,6'
       }).addTo(state.map);
     }
   }
@@ -1658,13 +1676,17 @@ if (f.size > 20 * 1024 * 1024) {
   // 🗑️ Botón para quitar la imagen personalizada
   $('#routeCustomImgClear').onclick = () => {
     state.routeDraft.customImage = '';
+    // 🔓 Marcar explícitamente que el usuario quiere quitar la imagen
+    //    Esto hace que al guardar NO se conserve la imagen previa.
+    state.routeDraft.customImageCleared = true;
     $('#routeCustomImg').value = '';
     $('#routeImgPreview').classList.add('hidden');
     $('#routeImgPreview').src = '';
     $('#routeCustomImgClear').classList.add('hidden');
-    $('#routeImgHint').textContent = 'Si no subes una imagen, se generará automáticamente desde el mapa.';
+    $('#routeImgHint').textContent = '✅ Imagen quitada. Al guardar, la ruta quedará sin imagen (o se regenerará si el trazado cambió).';
     toast('Imagen quitada');
   };
+  
 
    // Toolbar del mapa
    // Toolbar del mapa
@@ -1681,9 +1703,17 @@ if (f.size > 20 * 1024 * 1024) {
       if(m) state.map.removeLayer(m);
 
       if(meta){
-        if(meta.tipo === 'vuelta')      state.routeDraft.puntosVuelta.pop();
-        else if(meta.tipo === 'poi')    state.routeDraft.pois.pop();
-        else                            state.routeDraft.puntos.pop();
+        if(meta.tipo === 'vuelta') {
+          state.routeDraft.puntosVuelta.pop();
+          // 🔓 Invalidar geometría de vuelta: se quitó un punto
+          state.routeDraft.__geomVueltaInvalidada = true;
+        } else if(meta.tipo === 'poi') {
+          state.routeDraft.pois.pop();
+        } else {
+          state.routeDraft.puntos.pop();
+          // 🔓 Invalidar geometría de ida: se quitó un punto
+          state.routeDraft.__geomIdaInvalidada = true;
+        }
       }
       scheduleRedraw(); updateEditorStatus(); return;
     }
@@ -1699,6 +1729,9 @@ if (f.size > 20 * 1024 * 1024) {
       state.routeDraft.poisVuelta=[];
       state.routeDraft.geometriaIda=[];
       state.routeDraft.geometriaVuelta=[];
+      // 🔓 Invalidar geometrías: al limpiar, la geometría guardada ya no aplica
+      state.routeDraft.__geomIdaInvalidada = true;
+      state.routeDraft.__geomVueltaInvalidada = true;
       state.layers.markers.forEach(m=>state.map.removeLayer(m));
       state.layers.markers=[];
       state.markerMeta=[]; 
@@ -1749,9 +1782,13 @@ if (f.size > 20 * 1024 * 1024) {
       if(state.drawMode === 'draw-vuelta'){
         state.routeDraft.puntosVuelta.push([lat,lng]);
         addMarker(lat,lng, state.routeDraft.colorVuelta || '#a855f7', 'vuelta');
+        // 🔓 Invalidar geometría de vuelta: se agregó un punto nuevo
+        state.routeDraft.__geomVueltaInvalidada = true;
       } else {
         state.routeDraft.puntos.push([lat,lng]);
         addMarker(lat,lng, state.routeDraft.colorIda || '#ef4444', 'ida');
+        // 🔓 Invalidar geometría de ida: se agregó un punto nuevo
+        state.routeDraft.__geomIdaInvalidada = true;
       }
       scheduleRedraw(); updateEditorStatus();
     },err=>{ toast('GPS: '+err.message,'err'); },{enableHighAccuracy:true,maximumAge:0,timeout:15000});
@@ -2008,7 +2045,11 @@ async function detectStreets(){
     // Limpiar puntos anteriores del tipo correspondiente
     if (isIda) {
       state.routeDraft.puntos = coords;
+      // 🔓 Invalidar geometría: los puntos cambiaron, hay que recalcular
+      state.routeDraft.__geomIdaInvalidada = true;
       // Eliminar markers de ida existentes
+
+      
       const newMarkers = [];
       const newMeta = [];
       state.layers.markers.forEach((m, i) => {
@@ -2024,9 +2065,14 @@ async function detectStreets(){
       state.markerMeta = newMeta;
       // Agregar nuevos markers
       coords.forEach(p => addMarker(p[0], p[1], state.routeDraft.colorIda || '#00e5ff', 'ida'));
-    } else {
+
+
+          } else {
       state.routeDraft.puntosVuelta = coords;
+      // 🔓 Invalidar geometría: los puntos cambiaron, hay que recalcular
+      state.routeDraft.__geomVueltaInvalidada = true;
       const newMarkers = [];
+      
       const newMeta = [];
       state.layers.markers.forEach((m, i) => {
         const meta = state.markerMeta[i];
@@ -2776,10 +2822,14 @@ async function detectStreets(){
           state.routeDraft.puntosVuelta = r.puntosVuelta;
           $('#coordVueltaInput').value = formatCoordsForText(r.puntosVuelta);
         }
-        if (r.geometriaIda) state.routeDraft.geometriaIda = r.geometriaIda;
+
+                if (r.geometriaIda) state.routeDraft.geometriaIda = r.geometriaIda;
         if (r.geometriaVuelta) state.routeDraft.geometriaVuelta = r.geometriaVuelta;
         if (r.colorIda) state.routeDraft.colorIda = r.colorIda;
         if (r.colorVuelta) state.routeDraft.colorVuelta = r.colorVuelta;
+        // 🔒 La geometría importada es válida: NO invalidar (usar tal cual)
+        state.routeDraft.__geomIdaInvalidada = false;
+        state.routeDraft.__geomVueltaInvalidada = false;
         
         // Redibujar
         initColorSwatches();
@@ -2884,33 +2934,52 @@ async function detectStreets(){
     btn.innerHTML = usingCustomImage ? '⏳ Guardando ruta...' : '⏳ Generando imagen del mapa...';
 
     try {
-      // 🖼️ Lógica de imagen en 3 pasos:
+      // 🖼️ Lógica de imagen en 4 pasos:
       //   1. Si el usuario subió una imagen nueva → usarla
-      //   2. Si estamos EDITANDO y ya tiene imagen guardada → conservarla (NO regenerar)
-      //   3. Si es NUEVA ruta o no tiene imagen → generar automáticamente desde el mapa
+      //   2. Si el usuario pulsó "Quitar" y NO subió nueva → dejar sin imagen
+      //   3. Si el trazado cambió (flags de invalidación) → REGENERAR desde el mapa
+      //   4. Si estamos EDITANDO y el trazado NO cambió → conservar imagen anterior
+      //   5. Si es NUEVA ruta → generar desde el mapa
       let mapImage = '';
       const tieneImagenPrevia = !!(state.editingRoute && state.editingRoute.mapImage);
+      const trazadoCambio = !!(state.routeDraft.__geomIdaInvalidada || state.routeDraft.__geomVueltaInvalidada);
+      const usuarioQuitoImagen = !!state.routeDraft.customImageCleared;
+      const hayTrazado = (state.routeDraft.puntos?.length || 0) + 
+                         (state.routeDraft.puntosVuelta?.length || 0) > 0;
       
       if (state.routeDraft.customImage) {
         // ✅ Caso 1: Usuario subió imagen nueva (reemplaza la anterior)
         mapImage = state.routeDraft.customImage;
         console.log('[Ruta] Usando imagen personalizada NUEVA:', mapImage);
         toast('Imagen personalizada actualizada ✓');
+      } else if (usuarioQuitoImagen) {
+        // ✅ Caso 2: El usuario pulsó "Quitar" → dejar sin imagen
+        mapImage = '';
+        console.log('[Ruta] Imagen quitada por el usuario, no se regenera');
+        toast('Imagen eliminada ✓');
+      } else if (trazadoCambio && hayTrazado) {
+        // ✅ Caso 3: El trazado cambió → regenerar imagen del mapa
+        console.log('[Ruta] Trazado modificado, regenerando imagen…');
+        try {
+          btn.innerHTML = '⏳ Generando imagen del mapa...';
+          mapImage = await captureAndUploadMap();
+          toast('Imagen del mapa regenerada ✓');
+        } catch(e) {
+          console.warn('No se pudo capturar el mapa:', e);
+          // Si falla, conservar la previa como fallback
+          mapImage = tieneImagenPrevia ? state.editingRoute.mapImage : '';
+          toast('No se pudo regenerar imagen, se conserva la anterior', 'err');
+        }
       } else if (tieneImagenPrevia) {
-        // ✅ Caso 2: Editando ruta existente → conservar imagen anterior
+        // ✅ Caso 4: Editando sin cambios de trazado → conservar imagen anterior
         mapImage = state.editingRoute.mapImage;
         console.log('[Ruta] Conservando imagen previa (NO se regenera):', mapImage);
         toast('Imagen existente conservada ✓');
-         } else {
-        // 🗺️ Caso 3: Ruta nueva o sin imagen → generar desde el mapa
-        // ⚠️ Si NO hay puntos trazados, no intentamos capturar (es normal)
-        const hayTrazado = (state.routeDraft.puntos?.length || 0) + 
-                           (state.routeDraft.puntosVuelta?.length || 0) > 0;
-        
+      } else {
+        // 🗺️ Caso 5: Ruta nueva o sin imagen → generar desde el mapa
         if (!hayTrazado) {
           console.log('[Ruta] Sin trazado, se omite generación de imagen');
           mapImage = '';
-          // NO mostrar toast de error, es normal
         } else {
           try {
             btn.innerHTML = '⏳ Generando imagen del mapa...';
@@ -3009,8 +3078,14 @@ async function detectStreets(){
       calles:[], callesVuelta:[],
       pois:[], poisVuelta:[],
       geometriaIda:[], geometriaVuelta:[],
-      colorIda: colores[0], colorVuelta: colores[1]
+      colorIda: colores[0], colorVuelta: colores[1],
+      // 🔓 Resetear flags de control
+      __geomIdaInvalidada: false,
+      __geomVueltaInvalidada: false,
+      customImage: '',
+      customImageCleared: false
     };
+    
     state.drawMode = null;
     state.drawing = false;
 
@@ -3129,8 +3204,12 @@ async function detectStreets(){
           geometriaIda: r.geometriaIda||[],
           geometriaVuelta: r.geometriaVuelta||[],
           colorIda: r.colorIda||colores[0],
-          colorVuelta: r.colorVuelta||colores[1]
+          colorVuelta: r.colorVuelta||colores[1],
+          // 🔒 Arrancar SIN invalidación: usar la geometría guardada tal cual
+          __geomIdaInvalidada: false,
+          __geomVueltaInvalidada: false
         };
+            
         $('#routeFormTitle').textContent='Editar ruta';
         $('#routeName').value=r.nombre||'';
         $('#routeCat').value=r.categoria||'urbana';
@@ -3156,14 +3235,17 @@ async function detectStreets(){
         const clearBtn = $('#routeCustomImgClear');
         const hint = $('#routeImgHint');
         
+        // 🔓 Resetear el flag de "quitar imagen" al cargar una ruta
+        state.routeDraft.customImageCleared = false;
+        
         if (r.mapImage) {
           // Mostrar la imagen existente como referencia visual
           if (imgPrev) {
             imgPrev.src = r.mapImage;
             imgPrev.classList.remove('hidden');
           }
-          if (clearBtn) clearBtn.classList.add('hidden'); // No permitir quitarla todavía
-          if (hint) hint.textContent = '📷 Imagen actual de la ruta. Si subes una nueva, reemplazará esta. Si no, se mantendrá.';
+          if (clearBtn) clearBtn.classList.remove('hidden'); // ✅ SÍ permitir quitarla
+          if (hint) hint.textContent = '📷 Imagen actual de la ruta. Puedes reemplazarla subiendo una nueva, o quitarla con el botón X.';
         } else {
           if (imgPrev) {
             imgPrev.classList.add('hidden');
@@ -3252,6 +3334,11 @@ async function detectStreets(){
         }
 
         
+             // 🔓 Si estamos editando la ruta que acabamos de eliminar, resetear el wizard
+             if (state.editingRoute && state.editingRoute.id === id) {
+               resetRouteForm();
+             }
+             
              loadRoutes();
       };
     });
