@@ -3867,31 +3867,37 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
     sidePanelList.innerHTML = rutas.map(r => {
       const primeraParada = (r.paradas || [])[0] || '';
       const primerRetorno = (r.retornos || [])[0] || '';
-      const categoria = (r.categoria || 'urbana');
-      const badgeClass = categoria === 'foranea' ? 'badge-foranea' : 'badge-urbana';
+      const categoria = (r.categoria || 'urbana').toLowerCase();
+      const catClass = categoria === 'foranea' ? 'foranea' : 'urbana';
+
+      // 🔗 URL limpia (sin .html) para que Google la rastree como enlace interno
+      const rutaSlug = r.slug || r.id || '';
+      const rutaUrl = `/share/ruta/${encodeURIComponent(rutaSlug)}`;
 
       return `
-        <a class="sp-route-item" href="/share/ruta/${esc(r.id || r.slug)}">
+        <a class="sp-route-item" href="${rutaUrl}" title="Ver ruta ${esc(r.nombre || 'RUTA')}">
           <div class="sp-route-icon">
-            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-hidden="true">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="#ffffff" aria-hidden="true">
               <path fill-rule="evenodd" clip-rule="evenodd" d="M4.5 5C4.5 3.62 5.62 2.5 7 2.5h10c1.38 0 2.5 1.12 2.5 2.5v11c0 1.1-.9 2-2 2H17v3c0 .28-.22.5-.5.5h-2c-.28 0-.5-.22-.5-.5v-3h-4v3c0 .28-.22.5-.5.5h-2c-.28 0-.5-.22-.5-.5v-3H6.5c-1.1 0-2-.9-2-2V5Zm2 .5v2h11v-2h-11Zm0 4V13h5V9.5h-5Zm6 0V13h5V9.5h-5ZM8 15a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm2.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm3.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm2.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/>
             </svg>
           </div>
           <div class="sp-route-info">
-            <div class="sp-route-name">${esc(r.nombre || 'RUTA')}</div>
-            <div class="sp-route-cat"><span class="badge ${badgeClass}" style="font-size:9px;padding:2px 7px">${esc(categoria)}</span></div>
+            <div class="sp-route-row-1">
+              <div class="sp-route-name">${esc(r.nombre || 'RUTA')}</div>
+              <span class="sp-route-cat ${catClass}">${esc(categoria)}</span>
+            </div>
             ${(primeraParada || primerRetorno) ? `
-              <div class="sp-route-meta">
+              <div class="sp-route-row-2">
                 ${primeraParada ? `
-                  <div class="sp-meta-row" title="Parada: ${esc(primeraParada)}">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  <div class="sp-route-cell parada" title="Parada: ${esc(primeraParada)}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                     <span>${esc(primeraParada)}</span>
-                  </div>` : ''}
+                  </div>` : '<div></div>'}
                 ${primerRetorno ? `
-                  <div class="sp-meta-row" title="Retorno: ${esc(primerRetorno)}">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+                  <div class="sp-route-cell retorno" title="Retorno: ${esc(primerRetorno)}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
                     <span>${esc(primerRetorno)}</span>
-                  </div>` : ''}
+                  </div>` : '<div></div>'}
               </div>` : ''}
           </div>
         </a>`;
