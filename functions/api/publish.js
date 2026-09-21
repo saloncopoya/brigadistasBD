@@ -497,14 +497,30 @@ const safeDescOG = escapeHTML(enrichedContent.slice(0, 125));
   const websiteRef = { '@id': `${baseUrl}/#website` };
   const webpageRef = { '@id': `${pageUrl}#webpage` };
 
+  // ============================================================
+  //  📰 DATOS ENRIQUECIDOS: BusTrip + Product + BlogPosting
+  //  Todos con NewsArticle añadido para Google News/Discover
+  // ============================================================
+  
+  // Fechas reales (usar timestamp original, no "now")
+  const _ts = extra?.route?.timestamp || extra?.market?.timestamp || extra?.timestamp || Date.now();
+  const _upd = extra?.route?.updatedAt || extra?.market?.updatedAt || extra?.updatedAt || _ts;
+  const datePublished = new Date(_ts).toISOString();
+  const dateModified  = new Date(_upd).toISOString();
+
   let contentSchema;
+  
   if (tipo === 'ruta') {
     const r = extra?.route || {};
     contentSchema = {
-      '@type': 'BusTrip',
+      '@type': ['BusTrip', 'NewsArticle'],
       '@id': `${pageUrl}#bustrip`,
       name: title,
+      headline: title,
+      alternativeHeadline: `${title} - Colectivo Tuxtla Gutiérrez`,
       description: enrichedContent.slice(0, 160),
+      articleBody: enrichedContent.slice(0, 5000),
+      wordCount: enrichedContent.split(/\s+/).filter(Boolean).length,
       url: pageUrl,
       image: {
         '@type': 'ImageObject',
@@ -518,7 +534,13 @@ const safeDescOG = escapeHTML(enrichedContent.slice(0, 125));
         representativeOfPage: true,
         encodingFormat: 'image/jpeg'
       },
+      thumbnailUrl: safeImage,
       provider: orgRef,
+      author: orgRef,
+      publisher: orgRef,
+      datePublished,
+      dateModified,
+      inLanguage: 'es-MX',
       departureTime: r.horarioIni || undefined,
       arrivalTime: r.horarioFin || undefined,
       offers: r.tarifa ? {
@@ -537,19 +559,35 @@ const safeDescOG = escapeHTML(enrichedContent.slice(0, 125));
           addressCountry: 'MX'
         }
       })),
-      // 🗺️ Área de servicio (para SEO local)
       areaServed: {
         '@type': 'City',
         name: 'Tuxtla Gutiérrez',
         containedInPlace: { '@type': 'State', name: 'Chiapas' }
-      }
+      },
+      contentLocation: {
+        '@type': 'Place',
+        name: 'Tuxtla Gutiérrez',
+        address: {
+          '@type': 'PostalAddress',
+          addressLocality: 'Tuxtla Gutiérrez',
+          addressRegion: 'Chiapas',
+          addressCountry: 'MX'
+        }
+      },
+      keywords: `ruta, colectivo, ${r.categoria || 'urbana'}, Tuxtla Gutiérrez, Chiapas, ${toStrArr(r.calles).slice(0, 5).join(', ')}`,
+      mainEntityOfPage: webpageRef
     };
   } else if (tipo === 'market') {
+    const m = extra?.market || {};
     contentSchema = {
-      '@type': 'Product',
+      '@type': ['Product', 'NewsArticle'],
       '@id': `${pageUrl}#product`,
       name: title,
+      headline: title,
+      alternativeHeadline: `${title} - Marketplace Tuxtla Gutiérrez`,
       description: safeDesc,
+      articleBody: safeDesc,
+      wordCount: safeDesc.split(/\s+/).filter(Boolean).length,
       image: {
         '@type': 'ImageObject',
         '@id': `${pageUrl}#primaryimage`,
@@ -562,25 +600,49 @@ const safeDescOG = escapeHTML(enrichedContent.slice(0, 125));
         representativeOfPage: true,
         encodingFormat: 'image/jpeg'
       },
+      thumbnailUrl: safeImage,
       url: pageUrl,
+      sku: slug,
+      category: m.categoria || 'Otro',
+      datePublished,
+      dateModified,
+      inLanguage: 'es-MX',
+      author: orgRef,
+      publisher: orgRef,
       offers: {
         '@type': 'Offer',
-        price: extra?.market?.price || '0',
+        price: m.price || '0',
         priceCurrency: 'MXN',
         availability: 'https://schema.org/InStock',
         areaServed: {
           '@type': 'City',
           name: 'Tuxtla Gutiérrez'
+        },
+        seller: orgRef
+      },
+      contentLocation: {
+        '@type': 'Place',
+        name: 'Tuxtla Gutiérrez',
+        address: {
+          '@type': 'PostalAddress',
+          addressLocality: 'Tuxtla Gutiérrez',
+          addressRegion: 'Chiapas',
+          addressCountry: 'MX'
         }
       },
-      seller: orgRef
+      keywords: `marketplace, ${m.categoria || 'anuncio'}, Tuxtla Gutiérrez, Chiapas`,
+      mainEntityOfPage: webpageRef
     };
   } else {
+    // 📰 POST: BlogPosting + NewsArticle completo
     contentSchema = {
-      '@type': 'BlogPosting',
+      '@type': ['BlogPosting', 'NewsArticle'],
       '@id': `${pageUrl}#article`,
       headline: title,
+      alternativeHeadline: `${title} - Blog Tuxtla Gutiérrez`,
       description: safeDesc,
+      articleBody: toStr(content).slice(0, 5000),
+      wordCount: toStr(content).split(/\s+/).filter(Boolean).length,
       image: {
         '@type': 'ImageObject',
         '@id': `${pageUrl}#primaryimage`,
@@ -593,13 +655,28 @@ const safeDescOG = escapeHTML(enrichedContent.slice(0, 125));
         representativeOfPage: true,
         encodingFormat: 'image/jpeg'
       },
+      thumbnailUrl: safeImage,
       url: pageUrl,
-      datePublished: new Date().toISOString(),
-      dateModified: new Date().toISOString(),
+      datePublished,
+      dateModified,
       inLanguage: 'es-MX',
       author: orgRef,
       publisher: orgRef,
-      mainEntityOfPage: webpageRef
+      mainEntityOfPage: webpageRef,
+      contentLocation: {
+        '@type': 'Place',
+        name: 'Tuxtla Gutiérrez',
+        address: {
+          '@type': 'PostalAddress',
+          addressLocality: 'Tuxtla Gutiérrez',
+          addressRegion: 'Chiapas',
+          addressCountry: 'MX'
+        }
+      },
+      keywords: 'Tuxtla Gutiérrez, Chiapas, transporte público, rutas colectivos, noticias, blog',
+      commentCount: extra?.comments?.length || 0,
+      accessibilityFeature: ['alternativeText', 'highContrastDisplay'],
+      accessibilitySummary: 'Contenido con texto alternativo e imágenes optimizadas para lectura'
     };
   }
 
@@ -688,9 +765,13 @@ const graphNodes = [
     name: safeSeoTitle,
     description: safeDesc,
     isPartOf: websiteRef,
+
+     
     inLanguage: 'es-MX',
-    datePublished: new Date().toISOString(),
-    dateModified: new Date().toISOString(),
+    datePublished,
+    dateModified,
+
+     
     reviewedBy: {
       '@type': 'Organization',
       name: 'Rutas BGD'
@@ -766,6 +847,22 @@ bodyContent = renderRouteMapBlock(extra.route, baseUrl) + renderRouteBody(extra.
 <title>${safeSeoTitle}</title>
 <meta name="description" content="${safeDesc}">
 <link rel="canonical" href="${pageUrl}">
+
+<!-- 🚫 ROBOTS -->
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+<meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large">
+
+<!-- 📰 NEWS / DISCOVER -->
+<meta name="news_keywords" content="${tipo === 'ruta' ? `ruta, colectivo, transporte, Tuxtla Gutiérrez, ${toStrArr(extra?.route?.calles).slice(0,5).join(', ')}` : tipo === 'market' ? `marketplace, ${extra?.market?.categoria || 'anuncio'}, Tuxtla Gutiérrez` : `blog, Tuxtla Gutiérrez`}">
+<meta name="thumbnail" content="${safeImage}">
+
+<!-- 📍 GEO -->
+<meta name="geo.position" content="16.7530;-93.1150">
+<meta name="geo.placename" content="Tuxtla Gutiérrez, Chiapas, México">
+<meta name="geo.region" content="MX-CHP">
+<meta name="ICBM" content="16.7530, -93.1150">
+
+
 <link rel="manifest" href="/manifest.json">
 <!-- 🌐 FAVICON COMPLETO (multi-resolución para todos los dispositivos) -->
 <link rel="icon" type="image/svg+xml" href="${baseUrl}/assets/icon.svg">
@@ -808,16 +905,37 @@ bodyContent = renderRouteMapBlock(extra.route, baseUrl) + renderRouteBody(extra.
 <meta property="og:site_name" content="Rutas BGD">
 <meta property="og:locale" content="es_MX">
 <meta property="article:author" content="Rutas BGD">
-<meta property="article:published_time" content="${new Date().toISOString()}">
-<meta property="article:modified_time" content="${new Date().toISOString()}">
+<meta property="article:published_time" content="${datePublished}">
+<meta property="article:modified_time" content="${dateModified}">
 <meta property="article:section" content="${typeLabel}s">
 ${tipo === 'ruta' && toStrArr(extra?.route?.calles).length ? `<meta property="article:tag" content="${toStrArr(extra.route.calles).slice(0, 5).map(c => escapeHTML(c)).join('">\n<meta property="article:tag" content="')}">` : ''}
+
+${tipo === 'post' ? `
+<meta property="article:tag" content="blog">
+<meta property="article:tag" content="Tuxtla Gutiérrez">
+<meta property="article:tag" content="Chiapas">
+<meta property="article:tag" content="noticias">
+<meta property="article:tag" content="transporte público">
+` : ''}
+${tipo === 'market' ? `
+<meta property="article:tag" content="marketplace">
+<meta property="article:tag" content="${escapeHTML(extra?.market?.categoria || 'anuncio')}">
+<meta property="article:tag" content="Tuxtla Gutiérrez">
+<meta property="article:tag" content="Chiapas">
+` : ''}
+
 
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${safeSeoTitle}">
 <meta name="twitter:description" content="${safeDescOG}">
 <meta name="twitter:image" content="${safeImage}">
+<meta name="twitter:site" content="@rutasbgd">
+<meta name="twitter:creator" content="@rutasbgd">
+<meta name="twitter:label1" content="${typeLabel}">
+<meta name="twitter:data1" content="${safeTitle}">
+<meta name="twitter:label2" content="Ubicación">
+<meta name="twitter:data2" content="Tuxtla Gutiérrez, Chiapas">
 
 <!-- Schema.org -->
 <script type="application/ld+json">${JSON.stringify(schema)}</script>
