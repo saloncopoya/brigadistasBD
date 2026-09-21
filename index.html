@@ -343,7 +343,7 @@ img{max-width:100%;display:block}
     background: color-mix(in srgb, var(--surface) 92%, transparent);
    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(18px);
   border-top:1px solid var(--text-2);
-  display:grid;grid-template-columns:repeat(3,1fr);z-index:1000;
+  display:grid;grid-template-columns:repeat(5,1fr);z-index:1000;
 }
 .nav-item{
   display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -899,8 +899,8 @@ body.fs-active{overflow:hidden !important}
 }
 @media(min-width:1000px){
   .app{max-width:1200px;margin:0 auto}
-  .bottom-nav{max-width:560px;left:50%;transform:translateX(-50%);border-radius:18px 18px 0 0;border-left:1px solid var(--border);border-right:1px solid var(--border)}
-  #map{height:70vh}
+  .bottom-nav{max-width:720px;left:50%;transform:translateX(-50%);border-radius:18px 18px 0 0;border-left:1px solid var(--border);border-right:1px solid var(--border)}
+   #map{height:70vh}
 }
 @media(max-width:380px){
   .map-toolbar-above .tb{width:28px;height:24px}
@@ -1065,6 +1065,142 @@ body.fs-active{overflow:hidden !important}
               0 0 0 1px rgba(59, 130, 246, 0.4);
 }
 
+
+
+   /* ============================================================
+   📋 PANEL LATERAL "LISTA DE RUTAS"
+   ============================================================ */
+.side-panel-backdrop{
+  position:fixed;inset:0;background:rgba(0,0,0,.55);
+  z-index:2400;opacity:0;pointer-events:none;
+  transition:opacity .25s ease;
+  backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+}
+.side-panel-backdrop.open{opacity:1;pointer-events:auto}
+
+.side-panel{
+  position:fixed;top:0;right:0;bottom:0;
+  width:78vw;max-width:520px;
+  background:var(--surface);
+  border-left:1px solid var(--border-2);
+  z-index:2500;
+  transform:translateX(105%);
+  transition:transform .32s cubic-bezier(.32,.72,0,1);
+  display:flex;flex-direction:column;
+  box-shadow:-16px 0 40px rgba(0,0,0,.4);
+  will-change:transform;
+}
+.side-panel.open{transform:translateX(0)}
+
+.side-panel-head{
+  padding:14px 16px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  background:var(--surface);
+  position:sticky;top:0;z-index:2;
+}
+.side-panel-head h3{
+  font-size:15px;font-weight:900;letter-spacing:-.2px;
+  display:flex;align-items:center;gap:8px;
+}
+.side-panel-head h3 svg{width:18px;height:18px;color:var(--cyan)}
+
+.side-panel-search{
+  padding:10px 14px;
+  border-bottom:1px solid var(--border);
+  position:sticky;top:57px;z-index:2;
+  background:var(--surface);
+}
+.side-panel-search input{
+  width:100%;padding:10px 14px 10px 38px;
+  border-radius:10px;
+  background:var(--input-bg);
+  border:1px solid var(--border);
+  color:var(--text);font-size:13.5px;
+  transition:var(--transition);
+}
+.side-panel-search input:focus{
+  outline:none;border-color:var(--cyan);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--cyan) 18%,transparent);
+}
+.side-panel-search .sp-search-ico{
+  position:absolute;left:26px;top:50%;transform:translateY(-50%);
+  width:16px;height:16px;color:var(--text-3);pointer-events:none;
+  margin-top:2px;
+}
+
+.side-panel-list{
+  flex:1;overflow-y:auto;
+  padding:10px 12px 20px;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+}
+
+.sp-route-item{
+  display:flex;align-items:center;gap:10px;
+  padding:11px 12px;
+  border-radius:12px;
+  background:var(--surface-2);
+  border:1px solid var(--border);
+  margin-bottom:8px;
+  cursor:pointer;
+  transition:var(--transition);
+  text-decoration:none;color:inherit;
+}
+.sp-route-item:hover{
+  border-color:var(--cyan);
+  background:var(--surface-3);
+  transform:translateX(-2px);
+}
+.sp-route-item:active{transform:scale(.98)}
+
+.sp-route-icon{
+  width:40px;height:40px;border-radius:10px;
+  background:linear-gradient(135deg,var(--cyan),var(--cyan-d));
+  display:grid;place-items:center;color:#00121a;
+  flex-shrink:0;
+}
+.sp-route-icon svg{width:22px;height:22px}
+
+.sp-route-info{flex:1;min-width:0}
+
+.sp-route-name{
+  font-weight:800;font-size:13.5px;
+  text-transform:uppercase;letter-spacing:.2px;
+  line-height:1.25;margin-bottom:2px;
+  overflow:hidden;text-overflow:ellipsis;
+  display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;
+}
+.sp-route-cat{
+  font-size:10.5px;font-weight:700;
+  color:var(--text-3);text-transform:uppercase;
+  letter-spacing:.3px;
+}
+.sp-route-meta{
+  display:flex;flex-direction:column;gap:2px;
+  margin-top:4px;font-size:11px;
+  color:var(--text-2);
+}
+.sp-route-meta .sp-meta-row{
+  display:flex;align-items:center;gap:5px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.sp-route-meta .sp-meta-row svg{
+  width:11px;height:11px;color:var(--cyan);flex-shrink:0;
+}
+
+.sp-empty{
+  text-align:center;padding:40px 20px;
+  color:var(--text-3);font-size:13px;
+}
+.sp-empty svg{
+  width:44px;height:44px;opacity:.4;margin-bottom:10px;
+}
+
+@media(max-width:520px){
+  .side-panel{width:88vw}
+}
+   
 </style>
 </head>
 <body>
@@ -1389,20 +1525,28 @@ body.fs-active{overflow:hidden !important}
    
 </main>
 
-<!-- ============================ NAV INFERIOR ============================ -->
+<!-- ============================ NAV INFERIOR (5 botones) ============================ -->
 <nav class="bottom-nav">
   <button class="nav-item" data-page="home">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     <span>Inicio</span>
   </button>
-  <button class="nav-item active" data-page="routes">
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M4.5 5C4.5 3.62 5.62 2.5 7 2.5h10c1.38 0 2.5 1.12 2.5 2.5v11c0 1.1-.9 2-2 2H17v3c0 .28-.22.5-.5.5h-2c-.28 0-.5-.22-.5-.5v-3h-4v3c0 .28-.22.5-.5.5h-2c-.28 0-.5-.22-.5-.5v-3H6.5c-1.1 0-2-.9-2-2V5Zm2 .5v2h11v-2h-11Zm0 4V13h5V9.5h-5Zm6 0V13h5V9.5h-5ZM8 15a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm2.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm3.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm2.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/></svg>
-    <span>Rutas</span>
-  </button>
   <button class="nav-item" data-page="market">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
     <span>Market</span>
   </button>
+  <button class="nav-item active" data-page="routes">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M4.5 5C4.5 3.62 5.62 2.5 7 2.5h10c1.38 0 2.5 1.12 2.5 2.5v11c0 1.1-.9 2-2 2H17v3c0 .28-.22.5-.5.5h-2c-.28 0-.5-.22-.5-.5v-3h-4v3c0 .28-.22.5-.5.5h-2c-.28 0-.5-.22-.5-.5v-3H6.5c-1.1 0-2-.9-2-2V5Zm2 .5v2h11v-2h-11Zm0 4V13h5V9.5h-5Zm6 0V13h5V9.5h-5ZM8 15a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm2.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm3.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm2.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/></svg>
+    <span>Rutas</span>
+  </button>
+  <button class="nav-item" id="navLista" data-page="lista">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+    <span>Lista</span>
+  </button>
+  <a class="nav-item" href="/Comunidad" style="text-decoration:none;color:inherit">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    <span>Comunidad</span>
+  </a>
 </nav>
 
 <!-- ============================ MODALES ============================ -->
@@ -1456,6 +1600,34 @@ body.fs-active{overflow:hidden !important}
 </div>
 
 <div class="toast-wrap" id="toastWrap"></div>
+
+   <!-- ============================ PANEL LATERAL: LISTA DE RUTAS ============================ -->
+<div class="side-panel-backdrop" id="sidePanelBackdrop"></div>
+<aside class="side-panel" id="sidePanel" aria-hidden="true">
+  <div class="side-panel-head">
+    <h3>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="8" y1="6" x2="21" y2="6"/>
+        <line x1="8" y1="12" x2="21" y2="12"/>
+        <line x1="8" y1="18" x2="21" y2="18"/>
+        <line x1="3" y1="6" x2="3.01" y2="6"/>
+        <line x1="3" y1="12" x2="3.01" y2="12"/>
+        <line x1="3" y1="18" x2="3.01" y2="18"/>
+      </svg>
+      <span>Lista de Rutas</span>
+    </h3>
+    <button class="icon-btn" id="sidePanelClose" aria-label="Cerrar panel">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="side-panel-search">
+    <svg class="sp-search-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+    <input type="text" id="sidePanelSearch" placeholder="Buscar ruta, parada, retorno, calle..." autocomplete="off">
+  </div>
+  <div class="side-panel-list" id="sidePanelList"></div>
+</aside>
 
 <!-- ============================ SCRIPTS ============================ -->
 <script src="/vendor/leaflet/leaflet.js"></script>
