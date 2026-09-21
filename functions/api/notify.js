@@ -25,7 +25,7 @@ export async function onRequest(context) {
 
   try {
     const body = await request.json();
-    const { titulo, mensaje, url, imagen, tipo, letra1, boton1, letra2, boton2, letra3, boton3 } = body;
+    const { titulo, mensaje, url, imagen, icono, tipo, letra1, boton1, letra2, boton2, letra3, boton3 } = body;
      
 
     if (!titulo || !mensaje) {
@@ -85,6 +85,7 @@ export async function onRequest(context) {
                 title: titulo,
                 body: mensaje,
                 image: imagen || '',
+                icon: icono || '',
                 url: url || '/Comunidad',
                 tipo: tipo || 'comentario',
                 timestamp: String(Date.now()),
