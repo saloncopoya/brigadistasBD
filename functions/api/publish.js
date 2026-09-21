@@ -1184,8 +1184,8 @@ function renderRouteBody(route, baseUrl) {
   const resumen = [];
   if (route.paradas?.length) resumen.push(`${route.paradas.length} paradas oficiales`);
   if (route.calles?.length) resumen.push(`${route.calles.length} calles y avenidas`);
-  if (route.pois?.length) resumen.push(`${route.pois.length} POIs de ida`);
-  if (route.poisVuelta?.length) resumen.push(`${route.poisVuelta.length} POIs de regreso`);
+  if (route.pois?.length) resumen.push(`${route.pois.length} Paradas de ida`);
+  if (route.poisVuelta?.length) resumen.push(`${route.poisVuelta.length} Paradas de regreso`);
   if (route.retornos?.length) resumen.push(`${route.retornos.length} retornos`);
 
   if (resumen.length) {
@@ -1207,10 +1207,10 @@ function renderRouteBody(route, baseUrl) {
   if (route.retornos?.length) blocks.push(`<div class="block"><h3>↩️ Retornos</h3><ul>${route.retornos.map(p => `<li>${escapeHTML(p)}</li>`).join('')}</ul></div>`);
 
   // 🏥 POIs de Ida
-  if (route.pois?.length) blocks.push(`<div class="block"><h3>🏥 POIs de Ida</h3><ul>${route.pois.map(p => `<li>${escapeHTML(p)}</li>`).join('')}</ul></div>`);
+  if (route.pois?.length) blocks.push(`<div class="block"><h3>🏥 Paradas de Ida</h3><ul>${route.pois.map(p => `<li>${escapeHTML(p)}</li>`).join('')}</ul></div>`);
 
   // 🏥 POIs de Regreso
-  if (route.poisVuelta?.length) blocks.push(`<div class="block"><h3>🏥 POIs de Regreso</h3><ul>${route.poisVuelta.map(p => `<li>${escapeHTML(p)}</li>`).join('')}</ul></div>`);
+  if (route.poisVuelta?.length) blocks.push(`<div class="block"><h3>🏥 Paradas de Regreso</h3><ul>${route.poisVuelta.map(p => `<li>${escapeHTML(p)}</li>`).join('')}</ul></div>`);
 
   // 🛣️ Calles
   if (route.calles?.length) blocks.push(`<div class="block"><h3>🛣️ Calles</h3><ul>${route.calles.map(p => `<li>${escapeHTML(p)}</li>`).join('')}</ul></div>`);
