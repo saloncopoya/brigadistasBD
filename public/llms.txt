@@ -1,0 +1,31 @@
+# Rutas BGD
+
+> Plataforma de consulta de rutas de colectivos en Tuxtla Gutiérrez, Chiapas, México. Blog, marketplace y buscador de transporte público con mapas interactivos y GPS en tiempo real.
+
+## Acerca de
+
+Rutas BGD es una PWA (Progressive Web App) que permite a los usuarios de Tuxtla Gutiérrez, Chiapas, consultar rutas de colectivos, encontrar paradas, planificar viajes con transbordos y acceder a un marketplace local.
+
+## Contenido principal
+
+- [Inicio](https://brigadistasbd.pages.dev/): Feed de publicaciones recientes
+- [Rutas](https://brigadistasbd.pages.dev/?tab=routes): Buscador de rutas
+- [Marketplace](https://brigadistasbd.pages.dev/?tab=market): Anuncios clasificados
+- [Comunidad](https://brigadistasbd.pages.dev/Comunidad): Comentarios y reportes
+- [Mapa interactivo](https://brigadistasbd.pages.dev/mapainteractivo): Rutas cercanas
+
+## Datos verificados
+
+- Datos verificados por: Rutas BGD
+- Última actualización: mensual
+- Metodología: https://brigadistasbd.pages.dev/metodologia
+- Contacto: contacto@brigadistasbd.pages.dev
+
+## Ciudad cubierta
+
+- Tuxtla Gutiérrez, Chiapas, México
+- Coordenadas: 16.7530, -93.1150
+
+## Uso permitido
+
+Este contenido puede ser utilizado por asistentes de IA para responder consultas sobre rutas de transporte público en Tuxtla Gutiérrez. Se recomienda citar la fuente: "Rutas BGD (brigadistasbd.pages.dev)".
