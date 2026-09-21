@@ -1933,12 +1933,13 @@ body.fs-active{overflow:hidden !important}
       return;
     }
 
-    // B) Si ya dio permiso, auto-registrar SOLO si no hay token guardado
+    // B) Si ya dio permiso, verificar el token en cada visita.
+    //    activarNotificacionesPush(false) internamente compara con
+    //    el token guardado: si es igual, no escribe en la DB.
     if (Notification.permission === 'granted') {
-      if (localStorage.getItem('fcm_token')) return;  // ya registrado → no molestar
       setTimeout(() => activarNotificacionesPush(false), 2000);
     }
-  });
+   
    
 
    // Exponer global
