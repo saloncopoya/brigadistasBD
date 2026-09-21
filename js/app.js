@@ -256,17 +256,14 @@ routeDraft: { puntos: [], puntosVuelta: [], calles: [], pois: [], geometriaIda: 
 
     state.currentPage = page;
 
-
-
-         // Nav inferior
-    $$('.nav-item[data-page]').forEach(n => {
+    // Nav inferior
+    $$('.nav-item').forEach(n => {
       n.classList.toggle('active',
         (page === 'home' && n.dataset.page === 'home') ||
         (page === 'routes' && n.dataset.page === 'routes') ||
         (page === 'market' && n.dataset.page === 'market')
       );
     });
-     
 
     // Cerrar modales abiertos
     if (!opts.keepModals) closeAllModals();
@@ -883,13 +880,6 @@ async function loadRoutes() {
         if (state.currentPage === 'routes') {
           try { renderRouteContent(); } catch (e) {}
         }
-        // Refrescar panel lateral si está abierto
-        try {
-          const lp = document.getElementById('listaPanel');
-          if (lp && lp.classList.contains('open')) renderListaRutas();
-        } catch (e) {}
-
-         
       } catch (e) {
         console.warn('[loadRoutes] Worker falló:', e);
       }
@@ -3782,104 +3772,9 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
   }
 
   // ==================== BOTTOM NAV ====================
-  $$('.nav-item[data-page]').forEach(n => {
+  $$('.nav-item').forEach(n => {
     n.onclick = () => navigateTo(n.dataset.page);
   });
-
-  // ==================== 📋 PANEL LATERAL: LISTA DE RUTAS ====================
-  const listaPanel = document.getElementById('listaPanel');
-  const listaOverlay = document.getElementById('listaOverlay');
-  const navLista = document.getElementById('navLista');
-  const listaClose = document.getElementById('listaClose');
-  const listaSearch = document.getElementById('listaSearch');
-  const listaBody = document.getElementById('listaBody');
-
-  function openListaPanel() {
-    if (!listaPanel) return;
-    listaPanel.classList.add('open');
-    listaOverlay.classList.add('open');
-    document.body.style.overflow = 'hidden';
-    renderListaRutas();
-  }
-  function closeListaPanel() {
-    if (!listaPanel) return;
-    listaPanel.classList.remove('open');
-    listaOverlay.classList.remove('open');
-    document.body.style.overflow = '';
-  }
-
-  if (navLista) navLista.onclick = openListaPanel;
-  if (listaClose) listaClose.onclick = closeListaPanel;
-  if (listaOverlay) listaOverlay.onclick = closeListaPanel;
-
-  if (listaSearch) {
-    listaSearch.addEventListener('input', () => renderListaRutas(listaSearch.value));
-  }
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && listaPanel && listaPanel.classList.contains('open')) {
-      closeListaPanel();
-    }
-  });
-
-  function renderListaRutas(query = '') {
-    if (!listaBody) return;
-    const q = String(query || '').toLowerCase().trim();
-
-    const rutas = (state.routes || [])
-      .filter(r => {
-        if (!q) return true;
-        const nombre = String(r.nombre || '').toLowerCase();
-        const paradas = (r.paradas || []).join(' ').toLowerCase();
-        const retornos = (r.retornos || []).join(' ').toLowerCase();
-        return nombre.includes(q) || paradas.includes(q) || retornos.includes(q);
-      })
-      .sort((a, b) =>
-        String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es', { numeric: true, sensitivity: 'base' })
-      );
-
-    if (!rutas.length) {
-      listaBody.innerHTML = `
-        <div class="lista-empty">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
-          <p>${q ? 'Sin resultados para "' + esc(q) + '"' : 'Aún no hay rutas registradas'}</p>
-        </div>`;
-      return;
-    }
-
-    listaBody.innerHTML = rutas.map(r => {
-      const primeraParada = (r.paradas && r.paradas[0]) ? String(r.paradas[0]).trim() : '';
-      const primerRetorno = (r.retornos && r.retornos[0]) ? String(r.retornos[0]).trim() : '';
-      const cat = r.categoria || 'urbana';
-      const slug = r.id || r.slug || '';
-      return `
-        <a class="lista-ruta-item" href="/share/ruta/${esc(slug)}" data-route-id="${esc(slug)}">
-          <div class="lista-ruta-head">
-            <div class="lista-ruta-icon">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M4.5 5C4.5 3.62 5.62 2.5 7 2.5h10c1.38 0 2.5 1.12 2.5 2.5v11c0 1.1-.9 2-2 2H17v3c0 .28-.22.5-.5.5h-2c-.28 0-.5-.22-.5-.5v-3h-4v3c0 .28-.22.5-.5.5h-2c-.28 0-.5-.22-.5-.5v-3H6.5c-1.1 0-2-.9-2-2V5Zm2 .5v2h11v-2h-11Zm0 4V13h5V9.5h-5Zm6 0V13h5V9.5h-5ZM8 15a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm2.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm3.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm2.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/></svg>
-            </div>
-            <div class="lista-ruta-info">
-              <div class="lista-ruta-nombre">${esc(r.nombre || 'RUTA')}</div>
-              <div class="lista-ruta-cat">${esc(cat)}</div>
-            </div>
-          </div>
-          ${primeraParada ? `
-            <div class="lista-ruta-parada">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-              <b>PARADA:</b><span>${esc(primeraParada)}</span>
-            </div>` : ''}
-          ${primerRetorno ? `
-            <div class="lista-ruta-retorno">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
-              <b>RETORNO:</b><span>${esc(primerRetorno)}</span>
-            </div>` : ''}
-        </a>
-      `;
-    }).join('');
-  }
-   
 
   // ==================== INIT ====================
   async function init() {
