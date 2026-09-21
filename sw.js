@@ -3,20 +3,6 @@
 /* ============================================================
    🔔 FIREBASE MESSAGING — Service Worker de notificaciones push
    ============================================================ */
-importScripts('https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js');
-
-// ✅ MISMO proyecto que tu app (aplicacion-2c1c8)
-firebase.initializeApp({
-  apiKey: "AIzaSyAiojpfnGUPhaoQkpAh1Yey3fp6uWU-iFQ",
-  authDomain: "aplicacion-2c1c8.firebaseapp.com",
-  databaseURL: "https://aplicacion-2c1c8.firebaseio.com",
-  projectId: "aplicacion-2c1c8",
-  storageBucket: "aplicacion-2c1c8.firebasestorage.app",
-  messagingSenderId: "837629411067",
-  appId: "1:837629411067:web:6c96cfcd7490b049787a5e",
-  measurementId: "G-SFP1SEY20W"
-});
 
 
 // Notificaciones push en segundo plano
@@ -50,12 +36,15 @@ self.addEventListener('push', (event) => {
       if (urlBoton) urlsBotones[`boton_${i}`] = urlBoton;
     }
 
-    const notificationTitle = (payload.notification && payload.notification.title) || 'Rutas BGD';
+    const n = payload.notification || {};
+    const d = payload.data || {};
+
+    const notificationTitle = n.title || d.title || 'Rutas BGD';
     const notificationOptions = {
-      body: (payload.notification && payload.notification.body) || 'Notificación importante',
-      icon: (payload.notification && payload.notification.image) || '/img.png',
+      body: n.body || d.body || 'Notificación importante',
+      icon: n.icon || d.image || '/img.png',
       badge: '/img.png',
-      image: (payload.notification && payload.notification.image) || '/img.png',
+      image: n.image || d.image || '/img.png',
       vibrate: [200, 100, 200],
       requireInteraction: true,
       priority: 'high',
@@ -65,7 +54,7 @@ self.addEventListener('push', (event) => {
       actions: actions,
       data: {
         urls: urlsBotones,
-        url_por_defecto: customData.url || '/'
+        url_por_defecto: d.url || n.click_action || '/'
       }
     };
 
@@ -99,7 +88,7 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 /* SW.JS — v8 · NO intercepta tiles ni APIs externas */
-const VERSION = 'bgd-v14';
+const VERSION = 'bgd-v15';
 const STATIC_CACHE = `${VERSION}-static`;
 const HTML_CACHE = `${VERSION}-html`;
 
