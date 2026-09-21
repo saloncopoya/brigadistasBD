@@ -2,13 +2,13 @@
   "posts": [
     {
       "slug": "sur219",
-      "title": "Sur",
-      "description": "Ruta Sur",
-      "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789974294/rw6gdvakptm9kgtce9uv.jpg",
+      "title": "SUR2",
+      "description": "Ruta SUR2",
+      "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789974399/ckn0o2vtzd1iiit5s5uj.jpg",
       "url": "/share/ruta/sur219",
       "tipo": "ruta",
-      "timestamp": 1789974296966,
-      "updatedAt": "2026-09-21T07:04:56.966Z",
+      "timestamp": 1789974402238,
+      "updatedAt": "2026-09-21T07:06:42.238Z",
       "categoria": "urbana",
       "tarifa": "",
       "frecuencia": "",
@@ -156,6 +156,6 @@
     }
   ],
   "total": 3,
-  "updatedAt": "2026-09-21T07:04:56.966Z",
+  "updatedAt": "2026-09-21T07:06:42.238Z",
   "version": 1
 }
