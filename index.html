@@ -746,15 +746,15 @@ body.fs-active{overflow:hidden !important}
 .map-toolbar-above{
   position:absolute;
   left:50%;
-  top:12px;
+  top:4px;
   bottom:auto;
   transform:translateX(-50%);
   z-index:600;
   display:flex;
-  gap:5px;
-  padding:4px;
+  gap:6px;
+  padding:5px;
   border:1px solid var(--border-2);
-  border-radius:10px;
+  border-radius:12px;
   backdrop-filter:blur(10px);
   -webkit-backdrop-filter:blur(10px);
   box-shadow:var(--shadow);
@@ -763,31 +763,34 @@ body.fs-active{overflow:hidden !important}
    
    
 .map-toolbar-above .tb{
-  width:34px;height:28px;
+  width:42px;height:42px;
   justify-content:center;align-items:center;
   background:var(--surface-2);
   border:1px solid var(--border);
-  border-radius:8px;
+  border-radius:10px;
   color:var(--text);
   display:flex;
   transition:var(--transition);
   padding:0;
+  cursor:pointer;
 }
 
    .map-toolbar-above .tb.tb-text{
   width:auto;
-  padding:0 10px;
-  gap:5px;
+  padding:0 14px;
+  gap:7px;
 }
+   
 .map-toolbar-above .tb.tb-text span{
-  font-size:10.5px;
+  font-size:12px;
   font-weight:800;
   letter-spacing:.3px;
   color:inherit;
   line-height:1;
 }
-.map-toolbar-above .tb svg{width:14px;height:14px}
-.map-toolbar-above .tb:hover{border-color:var(--cyan);color:var(--cyan)}
+   
+.map-toolbar-above .tb svg{width:20px;height:20px}
+   .map-toolbar-above .tb:hover{border-color:var(--cyan);color:var(--cyan)}
 .map-toolbar-above .tb.active{background:var(--cyan);color:#00121a;border-color:transparent}
    
 .trip-controls-row{
@@ -984,8 +987,9 @@ body.fs-active{overflow:hidden !important}
   margin-top:4px;
 }
 @media(max-width:380px){
-  .map-toolbar-above .tb{width:28px;height:24px}
-  .map-toolbar-above .tb svg{width:12px;height:12px}
+  .map-toolbar-above .tb{width:38px;height:38px}
+  .map-toolbar-above .tb svg{width:18px;height:18px}
+   
   .routes-grid{grid-template-columns:repeat(3,1fr)}
    
   .header-brand .brand-txt{font-size:14px}
