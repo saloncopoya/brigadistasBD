@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0e1a">
+<meta name="description" content="Términos y Condiciones de uso de Rutas BGD. Conoce las reglas para usar nuestra plataforma de rutas de colectivos.">
+<meta name="robots" content="index, follow, max-snippet:-1">
+<link rel="canonical" href="https://brigadistasbd.pages.dev/terminos">
+<link rel="icon" type="image/svg+xml" href="/assets/icon.svg">
+<link rel="apple-touch-icon" href="/assets/icon.svg">
+<link rel="manifest" href="/manifest.json">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Términos y Condiciones · Rutas BGD">
+<meta property="og:description" content="Reglas de uso de la plataforma Rutas BGD.">
+<meta property="og:image" content="https://brigadistasbd.pages.dev/img.png">
+<meta property="og:url" content="https://brigadistasbd.pages.dev/terminos">
+<meta property="og:site_name" content="Rutas BGD">
+<meta property="og:locale" content="es_MX">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Términos y Condiciones · Rutas BGD">
+<meta name="twitter:image" content="https://brigadistasbd.pages.dev/img.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Términos y Condiciones",
+  "url": "https://brigadistasbd.pages.dev/terminos",
+  "inLanguage": "es-MX",
+  "datePublished": "2026-09-20",
+  "dateModified": "2026-09-20"
+}
+</script>
+
+<style>
+:root{
+  --cyan:#0167ff;--cyan-d:#0574a2;--cyan-glow:rgba(0,229,255,.35);
+  --purple:#a855f7;--green:#10b981;--amber:#f59e0b;--red:#ef4444;
+  --radius:14px;--radius-sm:10px;
+  --shadow:0 10px 30px rgba(0,0,0,.35);--shadow-sm:0 4px 12px rgba(0,0,0,.25);
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --nav-h:64px;--header-h:58px;--transition:.25s cubic-bezier(.4,0,.2,1);
+}
+[data-theme="dark"]{
+  --bg:#0a0e1a;--bg-2:#0f1526;--surface:#141c30;--surface-2:#1c2540;--surface-3:#242f4d;
+  --border:#26314f;--border-2:#334066;
+  --text:#e8edf7;--text-2:#a9b4cc;--text-3:#6b7793;--input-bg:#0f1626;
+}
+[data-theme="light"]{
+  --bg:#f4f6fb;--bg-2:#fff;--surface:#fff;--surface-2:#f4f6fb;--surface-3:#e8ecf5;
+  --border:#dde3ee;--border-2:#c5cfe2;
+  --text:#0c1322;--text-2:#4a5773;--text-3:#8a95ad;--input-bg:#f8fafd;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:var(--font);background:var(--bg);color:var(--text);
+  overflow-x:hidden;overscroll-behavior-y:none;
+  transition:background var(--transition),color var(--transition);
+  -webkit-font-smoothing:antialiased;line-height:1.7;
+}
+button,input,textarea,select{font-family:inherit;font-size:inherit;color:inherit}
+button{cursor:pointer;border:none;background:none}
+a{color:var(--cyan);text-decoration:none}
+a:hover{text-decoration:underline}
+img{max-width:100%;display:block}
+.hidden{display:none!important}
+::selection{background:var(--cyan);color:#00121a}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:8px}
+
+.header{
+  position:fixed;top:0;left:0;right:0;height:var(--header-h);
+  background:color-mix(in srgb,var(--surface) 92%,transparent);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 14px;z-index:1000;
+}
+.header-brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px;letter-spacing:-.3px;color:var(--text);text-decoration:none}
+.header-brand .logo{
+  width:32px;height:32px;border-radius:9px;
+  background:linear-gradient(135deg,var(--cyan),var(--cyan-d));
+  display:grid;place-items:center;color:#00121a;
+  box-shadow:0 0 18px var(--cyan-glow);
+}
+.header-brand .logo svg{width:20px;height:20px}
+.header-brand .brand-txt{background:linear-gradient(90deg,var(--cyan),#7dd3fc);-webkit-background-clip:text;background-clip:text;color:transparent}
+.header-actions{display:flex;align-items:center;gap:6px}
+.icon-btn{
+  width:40px;height:40px;border-radius:11px;display:grid;place-items:center;
+  color:var(--text-2);transition:var(--transition);text-decoration:none;
+}
+.icon-btn:hover{background:var(--surface-2);color:var(--cyan)}
+.icon-btn svg{width:20px;height:20px}
+
+.app{
+  padding-top:var(--header-h);
+  padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom));
+  min-height:100vh;
+}
+.wrap{max-width:820px;margin:0 auto;padding:20px}
+
+.breadcrumb{
+  display:flex;align-items:center;gap:6px;
+  font-size:12px;color:var(--text-3);margin-bottom:16px;flex-wrap:wrap;
+}
+.breadcrumb a{color:var(--text-2)}
+.breadcrumb a:hover{color:var(--cyan)}
+.breadcrumb .sep{opacity:.5}
+
+.page-hero{
+  padding:20px 0 24px;border-bottom:1px solid var(--border);margin-bottom:28px;
+}
+.page-hero h1{
+  font-size:clamp(26px,4vw,38px);font-weight:900;letter-spacing:-.6px;
+  line-height:1.15;margin-bottom:12px;
+  background:linear-gradient(135deg,var(--cyan),#7dd3fc 60%,var(--cyan-d));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.page-hero .subtitle{font-size:16px;color:var(--text-2);line-height:1.6}
+.page-hero .meta{
+  display:flex;gap:14px;flex-wrap:wrap;margin-top:16px;
+  font-size:12.5px;color:var(--text-3);
+}
+.page-hero .meta span{display:inline-flex;align-items:center;gap:5px}
+.page-hero .meta svg{width:14px;height:14px}
+
+.toc{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:18px 20px;margin-bottom:28px;
+}
+.toc h2{
+  font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;
+  color:var(--cyan);margin-bottom:12px;
+}
+.toc ol{padding-left:20px;margin:0}
+.toc li{padding:5px 0;font-size:14px}
+.toc a{color:var(--text-2)}
+.toc a:hover{color:var(--cyan)}
+
+.article h2{
+  font-size:clamp(20px,2.5vw,24px);font-weight:900;letter-spacing:-.4px;
+  margin:36px 0 14px;color:var(--text);line-height:1.3;
+  scroll-margin-top:calc(var(--header-h) + 20px);
+}
+.article h3{
+  font-size:17px;font-weight:800;
+  margin:24px 0 10px;color:var(--cyan);
+}
+.article p{font-size:15.5px;color:var(--text-2);margin-bottom:14px}
+.article p strong{color:var(--text);font-weight:700}
+.article ul,.article ol{padding-left:24px;margin-bottom:16px}
+.article li{font-size:15px;color:var(--text-2);margin-bottom:8px}
+.article blockquote{
+  border-left:4px solid var(--amber);background:var(--surface);
+  padding:14px 18px;margin:18px 0;border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+  color:var(--text-2);font-size:15px;
+}
+.article code{
+  background:var(--surface-2);padding:2px 7px;border-radius:5px;
+  font-family:ui-monospace,Menlo,monospace;font-size:13px;color:var(--cyan);
+}
+.info-box{
+  background:var(--surface);border:1px solid var(--border);
+  border-left:4px solid var(--cyan);
+  padding:16px 20px;border-radius:0 var(--radius) var(--radius) 0;
+  margin:20px 0;
+}
+.info-box h4{margin:0 0 8px;color:var(--cyan);font-size:14px}
+.info-box p:last-child{margin-bottom:0}
+
+.contact-block{
+  background:linear-gradient(135deg,color-mix(in srgb,var(--cyan) 8%,var(--surface)),var(--surface));
+  border:1px solid var(--border);border-radius:var(--radius);
+  padding:24px;margin:36px 0;text-align:center;
+}
+.contact-block h2{font-size:18px;font-weight:900;margin-bottom:10px;color:var(--text)}
+.contact-block p{font-size:14px;color:var(--text-2);margin-bottom:16px}
+.contact-block a{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:11px 20px;border-radius:10px;
+  background:linear-gradient(135deg,var(--cyan),var(--cyan-d));
+  color:#00121a;font-weight:800;font-size:13.5px;
+  text-decoration:none;transition:var(--transition);
+}
+.contact-block a:hover{filter:brightness(1.08);transform:translateY(-2px);text-decoration:none}
+
+footer{
+  margin-top:40px;padding:24px 0;border-top:1px solid var(--border);
+  color:var(--text-3);font-size:12px;text-align:center;line-height:1.9;
+}
+footer a{color:var(--cyan)}
+
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav-h) + env(safe-area-inset-bottom));
+  padding-bottom:env(safe-area-inset-bottom);
+  background:color-mix(in srgb,var(--surface) 92%,transparent);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border-top:1px solid var(--text-2);
+  display:grid;grid-template-columns:repeat(5,1fr);z-index:1000;
+}
+.nav-item{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;color:var(--text);font-size:11px;font-weight:600;
+  transition:var(--transition);position:relative;text-decoration:none;
+}
+.nav-item svg{width:23px;height:23px;transition:var(--transition)}
+.nav-item.active{color:var(--cyan)}
+.nav-item.active svg{transform:translateY(-2px) scale(1.08)}
+.nav-item.active::before{
+  content:"";position:absolute;top:6px;width:44px;height:3px;border-radius:0 0 4px 4px;
+  background:var(--cyan);box-shadow:0 0 14px var(--cyan-glow);
+}
+.nav-item:active{transform:scale(.94)}
+
+@media(min-width:1000px){
+  .bottom-nav{max-width:720px;left:50%;transform:translateX(-50%);border-radius:18px 18px 0 0;border-left:1px solid var(--border);border-right:1px solid var(--border)}
+}
+@media(max-width:380px){
+  .header-brand .brand-txt{font-size:14px}
+  .nav-item span{font-size:10px}
+  .nav-item svg{width:20px;height:20px}
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <a class="header-brand" href="/">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+        <circle cx="12" cy="10" r="3"/>
+      </svg>
+    </div>
+    <span class="brand-txt">Rutas BGD</span>
+  </a>
+  <div class="header-actions">
+    <button class="icon-btn" id="themeBtn" title="Cambiar tema">
+      <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <a class="icon-btn" href="/" title="Ir al inicio">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </a>
+  </div>
+</header>
+
+<main class="app">
+  <div class="wrap">
+
+    <nav class="breadcrumb">
+      <a href="/">Inicio</a>
+      <span class="sep">›</span>
+      <span aria-current="page">Términos y Condiciones</span>
+    </nav>
+
+    <div class="page-hero">
+      <h1>Términos y Condiciones</h1>
+      <p class="subtitle">Estos Términos y Condiciones rigen el uso de la plataforma Rutas BGD. Al acceder o utilizar el sitio, aceptas cumplir con ellos.</p>
+      <div class="meta">
+        <span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Vigente desde: Septiembre 2026
+        </span>
+        <span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Versión 1.0
+        </span>
+      </div>
+    </div>
+
+    <nav class="toc">
+      <h2>📋 Contenido</h2>
+      <ol>
+        <li><a href="#aceptacion">Aceptación de los términos</a></li>
+        <li><a href="#descripcion">Descripción del servicio</a></li>
+        <li><a href="#uso-permitido">Uso permitido</a></li>
+        <li><a href="#uso-prohibido">Uso prohibido</a></li>
+        <li><a href="#contenido-usuario">Contenido del usuario</a></li>
+        <li><a href="#propiedad">Propiedad intelectual</a></li>
+        <li><a href="#precision">Exactitud de la información</a></li>
+        <li><a href="#responsabilidad">Limitación de responsabilidad</a></li>
+        <li><a href="#enlaces">Enlaces a terceros</a></li>
+        <li><a href="#modificaciones">Modificaciones</a></li>
+        <li><a href="#ley">Ley aplicable</a></li>
+        <li><a href="#contacto">Contacto</a></li>
+      </ol>
+    </nav>
+
+    <article class="article">
+
+      <h2 id="aceptacion">1. Aceptación de los términos</h2>
+      <p>Al acceder, navegar o utilizar <strong>Rutas BGD</strong> (en adelante "la Plataforma", "el Sitio" o "nosotros"), aceptas quedar vinculado por estos Términos y Condiciones, así como por nuestra <a href="/politica-privacidad">Política de Privacidad</a>.</p>
+      <p>Si no estás de acuerdo con estos términos, <strong>te pedimos que no utilices la Plataforma</strong>.</p>
+
+      <div class="info-box">
+        <h4>📌 Resumen</h4>
+        <p>Usa la Plataforma de forma respetuosa, no publiques contenido ilegal o dañino, y entiende que la información de rutas puede cambiar sin previo aviso.</p>
+      </div>
+
+      <h2 id="descripcion">2. Descripción del servicio</h2>
+      <p>Rutas BGD es una <strong>Progressive Web App (PWA)</strong> sin fines de lucro que ofrece:</p>
+      <ul>
+        <li><strong>Catálogo de rutas de colectivos</strong> en Tuxtla Gutiérrez, Chiapas.</li>
+        <li><strong>Mapas interactivos</strong> con el trazado de cada ruta.</li>
+        <li><strong>Buscador de rutas</strong> con soporte para transbordos.</li>
+        <li><strong>Planificador de viajes</strong> en mapa interactivo.</li>
+        <li><strong>Marketplace local</strong> para anuncios clasificados.</li>
+        <li><strong>Muro de comunidad</strong> con comentarios y reportes.</li>
+      </ul>
+      <p>El servicio se ofrece <strong>"tal cual" y "según disponibilidad"</strong>, sin garantías de ningún tipo respecto a disponibilidad continua, exactitud o idoneidad para un propósito específico.</p>
+
+      <h2 id="uso-permitido">3. Uso permitido</h2>
+      <p>Puedes usar la Plataforma para:</p>
+      <ul>
+        <li>✅ Consultar información de rutas de colectivos.</li>
+        <li>✅ Planificar tus viajes en transporte público.</li>
+        <li>✅ Publicar comentarios respetuosos y constructivos.</li>
+        <li>✅ Reportar errores o actualizaciones de rutas.</li>
+        <li>✅ Publicar anuncios en el marketplace (autos, terrenos, casas, servicios).</li>
+        <li>✅ Compartir el contenido en redes sociales.</li>
+        <li>✅ Instalar la app en tu dispositivo (PWA).</li>
+        <li>✅ Usarla sin conexión a internet (contenido previamente cacheado).</li>
+      </ul>
+
+      <h2 id="uso-prohibido">4. Uso prohibido</h2>
+      <p><strong>NO está permitido:</strong></p>
+      <ul>
+        <li>❌ Publicar contenido ilegal, difamatorio, obsceno, violento o discriminatorio.</li>
+        <li>❌ Publicar spam, publicidad no solicitada o enlaces maliciosos.</li>
+        <li>❌ Suplantar la identidad de otras personas u organizaciones.</li>
+        <li>❌ Intentar acceder a áreas restringidas o a la administración del sitio.</li>
+        <li>❌ Realizar scraping masivo o ataques automatizados.</li>
+        <li>❌ Introducir virus, malware o código malicioso.</li>
+        <li>❌ Publicar contenido con derechos de autor sin permiso.</li>
+        <li>❌ Usar la Plataforma con fines comerciales no autorizados.</li>
+        <li>❌ Manipular reportes o comentarios de forma fraudulenta.</li>
+        <li>❌ Violar cualquier ley aplicable en México.</li>
+      </ul>
+
+      <blockquote>
+        ⚠️ <strong>Consecuencia:</strong> El incumplimiento de estas reglas puede resultar en la eliminación de tu contenido, bloqueo de tu dispositivo o acciones legales según corresponda.
+      </blockquote>
+
+      <h2 id="contenido-usuario">5. Contenido del usuario</h2>
+
+      <h3>5.1. Responsabilidad</h3>
+      <p>Eres el único responsable del contenido que publicas (comentarios, reportes, anuncios). Al publicar, declaras que:</p>
+      <ul>
+        <li>El contenido es verídico y de tu autoría.</li>
+        <li>No viola derechos de terceros.</li>
+        <li>Cumple con estos Términos y Condiciones.</li>
+      </ul>
+
+      <h3>5.2. Licencia</h3>
+      <p>Al publicar contenido, otorgas a Rutas BGD una <strong>licencia mundial, no exclusiva, libre de regalías y transferible</strong> para usar, reproducir, modificar, adaptar, publicar y mostrar dicho contenido en la Plataforma.</p>
+
+      <h3>5.3. Moderación</h3>
+      <p>Nos reservamos el derecho de:</p>
+      <ul>
+        <li>Eliminar cualquier contenido sin previo aviso.</li>
+        <li>Bloquear dispositivos o usuarios que violen estos términos.</li>
+        <li>Reportar contenido ilegal a las autoridades competentes.</li>
+      </ul>
+
+      <h3>5.4. Eliminación de contenido propio</h3>
+      <p>Puedes eliminar tus propios comentarios en cualquier momento desde la interfaz. Para eliminar reportes o anuncios, contacta al equipo administrativo.</p>
+
+      <h2 id="propiedad">6. Propiedad intelectual</h2>
+
+      <h3>6.1. Contenido de la Plataforma</h3>
+      <p>El diseño, código, logotipos, textos, gráficos, mapas y demás elementos de la Plataforma son propiedad de Rutas BGD o de sus respectivos titulares y están protegidos por leyes de propiedad intelectual.</p>
+
+      <h3>6.2. Marcas comerciales</h3>
+      <p>"Rutas BGD" es una marca no registrada. Los nombres de rutas y concesionarios mencionados pertenecen a sus respectivos propietarios.</p>
+
+      <h3>6.3. Contenido de mapas</h3>
+      <p>Los mapas se sirven a través de MapTiler y OpenStreetMap. Los datos de OpenStreetMap están disponibles bajo la Open Database License (ODbL).</p>
+
+      <h2 id="precision">7. Exactitud de la información</h2>
+      <p>Aunque nos esforzamos por mantener la información actualizada y precisa, <strong>NO garantizamos la exactitud, integridad o vigencia de los datos</strong> sobre rutas, tarifas, horarios, paradas o cualquier otro contenido.</p>
+
+      <blockquote>
+        ⚠️ <strong>IMPORTANTE:</strong> La información de rutas de colectivos puede cambiar sin previo aviso por decisiones de los concesionarios o autoridades. <strong>Siempre verifica con el conductor al abordar</strong>, especialmente tarifas y horarios.
+      </blockquote>
+
+      <p>Consulta nuestra <a href="/metodologia">Metodología</a> para saber cómo obtenemos y verificamos la información.</p>
+
+      <h2 id="responsabilidad">8. Limitación de responsabilidad</h2>
+      <p>En la máxima medida permitida por la ley aplicable:</p>
+      <ul>
+        <li>Rutas BGD <strong>NO se hace responsable</strong> de daños directos, indirectos, incidentales o consecuentes derivados del uso de la Plataforma.</li>
+        <li>NO somos responsables de retrasos, cancelaciones, accidentes o cualquier incidente relacionado con el transporte público.</li>
+        <li>NO somos responsables del contenido publicado por otros usuarios.</li>
+        <li>NO garantizamos la disponibilidad continua del servicio.</li>
+        <li>NO somos responsables de pérdidas económicas derivadas de decisiones tomadas con base en la información del sitio.</li>
+      </ul>
+      <p>El uso de la Plataforma es <strong>bajo tu propio riesgo</strong>.</p>
+
+      <h2 id="enlaces">9. Enlaces a terceros</h2>
+      <p>La Plataforma puede contener enlaces a sitios web de terceros (MapTiler, OpenStreetMap, Facebook, WhatsApp, etc.). No controlamos ni somos responsables de:</p>
+      <ul>
+        <li>El contenido de dichos sitios.</li>
+        <li>Sus prácticas de privacidad.</li>
+        <li>Su disponibilidad o funcionamiento.</li>
+      </ul>
+      <p>El acceso a sitios de terceros es bajo tu propio riesgo y está sujeto a sus propios términos y condiciones.</p>
+
+      <h2 id="modificaciones">10. Modificaciones</h2>
+      <p>Nos reservamos el derecho de modificar estos Términos y Condiciones en cualquier momento. Los cambios se publicarán en esta página con la fecha de "Vigente desde" actualizada.</p>
+      <p>El uso continuado de la Plataforma tras una modificación constituye <strong>aceptación tácita</strong> de los nuevos términos.</p>
+      <p>Te recomendamos revisar esta página periódicamente.</p>
+
+      <h2 id="ley">11. Ley aplicable y jurisdicción</h2>
+      <p>Estos Términos y Condiciones se rigen por las leyes de los <strong>Estados Unidos Mexicanos</strong>. Cualquier controversia derivada del uso de la Plataforma se someterá a la jurisdicción de los tribunales competentes de <strong>Tuxtla Gutiérrez, Chiapas, México</strong>.</p>
+
+      <h3>11.1. Resolución de conflictos</h3>
+      <p>Antes de iniciar cualquier acción legal, ambas partes se comprometen a intentar resolver la controversia de buena fe mediante comunicación directa.</p>
+
+      <h2 id="contacto">12. Contacto</h2>
+      <p>Si tienes dudas, comentarios o reclamos sobre estos Términos y Condiciones, contáctanos:</p>
+      <ul>
+        <li>📧 Correo: <a href="mailto:contacto@brigadistasbd.pages.dev">contacto@brigadistasbd.pages.dev</a></li>
+        <li>🌐 Sitio: <a href="https://brigadistasbd.pages.dev">brigadistasbd.pages.dev</a></li>
+      </ul>
+
+      <div class="contact-block">
+        <h2>¿Dudas sobre estos términos?</h2>
+        <p>Estamos abiertos a aclarar cualquier punto de estos Términos y Condiciones.</p>
+        <a href="mailto:contacto@brigadistasbd.pages.dev">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="16" height="16"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          contacto@brigadistasbd.pages.dev
+        </a>
+      </div>
+
+    </article>
+
+    <footer>
+      <div style="margin-bottom:14px">
+        <a href="/" style="margin:0 8px">Inicio</a>·
+        <a href="/?tab=routes" style="margin:0 8px">Rutas</a>·
+        <a href="/?tab=market" style="margin:0 8px">Marketplace</a>·
+        <a href="/Comunidad" style="margin:0 8px">Comunidad</a>
+      </div>
+      <div style="margin-bottom:14px">
+        <a href="/metodologia" style="margin:0 8px">Metodología</a>·
+        <a href="/acerca" style="margin:0 8px">Acerca de</a>·
+        <a href="/politica-privacidad" style="margin:0 8px">Privacidad</a>·
+        <a href="/terminos" style="margin:0 8px">Términos</a>
+      </div>
+      © <span id="year"></span> Rutas BGD · <a href="https://brigadistasbd.pages.dev">brigadistasbd.pages.dev</a>
+    </footer>
+
+  </div>
+</main>
+
+<nav class="bottom-nav">
+  <a class="nav-item" href="/" style="text-decoration:none;color:inherit">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>Inicio</span>
+  </a>
+  <a class="nav-item" href="/?tab=market" style="text-decoration:none;color:inherit">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+    <span>Market</span>
+  </a>
+  <a class="nav-item" href="/?tab=routes" style="text-decoration:none;color:inherit">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M4.5 5C4.5 3.62 5.62 2.5 7 2.5h10c1.38 0 2.5 1.12 2.5 2.5v11c0 1.1-.9 2-2 2H17v3c0 .28-.22.5-.5.5h-2c-.28 0-.5-.22-.5-.5v-3h-4v3c0 .28-.22.5-.5.5h-2c-.28 0-.5-.22-.5-.5v-3H6.5c-1.1 0-2-.9-2-2V5Zm2 .5v2h11v-2h-11Zm0 4V13h5V9.5h-5Zm6 0V13h5V9.5h-5ZM8 15a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm2.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm3.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm2.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/></svg>
+    <span>Rutas</span>
+  </a>
+  <a class="nav-item" href="/?tab=routes&openList=1" style="text-decoration:none;color:inherit">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+    <span>Lista</span>
+  </a>
+  <a class="nav-item" href="/Comunidad" style="text-decoration:none;color:inherit">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    <span>Comunidad</span>
+  </a>
+</nav>
+
+<script>
+(function(){
+  'use strict';
+  document.getElementById('year').textContent = new Date().getFullYear();
+  const savedTheme = localStorage.getItem('tgz_theme') || 'light';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  updateThemeIcon();
+
+  function updateThemeIcon(){
+    const t = document.documentElement.getAttribute('data-theme');
+    const icon = document.getElementById('themeIcon');
+    if(!icon) return;
+    icon.innerHTML = t==='dark'
+      ? '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'
+      : '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+  }
+  document.getElementById('themeBtn').onclick = () => {
+    const cur = document.documentElement.getAttribute('data-theme');
+    const next = cur==='dark'?'light':'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('tgz_theme', next);
+    updateThemeIcon();
+  };
+
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const id = a.getAttribute('href').slice(1);
+      const el = document.getElementById(id);
+      if(el){
+        e.preventDefault();
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>
