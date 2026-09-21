@@ -944,7 +944,7 @@ ${tipo === 'market' ? `
 
 <style>
 :root{
-  --cyan:#00e5ff;--cyan-d:#00b8cc;--cyan-glow:rgba(0,229,255,.35);
+  --cyan:#0167ff;--cyan-d:#0574a2;--cyan-glow:rgba(1,103,255,.35);
   --purple:#a855f7;--green:#10b981;--amber:#f59e0b;--red:#ef4444;
   --radius:14px;--radius-sm:10px;--radius-lg:22px;
   --shadow:0 10px 30px rgba(0,0,0,.35);--shadow-sm:0 4px 12px rgba(0,0,0,.25);
@@ -967,13 +967,29 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:
 .icon-btn:hover{background:var(--surface-2);color:var(--cyan)}
 .icon-btn svg{width:20px;height:20px}
 
-/* NAV INFERIOR */
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav-h) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:color-mix(in srgb,var(--surface) 96%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(4,1fr);z-index:1000}
-.nav-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--text-3);font-size:11px;font-weight:600;transition:var(--transition);text-decoration:none;position:relative}
-.nav-item svg{width:23px;height:23px}
+//* NAV INFERIOR (idéntico a index.html) */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;
+  height:calc(var(--nav-h) + env(safe-area-inset-bottom));
+  padding-bottom:env(safe-area-inset-bottom);
+  background:color-mix(in srgb,var(--surface) 92%,transparent);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border-top:1px solid var(--border);
+  display:grid;grid-template-columns:repeat(4,1fr);z-index:1000;
+}
+.nav-item{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;color:var(--text);font-size:11px;font-weight:600;
+  transition:var(--transition);text-decoration:none;position:relative;
+}
+.nav-item svg{width:23px;height:23px;transition:var(--transition)}
 .nav-item.active{color:var(--cyan)}
-.nav-item.active::before{content:"";position:absolute;top:6px;width:44px;height:3px;border-radius:0 0 4px 4px;background:var(--cyan);box-shadow:0 0 14px var(--cyan-glow)}
-
+.nav-item.active svg{transform:translateY(-2px) scale(1.08)}
+.nav-item.active::before{
+  content:"";position:absolute;top:6px;width:44px;height:3px;
+  border-radius:0 0 4px 4px;background:var(--cyan);
+  box-shadow:0 0 14px var(--cyan-glow);
+}
 /* CONTENIDO */
 .wrap{max-width:760px;margin:0 auto;padding:20px}
 .back{display:inline-flex;align-items:center;gap:6px;color:var(--cyan);text-decoration:none;font-size:13px;font-weight:700;margin-bottom:16px}
@@ -1026,13 +1042,13 @@ body.fs-active{overflow:hidden!important}
 .block li:last-child{border-bottom:none}
 .post-content{font-size:15.5px;line-height:1.7;color:var(--text);background:var(--surface);padding:18px;border-radius:var(--radius);border:1px solid var(--border);margin-bottom:20px}
 .badge{display:inline-block;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin-bottom:12px}
-.badge-urbana{background:rgba(0,229,255,.16);color:var(--cyan)}
+.badge-urbana{background:rgba(1,103,255,.16);color:var(--cyan)}
 .badge-foranea{background:rgba(168,85,247,.18);color:var(--purple)}
 .badge-green{background:rgba(16,185,129,.16);color:var(--green)}
 .price{font-size:22px;font-weight:900;color:var(--green);margin:10px 0}
 .cta{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:11px 18px;border-radius:10px;font-weight:700;font-size:13.5px;text-decoration:none;border:none;cursor:pointer;font-family:inherit}
-.btn-primary{background:linear-gradient(135deg,var(--cyan),#00b8cc);color:#00121a}
+.btn-primary{background:linear-gradient(135deg,var(--cyan),var(--cyan-d));color:#fff}
 .btn-ghost{background:var(--surface);color:var(--text);border:1px solid var(--border)}
 /* 📝 PÁRRAFOS INTRODUCTORIOS (SEO) */
 .intro-paragraphs{margin:20px 0}
@@ -1225,7 +1241,7 @@ ${image ? `
     <span>Market</span>
   </a>
   <a class="nav-item ${tipo === 'ruta' ? 'active' : ''}" href="${baseUrl}/?tab=routes">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M6 16V9a4 4 0 0 1 4-4h4"/><path d="M18 8v7a4 4 0 0 1-4 4H9"/></svg>
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M4.5 5C4.5 3.62 5.62 2.5 7 2.5h10c1.38 0 2.5 1.12 2.5 2.5v11c0 1.1-.9 2-2 2H17v3c0 .28-.22.5-.5.5h-2c-.28 0-.5-.22-.5-.5v-3h-4v3c0 .28-.22.5-.5.5h-2c-.28 0-.5-.22-.5-.5v-3H6.5c-1.1 0-2-.9-2-2V5Zm2 .5v2h11v-2h-11Zm0 4V13h5V9.5h-5Zm6 0V13h5V9.5h-5ZM8 15a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm2.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm3.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm2.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/></svg>
     <span>Rutas</span>
   </a>
   <a class="nav-item" href="${baseUrl}/Comunidad">
