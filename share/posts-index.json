@@ -2,13 +2,13 @@
   "posts": [
     {
       "slug": "nuevasrutas209",
-      "title": "Nuevas rutas",
-      "description": "Ruta Nuevas rutas",
+      "title": "NUEVAS RUTAS",
+      "description": "Ruta NUEVAS RUTAS",
       "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789955936/tb3cs0uvshje4fdxssnk.jpg",
       "url": "/share/ruta/nuevasrutas209",
       "tipo": "ruta",
-      "timestamp": 1789955938839,
-      "updatedAt": "2026-09-21T01:58:58.839Z",
+      "timestamp": 1789962715212,
+      "updatedAt": "2026-09-21T03:51:55.212Z",
       "categoria": "urbana",
       "tarifa": "10",
       "frecuencia": "15",
@@ -164,6 +164,6 @@
     }
   ],
   "total": 3,
-  "updatedAt": "2026-09-21T01:58:58.839Z",
+  "updatedAt": "2026-09-21T03:51:55.212Z",
   "version": 1
 }
