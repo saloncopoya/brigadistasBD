@@ -1260,7 +1260,7 @@ img{max-width:100%;display:block}
     const sel = $('#composerRouteSelect');
     if(!sel) return;
     
-    let html = '<option value="">📍 Sin ruta específica (comentario general)</option>';
+    let html = '<option value="">📍Comentario general</option>';
     state.routes.forEach(r => {
       html += `<option value="${esc(r.id)}">🚌 ${esc(r.nombre)} (${esc(r.categoria||'urbana')})</option>`;
     });
