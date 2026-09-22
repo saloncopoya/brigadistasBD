@@ -1415,7 +1415,7 @@ img{max-width:100%;display:block}
               ${likeCount ? `<span class="like-count">${likeCount}</span>` : ''}
               <button data-act="reply">
                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="14" height="14"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                  Ver ${replyCount} respuesta${replyCount>1?'s':''}
+                   ${replyCount} ${replyCount>1?'s':''}
                                <span>Responder</span>
               </button>
               ${replyCount > 0 ? `               
