@@ -1,10 +1,11 @@
 /* ============================================================
-   /api/notify — Envía push a todos O a un usuario específico
-   POST body: { 
-     titulo, mensaje, url, imagen, tipo,
-     destinatario: 'todos' | 'individual',  // ← NUEVO
-     token: 'xxx'                            // ← NUEVO (si es individual)
-   }
+   /api/notify — Envía push a TODOS o a UN usuario específico
+   
+   POST body (modo global):
+   { titulo, mensaje, url, imagen, tipo, destinatario: 'todos' }
+   
+   POST body (modo individual):
+   { titulo, mensaje, url, imagen, tipo, destinatario: 'individual', token: 'xxx' }
    ============================================================ */
 
 export async function onRequest(context) {
@@ -40,7 +41,7 @@ export async function onRequest(context) {
     const FCM_URL = `https://fcm.googleapis.com/v1/projects/${env.FIREBASE_PROJECT_ID}/messages:send`;
 
     // ============================================================
-    // 🎯 MODO INDIVIDUAL: enviar solo a un token específico
+    // 🎯 MODO INDIVIDUAL: enviar solo a UN token específico
     // ============================================================
     if (destinatario === 'individual' && tokenDirecto) {
       console.log('[notify] Modo INDIVIDUAL — enviando a 1 token');
