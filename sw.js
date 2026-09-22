@@ -39,15 +39,12 @@ self.addEventListener('push', (event) => {
     const n = payload.notification || {};
     const d = payload.data || {};
 
-    // 🎯 ¿Es un comentario? Si sí, NO mostramos imagen grande.
-    //    Cualquier otro tipo SÍ puede mostrar imagen.
-    const esComentario = (d.tipo === 'comentario') || (n.tipo === 'comentario');
-
     const notificationTitle = n.title || d.title || 'Rutas BGD';
     const notificationOptions = {
       body: n.body || d.body || 'Notificación importante',
-      icon: n.icon || d.icon || '/img.png',
+      icon: n.icon || d.image || '/img.png',
       badge: '/img.png',
+      image: n.image || d.image || '/img.png',
       vibrate: [200, 100, 200],
       requireInteraction: true,
       priority: 'high',
@@ -60,12 +57,6 @@ self.addEventListener('push', (event) => {
         url_por_defecto: d.url || n.click_action || '/'
       }
     };
-
-    // 🖼️ Solo agregamos la imagen grande si NO es comentario
-    if (!esComentario) {
-      const bigImg = n.image || d.image;
-      if (bigImg) notificationOptions.image = bigImg;
-    }
 
     await self.registration.showNotification(notificationTitle, notificationOptions);
   })());
@@ -97,7 +88,7 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 /* SW.JS — v8 · NO intercepta tiles ni APIs externas */
-const VERSION = 'bgd-v17';
+const VERSION = 'bgd-v15';
 const STATIC_CACHE = `${VERSION}-static`;
 const HTML_CACHE = `${VERSION}-html`;
 
