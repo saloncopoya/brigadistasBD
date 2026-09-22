@@ -1414,14 +1414,12 @@ img{max-width:100%;display:block}
               </button>
               ${likeCount ? `<span class="like-count">${likeCount}</span>` : ''}
               <button data-act="reply">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>
-                <span>Responder</span>
-              </button>
-              ${replyCount > 0 ? `
-                <button class="btn-view-replies" data-act="view-replies">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="14" height="14"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="14" height="14"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                   Ver ${replyCount} respuesta${replyCount>1?'s':''}
-                </button>` : ''}
+                               <span>Responder</span>
+              </button>
+              ${replyCount > 0 ? `               
+                ` : ''}
             </div>
           </div>
           
