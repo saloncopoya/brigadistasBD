@@ -1,8 +1,10 @@
 /* ============================================================
-
-ESTO ES EL CODIGO PARA ENVIAR COMO NOTIFICACIONES LOS COMENTARIOS DE USUARIOS
-   /api/notify — Envía push a todos los suscriptores
-   POST body: { titulo, mensaje, url, imagen, tipo }
+   /api/notify — Envía push a todos O a un usuario específico
+   POST body: { 
+     titulo, mensaje, url, imagen, tipo,
+     destinatario: 'todos' | 'individual',  // ← NUEVO
+     token: 'xxx'                            // ← NUEVO (si es individual)
+   }
    ============================================================ */
 
 export async function onRequest(context) {
@@ -15,27 +17,93 @@ export async function onRequest(context) {
     'Access-Control-Allow-Headers': 'Content-Type'
   };
 
-  if (request.method === 'OPTIONS') {
-    return new Response(null, { headers });
-  }
-
+  if (request.method === 'OPTIONS') return new Response(null, { headers });
   if (request.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Método no permitido' }), { status: 405, headers });
   }
 
   try {
     const body = await request.json();
-    const { titulo, mensaje, url, imagen, tipo } = body;
+    const { titulo, mensaje, url, imagen, tipo, destinatario, token: tokenDirecto } = body;
 
     if (!titulo || !mensaje) {
       return new Response(JSON.stringify({ error: 'Faltan título o mensaje' }), { status: 400, headers });
     }
 
-    // 🛡️ Rate limit básico: máx 1 notif cada 30s desde el mismo origen
-    // (opcional, se puede mejorar con KV)
+    // 🔑 Obtener access token de FCM
+    const accessToken = await getFcmAccessToken(env);
+    if (!accessToken) {
+      return new Response(JSON.stringify({ error: 'No se pudo obtener access token FCM' }), { status: 500, headers });
+    }
 
-    // 1️⃣ Leer todos los tokens suscritos desde Firebase RTDB
     const FIREBASE_DB = 'https://aplicacion-2c1c8.firebaseio.com';
+    const FCM_URL = `https://fcm.googleapis.com/v1/projects/${env.FIREBASE_PROJECT_ID}/messages:send`;
+
+    // ============================================================
+    // 🎯 MODO INDIVIDUAL: enviar solo a un token específico
+    // ============================================================
+    if (destinatario === 'individual' && tokenDirecto) {
+      console.log('[notify] Modo INDIVIDUAL — enviando a 1 token');
+      
+      try {
+        const res = await fetch(FCM_URL, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: {
+              token: tokenDirecto,
+              data: {
+                title: titulo,
+                body: mensaje,
+                image: imagen || '',
+                url: url || '/Comunidad',
+                tipo: tipo || 'respuesta',
+                timestamp: String(Date.now())
+              },
+              webpush: {
+                headers: { Urgency: 'high', TTL: '86400' },
+                fcm_options: { link: url || '/Comunidad' }
+              },
+              android: { priority: 'high' },
+              apns: { headers: { 'apns-priority': '10' } }
+            }
+          })
+        });
+
+        if (res.ok) {
+          return new Response(JSON.stringify({ 
+            ok: true, 
+            modo: 'individual',
+            enviados: 1 
+          }), { headers });
+        } else {
+          const err = await res.text();
+          // Token inválido → eliminar de Firebase
+          if (res.status === 404 || res.status === 410) {
+            await removeToken(tokenDirecto, FIREBASE_DB);
+          }
+          return new Response(JSON.stringify({ 
+            error: 'FCM error', 
+            status: res.status,
+            detail: err 
+          }), { status: 500, headers });
+        }
+      } catch (e) {
+        return new Response(JSON.stringify({ 
+          error: 'Error enviando a token individual',
+          detail: e.message 
+        }), { status: 500, headers });
+      }
+    }
+
+    // ============================================================
+    // 🌍 MODO GLOBAL: enviar a TODOS los suscriptores
+    // ============================================================
+    console.log('[notify] Modo GLOBAL — enviando a todos');
+    
     const tokensRes = await fetch(`${FIREBASE_DB}/pushTokens.json`);
     const tokensData = await tokensRes.json();
 
@@ -43,7 +111,6 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ ok: true, sent: 0, msg: 'Sin suscriptores' }), { headers });
     }
 
-    // Extraer tokens válidos
     const tokens = Object.values(tokensData)
       .map(d => d && d.token)
       .filter(t => typeof t === 'string' && t.length > 50);
@@ -52,20 +119,9 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ ok: true, sent: 0 }), { headers });
     }
 
-    // 2️⃣ Obtener access token de FCM (OAuth 2.0)
-    const accessToken = await getFcmAccessToken(env);
-
-    if (!accessToken) {
-      return new Response(JSON.stringify({ error: 'No se pudo obtener access token FCM' }), { status: 500, headers });
-    }
-
-    // 3️⃣ Enviar notificación a cada token
-    const FCM_URL = `https://fcm.googleapis.com/v1/projects/${env.FIREBASE_PROJECT_ID}/messages:send`;
     let enviados = 0;
     let fallidos = 0;
-
-    // Enviar en paralelo pero con límite (evitar saturar)
-    const BATCH_SIZE = 100; // FCM permite hasta 500 por batch, pero usamos 100 para no bloquear
+    const BATCH_SIZE = 100;
 
     for (let i = 0; i < tokens.length; i += BATCH_SIZE) {
       const batch = tokens.slice(i, i + BATCH_SIZE);
@@ -89,13 +145,8 @@ export async function onRequest(context) {
                 timestamp: String(Date.now())
               },
               webpush: {
-                headers: {
-                  Urgency: 'high',
-                  TTL: '86400'
-                },
-                fcm_options: {
-                  link: url || '/Comunidad'
-                }
+                headers: { Urgency: 'high', TTL: '86400' },
+                fcm_options: { link: url || '/Comunidad' }
               },
               android: { priority: 'high' },
               apns: { headers: { 'apns-priority': '10' } }
@@ -106,7 +157,6 @@ export async function onRequest(context) {
             if (r.ok) enviados++;
             else {
               fallidos++;
-              // Si el token expiró, eliminar de Firebase
               if (r.status === 404 || r.status === 410) {
                 removeToken(token, FIREBASE_DB);
               }
@@ -120,6 +170,7 @@ export async function onRequest(context) {
 
     return new Response(JSON.stringify({
       ok: true,
+      modo: 'global',
       total: tokens.length,
       enviados,
       fallidos
@@ -135,7 +186,6 @@ export async function onRequest(context) {
 
 /* ============================================================
    Obtener access token de FCM via Service Account
-   Usa el flow de JWT (RS256) → OAuth 2.0
    ============================================================ */
 async function getFcmAccessToken(env) {
   try {
@@ -161,12 +211,9 @@ async function getFcmAccessToken(env) {
 
     const unsigned = `${base64url(header)}.${base64url(payload)}`;
 
-    // Importar la private key
-    const pemHeader = '-----BEGIN PRIVATE KEY-----';
-    const pemFooter = '-----END PRIVATE KEY-----';
     const pemContents = serviceAccount.private_key
-      .replace(pemHeader, '')
-      .replace(pemFooter, '')
+      .replace('-----BEGIN PRIVATE KEY-----', '')
+      .replace('-----END PRIVATE KEY-----', '')
       .replace(/\s/g, '');
 
     const binaryDer = Uint8Array.from(atob(pemContents), c => c.charCodeAt(0));
@@ -190,7 +237,6 @@ async function getFcmAccessToken(env) {
 
     const jwt = `${unsigned}.${signatureB64}`;
 
-    // Intercambiar JWT por access_token
     const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -214,17 +260,13 @@ async function getFcmAccessToken(env) {
    ============================================================ */
 async function removeToken(token, FIREBASE_DB) {
   try {
-    // Leer TODOS los tokens y buscar el que coincida
-    // (más lento pero funciona sin índice)
     const res = await fetch(`${FIREBASE_DB}/pushTokens.json`);
     const data = await res.json();
     if (!data || typeof data !== 'object') return;
 
     for (const [deviceId, info] of Object.entries(data)) {
       if (info && info.token === token) {
-        await fetch(`${FIREBASE_DB}/pushTokens/${deviceId}.json`, {
-          method: 'DELETE'
-        });
+        await fetch(`${FIREBASE_DB}/pushTokens/${deviceId}.json`, { method: 'DELETE' });
         console.log(`[FCM] Token muerto eliminado: ${deviceId}`);
       }
     }
