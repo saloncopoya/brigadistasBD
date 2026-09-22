@@ -1075,22 +1075,26 @@ img{max-width:100%;display:block}
     },2800);
   }
 
-  function getDeviceId(){
-    let id = localStorage.getItem('bgd_device_id');
-    if(!id){
-      id = 'dev_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,8);
-      localStorage.setItem('bgd_device_id', id);
-    }
-    return id;
+ function getDeviceId(){
+  // ✅ Misma clave que index.html para que las notificaciones coincidan
+  let id = localStorage.getItem('device_id');
+  if(!id){
+    id = 'device_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
+    localStorage.setItem('device_id', id);
   }
+  return id;
+}
+   
   function getUserName(){
-    let n = localStorage.getItem('bgd_user_name');
-    if(!n){
-      n = 'Vecino ' + Math.floor(1000 + Math.random()*9000);
-      localStorage.setItem('bgd_user_name', n);
-    }
-    return n;
+  // ✅ Misma clave que index.html
+  let n = localStorage.getItem('user_name');
+  if(!n){
+    n = 'Vecino ' + Math.floor(1000 + Math.random()*9000);
+    localStorage.setItem('user_name', n);
   }
+  return n;
+}
+   
   function fmtTime(ts){
     const diff = (Date.now()-ts)/1000;
     if(diff < 60) return 'ahora';
