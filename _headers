@@ -8,7 +8,7 @@
   Content-Security-Policy: default-src 'self' https: data: blob: 'unsafe-inline' 'unsafe-eval'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://maps.googleapis.com https://*.firebaseio.com https://*.googleapis.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://unpkg.com https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https: wss:; frame-src 'self' https://www.google.com https://maps.google.com https://*.firebaseio.com; worker-src 'self' blob:; manifest-src 'self'; media-src 'self' https: blob:; object-src 'none'; base-uri 'self'; form-action 'self'
 
 /sitemap.xml
-  Content-Type: application/xml; charset=utf-8
+  X-Robots-Tag: noindex
   Cache-Control: public, max-age=3600
 
 /robots.txt
