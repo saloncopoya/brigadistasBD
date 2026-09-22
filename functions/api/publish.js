@@ -1645,14 +1645,16 @@ async function regenerateSitemap(env, ghHeaders, baseUrl, index) {
     });
   });
 
-  // ✨ Generar XML simple — igual que Blogger
-  // Sin changefreq, sin priority, sin image:image
+  // ⚡ FORMATO IDÉNTICO A BLOGGER:
+  //    - Declaración XML con comillas SIMPLES ('1.0')
+  //    - TODO en una sola línea, sin \n ni indentación
+  //    - Sin espacio entre <url> y </url>
   const xmlEntries = urls.map(u =>
-    `  <url>\n    <loc>${escapeXml(u.loc)}</loc>\n    <lastmod>${u.lastmod}</lastmod>\n  </url>`
-  ).join('\n');
+    `<url><loc>${escapeXml(u.loc)}</loc><lastmod>${u.lastmod}</lastmod></url>`
+  ).join('');
 
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${xmlEntries}\n</urlset>`;
-
+  const xml = `<?xml version='1.0' encoding='UTF-8'?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${xmlEntries}</urlset>`;
+   
   if (!xml.startsWith('<?xml') || !xml.trim().endsWith('</urlset>')) {
     console.error('[sitemap] XML mal formado, se aborta');
     return;
