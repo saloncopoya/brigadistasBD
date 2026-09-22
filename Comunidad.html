@@ -23,23 +23,12 @@
    VARIABLES Y TEMAS
    ============================================================ */
 :root{
-  --cyan:#0167ff;
-  --cyan-d:#0574a2;
-  --cyan-glow:rgba(0,229,255,.35);
-  --purple:#a855f7;
-  --green:#10b981;
-  --amber:#f59e0b;
-  --red:#ef4444;
-  --pink:#ec4899;
-  --radius:14px;
-  --radius-sm:10px;
-  --radius-lg:22px;
-  --shadow:0 10px 30px rgba(0,0,0,.35);
-  --shadow-sm:0 4px 12px rgba(0,0,0,.25);
+  --cyan:#0167ff; --cyan-d:#0574a2; --cyan-glow:rgba(0,229,255,.35);
+  --purple:#a855f7; --green:#10b981; --amber:#f59e0b; --red:#ef4444; --pink:#ec4899;
+  --radius:14px; --radius-sm:10px; --radius-lg:22px;
+  --shadow:0 10px 30px rgba(0,0,0,.35); --shadow-sm:0 4px 12px rgba(0,0,0,.25);
   --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-  --nav-h:64px;
-  --header-h:58px;
-  --transition:.25s cubic-bezier(.4,0,.2,1);
+  --nav-h:64px; --header-h:58px; --transition:.25s cubic-bezier(.4,0,.2,1);
 }
 [data-theme="dark"]{
   --bg:#0a0e1a;--bg-2:#0f1526;--bg-3:#161e33;
@@ -73,9 +62,7 @@ img{max-width:100%;display:block}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:8px}
 
-/* ============================================================
-   HEADER
-   ============================================================ */
+/* HEADER */
 .header{
   position:fixed;top:0;left:0;right:0;height:var(--header-h);
   background:color-mix(in srgb,var(--surface) 92%,transparent);
@@ -88,7 +75,7 @@ img{max-width:100%;display:block}
 .header-brand .logo{
   width:32px;height:32px;border-radius:9px;
   background:linear-gradient(135deg,var(--cyan),var(--cyan-d));
-  display:grid;place-items:center;color:#00121a;font-size:17px;
+  display:grid;place-items:center;color:#00121a;
   box-shadow:0 0 18px var(--cyan-glow);
 }
 .header-brand .logo svg{width:20px;height:20px}
@@ -101,9 +88,7 @@ img{max-width:100%;display:block}
 .icon-btn:hover{background:var(--surface-2);color:var(--cyan)}
 .icon-btn svg{width:20px;height:20px}
 
-/* ============================================================
-   LAYOUT
-   ============================================================ */
+/* LAYOUT */
 .app{
   padding-top:var(--header-h);
   padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom));
@@ -111,33 +96,22 @@ img{max-width:100%;display:block}
 }
 .container{max-width:900px;margin:0 auto;padding:14px}
 
-/* ============================================================
-   TABS FLOTANTES
-   ============================================================ */
+/* TABS FLOTANTES */
 .tabs-float{
-  position:sticky;top:var(--header-h);
-  z-index:900;
+  position:sticky;top:var(--header-h);z-index:900;
   background:color-mix(in srgb,var(--bg) 92%,transparent);
   backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
-  padding:12px 14px;
-  margin:0 -14px 14px;
-  display:flex;gap:8px;
-  overflow-x:auto;scrollbar-width:none;
+  padding:12px 14px;margin:0 -14px 14px;
+  display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;
   border-bottom:1px solid var(--border);
 }
 .tabs-float::-webkit-scrollbar{display:none}
 .tab-pill{
-  flex-shrink:0;
-  display:inline-flex;align-items:center;gap:7px;
-  padding:10px 16px;
-  border-radius:99px;
-  background:var(--surface);
-  border:1.5px solid var(--border);
-  color:var(--text-2);
-  font-size:13px;font-weight:800;
-  letter-spacing:.3px;
-  transition:var(--transition);
-  white-space:nowrap;
+  flex-shrink:0;display:inline-flex;align-items:center;gap:7px;
+  padding:10px 16px;border-radius:99px;
+  background:var(--surface);border:1.5px solid var(--border);
+  color:var(--text-2);font-size:13px;font-weight:800;letter-spacing:.3px;
+  transition:var(--transition);white-space:nowrap;
   box-shadow:0 3px 10px -4px rgba(0,0,0,.25);
 }
 .tab-pill svg{width:16px;height:16px;flex-shrink:0}
@@ -149,9 +123,7 @@ img{max-width:100%;display:block}
 }
 .tab-pill.active svg{color:#00121a}
 
-/* ============================================================
-   CARDS / UI GENERAL
-   ============================================================ */
+/* CARDS / UI GENERAL */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;transition:var(--transition)}
 .section-title{font-size:15px;font-weight:800;letter-spacing:.3px;margin:18px 0 10px;display:flex;align-items:center;gap:8px;color:var(--text)}
 .section-title svg{width:18px;height:18px;color:var(--cyan)}
@@ -208,104 +180,129 @@ img{max-width:100%;display:block}
 @keyframes toastIn{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:none}}
 
 /* ============================================================
-   TAB 1: COMENTARIOS (NUEVO DISEÑO TIKTOK/WHATSAPP)
+   FILTRO DE RUTA (combobox real)
    ============================================================ */
-
-/* Composer moderno */
-.composer{
+.route-filter{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 14px;
   background:var(--surface);
   border:1px solid var(--border);
-  border-radius:var(--radius);
-  padding:16px;
-  margin-bottom:16px;
+  border-radius:12px;
+  margin-bottom:14px;
+  flex-wrap:wrap;
+}
+.route-filter-icon{
+  width:36px;height:36px;border-radius:10px;
+  background:linear-gradient(135deg,var(--cyan),var(--cyan-d));
+  display:grid;place-items:center;color:#00121a;flex-shrink:0;
+}
+.route-filter-icon svg{width:18px;height:18px}
+.route-filter-select{
+  flex:1;min-width:180px;
+  padding:10px 14px;padding-right:38px;
+  background:var(--input-bg);
+  border:1px solid var(--border);
+  border-radius:10px;
+  font-size:13.5px;font-weight:600;
+  color:var(--text);
+  appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230167ff' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 12px center;
+  background-size:16px;
+  cursor:pointer;
+  transition:var(--transition);
+}
+.route-filter-select:focus{
+  outline:none;border-color:var(--cyan);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--cyan) 18%,transparent);
+}
+.route-filter-count{
+  font-size:11.5px;font-weight:800;
+  background:color-mix(in srgb,var(--cyan) 15%,transparent);
+  color:var(--cyan);
+  padding:4px 10px;border-radius:99px;
+  white-space:nowrap;
+}
+
+/* ============================================================
+   COMPOSER
+   ============================================================ */
+.composer{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px;margin-bottom:16px;
   transition:var(--transition);
 }
 .composer:focus-within{
   border-color:var(--cyan);
   box-shadow:0 0 0 3px color-mix(in srgb,var(--cyan) 12%,transparent);
 }
-.composer-head{
-  display:flex;align-items:center;gap:12px;margin-bottom:12px;
-}
+.composer-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
 .composer-avatar{
   width:44px;height:44px;border-radius:50%;
   background:linear-gradient(135deg,var(--cyan),var(--cyan-d));
   display:grid;place-items:center;color:#00121a;font-weight:800;font-size:16px;flex-shrink:0;
   box-shadow:0 3px 10px -3px var(--cyan-glow);
 }
-.composer-input-wrap{
-  flex:1;position:relative;
-}
+.composer-input-wrap{flex:1}
 .composer-input{
-  width:100%;
-  background:var(--input-bg);
-  border:1px solid var(--border);
-  border-radius:18px;
-  padding:12px 16px;
-  color:var(--text);font-size:14px;
-  transition:var(--transition);
-  font-family:inherit;
-  resize:none;
-  min-height:44px;
-  max-height:120px;
-  line-height:1.5;
+  width:100%;background:var(--input-bg);border:1px solid var(--border);
+  border-radius:18px;padding:12px 16px;color:var(--text);font-size:14px;
+  transition:var(--transition);font-family:inherit;resize:none;
+  min-height:44px;max-height:120px;line-height:1.5;
 }
 .composer-input:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px color-mix(in srgb,var(--cyan) 18%,transparent)}
 .composer-input::placeholder{color:var(--text-3)}
 
-/* Selector de ruta en composer */
-.composer-route{
-  display:flex;align-items:center;gap:8px;
-  padding:8px 12px;
-  background:var(--surface-2);
+/* Selector de ruta dentro del composer */
+.composer-route-select{
+  width:100%;
+  padding:10px 14px;padding-right:38px;
+  background:var(--input-bg);
   border:1px solid var(--border);
   border-radius:10px;
+  font-size:13px;font-weight:600;
+  color:var(--text);
+  appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230167ff' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 12px center;
+  background-size:16px;
+  cursor:pointer;
   margin-bottom:12px;
   transition:var(--transition);
-  cursor:pointer;
 }
-.composer-route:hover{border-color:var(--border-2)}
-.composer-route.selected{
+.composer-route-select:focus{
+  outline:none;border-color:var(--cyan);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--cyan) 18%,transparent);
+}
+.composer-route-select.has-value{
   border-color:var(--cyan);
-  background:color-mix(in srgb,var(--cyan) 8%,var(--surface-2));
+  background:color-mix(in srgb,var(--cyan) 8%,var(--input-bg));
+  color:var(--cyan);
 }
-.composer-route svg{width:16px;height:16px;color:var(--cyan);flex-shrink:0}
-.composer-route .route-label{flex:1;font-size:13px;color:var(--text-2);font-weight:600}
-.composer-route.selected .route-label{color:var(--cyan)}
-.composer-route .route-clear{
-  width:20px;height:20px;border-radius:50%;
-  background:var(--surface-3);display:grid;place-items:center;
-  color:var(--text-3);font-size:12px;
-}
-.composer-route .route-clear:hover{background:var(--red);color:#fff}
 
-.composer-foot{
-  display:flex;justify-content:space-between;align-items:center;gap:8px;
-}
+.composer-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 .composer-hint{
   font-size:11px;color:var(--text-3);
   display:flex;align-items:center;gap:4px;
 }
 .composer-hint.long{color:var(--amber)}
+.composer-hint.ok{color:var(--green)}
 .composer-actions{display:flex;gap:8px}
 
 /* ============================================================
-   COMENTARIO PRINCIPAL (Estilo WhatsApp/TikTok)
+   COMENTARIO
    ============================================================ */
 .comment{
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:var(--radius);
-  padding:0;
-  margin-bottom:12px;
-  transition:var(--transition);
-  overflow:hidden;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:0;margin-bottom:12px;
+  transition:var(--transition);overflow:hidden;
 }
 .comment:hover{border-color:var(--border-2)}
 .comment.has-route{border-left:4px solid var(--cyan)}
 
 .comment-inner{padding:14px}
-
 .comment-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .comment-avatar{
   width:38px;height:38px;border-radius:50%;
@@ -315,8 +312,7 @@ img{max-width:100%;display:block}
 }
 .comment-meta{flex:1;min-width:0}
 .comment-name{font-size:13.5px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:6px}
-.comment-name .verified{width:14px;height:14px;color:var(--cyan)}
-.comment-time{font-size:11px;color:var(--text-3);display:flex;align-items:center;gap:6px;margin-top:2px}
+.comment-time{font-size:11px;color:var(--text-3);margin-top:2px}
 .comment-time .edited{font-style:italic;opacity:.7}
 
 .comment-actions-top{display:flex;gap:4px;flex-shrink:0}
@@ -328,67 +324,49 @@ img{max-width:100%;display:block}
 .comment-actions-top button.del:hover{color:var(--red)}
 .comment-actions-top svg{width:15px;height:15px}
 
-/* Badge de ruta vinculada */
 .comment-route-badge{
   display:inline-flex;align-items:center;gap:6px;
   padding:6px 12px;
   background:linear-gradient(135deg,color-mix(in srgb,var(--cyan) 15%,transparent),color-mix(in srgb,var(--cyan) 8%,transparent));
   border:1px solid color-mix(in srgb,var(--cyan) 30%,transparent);
-  border-radius:99px;
-  font-size:11.5px;font-weight:700;
-  color:var(--cyan);
-  margin-bottom:10px;
-  text-decoration:none;
-  transition:var(--transition);
-  cursor:pointer;
+  border-radius:99px;font-size:11.5px;font-weight:700;
+  color:var(--cyan);margin-bottom:10px;text-decoration:none;
+  transition:var(--transition);cursor:pointer;
 }
 .comment-route-badge:hover{
   background:color-mix(in srgb,var(--cyan) 22%,transparent);
-  transform:translateY(-1px);
-  text-decoration:none;
+  transform:translateY(-1px);text-decoration:none;
 }
 .comment-route-badge svg{width:14px;height:14px;flex-shrink:0}
 
 .comment-body{
   font-size:14.5px;line-height:1.6;color:var(--text);
-  white-space:pre-wrap;word-break:break-word;
-  margin-bottom:10px;
+  white-space:pre-wrap;word-break:break-word;margin-bottom:10px;
 }
 
-/* Barra de acciones del comentario */
 .comment-bar{
   display:flex;gap:4px;padding-top:10px;
-  border-top:1px solid var(--border);
-  align-items:center;
-  flex-wrap:wrap;
+  border-top:1px solid var(--border);align-items:center;flex-wrap:wrap;
 }
 .comment-bar button{
   display:inline-flex;align-items:center;gap:6px;
   padding:7px 12px;border-radius:10px;
   font-size:12.5px;font-weight:700;color:var(--text-2);
-  transition:var(--transition);
-  background:transparent;
+  transition:var(--transition);background:transparent;
 }
 .comment-bar button:hover{background:var(--surface-2);color:var(--text)}
 .comment-bar button.liked{color:var(--pink)}
 .comment-bar button.liked svg{fill:currentColor}
 .comment-bar button svg{width:16px;height:16px}
-.comment-bar .spacer{flex:1}
 .comment-bar .like-count{font-size:12px;color:var(--text-3);font-weight:700;margin-left:-4px}
 
-/* Respuestas compactas (solo último) */
+/* Preview de respuestas */
 .replies-preview{
-  background:var(--surface-2);
-  border-top:1px solid var(--border);
-  padding:12px 14px;
-  cursor:pointer;
-  transition:var(--transition);
+  background:var(--surface-2);border-top:1px solid var(--border);
+  padding:12px 14px;cursor:pointer;transition:var(--transition);
 }
 .replies-preview:hover{background:var(--surface-3)}
-
-.reply-compact{
-  display:flex;align-items:flex-start;gap:10px;
-}
+.reply-compact{display:flex;align-items:flex-start;gap:10px}
 .reply-compact-avatar{
   width:28px;height:28px;border-radius:50%;
   background:linear-gradient(135deg,var(--green),#059669);
@@ -397,42 +375,30 @@ img{max-width:100%;display:block}
 .reply-compact-content{flex:1;min-width:0}
 .reply-compact-head{
   display:flex;align-items:center;gap:6px;
-  font-size:12px;font-weight:700;color:var(--text);
-  margin-bottom:2px;
+  font-size:12px;font-weight:700;color:var(--text);margin-bottom:2px;
 }
 .reply-compact-head .time{font-size:10.5px;color:var(--text-3);font-weight:500}
 .reply-compact-text{
   font-size:13px;color:var(--text-2);line-height:1.45;
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
-  overflow:hidden;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
 }
-
 .replies-more{
   display:flex;align-items:center;justify-content:center;gap:6px;
-  padding:8px;
-  margin-top:8px;
-  background:var(--surface);
-  border:1px dashed var(--border-2);
-  border-radius:10px;
-  font-size:12px;font-weight:700;color:var(--cyan);
-  transition:var(--transition);
+  padding:8px;margin-top:8px;background:var(--surface);
+  border:1px dashed var(--border-2);border-radius:10px;
+  font-size:12px;font-weight:700;color:var(--cyan);transition:var(--transition);
 }
 .replies-more:hover{
   background:color-mix(in srgb,var(--cyan) 8%,var(--surface));
-  border-color:var(--cyan);
-  border-style:solid;
+  border-color:var(--cyan);border-style:solid;
 }
 .replies-more svg{width:14px;height:14px}
 
-/* Botón "ver todas las respuestas" */
 .btn-view-replies{
   display:inline-flex;align-items:center;gap:6px;
-  padding:6px 12px;
-  border-radius:99px;
-  background:var(--surface-2);
-  border:1px solid var(--border);
-  font-size:11.5px;font-weight:700;
-  color:var(--cyan);
+  padding:6px 12px;border-radius:99px;
+  background:var(--surface-2);border:1px solid var(--border);
+  font-size:11.5px;font-weight:700;color:var(--cyan);
   transition:var(--transition);
 }
 .btn-view-replies:hover{
@@ -441,75 +407,43 @@ img{max-width:100%;display:block}
 }
 
 /* ============================================================
-   MODAL DE RESPUESTAS (flotante)
+   MODAL DE RESPUESTAS
    ============================================================ */
 .replies-modal{
-  position:fixed;inset:0;
-  background:var(--overlay);
-  z-index:3000;
+  position:fixed;inset:0;background:var(--overlay);z-index:3000;
   display:flex;align-items:flex-end;justify-content:center;
-  opacity:0;pointer-events:none;
-  transition:opacity .25s ease;
+  opacity:0;pointer-events:none;transition:opacity .25s ease;
   backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
 }
 .replies-modal.open{opacity:1;pointer-events:auto}
-
 .replies-modal-sheet{
-  background:var(--surface);
-  width:100%;max-width:560px;
+  background:var(--surface);width:100%;max-width:560px;
   border-radius:var(--radius-lg) var(--radius-lg) 0 0;
-  max-height:85vh;
-  display:flex;flex-direction:column;
+  max-height:85vh;display:flex;flex-direction:column;
   transform:translateY(100%);
   transition:transform .3s cubic-bezier(.32,.72,0,1);
   border-top:1px solid var(--border-2);
 }
 .replies-modal.open .replies-modal-sheet{transform:translateY(0)}
-
-.replies-modal-handle{
-  padding:10px 0 4px;
-  display:grid;place-items:center;
-  cursor:grab;
-}
-.replies-modal-handle::before{
-  content:"";width:40px;height:4px;border-radius:99px;background:var(--border-2);
-}
-
+.replies-modal-handle{padding:10px 0 4px;display:grid;place-items:center;cursor:grab}
+.replies-modal-handle::before{content:"";width:40px;height:4px;border-radius:99px;background:var(--border-2)}
 .replies-modal-head{
-  padding:8px 18px 14px;
-  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 18px 14px;display:flex;align-items:center;justify-content:space-between;
   border-bottom:1px solid var(--border);
 }
-.replies-modal-head h3{
-  font-size:16px;font-weight:800;
-  display:flex;align-items:center;gap:8px;
-}
+.replies-modal-head h3{font-size:16px;font-weight:800;display:flex;align-items:center;gap:8px}
 .replies-modal-head h3 svg{width:18px;height:18px;color:var(--cyan)}
 .replies-modal-head .count{
-  font-size:11.5px;font-weight:700;
-  background:var(--surface-2);
-  padding:3px 10px;border-radius:99px;
-  color:var(--text-2);
+  font-size:11.5px;font-weight:700;background:var(--surface-2);
+  padding:3px 10px;border-radius:99px;color:var(--text-2);
 }
+.replies-modal-body{padding:16px 18px;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch}
 
-.replies-modal-body{
-  padding:16px 18px;
-  overflow-y:auto;flex:1;
-  -webkit-overflow-scrolling:touch;
-}
-
-/* Comentario original dentro del modal */
 .original-comment{
-  background:var(--surface-2);
-  border-radius:12px;
-  padding:14px;
-  margin-bottom:16px;
-  border-left:3px solid var(--cyan);
+  background:var(--surface-2);border-radius:12px;padding:14px;
+  margin-bottom:16px;border-left:3px solid var(--cyan);
 }
-.original-comment .oc-head{
-  display:flex;align-items:center;gap:8px;
-  margin-bottom:8px;
-}
+.original-comment .oc-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .original-comment .oc-avatar{
   width:32px;height:32px;border-radius:50%;
   background:linear-gradient(135deg,var(--purple),#7e22ce);
@@ -518,11 +452,9 @@ img{max-width:100%;display:block}
 .original-comment .oc-name{font-size:13px;font-weight:800}
 .original-comment .oc-text{font-size:13.5px;color:var(--text-2);line-height:1.5}
 
-/* Lista de respuestas en el modal */
 .reply-item{
   display:flex;align-items:flex-start;gap:10px;
-  padding:12px 0;
-  border-bottom:1px solid var(--border);
+  padding:12px 0;border-bottom:1px solid var(--border);
 }
 .reply-item:last-child{border-bottom:none}
 .reply-item-avatar{
@@ -531,105 +463,50 @@ img{max-width:100%;display:block}
   display:grid;place-items:center;color:#fff;font-weight:800;font-size:12px;flex-shrink:0;
 }
 .reply-item-content{flex:1;min-width:0}
-.reply-item-head{
-  display:flex;align-items:center;gap:6px;
-  margin-bottom:4px;
-}
+.reply-item-head{display:flex;align-items:center;gap:6px;margin-bottom:4px}
 .reply-item-name{font-size:12.5px;font-weight:800;color:var(--text)}
 .reply-item-time{font-size:10.5px;color:var(--text-3)}
 .reply-item-text{
-  font-size:13.5px;color:var(--text);
-  line-height:1.5;white-space:pre-wrap;word-break:break-word;
-  margin-bottom:6px;
+  font-size:13.5px;color:var(--text);line-height:1.5;
+  white-space:pre-wrap;word-break:break-word;margin-bottom:6px;
 }
-.reply-item-actions{
-  display:flex;gap:4px;align-items:center;
-}
+.reply-item-actions{display:flex;gap:4px;align-items:center}
 .reply-item-actions button{
   display:inline-flex;align-items:center;gap:4px;
   padding:5px 10px;border-radius:8px;
-  font-size:11px;font-weight:700;
-  color:var(--text-2);
-  transition:var(--transition);
+  font-size:11px;font-weight:700;color:var(--text-2);transition:var(--transition);
 }
 .reply-item-actions button:hover{background:var(--surface-2);color:var(--text)}
 .reply-item-actions button.liked{color:var(--pink)}
 .reply-item-actions button.liked svg{fill:currentColor}
 .reply-item-actions button svg{width:13px;height:13px}
 
-/* Reply composer dentro del modal */
 .reply-composer{
-  display:flex;gap:8px;
-  padding:12px 18px;
-  border-top:1px solid var(--border);
-  background:var(--surface);
+  display:flex;gap:8px;padding:12px 18px;
+  border-top:1px solid var(--border);background:var(--surface);
 }
 .reply-composer input{
-  flex:1;
-  padding:11px 16px;
-  border-radius:22px;
-  background:var(--input-bg);
-  border:1px solid var(--border);
-  color:var(--text);font-size:14px;font-family:inherit;
-  transition:var(--transition);
+  flex:1;padding:11px 16px;border-radius:22px;
+  background:var(--input-bg);border:1px solid var(--border);
+  color:var(--text);font-size:14px;font-family:inherit;transition:var(--transition);
 }
 .reply-composer input:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px color-mix(in srgb,var(--cyan) 18%,transparent)}
 .reply-composer button{
-  padding:11px 18px;
-  border-radius:22px;
+  padding:11px 18px;border-radius:22px;
   background:linear-gradient(135deg,var(--cyan),var(--cyan-d));
-  color:#00121a;font-weight:800;font-size:13px;
-  transition:var(--transition);
+  color:#00121a;font-weight:800;font-size:13px;transition:var(--transition);
 }
 .reply-composer button:hover{filter:brightness(1.08)}
 
 /* ============================================================
-   FILTRO POR RUTA
+   TAB FACEBOOK
    ============================================================ */
-.route-filter{
-  display:flex;align-items:center;gap:8px;
-  padding:10px 14px;
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:12px;
-  margin-bottom:14px;
-  overflow-x:auto;
-  scrollbar-width:none;
-}
-.route-filter::-webkit-scrollbar{display:none}
-.route-filter-chip{
-  flex-shrink:0;
-  display:inline-flex;align-items:center;gap:6px;
-  padding:7px 14px;
-  border-radius:99px;
-  background:var(--surface-2);
-  border:1px solid var(--border);
-  font-size:12px;font-weight:700;
-  color:var(--text-2);
-  transition:var(--transition);
-  white-space:nowrap;
-  cursor:pointer;
-}
-.route-filter-chip:hover{border-color:var(--border-2);color:var(--text)}
-.route-filter-chip.active{
-  background:linear-gradient(135deg,var(--cyan),var(--cyan-d));
-  color:#00121a;border-color:transparent;
-}
-.route-filter-chip svg{width:14px;height:14px}
-
-/* ============================================================
-   TAB 3: FACEBOOK
-   ============================================================ */
-.social-grid{
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
-  gap:10px;margin-top:14px;
-}
+.social-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:14px}
 .social-btn{
   display:flex;align-items:center;justify-content:center;gap:8px;
   padding:14px 16px;border-radius:14px;
   font-weight:800;font-size:13.5px;letter-spacing:.2px;
-  color:#fff;text-decoration:none;
-  transition:var(--transition);
+  color:#fff;text-decoration:none;transition:var(--transition);
   box-shadow:0 6px 18px -6px rgba(0,0,0,.4);
 }
 .social-btn svg{width:20px;height:20px}
@@ -638,22 +515,13 @@ img{max-width:100%;display:block}
 .social-btn.ig{background:linear-gradient(135deg,#E1306C,#C13584,#833AB4)}
 .social-btn.tt{background:linear-gradient(135deg,#000,#25F4EE)}
 .social-btn.wa{background:linear-gradient(135deg,#25D366,#128C7E)}
-.social-btn.tel{background:linear-gradient(135deg,#10b981,#059669)}
-.social-btn.mail{background:linear-gradient(135deg,#ef4444,#b91c1c)}
 
 /* ============================================================
    PÁGINAS INDIVIDUALES (Reportar / Contacto)
    ============================================================ */
-.subpage-header{
-  display:flex;align-items:center;gap:10px;
-  padding:8px 0 16px;
-}
-.subpage-header h1{
-  font-size:22px;font-weight:900;letter-spacing:-.4px;line-height:1.2;
-  flex:1;
-}
+.subpage-header{display:flex;align-items:center;gap:10px;padding:8px 0 16px}
+.subpage-header h1{font-size:22px;font-weight:900;letter-spacing:-.4px;line-height:1.2;flex:1}
 
-/* Reporte — 3 columnas como admin */
 .admin-cols-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:8px}
 .admin-col{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;display:flex;flex-direction:column;gap:8px}
 .admin-col-title{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--cyan);padding-bottom:8px;margin-bottom:4px;border-bottom:1px solid var(--border)}
@@ -691,46 +559,27 @@ img{max-width:100%;display:block}
 .step-dot.done{background:var(--green)}
 .step-dot.active{background:var(--cyan);box-shadow:0 0 10px var(--cyan-glow)}
 
-/* Contacto grid */
-.contact-grid{
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
-  gap:12px;margin-top:14px;
-}
+/* Contacto */
+.contact-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:14px}
 .contact-card{
   background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
   padding:20px 16px;text-align:center;text-decoration:none;color:inherit;
   transition:var(--transition);display:flex;flex-direction:column;align-items:center;gap:10px;
 }
 .contact-card:hover{border-color:var(--cyan);transform:translateY(-3px);box-shadow:var(--shadow)}
-.contact-card .cc-icon{
-  width:54px;height:54px;border-radius:14px;
-  display:grid;place-items:center;color:#fff;
-}
+.contact-card .cc-icon{width:54px;height:54px;border-radius:14px;display:grid;place-items:center;color:#fff}
 .contact-card .cc-icon svg{width:26px;height:26px}
 .contact-card .cc-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text-3)}
 .contact-card .cc-value{font-size:13.5px;font-weight:700;color:var(--text);word-break:break-word;line-height:1.3}
 
-/* Vista tab */
 .tab-view{display:none;animation:fadeIn .3s ease}
 .tab-view.active{display:block}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 
-/* Responsive */
-@media(min-width:1000px){
-  .bottom-nav{max-width:720px;left:50%;transform:translateX(-50%);border-radius:18px 18px 0 0;border-left:1px solid var(--border);border-right:1px solid var(--border)}
-}
-@media(max-width:380px){
-  .header-brand .brand-txt{font-size:14px}
-  .tab-pill{padding:9px 13px;font-size:12px}
-  .tab-pill svg{width:14px;height:14px}
-  .composer-avatar{width:38px;height:38px;font-size:14px}
-}
-
-/* ============================================================
-   NAV INFERIOR
-   ============================================================ */
+/* NAV INFERIOR */
 .bottom-nav{
-  position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav-h) + env(safe-area-inset-bottom));
+  position:fixed;bottom:0;left:0;right:0;
+  height:calc(var(--nav-h) + env(safe-area-inset-bottom));
   padding-bottom:env(safe-area-inset-bottom);
   background:color-mix(in srgb,var(--surface) 92%,transparent);
   backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
@@ -746,15 +595,26 @@ img{max-width:100%;display:block}
 .nav-item.active{color:var(--cyan)}
 .nav-item.active svg{transform:translateY(-2px) scale(1.08)}
 .nav-item.active::before{
-  content:"";position:absolute;top:6px;width:44px;height:3px;border-radius:0 0 4px 4px;
-  background:var(--cyan);box-shadow:0 0 14px var(--cyan-glow);
+  content:"";position:absolute;top:6px;width:44px;height:3px;
+  border-radius:0 0 4px 4px;background:var(--cyan);
+  box-shadow:0 0 14px var(--cyan-glow);
 }
 .nav-item:active{transform:scale(.94)}
+
+@media(min-width:1000px){
+  .bottom-nav{max-width:720px;left:50%;transform:translateX(-50%);border-radius:18px 18px 0 0;border-left:1px solid var(--border);border-right:1px solid var(--border)}
+}
+@media(max-width:380px){
+  .header-brand .brand-txt{font-size:14px}
+  .tab-pill{padding:9px 13px;font-size:12px}
+  .tab-pill svg{width:14px;height:14px}
+  .composer-avatar{width:38px;height:38px;font-size:14px}
+}
 </style>
 </head>
 <body>
 
-<!-- ============================ HEADER ============================ -->
+<!-- HEADER -->
 <header class="header">
   <a class="header-brand" href="/">
     <div class="logo">
@@ -775,11 +635,11 @@ img{max-width:100%;display:block}
   </div>
 </header>
 
-<!-- ============================ APP ============================ -->
+<!-- APP -->
 <main class="app">
   <div class="container">
 
-    <!-- TABS FLOTANTES -->
+    <!-- TABS -->
     <div class="tabs-float">
       <button class="tab-pill active" data-tab="comentarios">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -802,13 +662,20 @@ img{max-width:100%;display:block}
     <!-- ===================== TAB 1: COMENTARIOS ===================== -->
     <section class="tab-view active" id="view-comentarios">
       
-      <!-- Filtro por ruta -->
-      <div class="route-filter" id="routeFilter">
-        <button class="route-filter-chip active" data-route="">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
-          Todas
-        </button>
-        <!-- Se llenan dinámicamente -->
+      <!-- Filtro de ruta (combobox real) -->
+      <div class="route-filter">
+        <div class="route-filter-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="13" rx="2"/>
+            <path d="M3 11h18"/>
+            <circle cx="7.5" cy="17" r="2"/>
+            <circle cx="16.5" cy="17" r="2"/>
+          </svg>
+        </div>
+        <select class="route-filter-select" id="routeFilterSelect">
+          <option value="">🔍 Ver todos los comentarios</option>
+        </select>
+        <span class="route-filter-count" id="routeFilterCount">0</span>
       </div>
 
       <!-- Composer -->
@@ -820,21 +687,9 @@ img{max-width:100%;display:block}
           </div>
         </div>
         
-        <!-- Selector de ruta -->
-        <div class="composer-route" id="composerRoute" style="display:none">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
-            <rect x="3" y="4" width="18" height="13" rx="2"/>
-            <path d="M3 11h18"/>
-            <circle cx="7.5" cy="17" r="2"/>
-            <circle cx="16.5" cy="17" r="2"/>
-          </svg>
-          <span class="route-label" id="composerRouteLabel">Seleccionar ruta (opcional)</span>
-          <button class="route-clear" id="composerRouteClear" style="display:none" title="Quitar ruta">✕</button>
-        </div>
-        
-        <!-- Selector de ruta desplegable -->
-        <select class="select" id="composerRouteSelect" style="display:none; margin-bottom:12px">
-          <option value="">— Seleccionar ruta —</option>
+        <!-- Combobox de ruta en el composer -->
+        <select class="composer-route-select" id="composerRouteSelect">
+          <option value="">📍 Sin ruta específica (comentario general)</option>
         </select>
 
         <div class="composer-foot">
@@ -926,7 +781,7 @@ img{max-width:100%;display:block}
         </div>
 
         <div class="field">
-          <label>Ruta a reportar</label>
+          <label>Ruta a reportar *</label>
           <select class="select" id="rpRuta">
             <option value="">— Cargando rutas… —</option>
           </select>
@@ -939,30 +794,15 @@ img{max-width:100%;display:block}
             <div class="step-dot" data-step="3"></div>
           </div>
 
-          <!-- PASO 1: Datos -->
           <div class="rp-step" data-step="1">
             <div class="field full">
               <label>Nombre de la ruta</label>
               <input class="input" id="rpNombre" readonly>
             </div>
 
-            <div class="form-grid" style="margin-bottom:12px">
-              <div class="field">
-                <label>Color de ida</label>
-                <div class="color-swatches" id="rpColorIda"></div>
-              </div>
-              <div class="field">
-                <label>Color de regreso</label>
-                <div class="color-swatches" id="rpColorVuelta"></div>
-              </div>
-            </div>
-
             <div class="admin-cols-3">
               <div class="admin-col">
-                <div class="admin-col-title">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                  Información
-                </div>
+                <div class="admin-col-title">Información</div>
                 <div class="field">
                   <label>Categoría</label>
                   <select class="select" id="rpCat">
@@ -981,10 +821,7 @@ img{max-width:100%;display:block}
               </div>
 
               <div class="admin-col">
-                <div class="admin-col-title">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                  Horario
-                </div>
+                <div class="admin-col-title">Horario</div>
                 <div class="field">
                   <label>Hora inicio</label>
                   <input class="input" id="rpHoraIni" placeholder="05:00">
@@ -1005,10 +842,7 @@ img{max-width:100%;display:block}
               </div>
 
               <div class="admin-col">
-                <div class="admin-col-title">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg>
-                  Detalles
-                </div>
+                <div class="admin-col-title">Detalles</div>
                 <div class="field">
                   <label>Accesibilidad</label>
                   <select class="select" id="rpAcces">
@@ -1026,7 +860,6 @@ img{max-width:100%;display:block}
             </div>
           </div>
 
-          <!-- PASO 2: Paradas -->
           <div class="rp-step hidden" data-step="2">
             <div class="field full">
               <label>Paradas (separadas por coma)</label>
@@ -1046,7 +879,6 @@ img{max-width:100%;display:block}
             </div>
           </div>
 
-          <!-- PASO 3: Mapa -->
           <div class="rp-step hidden" data-step="3">
             <div class="field full">
               <label>Calles por donde pasa</label>
@@ -1059,30 +891,10 @@ img{max-width:100%;display:block}
             <div class="map-wrap" id="rpMapWrap" style="margin:0 0 12px">
               <div id="reportMap"></div>
               <div class="map-toolbar">
-                <button class="tb" data-rp-tool="draw-ida">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
-                  Ida
-                </button>
-                <button class="tb" data-rp-tool="draw-vuelta">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
-                  Regreso
-                </button>
-                <button class="tb" data-rp-tool="gps">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
-                  GPS
-                </button>
-                <button class="tb" data-rp-tool="undo">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 3-7.7L3 8"/></svg>
-                  Deshacer
-                </button>
-                <button class="tb" data-rp-tool="clear">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
-                  Limpiar
-                </button>
-                <button class="tb" data-rp-tool="detect">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                  Detectar
-                </button>
+                <button class="tb" data-rp-tool="draw-ida">Ida</button>
+                <button class="tb" data-rp-tool="draw-vuelta">Regreso</button>
+                <button class="tb" data-rp-tool="undo">Deshacer</button>
+                <button class="tb" data-rp-tool="clear">Limpiar</button>
               </div>
             </div>
             <div class="muted tiny" id="rpStatus" style="margin-top:6px">Puntos: 0 · Calles: 0</div>
@@ -1098,16 +910,11 @@ img{max-width:100%;display:block}
             </div>
           </div>
 
-          <!-- Botones de navegación del wizard -->
           <div style="display:flex;gap:8px;margin-top:16px">
             <button type="button" class="btn btn-ghost" id="rpPrev">← Anterior</button>
             <button type="button" class="btn btn-primary" style="flex:1" id="rpNext">Siguiente →</button>
             <button type="button" class="btn btn-primary hidden" style="flex:1" id="rpSave">Enviar reporte</button>
           </div>
-          <button type="button" class="btn btn-ghost btn-block hidden" id="rpWhatsApp" style="margin-top:8px;background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;border-color:transparent">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884"/></svg>
-            Enviar también por WhatsApp
-          </button>
         </div>
       </div>
     </section>
@@ -1133,17 +940,9 @@ img{max-width:100%;display:block}
           <div class="cc-value">+52 123 456 7890</div>
         </a>
 
-        <a class="contact-card" href="tel:+521234567890">
-          <div class="cc-icon" style="background:linear-gradient(135deg,#10b981,#059669)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-          </div>
-          <div class="cc-label">Teléfono</div>
-          <div class="cc-value">+52 123 456 7890</div>
-        </a>
-
         <a class="contact-card" href="mailto:contacto@brigadistasbd.pages.dev">
           <div class="cc-icon" style="background:linear-gradient(135deg,#ef4444,#b91c1c)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
           </div>
           <div class="cc-label">Correo</div>
           <div class="cc-value">contacto@brigadistasbd.pages.dev</div>
@@ -1178,7 +977,7 @@ img{max-width:100%;display:block}
   </div>
 </main>
 
-<!-- ============================ MODAL DE RESPUESTAS ============================ -->
+<!-- MODAL DE RESPUESTAS -->
 <div class="replies-modal" id="repliesModal">
   <div class="replies-modal-sheet" id="repliesModalSheet">
     <div class="replies-modal-handle" id="repliesModalHandle"></div>
@@ -1200,38 +999,33 @@ img{max-width:100%;display:block}
   </div>
 </div>
 
-<!-- ============================ NAV INFERIOR ============================ -->
+<!-- NAV INFERIOR -->
 <nav class="bottom-nav">
   <a class="nav-item" href="/" style="text-decoration:none;color:inherit">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     <span>Inicio</span>
   </a>
   <a class="nav-item" href="/?tab=market" style="text-decoration:none;color:inherit">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
     <span>Market</span>
   </a>
   <a class="nav-item" href="/?tab=routes" style="text-decoration:none;color:inherit">
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M4.5 5C4.5 3.62 5.62 2.5 7 2.5h10c1.38 0 2.5 1.12 2.5 2.5v11c0 1.1-.9 2-2 2H17v3c0 .28-.22.5-.5.5h-2c-.28 0-.5-.22-.5-.5v-3h-4v3c0 .28-.22.5-.5.5h-2c-.28 0-.5-.22-.5-.5v-3H6.5c-1.1 0-2-.9-2-2V5Zm2 .5v2h11v-2h-11Zm0 4V13h5V9.5h-5Zm6 0V13h5V9.5h-5ZM8 15a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm2.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm3.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm2.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/></svg>
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.5 5C4.5 3.62 5.62 2.5 7 2.5h10c1.38 0 2.5 1.12 2.5 2.5v11c0 1.1-.9 2-2 2H17v3c0 .28-.22.5-.5.5h-2c-.28 0-.5-.22-.5-.5v-3h-4v3c0 .28-.22.5-.5.5h-2c-.28 0-.5-.22-.5-.5v-3H6.5c-1.1 0-2-.9-2-2V5Z"/></svg>
     <span>Rutas</span>
   </a>
   <a class="nav-item" href="/?tab=routes&openList=1" style="text-decoration:none;color:inherit">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
     <span>Lista</span>
   </a>
   <a class="nav-item active" href="/Comunidad" style="text-decoration:none;color:inherit">
-    <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path d="M27 13a2 2 0 0 1-2 2h-5l-3 3V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2z" opacity="0.4"/>
-      <path d="M22 21a2.5 2.5 0 0 1-2.5 2.5H9l-5 5V9A2.5 2.5 0 0 1 6.5 6.5h13A2.5 2.5 0 0 1 22 9z"/>
-      <circle cx="25" cy="7" r="6.5" fill="#ef4444" stroke="var(--bg)" stroke-width="2"/>
-      <text x="25" y="10" font-size="8" font-weight="900" text-anchor="middle" fill="#ffffff" font-family="Arial, Helvetica, sans-serif">3</text>
-    </svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
     <span>Comunidad</span>
   </a>
 </nav>
 
 <div class="toast-wrap" id="toastWrap"></div>
 
-<!-- ============================ SCRIPTS ============================ -->
+<!-- SCRIPTS -->
 <script src="/vendor/leaflet/leaflet.js"></script>
 <script src="/vendor/idb/umd.js"></script>
 <script src="/vendor/firebase/firebase-app-compat.js"></script>
@@ -1240,11 +1034,7 @@ img{max-width:100%;display:block}
 
 <script>
 /* ==========================================================================
-   COMUNIDAD.JS — Lógica mejorada de comentarios
-   - Comentarios centrados en rutas
-   - Notificaciones inteligentes (solo comentarios largos)
-   - Respuestas compactas con modal
-   - Notificación solo al dueño del comentario al responder
+   COMUNIDAD.JS — Comentarios centrados en rutas + Reportes funcionales
    ========================================================================== */
 (function(){
   'use strict';
@@ -1257,14 +1047,11 @@ img{max-width:100%;display:block}
     projectId: "aplicacion-2c1c8",
     storageBucket: "aplicacion-2c1c8.firebasestorage.app",
     messagingSenderId: "837629411067",
-    appId: "1:837629411067:web:6c96cfcd7490b049787a5e",
-    measurementId: "G-SFP1SEY20W"
+    appId: "1:837629411067:web:6c96cfcd7490b049787a5e"
   };
   const DEFAULT_CENTER = [16.7530, -93.1150];
   const DEFAULT_ZOOM = 13;
   const WHATSAPP_ADMIN = '521234567890';
-
-  // 🔔 Umbral mínimo de caracteres para enviar notificación global
   const NOTIFICATION_THRESHOLD = 50;
 
   // ==================== UTILIDADES ====================
@@ -1272,7 +1059,6 @@ img{max-width:100%;display:block}
   const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const splitList = v => String(v||'').split(/[\n,;]+/).map(s=>s.trim()).filter(Boolean);
-  const norm = s => String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[',.\s]+/g,' ').trim();
 
   function toast(msg, type='ok'){
     const w = $('#toastWrap'); if(!w) return;
@@ -1305,7 +1091,6 @@ img{max-width:100%;display:block}
     }
     return n;
   }
-
   function fmtTime(ts){
     const diff = (Date.now()-ts)/1000;
     if(diff < 60) return 'ahora';
@@ -1314,7 +1099,6 @@ img{max-width:100%;display:block}
     if(diff < 604800) return Math.floor(diff/86400)+' d';
     return new Date(ts).toLocaleDateString('es-MX');
   }
-
   function sanitize(text){
     let s = String(text||'');
     s = s.replace(/<[^>]*>/g,'');
@@ -1353,14 +1137,14 @@ img{max-width:100%;display:block}
     }
   } catch(e){ console.warn('[FB]', e); }
 
-  // ==================== ESTADO GLOBAL ====================
+  // ==================== ESTADO ====================
   const state = {
     routes: [],
     commentsCache: [],
-    currentFilterRoute: '',      // Filtro por ruta
-    composerSelectedRoute: '',   // Ruta seleccionada en el composer
-    currentReplyCommentId: null, // Comentario actual en el modal de respuestas
-    replyReplyId: null           // Respuesta específica a la que se responde
+    currentFilterRoute: '',
+    composerSelectedRoute: '',
+    currentReplyCommentId: null,
+    replyReplyId: null
   };
 
   // ==================== TABS ====================
@@ -1390,14 +1174,14 @@ img{max-width:100%;display:block}
   async function loadRoutes(){
     let routes = [];
     
-    // 1) IndexedDB
+    // IndexedDB primero
     try {
       if(typeof DB !== 'undefined' && DB.getAll){
         routes = await DB.getAll('routes');
       }
     } catch(e){}
     
-    // 2) Firebase si está vacío
+    // Firebase si vacío
     if((!routes || !routes.length) && fbDB){
       try {
         const snap = await fbDB.ref('rutas_index').once('value');
@@ -1410,52 +1194,99 @@ img{max-width:100%;display:block}
       String(a.nombre||'').localeCompare(String(b.nombre||''), 'es', {numeric:true, sensitivity:'base'})
     );
     
-    renderRouteFilter();
+    populateRouteFilterSelect();
     populateComposerRouteSelect();
+    populateReportRouteSelect();
   }
 
-  function renderRouteFilter(){
-    const el = $('#routeFilter');
-    if(!el) return;
+  // Combobox de filtro (TODOS + cada ruta)
+  function populateRouteFilterSelect(){
+    const sel = $('#routeFilterSelect');
+    if(!sel) return;
     
-    // Solo mostrar rutas que tienen comentarios o todas si no hay muchas
     const routeCounts = {};
     state.commentsCache.forEach(c => {
       if(c.routeId) routeCounts[c.routeId] = (routeCounts[c.routeId]||0) + 1;
     });
     
-    const routesWithComments = state.routes.filter(r => routeCounts[r.id]);
-    const routesToShow = routesWithComments.length > 0 ? routesWithComments : state.routes.slice(0, 10);
+    const currentVal = state.currentFilterRoute;
     
-    el.innerHTML = `
-      <button class="route-filter-chip ${!state.currentFilterRoute?'active':''}" data-route="">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
-        Todas
-      </button>
-      ${routesToShow.map(r => `
-        <button class="route-filter-chip ${state.currentFilterRoute===r.id?'active':''}" data-route="${esc(r.id)}">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M3 11h18"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/></svg>
-          ${esc(r.nombre)}
-          ${routeCounts[r.id] ? `<span style="background:rgba(255,255,255,.2);padding:1px 6px;border-radius:99px;font-size:10px">${routeCounts[r.id]}</span>` : ''}
-        </button>
-      `).join('')}
-    `;
+    let html = '<option value="">🔍 Ver todos los comentarios</option>';
     
-    el.querySelectorAll('.route-filter-chip').forEach(chip => {
-      chip.onclick = () => {
-        state.currentFilterRoute = chip.dataset.route;
-        renderRouteFilter();
-        renderComments();
-      };
-    });
+    // Solo rutas con comentarios primero
+    const withComments = state.routes.filter(r => routeCounts[r.id]);
+    const withoutComments = state.routes.filter(r => !routeCounts[r.id]);
+    
+    if(withComments.length){
+      html += '<optgroup label="Con comentarios">';
+      withComments.forEach(r => {
+        html += `<option value="${esc(r.id)}" ${currentVal===r.id?'selected':''}>${esc(r.nombre)} (${routeCounts[r.id]})</option>`;
+      });
+      html += '</optgroup>';
+    }
+    
+    if(withoutComments.length){
+      html += '<optgroup label="Sin comentarios aún">';
+      withoutComments.forEach(r => {
+        html += `<option value="${esc(r.id)}" ${currentVal===r.id?'selected':''}>${esc(r.nombre)}</option>`;
+      });
+      html += '</optgroup>';
+    }
+    
+    sel.innerHTML = html;
+    
+    // Contador
+    updateFilterCount();
   }
 
+  function updateFilterCount(){
+    const count = $('#routeFilterCount');
+    if(!count) return;
+    let n = state.commentsCache.length;
+    if(state.currentFilterRoute){
+      n = state.commentsCache.filter(c => c.routeId === state.currentFilterRoute).length;
+    }
+    count.textContent = n + ' comentario' + (n === 1 ? '' : 's');
+  }
+
+  // Combobox del composer
   function populateComposerRouteSelect(){
     const sel = $('#composerRouteSelect');
     if(!sel) return;
     
-    sel.innerHTML = '<option value="">— Seleccionar ruta —</option>' +
-      state.routes.map(r => `<option value="${esc(r.id)}">${esc(r.nombre)} (${esc(r.categoria||'urbana')})</option>`).join('');
+    let html = '<option value="">📍 Sin ruta específica (comentario general)</option>';
+    state.routes.forEach(r => {
+      html += `<option value="${esc(r.id)}">🚌 ${esc(r.nombre)} (${esc(r.categoria||'urbana')})</option>`;
+    });
+    sel.innerHTML = html;
+  }
+
+  // Combobox de la sección Reportar
+  function populateReportRouteSelect(){
+    const sel = $('#rpRuta');
+    if(!sel) return;
+    
+    if(!state.routes.length){
+      sel.innerHTML = '<option value="">— Sin rutas disponibles —</option>';
+      return;
+    }
+    
+    let html = '<option value="">— Selecciona una ruta —</option>';
+    state.routes.forEach(r => {
+      html += `<option value="${esc(r.id)}">${esc(r.nombre)} · ${esc(r.categoria||'urbana')}</option>`;
+    });
+    sel.innerHTML = html;
+    
+    // Al seleccionar, cargar los datos de la ruta
+    sel.onchange = () => {
+      const id = sel.value;
+      if(!id){
+        $('#rpEditor').classList.add('hidden');
+        return;
+      }
+      const route = state.routes.find(r => r.id === id);
+      if(route) loadRouteIntoReport(route);
+    };
   }
 
   // ==================== COMENTARIOS ====================
@@ -1481,20 +1312,27 @@ img{max-width:100%;display:block}
       unsubscribeComments = fbDB.ref(COMMENTS_PATH).limitToLast(200).on('value', snap => {
         const val = snap.val() || {};
         state.commentsCache = Object.values(val).sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
-        renderRouteFilter();
+        populateRouteFilterSelect();
         renderComments();
       }, err => {
-        console.warn('[Comments] Firebase error, usando local:', err);
+        console.warn('[Comments] Firebase error:', err);
         state.commentsCache = loadLocalComments();
-        renderRouteFilter();
+        populateRouteFilterSelect();
         renderComments();
       });
     } else {
       state.commentsCache = loadLocalComments();
-      renderRouteFilter();
+      populateRouteFilterSelect();
       renderComments();
     }
   }
+
+  // Filtro select change
+  $('#routeFilterSelect')?.addEventListener('change', (e) => {
+    state.currentFilterRoute = e.target.value;
+    updateFilterCount();
+    renderComments();
+  });
 
   function renderComments(){
     const list = $('#commentsList');
@@ -1502,7 +1340,6 @@ img{max-width:100%;display:block}
     
     let comments = state.commentsCache;
     
-    // Filtrar por ruta si hay filtro activo
     if(state.currentFilterRoute){
       comments = comments.filter(c => c.routeId === state.currentFilterRoute);
     }
@@ -1526,8 +1363,6 @@ img{max-width:100%;display:block}
       const replies = c.replies || [];
       const replyCount = replies.length;
       const lastReply = replyCount > 0 ? replies[replyCount - 1] : null;
-      
-      // Buscar la ruta vinculada
       const route = c.routeId ? state.routes.find(r => r.id === c.routeId) : null;
 
       return `
@@ -1536,10 +1371,7 @@ img{max-width:100%;display:block}
             <div class="comment-head">
               <div class="comment-avatar">${esc((c.author||'A')[0].toUpperCase())}</div>
               <div class="comment-meta">
-                <div class="comment-name">
-                  ${esc(c.author||'Anónimo')}
-                  ${c.isVerified ? '<svg class="verified" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>' : ''}
-                </div>
+                <div class="comment-name">${esc(c.author||'Anónimo')}</div>
                 <div class="comment-time">
                   ${fmtTime(c.timestamp)}
                   ${c.updatedAt ? '<span class="edited">· editado</span>' : ''}
@@ -1614,8 +1446,6 @@ img{max-width:100%;display:block}
   }
 
   function bindCommentEvents(list){
-    const uid = getDeviceId();
-    
     list.querySelectorAll('.comment').forEach(card => {
       const cid = card.dataset.cid;
       const comment = state.commentsCache.find(c => c.id === cid);
@@ -1652,7 +1482,6 @@ img{max-width:100%;display:block}
     const uid = getDeviceId();
     
     body.innerHTML = `
-      <!-- Comentario original -->
       <div class="original-comment">
         <div class="oc-head">
           <div class="oc-avatar">${esc((comment.author||'A')[0].toUpperCase())}</div>
@@ -1664,9 +1493,8 @@ img{max-width:100%;display:block}
         <div class="oc-text">${esc(comment.text)}</div>
       </div>
       
-      <!-- Lista de respuestas -->
       <div class="replies-list">
-        ${replies.length ? replies.map((r, i) => {
+        ${replies.length ? replies.map((r) => {
           const rLiked = (r.likes||[]).includes(uid);
           const rOwner = r.deviceId === uid;
           return `
@@ -1698,7 +1526,6 @@ img{max-width:100%;display:block}
       </div>
     `;
     
-    // Bind events
     body.querySelectorAll('[data-ract]').forEach(btn => {
       btn.onclick = async (e) => {
         e.stopPropagation();
@@ -1739,7 +1566,7 @@ img{max-width:100%;display:block}
     if(e.target.id === 'repliesModal') closeRepliesModal();
   };
 
-  // Drag para cerrar modal
+  // Drag modal
   (function bindModalDrag(){
     const handle = $('#repliesModalHandle');
     const sheet = $('#repliesModalSheet');
@@ -1778,7 +1605,6 @@ img{max-width:100%;display:block}
     input.placeholder = 'Escribe una respuesta...';
     state.replyReplyId = null;
     
-    // Recargar el modal
     openRepliesModal(comment, false);
   };
 
@@ -1789,7 +1615,7 @@ img{max-width:100%;display:block}
     }
   });
 
-  // ==================== ACCIONES DE COMENTARIOS ====================
+  // ==================== ACCIONES ====================
   async function addComment(text, routeId){
     const uid = getDeviceId();
     const author = getUserName();
@@ -1801,7 +1627,6 @@ img{max-width:100%;display:block}
       routeId: routeId || null
     };
 
-    // Guardar en Firebase o local
     let saved = false;
     if(fbDB){
       try {
@@ -1817,12 +1642,11 @@ img{max-width:100%;display:block}
       local.unshift(comment);
       saveLocalComments(local);
       state.commentsCache.unshift(comment);
-      renderRouteFilter();
+      populateRouteFilterSelect();
       renderComments();
     }
 
-    // 🔔 NOTIFICACIÓN INTELIGENTE:
-    // Solo enviar si el comentario es LARGO (>= NOTIFICATION_THRESHOLD caracteres)
+    // 🔔 NOTIFICACIÓN: solo si es largo Y no es una respuesta al propio autor
     if(text.length >= NOTIFICATION_THRESHOLD){
       try {
         await fetch('/api/notify', {
@@ -1872,15 +1696,16 @@ img{max-width:100%;display:block}
       renderComments();
     }
     
-    // 🔔 NOTIFICACIÓN AL DUEÑO DEL COMENTARIO (no a todos)
+    // 🔔 NOTIFICACIÓN al dueño del comentario original
+    // SOLO si:
+    //  - El dueño es diferente al que responde (no auto-notificar)
+    //  - El dueño tiene token FCM
     if(comment.deviceId && comment.deviceId !== uid){
       try {
-        // Obtener el token FCM del dueño del comentario
         const tokenSnap = await fbDB.ref('pushTokens/' + comment.deviceId).once('value');
         const tokenData = tokenSnap.val();
         
         if(tokenData && tokenData.token){
-          // Enviar notificación SOLO a ese usuario
           await fetch('/api/notify', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1895,11 +1720,15 @@ img{max-width:100%;display:block}
               token: tokenData.token
             })
           });
-          console.log('[notify] Notificación individual enviada al dueño del comentario');
+          console.log('[notify] Notificación individual enviada');
+        } else {
+          console.log('[notify] El dueño no tiene token FCM guardado');
         }
       } catch(e) {
-        console.warn('[notify] Error enviando notificación individual:', e);
+        console.warn('[notify] Error:', e);
       }
+    } else {
+      console.log('[notify] NO se notifica (es tu propio comentario)');
     }
     
     toast('Respuesta enviada');
@@ -1914,7 +1743,7 @@ img{max-width:100%;display:block}
       const local = loadLocalComments().filter(c=>c.id!==comment.id);
       saveLocalComments(local);
       state.commentsCache = state.commentsCache.filter(c=>c.id!==comment.id);
-      renderRouteFilter();
+      populateRouteFilterSelect();
       renderComments();
     }
     toast('Comentario eliminado');
@@ -1924,7 +1753,6 @@ img{max-width:100%;display:block}
     const bodyEl = card.querySelector('[data-body]');
     const original = comment.text;
     const wrap = document.createElement('div');
-    wrap.className = 'comment-edit-area';
     wrap.style.cssText = 'display:flex;flex-direction:column;gap:8px;margin-bottom:10px';
     wrap.innerHTML = `
       <textarea style="width:100%;padding:10px 12px;border-radius:10px;background:var(--input-bg);border:1px solid var(--cyan);color:var(--text);font-size:14px;font-family:inherit;resize:vertical;min-height:60px" maxlength="800">${esc(original)}</textarea>
@@ -2012,81 +1840,54 @@ img{max-width:100%;display:block}
   const composerInput = $('#composerInput');
   const composerSend = $('#composerSend');
   const composerAvatar = $('#composerAvatar');
-  const composerRoute = $('#composerRoute');
-  const composerRouteLabel = $('#composerRouteLabel');
-  const composerRouteClear = $('#composerRouteClear');
   const composerRouteSelect = $('#composerRouteSelect');
   const composerHint = $('#composerHint');
   const composerHintText = $('#composerHintText');
   
   if(composerAvatar) composerAvatar.textContent = getUserName()[0].toUpperCase();
 
-  // Auto-resize del textarea
   composerInput.addEventListener('input', () => {
     composerInput.style.height = 'auto';
     composerInput.style.height = Math.min(composerInput.scrollHeight, 120) + 'px';
     
-    // Actualizar hint según longitud
     const len = composerInput.value.length;
     if(len >= NOTIFICATION_THRESHOLD){
       composerHint.classList.add('long');
+      composerHint.classList.remove('ok');
       composerHintText.textContent = `✅ Notificará a todos (${len} caracteres)`;
     } else if(len > 0){
-      composerHint.classList.remove('long');
+      composerHint.classList.remove('long','ok');
       composerHintText.textContent = `${len}/${NOTIFICATION_THRESHOLD} para notificar a todos`;
     } else {
-      composerHint.classList.remove('long');
+      composerHint.classList.remove('long','ok');
       composerHintText.textContent = 'Comentarios cortos no notifican';
     }
   });
 
-  // Selector de ruta
-  composerRoute.onclick = () => {
-    composerRouteSelect.style.display = composerRouteSelect.style.display === 'none' ? 'block' : 'none';
-    if(composerRouteSelect.style.display === 'block'){
-      composerRouteSelect.focus();
-    }
-  };
-  
-  composerRouteSelect.onchange = () => {
+  // Cambio en el selector de ruta del composer
+  composerRouteSelect.addEventListener('change', () => {
     const val = composerRouteSelect.value;
+    state.composerSelectedRoute = val;
     if(val){
-      state.composerSelectedRoute = val;
-      const route = state.routes.find(r => r.id === val);
-      composerRouteLabel.textContent = route ? route.nombre : 'Ruta seleccionada';
-      composerRoute.classList.add('selected');
-      composerRouteClear.style.display = 'grid';
+      composerRouteSelect.classList.add('has-value');
     } else {
-      state.composerSelectedRoute = '';
-      composerRouteLabel.textContent = 'Seleccionar ruta (opcional)';
-      composerRoute.classList.remove('selected');
-      composerRouteClear.style.display = 'none';
+      composerRouteSelect.classList.remove('has-value');
     }
-    composerRouteSelect.style.display = 'none';
-  };
-  
-  composerRouteClear.onclick = (e) => {
-    e.stopPropagation();
-    state.composerSelectedRoute = '';
-    composerRouteSelect.value = '';
-    composerRouteLabel.textContent = 'Seleccionar ruta (opcional)';
-    composerRoute.classList.remove('selected');
-    composerRouteClear.style.display = 'none';
-  };
+  });
 
-  // Enviar comentario
   composerSend.onclick = async () => {
     const raw = composerInput.value.trim();
     const txt = sanitize(raw);
     if(!txt){ toast('Escribe algo primero','err'); return; }
     
     composerSend.disabled = true;
-    await addComment(txt, state.composerSelectedRoute);
+    await addComment(txt, composerRouteSelect.value);
     composerInput.value = '';
     composerInput.style.height = 'auto';
+    composerRouteSelect.value = '';
+    composerRouteSelect.classList.remove('has-value');
     composerSend.disabled = false;
     
-    // Reset hint
     composerHint.classList.remove('long');
     composerHintText.textContent = 'Comentarios cortos no notifican';
     
@@ -2096,6 +1897,157 @@ img{max-width:100%;display:block}
   composerInput.addEventListener('keydown', e => {
     if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); composerSend.click(); }
   });
+
+  // ==================== REPORTES ====================
+  let rpState = {
+    step: 1,
+    map: null,
+    drawMode: null,
+    drawing: false,
+    puntos: [],
+    puntosVuelta: [],
+    calles: [],
+    markers: [],
+    markerMeta: [],
+    layers: { ida: null, vuelta: null },
+    editingRoute: null
+  };
+
+  function loadRouteIntoReport(route){
+    rpState.editingRoute = route;
+    $('#rpEditor').classList.remove('hidden');
+    $('#rpNombre').value = route.nombre || '';
+    $('#rpCat').value = route.categoria || 'urbana';
+    $('#rpTarifa').value = route.tarifa || '';
+    $('#rpFrec').value = route.frecuencia || '';
+    $('#rpHoraIni').value = route.horarioIni || '';
+    $('#rpHoraFin').value = route.horarioFin || '';
+    $('#rpDias').value = route.dias || 'todos';
+    $('#rpAcces').value = route.accesibilidad || 'no';
+    $('#rpNotas').value = route.notas || '';
+    $('#rpParadas').value = (route.paradas||[]).join(', ');
+    $('#rpRetornos').value = (route.retornos||[]).join(', ');
+    $('#rpPoisIda').value = (route.pois||[]).join(', ');
+    $('#rpPoisVuelta').value = (route.poisVuelta||[]).join(', ');
+    $('#rpCalles').value = (route.calles||[]).join(', ');
+    
+    rpState.puntos = route.puntos || [];
+    rpState.puntosVuelta = route.puntosVuelta || [];
+    
+    goRpStep(1);
+  }
+
+  function goRpStep(n){
+    n = Math.max(1, Math.min(3, n));
+    rpState.step = n;
+    
+    $$('.rp-step').forEach(s=>{
+      s.classList.toggle('hidden', +s.dataset.step !== n);
+    });
+    
+    $$('.steps .step-dot').forEach(d=>{
+      const s = +d.dataset.step;
+      d.classList.toggle('active', s === n);
+      d.classList.toggle('done', s < n);
+    });
+    
+    const btnPrev = $('#rpPrev');
+    const btnNext = $('#rpNext');
+    const btnSave = $('#rpSave');
+    
+    if(btnPrev) btnPrev.style.visibility = n === 1 ? 'hidden' : 'visible';
+    if(btnNext) btnNext.classList.toggle('hidden', n === 3);
+    if(btnSave) btnSave.classList.toggle('hidden', n !== 3);
+    
+    if(n === 3){
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          initReportMap();
+        });
+      });
+    }
+  }
+
+  $('#rpPrev').onclick = () => goRpStep(rpState.step - 1);
+  $('#rpNext').onclick = () => goRpStep(rpState.step + 1);
+
+  function initReportMap(){
+    if(rpState.map){
+      rpState.map.invalidateSize();
+      return;
+    }
+    const el = document.getElementById('reportMap');
+    if(!el) return;
+    
+    rpState.map = L.map('reportMap').setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+    
+    L.tileLayer('https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}@2x.png?key=kXZYdaMbZkD1EevhGXMI', {
+      tileSize: 512, zoomOffset: -1, maxZoom: 20,
+      crossOrigin: true,
+      attribution: '© MapTiler © OpenStreetMap'
+    }).addTo(rpState.map);
+  }
+
+  $('#rpSave').onclick = async () => {
+    const tipo = $('#rpTipo').value;
+    const rutaId = $('#rpRuta').value;
+    const rutaNombre = $('#rpNombre').value.trim();
+    
+    if(!rutaId && !rutaNombre){ toast('Selecciona una ruta','err'); return; }
+    
+    const reporte = {
+      tipo,
+      rutaId: rutaId || null,
+      rutaNombre,
+      categoria: $('#rpCat').value,
+      tarifa: $('#rpTarifa').value.trim(),
+      frecuencia: $('#rpFrec').value.trim(),
+      horarioIni: $('#rpHoraIni').value.trim(),
+      horarioFin: $('#rpHoraFin').value.trim(),
+      dias: $('#rpDias').value,
+      accesibilidad: $('#rpAcces').value,
+      notas: $('#rpNotas').value.trim(),
+      paradas: splitList($('#rpParadas').value),
+      retornos: splitList($('#rpRetornos').value),
+      pois: splitList($('#rpPoisIda').value),
+      poisVuelta: splitList($('#rpPoisVuelta').value),
+      calles: splitList($('#rpCalles').value),
+      puntos: rpState.puntos,
+      puntosVuelta: rpState.puntosVuelta,
+      comentario: $('#rpComentario').value.trim(),
+      autor: $('#rpAutor').value.trim() || 'Anónimo',
+      deviceId: getDeviceId(),
+      timestamp: Date.now(),
+      estado: 'pendiente'
+    };
+    
+    const id = 'rep_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+    
+    let guardadoOK = false;
+    if(fbDB){
+      try {
+        await fbDB.ref('actualizaciones_rutas/' + id).set({ id, ...reporte });
+        guardadoOK = true;
+      } catch(e){}
+    }
+    
+    if(!guardadoOK){
+      try {
+        const arr = JSON.parse(localStorage.getItem('bgd_reports_local') || '[]');
+        arr.unshift({ id, ...reporte });
+        localStorage.setItem('bgd_reports_local', JSON.stringify(arr));
+      } catch(e){
+        toast('No se pudo guardar','err');
+        return;
+      }
+    }
+    
+    toast('✅ Reporte enviado');
+    
+    // Reset
+    $('#rpEditor').classList.add('hidden');
+    $('#rpRuta').value = '';
+  };
 
   // ==================== INIT ====================
   (async () => {
