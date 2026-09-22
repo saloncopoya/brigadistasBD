@@ -1091,7 +1091,7 @@ img{max-width:100%;display:block}
   // ✅ Misma clave que index.html
   let n = localStorage.getItem('user_name');
   if(!n){
-    n = 'Vecino ' + Math.floor(1000 + Math.random()*9000);
+    n = 'Usuario' + Math.floor(1000 + Math.random()*9000);
     localStorage.setItem('user_name', n);
   }
   return n;
