@@ -1054,7 +1054,7 @@ img{max-width:100%;display:block}
   const DEFAULT_CENTER = [16.7530, -93.1150];
   const DEFAULT_ZOOM = 13;
   const WHATSAPP_ADMIN = '521234567890';
-  const NOTIFICATION_THRESHOLD = 50;
+  const NOTIFICATION_THRESHOLD = 100;
 
   // ==================== UTILIDADES ====================
   const $ = (s,r=document)=>r.querySelector(s);
@@ -1861,7 +1861,7 @@ img{max-width:100%;display:block}
       composerHintText.textContent = `✅ Notificará a todos (${len} caracteres)`;
     } else if(len > 0){
       composerHint.classList.remove('long','ok');
-      composerHintText.textContent = `${len}/${NOTIFICATION_THRESHOLD} para notificar a todos`;
+      composerHintText.textContent = `${len}/${NOTIFICATION_THRESHOLD} para recibir respuestas inmediatas.`;
     } else {
       composerHint.classList.remove('long','ok');
       composerHintText.textContent = 'Comentarios cortos no notifican';
