@@ -1284,9 +1284,9 @@ body.fs-active{overflow:hidden !important}
   border:1px solid color-mix(in srgb,var(--purple) 32%,transparent);
 }
 
-/* Fila 2: parada + retorno lado a lado */
+/* Fila 2: parada arriba, retorno abajo */
 .sp-route-row-2{
-  display:grid;grid-template-columns:1fr 1fr;gap:6px;
+  display:flex;flex-direction:column;gap:3px;
 }
 .sp-route-cell{
   display:flex;align-items:center;gap:4px;
@@ -1302,6 +1302,8 @@ body.fs-active{overflow:hidden !important}
   overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;min-width:0;
 }
+
+   
 
 .sp-empty{
   text-align:center;padding:40px 20px;
