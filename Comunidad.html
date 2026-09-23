@@ -680,6 +680,12 @@ img{max-width:100%;display:block}
 
       <!-- Composer -->
       <div class="composer" id="composer">
+        <!-- Input de nombre (solo aparece si no se ha guardado) -->
+        <div class="name-field" id="nameField" style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:8px 12px;background:var(--input-bg);border:1px solid var(--border);border-radius:12px">
+          <label for="userNameInput" style="font-size:12.5px;font-weight:800;color:var(--text-2);white-space:nowrap">Nombre:</label>
+          <input type="text" id="userNameInput" maxlength="20" placeholder="Tu nombre" style="flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:14px;font-weight:600" />
+        </div>
+
         <div class="composer-head">
           <div class="composer-avatar" id="composerAvatar">T</div>
           <div class="composer-input-wrap">
@@ -1088,14 +1094,14 @@ img{max-width:100%;display:block}
 }
    
   function getUserName(){
-  // ✅ Misma clave que index.html
-  let n = localStorage.getItem('user_name');
-  if(!n){
-    n = 'Usuario' + Math.floor(1000 + Math.random()*9000);
-    localStorage.setItem('user_name', n);
+    // ✅ Misma clave que index.html
+    let n = localStorage.getItem('user_name');
+    if(!n){
+      n = 'Usuario' + Math.floor(1000 + Math.random()*9000);
+      // ⚠️ NO lo guardamos aún: se guardará cuando publique su primer comentario
+    }
+    return n;
   }
-  return n;
-}
    
   function fmtTime(ts){
     const diff = (Date.now()-ts)/1000;
@@ -1850,6 +1856,29 @@ img{max-width:100%;display:block}
   
   if(composerAvatar) composerAvatar.textContent = getUserName()[0].toUpperCase();
 
+  // ===== Input de nombre (solo primera vez) =====
+  (function initNameField(){
+    const nameField = $('#nameField');
+    const nameInput = $('#userNameInput');
+    const savedName = localStorage.getItem('user_name');
+
+    if(!nameField || !nameInput) return;
+
+    if(savedName){
+      // Ya tiene nombre guardado: ocultar el campo
+      nameField.style.display = 'none';
+    } else {
+      // Primera vez: mostrar con el nombre autogenerado editable
+      const auto = getUserName();
+      nameInput.value = auto;
+      // Actualizar avatar mientras escribe
+      nameInput.addEventListener('input', () => {
+        const v = nameInput.value.trim();
+        if(composerAvatar) composerAvatar.textContent = (v[0] || 'U').toUpperCase();
+      });
+    }
+  })();
+   
   composerInput.addEventListener('input', () => {
     composerInput.style.height = 'auto';
     composerInput.style.height = Math.min(composerInput.scrollHeight, 120) + 'px';
@@ -1883,6 +1912,17 @@ img{max-width:100%;display:block}
     const raw = composerInput.value.trim();
     const txt = sanitize(raw);
     if(!txt){ toast('Escribe algo primero','err'); return; }
+    
+    // ===== Guardar nombre si es la primera vez =====
+    const nameField = $('#nameField');
+    const nameInput = $('#userNameInput');
+    if(nameField && nameField.style.display !== 'none' && nameInput){
+      let newName = nameInput.value.trim().slice(0, 20);
+      if(!newName) newName = 'Usuario' + Math.floor(1000 + Math.random()*9000);
+      localStorage.setItem('user_name', newName);
+      // Ocultar el campo para siempre
+      nameField.style.display = 'none';
+    }
     
     composerSend.disabled = true;
     await addComment(txt, composerRouteSelect.value);
