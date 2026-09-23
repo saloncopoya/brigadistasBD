@@ -1,6 +1,30 @@
 {
   "posts": [
     {
+      "slug": "sur219",
+      "title": "SUR2",
+      "description": "Ruta SUR2",
+      "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1790133458/nfl6z57qeqrikkuunqco.jpg",
+      "url": "/share/ruta/sur219",
+      "tipo": "ruta",
+      "timestamp": 1790133460945,
+      "updatedAt": "2026-09-23T03:17:40.945Z",
+      "categoria": "urbana",
+      "tarifa": "",
+      "frecuencia": "",
+      "horarioIni": "",
+      "horarioFin": "",
+      "dias": "todos",
+      "paradas": [
+        "Calle 12 Oriente Sur"
+      ],
+      "calles": [
+        "Calle 12 Oriente Sur",
+        "Avenida 1a. Sur Oriente"
+      ],
+      "pois": []
+    },
+    {
       "slug": "ruta1149",
       "title": "RUTA 1",
       "description": "Ruta RUTA 1",
@@ -134,28 +158,9 @@
         "Hospital Regional Dr. Rafael Pascacio Gamboa",
         "Mercado Centro - Mercado Público Municipal Juan Sabines (cerca)"
       ]
-    },
-    {
-      "slug": "sur219",
-      "title": "SUR2",
-      "description": "Ruta SUR2",
-      "image": "https://res.cloudinary.com/davovja1g/image/upload/c_limit,w_1600,h_1600,q_auto:good,f_auto/v1789974399/ckn0o2vtzd1iiit5s5uj.jpg",
-      "url": "/share/ruta/sur219",
-      "tipo": "ruta",
-      "timestamp": 1789974402238,
-      "updatedAt": "2026-09-21T07:06:42.238Z",
-      "categoria": "urbana",
-      "tarifa": "",
-      "frecuencia": "",
-      "horarioIni": "",
-      "horarioFin": "",
-      "dias": "todos",
-      "paradas": [],
-      "calles": [],
-      "pois": []
     }
   ],
   "total": 3,
-  "updatedAt": "2026-09-23T03:16:48.582Z",
+  "updatedAt": "2026-09-23T03:17:40.945Z",
   "version": 1
 }
