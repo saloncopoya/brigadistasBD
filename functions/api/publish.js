@@ -59,7 +59,7 @@ export async function onRequest(context) {
         return new Response(JSON.stringify({ error: 'Configuración de GitHub incompleta' }), { status: 500, headers });
       }
 
-      const domain = (D || 'brigadistasbd.pages.dev').replace(/^https?:\/\//, '').replace(/\/$/, '');
+      const domain = (D || 'rutiachiapas.pages.dev').replace(/^https?:\/\//, '').replace(/\/$/, '');
       const baseUrl = `https://${domain}`;
 
       let folder = 'share/post';
@@ -72,7 +72,7 @@ export async function onRequest(context) {
       const ghHeaders = {
         'Authorization': `Bearer ${T}`,
         'Accept': 'application/vnd.github+json',
-        'User-Agent': 'brigadistasbd-publisher',
+        'User-Agent': 'rutiachiapas-publisher',
         'X-GitHub-Api-Version': '2022-11-28'
       };
       const apiBase = `https://api.github.com/repos/${O}/${N}/contents`;
@@ -197,7 +197,7 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ error: 'Configuración de GitHub incompleta' }), { status: 500, headers });
     }
 
-    const domain = SITE_DOMAIN || 'brigadistasbd.pages.dev';
+    const domain = SITE_DOMAIN || 'rutiachiapas.pages.dev';
     const cleanDomain = domain.replace(/^https?:\/\//, '').replace(/\/$/, '');
     const baseUrl = `https://${cleanDomain}`;
 
@@ -219,7 +219,7 @@ const cleanPath = `${folder}/${safeSlug}`;
     const ghHeaders = {
       'Authorization': `Bearer ${GITHUB_TOKEN}`,
       'Accept': 'application/vnd.github+json',
-      'User-Agent': 'brigadistasbd-publisher',
+      'User-Agent': 'rutiachiapas-publisher',
       'X-GitHub-Api-Version': '2022-11-28'
     };
 
@@ -370,7 +370,7 @@ function generateHTML({ tipo, title, content, image, slug, pageUrl, baseUrl, ext
 
      // 📰 Título optimizado para SEO (máx ~60 caracteres, ideal para Google)
   const SEO_MAX = 60;
-  const GEO_SUFFIX = ' - Tuxtla Gutiérrez';
+  const GEO_SUFFIX = ' - Chiapas';
 
   let seoTitle = title;
   if (tipo === 'ruta') {
@@ -416,13 +416,13 @@ function generateHTML({ tipo, title, content, image, slug, pageUrl, baseUrl, ext
     const faltaInfo    = !tieneParada || !tieneRetorno;
 
     if (faltaInfo
-        && !/tuxtla/i.test(seoTitle)
+        && !/chiapas/i.test(seoTitle)
         && (seoTitle.length + GEO_SUFFIX.length) <= SEO_MAX) {
       seoTitle += GEO_SUFFIX;
     }
 
   } else if (tipo === 'market') {
-    seoTitle = `${title} · Marketplace Tuxtla Gutiérrez`;
+    seoTitle = `${title} · Marketplace Chiapas`;
   } else {
     seoTitle = `${title} · Blog`;
   }
@@ -517,7 +517,7 @@ const safeDescOG = escapeHTML(enrichedContent.slice(0, 125));
       '@id': `${pageUrl}#bustrip`,
       name: title,
       headline: title,
-      alternativeHeadline: `${title} - Colectivo Tuxtla Gutiérrez`,
+      alternativeHeadline: `${title} - Colectivo Chiapas`,
       description: enrichedContent.slice(0, 160),
       articleBody: enrichedContent.slice(0, 5000),
       wordCount: enrichedContent.split(/\s+/).filter(Boolean).length,
@@ -554,27 +554,26 @@ const safeDescOG = escapeHTML(enrichedContent.slice(0, 125));
         name: p,
         address: {
           '@type': 'PostalAddress',
-          addressLocality: 'Tuxtla Gutiérrez',
+          addressLocality: 'Chiapas',
           addressRegion: 'Chiapas',
           addressCountry: 'MX'
         }
       })),
       areaServed: {
-        '@type': 'City',
-        name: 'Tuxtla Gutiérrez',
-        containedInPlace: { '@type': 'State', name: 'Chiapas' }
+        '@type': 'State',
+        name: 'Chiapas'
       },
-      contentLocation: {
+           contentLocation: {
         '@type': 'Place',
-        name: 'Tuxtla Gutiérrez',
+        name: 'Chiapas',
         address: {
           '@type': 'PostalAddress',
-          addressLocality: 'Tuxtla Gutiérrez',
+          addressLocality: 'Chiapas',
           addressRegion: 'Chiapas',
           addressCountry: 'MX'
         }
       },
-      keywords: `ruta, colectivo, ${r.categoria || 'urbana'}, Tuxtla Gutiérrez, Chiapas, ${toStrArr(r.calles).slice(0, 5).join(', ')}`,
+      keywords: `ruta, colectivo, ${r.categoria || 'urbana'}, Chiapas, México, ${toStrArr(r.calles).slice(0, 5).join(', ')}`,
       mainEntityOfPage: webpageRef
     };
   } else if (tipo === 'market') {
@@ -584,7 +583,7 @@ const safeDescOG = escapeHTML(enrichedContent.slice(0, 125));
       '@id': `${pageUrl}#product`,
       name: title,
       headline: title,
-      alternativeHeadline: `${title} - Marketplace Tuxtla Gutiérrez`,
+      alternativeHeadline: `${title} - Marketplace Chiapas`,
       description: safeDesc,
       articleBody: safeDesc,
       wordCount: safeDesc.split(/\s+/).filter(Boolean).length,
@@ -615,22 +614,22 @@ const safeDescOG = escapeHTML(enrichedContent.slice(0, 125));
         priceCurrency: 'MXN',
         availability: 'https://schema.org/InStock',
         areaServed: {
-          '@type': 'City',
-          name: 'Tuxtla Gutiérrez'
+          '@type': 'State',
+          name: 'Chiapas'
         },
         seller: orgRef
       },
       contentLocation: {
         '@type': 'Place',
-        name: 'Tuxtla Gutiérrez',
+        name: 'Chiapas',
         address: {
           '@type': 'PostalAddress',
-          addressLocality: 'Tuxtla Gutiérrez',
+          addressLocality: 'Chiapas',
           addressRegion: 'Chiapas',
           addressCountry: 'MX'
         }
       },
-      keywords: `marketplace, ${m.categoria || 'anuncio'}, Tuxtla Gutiérrez, Chiapas`,
+      keywords: `marketplace, ${m.categoria || 'anuncio'}, Chiapas`,
       mainEntityOfPage: webpageRef
     };
   } else {
@@ -639,8 +638,8 @@ const safeDescOG = escapeHTML(enrichedContent.slice(0, 125));
       '@type': ['BlogPosting', 'NewsArticle'],
       '@id': `${pageUrl}#article`,
       headline: title,
-      alternativeHeadline: `${title} - Blog Tuxtla Gutiérrez`,
-      description: safeDesc,
+      alternativeHeadline: `${title} - Blog Chiapas`,
+       description: safeDesc,
       articleBody: toStr(content).slice(0, 5000),
       wordCount: toStr(content).split(/\s+/).filter(Boolean).length,
       image: {
@@ -665,15 +664,15 @@ const safeDescOG = escapeHTML(enrichedContent.slice(0, 125));
       mainEntityOfPage: webpageRef,
       contentLocation: {
         '@type': 'Place',
-        name: 'Tuxtla Gutiérrez',
+        name: 'Chiapas',
         address: {
           '@type': 'PostalAddress',
-          addressLocality: 'Tuxtla Gutiérrez',
+          addressLocality: 'Chiapas',
           addressRegion: 'Chiapas',
           addressCountry: 'MX'
         }
       },
-      keywords: 'Tuxtla Gutiérrez, Chiapas, transporte público, rutas colectivos, noticias, blog',
+      keywords: 'Chiapas, transporte público, rutas colectivos, noticias, blog',
       commentCount: extra?.comments?.length || 0,
       accessibilityFeature: ['alternativeText', 'highContrastDisplay'],
       accessibilitySummary: 'Contenido con texto alternativo e imágenes optimizadas para lectura'
@@ -702,7 +701,7 @@ const faqSchema = tipo === 'ruta' ? {
         '@type': 'Answer',
         text: extra?.route?.horarioIni
           ? `La ${title} opera desde las ${extra.route.horarioIni} hasta las ${extra.route.horarioFin || 'última hora'}.`
-          : `La ${title} opera en horarios habituales de transporte público en Tuxtla Gutiérrez.`
+rutiachiapas          : `La ${title} opera en horarios habituales de transporte público en Chiapas.`
       }
     },
     {
@@ -720,7 +719,7 @@ const faqSchema = tipo === 'ruta' ? {
       name: `¿La ${title} es urbana o foránea?`,
       acceptedAnswer: {
         '@type': 'Answer',
-        text: `La ${title} es una ruta de categoría ${extra?.route?.categoria || 'urbana'} en Tuxtla Gutiérrez, Chiapas.`
+        text: `La ${title} es una ruta de categoría ${extra?.route?.categoria || 'urbana'} en Chiapas.`
       }
     }
   ]
@@ -730,7 +729,7 @@ const graphNodes = [
   {
     '@type': 'Organization',
     '@id': `${baseUrl}/#organization`,
-    name: 'Rutas BGD',
+    name: 'RUTIA Chiapas',
     url: `${baseUrl}/`,
     logo: {
       '@type': 'ImageObject',
@@ -741,7 +740,7 @@ const graphNodes = [
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'customer service',
-      email: 'contacto@brigadistasbd.pages.dev',
+      email: 'contacto@rutiachiapas.pages.dev',
       availableLanguage: ['Spanish', 'es-MX']
     },
     areaServed: {
@@ -754,7 +753,7 @@ const graphNodes = [
     '@type': 'WebSite',
     '@id': `${baseUrl}/#website`,
     url: `${baseUrl}/`,
-    name: 'Rutas BGD',
+    name: 'RUTIA Chiapas',
     publisher: orgRef,
     inLanguage: 'es-MX'
   },
@@ -774,7 +773,7 @@ const graphNodes = [
      
     reviewedBy: {
       '@type': 'Organization',
-      name: 'Rutas BGD'
+      name: 'RUTIA Chiapas'
     },
     lastReviewed: new Date().toISOString(),
     primaryImageOfPage: {
@@ -802,10 +801,10 @@ const graphNodes = [
       encodingFormat: 'image/jpeg'
     },
     keywords: tipo === 'ruta'
-      ? `ruta, colectivo, transporte público, Tuxtla Gutiérrez, Chiapas, ${toStrArr(extra?.route?.calles).slice(0, 5).join(', ')}`
+      ? `ruta, colectivo, transporte público, Chiapas, ${toStrArr(extra?.route?.calles).slice(0, 5).join(', ')}`
       : tipo === 'market'
-        ? `marketplace, ${extra?.market?.categoria || 'anuncio'}, Tuxtla Gutiérrez, Chiapas`
-        : `blog, Tuxtla Gutiérrez, Chiapas`,
+        ? `marketplace, ${extra?.market?.categoria || 'anuncio'}, Chiapas`
+        : `blog, Chiapas`,
     breadcrumb: {
       '@type': 'BreadcrumbList',
       '@id': `${pageUrl}#breadcrumb`,
@@ -858,7 +857,7 @@ bodyContent = renderRouteMapBlock(extra.route, baseUrl) + renderRouteBody(extra.
 
 <!-- 📍 GEO -->
 <meta name="geo.position" content="16.7530;-93.1150">
-<meta name="geo.placename" content="Tuxtla Gutiérrez, Chiapas, México">
+<meta name="geo.placename" content="Chiapas, México">
 <meta name="geo.region" content="MX-CHP">
 <meta name="ICBM" content="16.7530, -93.1150">
 
@@ -881,7 +880,7 @@ bodyContent = renderRouteMapBlock(extra.route, baseUrl) + renderRouteBody(extra.
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Rutas BGD">
+<meta name="apple-mobile-web-app-title" content="RUTIA Chiapas">
 <link rel="preconnect" href="https://tile.openstreetmap.org">
 
 <!-- 🌍 Hreflang: contenido en español México -->
@@ -902,9 +901,9 @@ bodyContent = renderRouteMapBlock(extra.route, baseUrl) + renderRouteBody(extra.
 <meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:alt" content="${safeTitle}">
 <meta property="og:url" content="${pageUrl}">
-<meta property="og:site_name" content="Rutas BGD">
+<meta property="og:site_name" content="RUTIA Chiapas">
 <meta property="og:locale" content="es_MX">
-<meta property="article:author" content="Rutas BGD">
+<meta property="article:author" content="RUTIA Chiapas">
 <meta property="article:published_time" content="${datePublished}">
 <meta property="article:modified_time" content="${dateModified}">
 <meta property="article:section" content="${typeLabel}s">
@@ -930,8 +929,8 @@ ${tipo === 'market' ? `
 <meta name="twitter:title" content="${safeSeoTitle}">
 <meta name="twitter:description" content="${safeDescOG}">
 <meta name="twitter:image" content="${safeImage}">
-<meta name="twitter:site" content="@rutasbgd">
-<meta name="twitter:creator" content="@rutasbgd">
+<meta name="twitter:site" content="@rutiachiapas">
+<meta name="twitter:creator" content="@rutiachiapas">
 <meta name="twitter:label1" content="${typeLabel}">
 <meta name="twitter:data1" content="${safeTitle}">
 <meta name="twitter:label2" content="Ubicación">
@@ -1040,7 +1039,20 @@ body.fs-active{overflow:hidden!important}
 .block ul{list-style:none;padding:0}
 .block li{padding:7px 0;border-bottom:1px solid var(--border);font-size:14px}
 .block li:last-child{border-bottom:none}
+.post-image-hero{
+  width:100%;
+  height:auto;
+  max-height:520px;
+  object-fit:cover;
+  border-radius:var(--radius);
+  border:1px solid var(--border);
+  margin:0 0 20px;
+  background:var(--surface-2);
+  display:block;
+  box-shadow:var(--shadow-sm);
+}
 .post-content{font-size:15.5px;line-height:1.7;color:var(--text);background:var(--surface);padding:18px;border-radius:var(--radius);border:1px solid var(--border);margin-bottom:20px}
+
 .badge{display:inline-block;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin-bottom:12px}
 .badge-urbana{background:rgba(1,103,255,.16);color:var(--cyan)}
 .badge-foranea{background:rgba(168,85,247,.18);color:var(--purple)}
@@ -1136,7 +1148,7 @@ footer a{color:var(--cyan)}
         <circle cx="12" cy="10" r="3"/>
       </svg>
     </div>
-    <span class="brand-txt">Rutas BGD</span>
+    <span class="brand-txt">RUTIA Chiapas</span>
     </a>
   <div class="header-actions">
     <a class="icon-btn" href="${baseUrl}/" title="Ir al inicio">
@@ -1170,18 +1182,26 @@ footer a{color:var(--cyan)}
 
 
 
-  <!-- 🔒 IMAGEN SEO: oculta visualmente pero indexable por Google y accesible para IA -->
-${image ? `
+  <!-- 🖼️ IMAGEN: visible en post/market, oculta en rutas (el mapa es el hero) -->
+${image ? (tipo === 'ruta' ? `
   <img class="seo-hero"
        src="${safeImage}"
-       alt="Mapa y recorrido de la ${safeTitle} — Tuxtla Gutiérrez, Chiapas"
-       title="${safeTitle} — Rutas BGD"
+       alt="Mapa y recorrido de la ${safeTitle} — Chiapas"
+       title="${safeTitle} — RUTIA Chiapas"
        width="1200"
        height="630"
-       sizes="(max-width: 480px) 100vw, (max-width: 768px) 90vw, (max-width: 1024px) 80vw, 760px"
        loading="eager"
        decoding="async"
-       fetchpriority="high">` : ''}
+       fetchpriority="high">` : `
+  <img class="post-image-hero"
+       src="${safeImage}"
+       alt="${safeTitle}"
+       title="${safeTitle} — RUTIA Chiapas"
+       width="1200"
+       height="630"
+       loading="eager"
+       decoding="async"
+       fetchpriority="high">`) : ''}
        
   
   ${bodyContent}
@@ -1195,11 +1215,11 @@ ${image ? `
   <div style="display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-start">
     <div style="flex:1;min-width:200px">
       <strong style="color:var(--cyan);display:block;margin-bottom:4px">✅ Datos verificados por</strong>
-      Rutas BGD · Tuxtla Gutiérrez, Chiapas
+      RUTIA Chiapas · Tuxtla Gutiérrez, Chiapas
     </div>
     <div style="flex:1;min-width:200px">
       <strong style="color:var(--cyan);display:block;margin-bottom:4px">📧 Contacto</strong>
-      <a href="mailto:contacto@brigadistasbd.pages.dev" style="color:var(--cyan)">contacto@brigadistasbd.pages.dev</a>
+      <a href="mailto:contacto@rutiachiapas.pages.dev" style="color:var(--cyan)">contacto@rutiachiapas.pages.dev</a>
     </div>
     <div style="flex:1;min-width:200px">
       <strong style="color:var(--cyan);display:block;margin-bottom:4px">📋 Metodología</strong>
@@ -1224,7 +1244,7 @@ ${image ? `
     <a href="${baseUrl}/acerca" style="color:var(--cyan);margin:0 8px">Acerca de</a>
   </div>
   <div style="color:var(--text-3);font-size:11px">
-    © ${new Date().getFullYear()} Rutas BGD · <a href="${baseUrl}" style="color:var(--cyan)">${cleanDomain(baseUrl)}</a>
+    © ${new Date().getFullYear()} RUTIA Chiapas · <a href="${baseUrl}" style="color:var(--cyan)">${cleanDomain(baseUrl)}</a>
     <br>
     <span style="opacity:.7">Información actualizada periódicamente. Verifica siempre antes de viajar.</span>
   </div>
@@ -1287,7 +1307,7 @@ function cleanDomain(baseUrl) {
 //  🗺️  BLOQUE DE MAPA INTERACTIVO PARA RUTAS COMPARTIDAS
 // ============================================================
 function renderRouteMapBlock(route, baseUrl) {
-  baseUrl = baseUrl || 'https://brigadistasbd.pages.dev';
+  baseUrl = baseUrl || 'https://rutiachiapas.pages.dev';
   if (!route) return '';
   const puntos       = route.puntos || [];
   const puntosVuelta = route.puntosVuelta || [];
@@ -1509,7 +1529,7 @@ function introParagraph(route, title, baseUrl) {
 }
 
 function renderRouteBody(route, baseUrl) {
-  baseUrl = baseUrl || 'https://brigadistasbd.pages.dev';
+  baseUrl = baseUrl || 'https://rutiachiapas.pages.dev';
   const blocks = [];
 
   // ✅ H2 principal de la sección de datos
