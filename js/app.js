@@ -3880,8 +3880,9 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
     sidePanelList.innerHTML = rutas.map(r => {
       const primeraParada = (r.paradas || [])[0] || '';
       const primerRetorno = (r.retornos || [])[0] || '';
-      const categoria = (r.categoria || 'urbana').toLowerCase();
-      const catClass = categoria === 'foranea' ? 'foranea' : 'urbana';
+     const categoria = (r.categoria || 'urbana').toLowerCase();
+const catClass = String(categoria).startsWith('foranea') ? 'foranea' : 'urbana';
+       
 
       // 🔗 URL limpia (sin .html) para que Google la rastree como enlace interno
       const rutaSlug = r.slug || r.id || '';
@@ -3897,7 +3898,7 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
           <div class="sp-route-info">
             <div class="sp-route-row-1">
               <div class="sp-route-name">${esc(r.nombre || 'RUTA')}</div>
-              <span class="sp-route-cat ${catClass}">${esc(categoria)}</span>
+              <span class="sp-route-cat ${catClass}">${esc(categoria.split('-')[0])}</span>
             </div>
             ${(primeraParada || primerRetorno) ? `
               <div class="sp-route-row-2">
