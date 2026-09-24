@@ -380,9 +380,9 @@ function generateHTML({ tipo, title, content, image, slug, pageUrl, baseUrl, ext
     let cat = '';
     if (r.categoria) {
       const c = String(r.categoria).toLowerCase();
-      const pretty = c === 'foranea' ? 'Foránea'
-                   : c === 'urbana'  ? 'Urbana'
-                   : (c.charAt(0).toUpperCase() + c.slice(1));
+const pretty = c.startsWith('foranea') ? 'Foránea'
+             : c.startsWith('urbana')  ? 'Urbana'
+             : (c.charAt(0).toUpperCase() + c.slice(1));
       cat = ` - ${pretty}`;
     }
 
@@ -1164,7 +1164,7 @@ footer a{color:var(--cyan)}
 </div>
 
   
-     <span class="badge badge-${tipo === 'ruta' ? (extra?.route?.categoria === 'foranea' ? 'foranea' : 'urbana') : tipo === 'market' ? 'green' : 'urbana'}">${typeLabel}</span>
+     <span class="badge badge-${tipo === 'ruta' ? (String(extra?.route?.categoria || '').startsWith('foranea') ? 'foranea' : 'urbana') : tipo === 'market' ? 'green' : 'urbana'}">${typeLabel}</span>
   <h1>${safeTitle}${tipo === 'ruta' ? ' · Colectivo Chiapas' : tipo === 'market' ? ' · Marketplace Chiapas' : ''}</h1>
   
 
