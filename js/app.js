@@ -3722,23 +3722,24 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
 
 
 
-        // Auto-follow
-        if (state.gpsLive.autoFollow) {
-          if (!state.gpsLive.firstFix) {
-            state.tripMap.setView(latlng, Math.max(state.tripMap.getZoom(), 16), { animate: true });
-            state.gpsLive.firstFix = true;
-          } else {
-            const prev = state.gpsLive.lastLatLng;
-            if (prev) {
-              const d = haversine(prev[0], prev[1], lat, lng);
-              if (d > state.gpsLive.minDistanceToPan) {
-                state.tripMap.panTo(latlng, { animate: true, duration: 0.6 });
-              }
-            } else {
-              state.tripMap.panTo(latlng, { animate: true, duration: 0.6 });
-            }
-          }
-        }
+        // Auto-follow (SIN cambiar el zoom)
+if (state.gpsLive.autoFollow) {
+  if (!state.gpsLive.firstFix) {
+    // Primer fix: centrar sin cambiar el zoom actual
+    state.tripMap.setView(latlng, state.tripMap.getZoom(), { animate: true });
+    state.gpsLive.firstFix = true;
+  } else {
+    const prev = state.gpsLive.lastLatLng;
+    if (prev) {
+      const d = haversine(prev[0], prev[1], lat, lng);
+      if (d > state.gpsLive.minDistanceToPan) {
+        state.tripMap.panTo(latlng, { animate: true, duration: 0.6 });
+      }
+    } else {
+      state.tripMap.panTo(latlng, { animate: true, duration: 0.6 });
+    }
+  }
+}
 
         state.gpsLive.lastLatLng = latlng;
       },
