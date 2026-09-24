@@ -3180,7 +3180,7 @@ async function detectStreets(){
       <div class="li-info">
         <div class="li-title">${esc(r.nombre)}</div>
         <div class="li-sub">
-          <span class="badge badge-${r.categoria==='foranea'?'foranea':'urbana'}">${esc(r.categoria)}</span>
+          <span class="badge badge-${String(r.categoria||'').startsWith('foranea')?'foranea':'urbana'}">${esc(r.categoria)}</span>
           · ${(r.paradas||[]).length} paradas · ${(r.calles||[]).length} calles
         </div>
       </div>
