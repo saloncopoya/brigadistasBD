@@ -811,10 +811,16 @@ img{max-width:100%;display:block}
                 <div class="admin-col-title">Información</div>
                 <div class="field">
                   <label>Categoría</label>
-                  <select class="select" id="rpCat">
-                    <option value="urbana">Urbana</option>
-                    <option value="foranea">Foránea</option>
-                  </select>
+                <select class="select" id="rpCat">
+  <option value="urbana-tuxtla">Urbana Tuxtla Gutiérrez</option>
+  <option value="foranea-tuxtla">Foránea Tuxtla Gutiérrez</option>
+  <option value="urbana-tapachula">Urbana Tapachula</option>
+  <option value="foranea-tapachula">Foránea Tapachula</option>
+  <option value="urbana-san-cristobal">Urbana San Cristóbal de las Casas</option>
+  <option value="foranea-san-cristobal">Foránea San Cristóbal de las Casas</option>
+  <option value="urbana-comitan">Urbana Comitán</option>
+  <option value="foranea-comitan">Foránea Comitán</option>
+</select>
                 </div>
                 <div class="field">
                   <label>Tarifa</label>
@@ -1961,7 +1967,13 @@ img{max-width:100%;display:block}
     rpState.editingRoute = route;
     $('#rpEditor').classList.remove('hidden');
     $('#rpNombre').value = route.nombre || '';
-    $('#rpCat').value = route.categoria || 'urbana';
+   
+     const catGuardada = route.categoria || 'urbana-tuxtla';
+const catNormalizada = catGuardada === 'urbana' ? 'urbana-tuxtla'
+                     : catGuardada === 'foranea' ? 'foranea-tuxtla'
+                     : catGuardada;
+$('#rpCat').value = catNormalizada;
+     
     $('#rpTarifa').value = route.tarifa || '';
     $('#rpFrec').value = route.frecuencia || '';
     $('#rpHoraIni').value = route.horarioIni || '';
