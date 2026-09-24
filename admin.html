@@ -439,13 +439,19 @@ body.fs-active{overflow:hidden !important}
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
               Información
             </div>
-            <div class="field">
-              <label>Categoría *</label>
-              <select class="select" id="routeCat">
-                <option value="urbana">Urbana</option>
-                <option value="foranea">Foránea</option>
-              </select>
-            </div>
+          <div class="field">
+  <label>Categoría *</label>
+  <select class="select" id="routeCat">
+    <option value="urbana-tuxtla">Urbana Tuxtla Gutiérrez</option>
+    <option value="foranea-tuxtla">Foránea Tuxtla Gutiérrez</option>
+    <option value="urbana-tapachula">Urbana Tapachula</option>
+    <option value="foranea-tapachula">Foránea Tapachula</option>
+    <option value="urbana-san-cristobal">Urbana San Cristóbal de las Casas</option>
+    <option value="foranea-san-cristobal">Foránea San Cristóbal de las Casas</option>
+    <option value="urbana-comitan">Urbana Comitán</option>
+    <option value="foranea-comitan">Foránea Comitán</option>
+  </select>
+</div>
             <div class="field">
               <label>Tarifa</label>
               <input class="input" id="routeTarifa" placeholder="$10">
@@ -3212,8 +3218,15 @@ async function detectStreets(){
             
         $('#routeFormTitle').textContent='Editar ruta';
         $('#routeName').value=r.nombre||'';
-        $('#routeCat').value=r.categoria||'urbana';
-        $('#routeTarifa').value=r.tarifa||'';
+
+            const catGuardada = r.categoria || 'urbana-tuxtla';
+// Compatibilidad con valores antiguos
+const catNormalizada = catGuardada === 'urbana' ? 'urbana-tuxtla'
+                     : catGuardada === 'foranea' ? 'foranea-tuxtla'
+                     : catGuardada;
+$('#routeCat').value = catNormalizada;
+            
+            $('#routeTarifa').value=r.tarifa||'';
         $('#routeFrec').value=r.frecuencia||'';
         $('#routeHoraIni').value=r.horarioIni||'';
         $('#routeHoraFin').value=r.horarioFin||'';
