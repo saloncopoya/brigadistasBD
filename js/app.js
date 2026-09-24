@@ -587,7 +587,7 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
                        } else if (act === 'del-post') {
             if (!confirm('¿Eliminar esta publicación?')) return;
 
-            let pass = sessionStorage.getItem('tgz_admin') || '';
+            let pass = sessionStorage.getItem('chiapas_admin') || '';
             if (!pass) pass = prompt('Contraseña admin para eliminar:') || '';
             if (!pass) {
               toast('Se necesita la contraseña para eliminar del servidor', 'err');
@@ -1071,7 +1071,7 @@ async function loadRoutes() {
           else if (act === 'del') {
   if (!confirm('¿Eliminar esta ruta?')) return;
 
-  const pass = sessionStorage.getItem('tgz_admin') || prompt('Contraseña admin:') || '';
+  const pass = sessionStorage.getItem('chiapas_admin') || prompt('Contraseña admin:') || '';
   if (!pass) { toast('Se necesita contraseña para eliminar', 'err'); return; }
 
   // 🔐 Validar contraseña ANTES
@@ -1912,7 +1912,7 @@ const url = location.origin + '/share/ruta/' + route.id;
 
 
         // 🔐 Validar contraseña antes de guardar
-  let pass = sessionStorage.getItem('tgz_admin') || '';
+  let pass = sessionStorage.getItem('chiapas_admin') || '';
   if (!pass) pass = prompt('Contraseña admin:') || '';
   if (!pass) { toast('Se necesita la contraseña', 'err'); return; }
   try {
@@ -2148,7 +2148,7 @@ const url = location.origin + '/share/m/' + id;
         });
         if (res.ok || res.status === 200) {
           state.isAdmin = true;
-          sessionStorage.setItem('tgz_admin', pass);
+          sessionStorage.setItem('chiapas_admin', pass);
           closeModal('authModal');
           $('#adminFab').classList.remove('hidden');
           $('#feedAdminBar').classList.remove('hidden');
@@ -2161,7 +2161,7 @@ const url = location.origin + '/share/m/' + id;
       } catch (e) {
         // Fallback: aceptar localmente si no hay red
         state.isAdmin = true;
-        sessionStorage.setItem('tgz_admin', pass);
+        sessionStorage.setItem('chiapas_admin', pass);
         closeModal('authModal');
         $('#adminFab').classList.remove('hidden');
         $('#feedAdminBar').classList.remove('hidden');
@@ -2175,7 +2175,7 @@ const url = location.origin + '/share/m/' + id;
   }
 
   // Detección automática de admin por sesión
-  const savedPass = sessionStorage.getItem('tgz_admin');
+  const savedPass = sessionStorage.getItem('chiapas_admin');
   if (savedPass) {
     state.isAdmin = true;
     $('#adminFab').classList.remove('hidden');
@@ -3557,7 +3557,7 @@ const color = ['#10b981', '#ef4444', '#f59e0b', '#1A73E8', '#a855f7'][idx] || '#
     tripShareBtn.onclick = async () => {
       const url = location.origin + '/?tab=trip';
       const res = await Publisher.share({
-        title: 'Buscar viaje en mapa · Rutas BGD',
+        title: 'Buscar viaje en mapa · RUTIA Chiapas',
         text: 'Encuentra rutas cercanas a tu ubicación en el mapa',
         url
       });
