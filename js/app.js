@@ -320,7 +320,7 @@ routeDraft: { puntos: [], puntosVuelta: [], calles: [], pois: [], geometriaIda: 
   });
 
   // ==================== TEMA ====================
-const savedTheme = localStorage.getItem('tgz_theme') || 'light';
+const savedTheme = localStorage.getItem('chiapas_theme') || 'light';
    document.documentElement.setAttribute('data-theme', savedTheme);
   updateThemeIcon();
 
@@ -337,7 +337,7 @@ const savedTheme = localStorage.getItem('tgz_theme') || 'light';
     const cur = document.documentElement.getAttribute('data-theme');
     const next = cur === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('tgz_theme', next);
+    localStorage.setItem('chiapas_theme', next);
     updateThemeIcon();
     // Refrescar tiles del mapa si existe
     if (state.map) {
@@ -627,10 +627,10 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
   }
 
   function getUserId() {
-    let uid = localStorage.getItem('tgz_uid');
+    let uid = localStorage.getItem('chiapas_uid');
     if (!uid) {
       uid = 'u_' + Math.random().toString(36).slice(2, 10);
-      localStorage.setItem('tgz_uid', uid);
+      localStorage.setItem('chiapas_uid', uid);
     }
     return uid;
   }
