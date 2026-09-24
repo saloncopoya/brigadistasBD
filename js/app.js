@@ -959,7 +959,7 @@ async function loadRoutes() {
         </div>` : ''}
         <div class="route-icon"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="#ffffff" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M4.5 5C4.5 3.62 5.62 2.5 7 2.5h10c1.38 0 2.5 1.12 2.5 2.5v11c0 1.1-.9 2-2 2H17v3c0 .28-.22.5-.5.5h-2c-.28 0-.5-.22-.5-.5v-3h-4v3c0 .28-.22.5-.5.5h-2c-.28 0-.5-.22-.5-.5v-3H6.5c-1.1 0-2-.9-2-2V5Zm2 .5v2h11v-2h-11Zm0 4V13h5V9.5h-5Zm6 0V13h5V9.5h-5ZM8 15a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm2.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm3.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm2.5 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/></svg></div>
         <div class="route-name">${esc(r.nombre || 'RUTA')}</div>
-        <span class="badge ${r.categoria === 'foranea' ? 'badge-foranea' : 'badge-urbana'}">${esc(r.categoria || 'urbana')}</span>
+        <span class="badge ${String(r.categoria||'').startsWith('foranea') ? 'badge-foranea' : 'badge-urbana'}">${esc(r.categoria || 'urbana')}</span>
         <div class="route-actions">
           <button class="icon-btn" data-act="open" title="Abrir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 6l8-3 6 3 8-3v15l-8 3-6-3-8 3z"/></svg></button>
           <button class="icon-btn btn-share" data-act="share" title="Compartir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
@@ -1209,7 +1209,7 @@ async function loadRoutes() {
     // ✅ Actualizar el H1 real (el que ve Google)
     const h1El = document.getElementById('routeH1');
     if (h1El) {
-      h1El.textContent = `Ruta ${route.nombre || ''} - ${route.categoria === 'foranea' ? 'Foránea' : 'Urbana'} Tuxtla Gutiérrez`;
+      h1El.textContent = `Ruta ${route.nombre || ''} - ${String(route.categoria||'').startsWith('foranea') ? 'Foránea' : 'Urbana'} Tuxtla Gutiérrez`;
       h1El.classList.remove('hidden');
     }
     
@@ -1224,7 +1224,7 @@ async function loadRoutes() {
 
       
       <div class="hero-meta">
-        <span class="badge ${route.categoria === 'foranea' ? 'badge-foranea' : 'badge-urbana'}">${esc(route.categoria || 'urbana')}</span>
+        <span class="badge ${String(route.categoria||'').startsWith('foranea') ? 'badge-foranea' : 'badge-urbana'}">${esc(route.categoria || 'urbana')}</span>
         ${route.tarifa ? `<span class="chip mini">💰 ${esc(route.tarifa)}</span>` : ''}
         ${route.frecuencia ? `<span class="chip mini">⏱️ ${esc(route.frecuencia)}</span>` : ''}
         ${route.horarioIni ? `<span class="chip mini">🕐 ${esc(route.horarioIni)} - ${esc(route.horarioFin || '')}</span>` : ''}
