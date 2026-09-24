@@ -701,7 +701,7 @@ const faqSchema = tipo === 'ruta' ? {
         '@type': 'Answer',
         text: extra?.route?.horarioIni
           ? `La ${title} opera desde las ${extra.route.horarioIni} hasta las ${extra.route.horarioFin || 'última hora'}.`
-rutiachiapas          : `La ${title} opera en horarios habituales de transporte público en Chiapas.`
+          : `La ${title} opera en horarios habituales de transporte público en Chiapas.`
       }
     },
     {
@@ -744,9 +744,8 @@ const graphNodes = [
       availableLanguage: ['Spanish', 'es-MX']
     },
     areaServed: {
-      '@type': 'City',
-      name: 'Tuxtla Gutiérrez',
-      containedInPlace: { '@type': 'State', name: 'Chiapas' }
+      '@type': 'State',
+      name: 'Chiapas'
     }
   },
   {
@@ -852,7 +851,7 @@ bodyContent = renderRouteMapBlock(extra.route, baseUrl) + renderRouteBody(extra.
 <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large">
 
 <!-- 📰 NEWS / DISCOVER -->
-<meta name="news_keywords" content="${tipo === 'ruta' ? `ruta, colectivo, transporte, Tuxtla Gutiérrez, ${toStrArr(extra?.route?.calles).slice(0,5).join(', ')}` : tipo === 'market' ? `marketplace, ${extra?.market?.categoria || 'anuncio'}, Tuxtla Gutiérrez` : `blog, Tuxtla Gutiérrez`}">
+<meta name="news_keywords" content="${tipo === 'ruta' ? `ruta, colectivo, transporte, Chiapas, ${toStrArr(extra?.route?.calles).slice(0,5).join(', ')}` : tipo === 'market' ? `marketplace, ${extra?.market?.categoria || 'anuncio'}, Chiapas` : `blog, Chiapas`}">
 <meta name="thumbnail" content="${safeImage}">
 
 <!-- 📍 GEO -->
@@ -911,7 +910,7 @@ ${tipo === 'ruta' && toStrArr(extra?.route?.calles).length ? `<meta property="ar
 
 ${tipo === 'post' ? `
 <meta property="article:tag" content="blog">
-<meta property="article:tag" content="Tuxtla Gutiérrez">
+<meta property="article:tag" content="Chiapas">
 <meta property="article:tag" content="Chiapas">
 <meta property="article:tag" content="noticias">
 <meta property="article:tag" content="transporte público">
@@ -919,7 +918,7 @@ ${tipo === 'post' ? `
 ${tipo === 'market' ? `
 <meta property="article:tag" content="marketplace">
 <meta property="article:tag" content="${escapeHTML(extra?.market?.categoria || 'anuncio')}">
-<meta property="article:tag" content="Tuxtla Gutiérrez">
+<meta property="article:tag" content="Chiapas">
 <meta property="article:tag" content="Chiapas">
 ` : ''}
 
@@ -934,7 +933,7 @@ ${tipo === 'market' ? `
 <meta name="twitter:label1" content="${typeLabel}">
 <meta name="twitter:data1" content="${safeTitle}">
 <meta name="twitter:label2" content="Ubicación">
-<meta name="twitter:data2" content="Tuxtla Gutiérrez, Chiapas">
+<meta name="twitter:data2" content="Chiapas">
 
 <!-- Schema.org -->
 <script type="application/ld+json">${JSON.stringify(schema)}</script>
@@ -1166,8 +1165,8 @@ footer a{color:var(--cyan)}
 
   
      <span class="badge badge-${tipo === 'ruta' ? (extra?.route?.categoria === 'foranea' ? 'foranea' : 'urbana') : tipo === 'market' ? 'green' : 'urbana'}">${typeLabel}</span>
-  <h1>${safeTitle}${tipo === 'ruta' ? ' · Colectivo Tuxtla Gutiérrez' : tipo === 'market' ? ' · Marketplace Tuxtla Gutiérrez' : ''}</h1>
-
+  <h1>${safeTitle}${tipo === 'ruta' ? ' · Colectivo Chiapas' : tipo === 'market' ? ' · Marketplace Chiapas' : ''}</h1>
+  
 
 <div class="meta">
   <time datetime="${new Date().toISOString()}" title="Fecha de publicación">
@@ -1215,7 +1214,7 @@ ${image ? (tipo === 'ruta' ? `
   <div style="display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-start">
     <div style="flex:1;min-width:200px">
       <strong style="color:var(--cyan);display:block;margin-bottom:4px">✅ Datos verificados por</strong>
-      RUTIA Chiapas · Tuxtla Gutiérrez, Chiapas
+      RUTIA Chiapas · Chiapas
     </div>
     <div style="flex:1;min-width:200px">
       <strong style="color:var(--cyan);display:block;margin-bottom:4px">📧 Contacto</strong>
@@ -1498,7 +1497,7 @@ function introParagraph(route, title, baseUrl) {
   const dias = r.dias || '';
   const categoria = r.categoria || 'urbana';
 
-  const p1 = `<p>La <strong>${escapeHTML(title)}</strong> es una ruta de colectivo de categoría <strong>${escapeHTML(categoria)}</strong> que opera en la ciudad de Tuxtla Gutiérrez, Chiapas, México. ${tarifa ? `El costo del pasaje es de <strong>${escapeHTML(tarifa)}</strong>.` : ''} ${frecuencia ? `La frecuencia de paso aproximada es <strong>${escapeHTML(frecuencia)}</strong>.` : ''} ${horarioIni ? `Presta servicio desde las <strong>${escapeHTML(horarioIni)}</strong> hasta las <strong>${escapeHTML(horarioFin || 'última hora')}</strong>.` : ''} ${dias ? `Los días de operación son <strong>${escapeHTML(dias)}</strong>.` : ''}</p>`;
+  const p1 = `<p>La <strong>${escapeHTML(title)}</strong> es una ruta de colectivo de categoría <strong>${escapeHTML(categoria)}</strong> que opera en la ciudad de Chiapas, México. ${tarifa ? `El costo del pasaje es de <strong>${escapeHTML(tarifa)}</strong>.` : ''} ${frecuencia ? `La frecuencia de paso aproximada es <strong>${escapeHTML(frecuencia)}</strong>.` : ''} ${horarioIni ? `Presta servicio desde las <strong>${escapeHTML(horarioIni)}</strong> hasta las <strong>${escapeHTML(horarioFin || 'última hora')}</strong>.` : ''} ${dias ? `Los días de operación son <strong>${escapeHTML(dias)}</strong>.` : ''}</p>`;
 
   const p2 = paradas.length
     ? `<p>Esta ruta cuenta con un total de <strong>${paradas.length} paradas oficiales</strong> a lo largo de su recorrido, entre las que destacan: ${paradas.slice(0, 10).map(p => escapeHTML(p)).join(', ')}${paradas.length > 10 ? ', entre otras' : ''}. Los usuarios pueden abordar y descender en cualquiera de estos puntos para llegar a su destino de forma segura y eficiente.</p>`
